@@ -1,0 +1,2 @@
+* [GitHub - galkan/crowbar: Crowbar is brute forcing tool that can be used during penetration tests. It is developed to support protocols that are not currently supported by thc-hydra and other popular brute forcing tools.](https://github.com/galkan/crowbar)
+* `crowbar -b rdp -s 192.168.220.142/32 -U users.txt -c 'password123'`

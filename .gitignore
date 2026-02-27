@@ -1,0 +1,15 @@
+# Obsidian config (personal settings)
+.obsidian/
+
+# Claude Code settings
+.claude/
+CLAUDE.md
+
+# Jupyter artifacts
+.ipynb_checkpoints/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+

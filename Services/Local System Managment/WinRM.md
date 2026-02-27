@@ -1,0 +1,11 @@
+#winrm #windowsremotemanagement #localsystemmanagement
+- The Windows Remote Management (`WinRM`) is a simple Windows integrated remote management protocol based on the command line.
+- Uses SOAP
+- Port TCP 5985, 5986
+- Supports HTTPS
+- WinRS (Windows Remote Shell) is a subcomponent that allows remote command execution
+- Powershell requires WinRM
+- Enabled by default in modern windows (10+ years)
+- Abuse with
+	- nmap scripts
+	- [[Evil WinRM]]

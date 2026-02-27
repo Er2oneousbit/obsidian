@@ -1,0 +1,4 @@
+- 94.237.51.163:36647
+- login web portal - user *htb-student* and password *Academy_student!*
+- Seems to be some sort of social media management portal
+- 

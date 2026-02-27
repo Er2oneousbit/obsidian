@@ -1,0 +1,19 @@
+#rdp #remotedesktopprotocol #remoteaccess 
+- RDP is used to remotely access systems with a GUI (graphical user interface)
+	- First created for Windows
+	- Can be found on other systems with non microsoft versions such as xrdp or freerdp
+- Port TCP/UDP 3389
+- Can use TLS, but typically self sighed certs that can be MITM
+- Can be management with server manager service
+- Can be set to use NLA https://en.wikipedia.org/wiki/Network_Level_Authentication
+- RDP over the internet will need public IPs
+- Abuse with
+	- nmap scripts
+		- packet trace can reveal sensitive information
+	- [[Hydra]]
+	- https://github.com/CiscoCXSecurity/rdp-sec-check # identify security of RDP without Auth
+- Example linux command to connect `xfreerdp /u:cry0l1t3 /p:"P455w0rd!" /v:10.129.201.248`
+- Connect  windows 
+	- RDC # %windir%\system32\mstsc.exe
+	- RDCMan [Remote Desktop Connection Manager - Sysinternals | Microsoft Learn](https://learn.microsoft.com/en-us/sysinternals/downloads/rdcman)
+	- 3rd party tools

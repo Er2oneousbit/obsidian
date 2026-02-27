@@ -1,0 +1,2 @@
+#ZAP
+- [Zed Attack Proxy](https://www.zaproxy.org/) (`ZAP`) is an open-source web proxy that belongs to the [Open Web Application Security Project](https://owasp.org/) (`OWASP`). It allows us to perform manual and automated security testing on web applications. Using it as a proxy server will enable us to intercept and manipulate all the traffic that passes through it.

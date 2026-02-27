@@ -1,0 +1,11 @@
+#inveigh #activedirectory #hash #passwordcracking 
+- [Inveigh](https://github.com/Kevin-Robertson/Inveigh)
+- Inveigh is a cross-platform .NET IPv4/IPv6 machine-in-the-middle tool for penetration testers. This repo contains the primary C# version as well as the legacy PowerShell version.
+- Powershell Version
+	- `Import-Module Inveigh.ps1` load tool into PS session
+	- `Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput Y` start spoofing
+- C# version
+	- `.\Inveigh.exe`
+	- Press `ESC` to enter interactive menu
+	- `GET NTLMV2UNIQUE` all the unique captured hashes
+	- `GET NTLMV2USERNAMES` all unique captured usernames

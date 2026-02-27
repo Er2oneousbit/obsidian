@@ -1,0 +1,84 @@
+- Nmap
+	- URL and Host IPs- what ports are open?
+	- Ports
+		- Too many?
+		- Banned?
+		- Any vuln services discovered?
+	- Run scripts against ports for vulns
+- Go/Netscaler - what ports are on the LB? 
+- TLS - What ciphers are being used?
+- Webcert 
+	- Self signed?
+	- Expired?
+	- SHA256 or better?
+- Does the app have a login page?
+	- Auth attacks
+	- Reset password
+	- User enum
+- Does app use tokens or cookies?
+	- Steal session
+	- Forge session
+	- Does session rotate/expire?
+	- Cross session - can user A use user B's session
+- Does app ingest client provided data?
+	- Does app validate provided data?
+		- Verbose errors
+		- Injection points
+	- Does app return more data than it should?
+- Does app have client side controls?
+	- Does app store client side data in cache?
+	- What happens if these controls are discarded/blocked?
+	- Can client side code be manipulated to allow payloads while allowing app to function?
+- Does app handle PCI?
+	- Does CCN 'hide' as or after user enters?
+	- Does CCN show up in browser cache/java logs
+	- Does CCN show up in source as a hidden field?
+	- Does client send CCN back to APP?
+	- Does server reflect CCN back to client?
+	- Does app clear screen after 15 min idle?
+	- Does app require reauth after 15 min idle?
+- Can you do source code review?
+	- ADO
+		- run scripts to find issues
+		- review config files
+		- look for any interestingly name files to review
+		- Hard coded creds?
+	- Binaries
+		- .Net
+			- Use ilspy, Dotpeek, etc to see source code
+			- Does source code have vuln libraries?
+			- Look for functions that handle authentication
+			- Look for functions that handle PCI
+			- Look for how SQL queries are handled
+			- Review any function that does encryption, can it be reverse?
+			- Hardcoded creds?
+		- Other
+			- Use appropriate tool for language
+			- Repeat above
+- Can app be dirbusted?
+	- Any sensitive files or directories found?
+- Directory traversal?
+- Nikto scan
+- Burpsuite scan
+- Review headers
+- Host server
+	- Review host files 
+		- Any vuln libraries
+		- Review any logs for sensitive data
+		- Any certificates laying around?
+			- Can they be cracked? 
+		- Any files have hardcoded creds?
+	- Any vuln apps installed?
+	- Vuln OS?
+	- What services are on?
+		- FTP
+			- Annon access?
+			- Directory traversal?
+		- IIS
+			- Default pages?
+			- Directory traversal?
+			- Idors?
+		- SMB
+			- Annon access?
+	- Wireshark
+		- Does app send data from host in the clear?
