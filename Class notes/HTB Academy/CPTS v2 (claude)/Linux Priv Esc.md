@@ -632,6 +632,7 @@ find / -name ".*_history" -readable 2>/dev/null
 ```bash
 find / -name "*.conf" -readable 2>/dev/null | xargs grep -l "password" 2>/dev/null
 find / -name "*.config" -readable 2>/dev/null | xargs grep -l "password" 2>/dev/null
+find / -name "*.env" -readable 2>/dev/null | xargs grep -l "password\|secret\|key" 2>/dev/null
 
 # Common locations
 cat /var/www/html/config.php
@@ -640,13 +641,25 @@ cat /etc/mysql/mysql.conf.d/mysqld.cnf
 find /var/www -name "*.php" | xargs grep -i "password\|passwd\|db_pass" 2>/dev/null
 ```
 
-### SSH keys
+### Logs
+
+```bash
+# Logs sometimes contain credentials passed as CLI args or in error output
+grep -rn "password\|passwd\|token\|secret" /var/log/ 2>/dev/null
+ls -la /var/log/
+cat /var/log/auth.log       # SSH logins, sudo usage
+cat /var/log/syslog
+```
+
+### SSH keys / GPG
 
 ```bash
 find / -name "id_rsa" -o -name "id_ed25519" -o -name "id_ecdsa" 2>/dev/null
 find / -name "authorized_keys" 2>/dev/null
+find / -name "*.pem" -o -name "*.ppk" 2>/dev/null
 cat ~/.ssh/id_rsa
 ls -la ~/.ssh/
+ls -la ~/.gnupg/            # GPG keys — may unlock encrypted files or password managers
 ```
 
 ### Password in scripts / env
@@ -655,6 +668,7 @@ ls -la ~/.ssh/
 grep -rn "password\|passwd\|secret\|api_key\|token" /home /var/www /opt /etc 2>/dev/null
 grep -rn "PASS\|PASSWORD" /etc/environment /etc/profile.d/ 2>/dev/null
 cat /proc/*/environ 2>/dev/null | tr '\0' '\n' | grep -i pass
+printenv                    # Current environment variables
 ```
 
 ### Writable .bashrc / .bash_profile

