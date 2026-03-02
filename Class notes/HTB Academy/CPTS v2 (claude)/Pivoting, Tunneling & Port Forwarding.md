@@ -2,6 +2,28 @@
 
 #Pivoting #Tunnel #Tunneling #PortForwarding #SOCKS #Chisel #Ligolo
 
+## What is this?
+
+Use a compromised host (pivot/beachhead) to relay traffic into internal network segments not reachable from the attack machine. Covers dynamic SOCKS proxies, local/remote port forwarding, SSH tunneling, Ligolo-ng, Chisel, and proxychains. Essential for lateral movement after initial access.
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Ligolo-ng` | TUN/TAP agent tunnel — transparent routing, no proxychains needed |
+| `Chisel` | TCP/UDP tunnel over HTTP — SOCKS5 support |
+| `SSH` | Native port forwarding (`-L`, `-R`, `-D`) + dynamic SOCKS proxy |
+| `proxychains` | Route any tool through a SOCKS/HTTP proxy |
+| `Metasploit` | `route`, `socks_proxy`, `portfwd` modules |
+| `sshuttle` | VPN-over-SSH — routes entire subnet transparently |
+| `rpivot` | Reverse SOCKS proxy for restricted egress environments |
+| `socat` | Port relay and forwarding |
+| `dnscat2` | DNS-tunneled C2 + covert pivoting |
+
+---
+
 ## Core Concepts
 
 | Term | Meaning |

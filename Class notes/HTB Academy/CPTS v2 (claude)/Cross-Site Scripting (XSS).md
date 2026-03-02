@@ -10,6 +10,18 @@ Web app fails to sanitize user input, allowing injection of JavaScript that exec
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `XSStrike` | Smart XSS scanner — context-aware payload generation |
+| `dalfox` | Fast XSS scanner — parameter analysis + PoC generation |
+| `xsshunter` | Blind XSS callback service — captures cookies/DOM/screenshots |
+| `Burp Suite` | Intercept, test, and automate XSS discovery |
+| `BeEF` | Browser exploitation framework — post-XSS browser control |
+
+---
+
 ## XSS Types
 
 | Type | Where Payload Lives | Persistence | Severity |

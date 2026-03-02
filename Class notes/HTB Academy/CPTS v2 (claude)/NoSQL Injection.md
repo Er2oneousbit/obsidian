@@ -12,6 +12,17 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `NoSQLMap` | Automated MongoDB injection and exploitation |
+| `Burp Suite` | Manual operator injection testing |
+| `mongosh` | MongoDB shell — test payloads directly |
+| `nosql-detective` | MongoDB injection scanner |
+
+---
+
 ## MongoDB Operator Reference
 
 | Operator | Meaning | Injection use |
@@ -26,6 +37,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 | `$nin` | Not in array | Bypass blocklists |
 
 ---
+
 
 ## Detection
 

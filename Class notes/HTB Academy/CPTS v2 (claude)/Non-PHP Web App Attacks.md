@@ -8,6 +8,19 @@ Attack reference for non-PHP stacks commonly encountered in HTB boxes and labs. 
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `ysoserial` | Java deserialization gadget chain generator |
+| `ysoserial.net` | .NET deserialization payloads |
+| `tplmap` | SSTI scanner and exploitation |
+| `Burp Suite` | Manual SSTI testing, active scan, deserialization detection |
+| `GadgetProbe` | Enumerate loaded Java classes for deserialization |
+| `marshalsec` | Java deserialization JNDI/marshalling exploits |
+
+---
+
 ## Stack Fingerprinting
 
 Identify the backend before attacking — technique selection depends entirely on the stack.

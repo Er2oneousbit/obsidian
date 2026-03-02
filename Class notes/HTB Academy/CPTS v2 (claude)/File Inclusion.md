@@ -12,6 +12,18 @@ Web app dynamically includes files based on user input. LFI = local files, RFI =
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `ffuf` / `wfuzz` | Fuzz for LFI parameters and path traversal variations |
+| `Burp Suite` | Manual interception and testing of file inclusion params |
+| `LFISuite` | Automated LFI exploitation and path traversal |
+| `php_filter_chain_generator` | Generate PHP filter chains for LFI → RCE |
+| `Fimap` | LFI/RFI scanner and exploitation tool |
+
+---
+
 ## LFI Attack Types
 
 ### Basic LFI - Absolute Paths

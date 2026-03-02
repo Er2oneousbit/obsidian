@@ -1,6 +1,10 @@
 # Password Attacks
 
-**Tags:** `#passwordcracking` `#passwords` `#auth` `#authentication` `#hashcat` `#PassTheHash` `#PassTheTicket` `#Kerberos`
+#passwordcracking #passwords #auth #authentication #hashcat #PassTheHash #PassTheTicket #Kerberos
+
+## What is this?
+
+Extract, capture, and crack credentials from Windows and Linux systems. Windows: SAM/LSASS/NTDS.dit hash extraction, Pass-the-Hash (PTH), Pass-the-Ticket (PTT). Linux: harvesting from configs, history, and memory. Network captures for cleartext creds. Offline cracking with hashcat and john.
 
 ---
 

@@ -1,6 +1,31 @@
 # Information Gathering & Reconnaissance
 
-**Tags:** `#enumeration` `#informationgathering` `#OSINT` `#recon` `#DNS` `#subdomain`
+#enumeration #informationgathering #OSINT #recon #DNS #subdomain
+
+## What is this?
+
+Map the full attack surface before touching the target. Passive: OSINT, WHOIS, certificate transparency, subdomain enumeration via third-party sources, dorking. Active: DNS brute force, port scanning, vhost/dir discovery, tech stack fingerprinting. Goal: complete picture of exposed assets, services, and entry points.
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `nmap` | Port scanning, service fingerprinting, OS detection |
+| `theHarvester` | Email, subdomain, and host OSINT aggregation |
+| `subfinder` | Fast passive subdomain enumeration |
+| `amass` | Subdomain enum + OSINT + ASN/IP range mapping |
+| `gobuster` | DNS/vhost/directory brute force |
+| `ffuf` | Directory, file, vhost fuzzing |
+| `dnsenum` / `dnsrecon` | DNS enumeration + zone transfer attempts |
+| `whatweb` | Web technology fingerprinting |
+| `wafw00f` | WAF detection and identification |
+| `httpx` | HTTP probing — live hosts, status codes, titles |
+| `nuclei` | Template-based CVE/misconfig/exposure scanning |
+| `eyewitness` | Screenshots + reports of discovered web assets |
+| `shodan` (CLI) | Search internet-exposed services and devices |
+| `recon-ng` | Modular OSINT framework |
 
 ---
 

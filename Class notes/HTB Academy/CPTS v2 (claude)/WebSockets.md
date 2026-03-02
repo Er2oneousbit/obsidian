@@ -43,6 +43,17 @@ After the `101 Switching Protocols` response, the connection is a WebSocket — 
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | WS history, Repeater, Intruder — intercept + fuzz |
+| `wscat` | CLI WebSocket client — manual interaction |
+| `websocat` | Versatile WS client — scripting + fuzzing |
+| `OWASP ZAP` | Active WebSocket scanning |
+
+---
+
 ## Intercepting WebSockets
 
 ### Burp Suite

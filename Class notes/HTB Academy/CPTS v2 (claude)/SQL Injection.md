@@ -20,6 +20,17 @@ SQL injection occurs when unsanitized user input is inserted directly into a SQL
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `sqlmap` | Automated SQLi detection and exploitation |
+| `ghauri` | Modern sqlmap alternative — faster, cleaner output |
+| `Burp Suite` | Manual testing + Repeater for blind injection |
+| `sqlmap --tamper` | WAF bypass scripts (space2comment, randomcase, etc.) |
+
+---
+
 ## Detection — Initial Probing
 
 **Basic probes** — look for errors, changed output, or delays:

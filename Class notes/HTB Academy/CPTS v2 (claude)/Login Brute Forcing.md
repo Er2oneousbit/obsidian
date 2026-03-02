@@ -1,6 +1,25 @@
 # Login Brute Forcing
 
-**Tags:** `#bruteforce` `#auth` `#authentication` `#hydra` `#medusa` `#passwords`
+#bruteforce #auth #authentication #hydra #medusa #passwords
+
+## What is this?
+
+Automated credential testing against authentication interfaces. Covers Hydra and Medusa for protocols (SSH, FTP, SMB, RDP, HTTP forms), wordlist generation (cupp, CeWL), username enumeration via response analysis, and password spraying to avoid account lockouts.
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Hydra` | Multi-protocol online brute forcer — SSH, FTP, SMB, RDP, HTTP |
+| `Medusa` | Multi-threaded parallel brute forcer |
+| `CrackMapExec` / `netexec` | SMB/AD password spraying with lockout tracking |
+| `ffuf` | HTTP form brute force + username enumeration |
+| `Burp Intruder` | GUI credential stuffing and form fuzzing |
+| `cupp` | Targeted wordlist generation from personal info |
+| `username-anarchy` | Username permutation from real names |
+| `CeWL` | Crawl target site to build custom wordlist |
 
 ---
 

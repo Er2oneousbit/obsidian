@@ -2,6 +2,27 @@
 
 #shells #webshells #msfvenom #payloads #ReverseShell
 
+## What is this?
+
+Generate, deliver, and catch shells for initial access or post-exploitation command execution. Covers reverse/bind/web shells, msfvenom payload generation, listeners (netcat, pwncat-cs, socat), shell stabilization, and web shell deployment. Goal: interactive shell or RCE on the target.
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `msfvenom` | Payload generation — executables, DLLs, shellcode, web shells |
+| `metasploit` | Framework — stagers, meterpreter listeners, post modules |
+| `netcat` / `ncat` | Listener + raw reverse/bind shells |
+| `pwncat-cs` | Advanced listener — auto TTY upgrade, file transfer |
+| `socat` | Versatile relay — encrypted shells, port forwarding |
+| `impacket-smbserver` | SMB server for file staging to Windows targets |
+| `HoaxShell` | Obfuscated PowerShell reverse shell generator |
+| `revshells.com` | One-click reverse shell syntax for all languages |
+
+---
+
 ## Shell Types
 
 | Type | Direction | Use case |
