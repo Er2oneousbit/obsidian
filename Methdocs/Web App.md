@@ -38,7 +38,7 @@
 	- Does app clear screen after 15 min idle?
 	- Does app require reauth after 15 min idle?
 - Can you do source code review?
-	- ADO
+	- Repo
 		- run scripts to find issues
 		- review config files
 		- look for any interestingly name files to review
