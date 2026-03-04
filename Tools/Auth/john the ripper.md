@@ -1,107 +1,283 @@
-#john #jumbojohn #johntheripper #auth #hash
+# John the Ripper
 
-#update
+**Tags:** `#john` `#jtr` `#johntheripper` `#passwordcracking` `#hashcracking` `#auth`
 
-- A password cracking tool
-- http://www.openwall.com/john/
-- [John The Ripper Hash Formats | pentestmonkey](https://pentestmonkey.net/cheat-sheet/john-the-ripper-hash-formats)
+Offline password cracker supporting hundreds of hash types. Best used for cracking hashes obtained from target systems — `/etc/shadow`, SAM dumps, captured NTLMs, protected files. Jumbo version (standard on Kali) includes all community patches and format support.
 
-Commands
-- `john --format={hash type} {hash or hash file}`
-	- `john --format=sha256 hashes_to_crack.txt`
-- `john --show` show the contents of the pot file
-- `john --wordlist=<wordlist_file> --rules <hash_file>` use a custom word list and rules
-- `john --incremental <hash_file>` use incremental mode 
-- `pdf2john server_doc.pdf > server_doc.hash` extract the hash of a PDF password in a john format
-- `office2john.py Protected.docx > protected-docx.hash` office files to john file
-- `ssh2john id_rsa > ssh.hash`
-- `zip2john ZIP.zip > zip.hash` grab password of a zip file
-	- `john --wordlist=rockyou.txt zip.hash`
+**Source:** https://www.openwall.com/john/
+**Formats reference:** https://pentestmonkey.net/cheat-sheet/john-the-ripper-hash-formats
+**Install:** pre-installed on Kali (`john`) — use `john --list=formats` to see all supported formats
 
+> [!note] **JTR vs Hashcat** — Use JTR for the 2john file extraction workflow (SSH keys, ZIP, KeePass, Office docs, etc.) and quick single/wordlist runs. Use hashcat when you need GPU acceleration for bulk cracking — hashcat is significantly faster on large hash dumps. Both tools are complementary, not interchangeable.
 
-Misc
-- Results found in `~/.john/john.pot`
+---
 
+## Common Wordlist Paths (Kali)
 
+```
+/usr/share/wordlists/rockyou.txt          # standard starting point
+/usr/share/wordlists/fasttrack.txt        # smaller, common passwords
+/usr/share/seclists/Passwords/            # SecLists password collections
+/usr/share/seclists/Passwords/Leaked-Databases/
+/usr/share/john/password.lst              # JTR built-in wordlist
+```
 
-|**Hash Format**|**Example Command**|**Description**|
-|---|---|---|
-|afs|`john --format=afs hashes_to_crack.txt`|AFS (Andrew File System) password hashes|
-|bfegg|`john --format=bfegg hashes_to_crack.txt`|bfegg hashes used in Eggdrop IRC bots|
-|bf|`john --format=bf hashes_to_crack.txt`|Blowfish-based crypt(3) hashes|
-|bsdi|`john --format=bsdi hashes_to_crack.txt`|BSDi crypt(3) hashes|
-|crypt(3)|`john --format=crypt hashes_to_crack.txt`|Traditional Unix crypt(3) hashes|
-|des|`john --format=des hashes_to_crack.txt`|Traditional DES-based crypt(3) hashes|
-|dmd5|`john --format=dmd5 hashes_to_crack.txt`|DMD5 (Dragonfly BSD MD5) password hashes|
-|dominosec|`john --format=dominosec hashes_to_crack.txt`|IBM Lotus Domino 6/7 password hashes|
-|EPiServer SID hashes|`john --format=episerver hashes_to_crack.txt`|EPiServer SID (Security Identifier) password hashes|
-|hdaa|`john --format=hdaa hashes_to_crack.txt`|hdaa password hashes used in Openwall GNU/Linux|
-|hmac-md5|`john --format=hmac-md5 hashes_to_crack.txt`|hmac-md5 password hashes|
-|hmailserver|`john --format=hmailserver hashes_to_crack.txt`|hmailserver password hashes|
-|ipb2|`john --format=ipb2 hashes_to_crack.txt`|Invision Power Board 2 password hashes|
-|krb4|`john --format=krb4 hashes_to_crack.txt`|Kerberos 4 password hashes|
-|krb5|`john --format=krb5 hashes_to_crack.txt`|Kerberos 5 password hashes|
-|LM|`john --format=LM hashes_to_crack.txt`|LM (Lan Manager) password hashes|
-|lotus5|`john --format=lotus5 hashes_to_crack.txt`|Lotus Notes/Domino 5 password hashes|
-|mscash|`john --format=mscash hashes_to_crack.txt`|MS Cache password hashes|
-|mscash2|`john --format=mscash2 hashes_to_crack.txt`|MS Cache v2 password hashes|
-|mschapv2|`john --format=mschapv2 hashes_to_crack.txt`|MS CHAP v2 password hashes|
-|mskrb5|`john --format=mskrb5 hashes_to_crack.txt`|MS Kerberos 5 password hashes|
-|mssql05|`john --format=mssql05 hashes_to_crack.txt`|MS SQL 2005 password hashes|
-|mssql|`john --format=mssql hashes_to_crack.txt`|MS SQL password hashes|
-|mysql-fast|`john --format=mysql-fast hashes_to_crack.txt`|MySQL fast password hashes|
-|mysql|`john --format=mysql hashes_to_crack.txt`|MySQL password hashes|
-|mysql-sha1|`john --format=mysql-sha1 hashes_to_crack.txt`|MySQL SHA1 password hashes|
-|NETLM|`john --format=netlm hashes_to_crack.txt`|NETLM (NT LAN Manager) password hashes|
-|NETLMv2|`john --format=netlmv2 hashes_to_crack.txt`|NETLMv2 (NT LAN Manager version 2) password hashes|
-|NETNTLM|`john --format=netntlm hashes_to_crack.txt`|NETNTLM (NT LAN Manager) password hashes|
-|NETNTLMv2|`john --format=netntlmv2 hashes_to_crack.txt`|NETNTLMv2 (NT LAN Manager version 2) password hashes|
-|NEThalfLM|`john --format=nethalflm hashes_to_crack.txt`|NEThalfLM (NT LAN Manager) password hashes|
-|md5ns|`john --format=md5ns hashes_to_crack.txt`|md5ns (MD5 namespace) password hashes|
-|nsldap|`john --format=nsldap hashes_to_crack.txt`|nsldap (OpenLDAP SHA) password hashes|
-|ssha|`john --format=ssha hashes_to_crack.txt`|ssha (Salted SHA) password hashes|
-|NT|`john --format=nt hashes_to_crack.txt`|NT (Windows NT) password hashes|
-|openssha|`john --format=openssha hashes_to_crack.txt`|OPENSSH private key password hashes|
-|oracle11|`john --format=oracle11 hashes_to_crack.txt`|Oracle 11 password hashes|
-|oracle|`john --format=oracle hashes_to_crack.txt`|Oracle password hashes|
-|pdf|`john --format=pdf hashes_to_crack.txt`|PDF (Portable Document Format) password hashes|
-|phpass-md5|`john --format=phpass-md5 hashes_to_crack.txt`|PHPass-MD5 (Portable PHP password hashing framework) password hashes|
-|phps|`john --format=phps hashes_to_crack.txt`|PHPS password hashes|
-|pix-md5|`john --format=pix-md5 hashes_to_crack.txt`|Cisco PIX MD5 password hashes|
-|po|`john --format=po hashes_to_crack.txt`|Po (Sybase SQL Anywhere) password hashes|
-|rar|`john --format=rar hashes_to_crack.txt`|RAR (WinRAR) password hashes|
-|raw-md4|`john --format=raw-md4 hashes_to_crack.txt`|Raw MD4 password hashes|
-|raw-md5|`john --format=raw-md5 hashes_to_crack.txt`|Raw MD5 password hashes|
-|raw-md5-unicode|`john --format=raw-md5-unicode hashes_to_crack.txt`|Raw MD5 Unicode password hashes|
-|raw-sha1|`john --format=raw-sha1 hashes_to_crack.txt`|Raw SHA1 password hashes|
-|raw-sha224|`john --format=raw-sha224 hashes_to_crack.txt`|Raw SHA224 password hashes|
-|raw-sha256|`john --format=raw-sha256 hashes_to_crack.txt`|Raw SHA256 password hashes|
-|raw-sha384|`john --format=raw-sha384 hashes_to_crack.txt`|Raw SHA384 password hashes|
-|raw-sha512|`john --format=raw-sha512 hashes_to_crack.txt`|Raw SHA512 password hashes|
-|salted-sha|`john --format=salted-sha hashes_to_crack.txt`|Salted SHA password hashes|
-|sapb|`john --format=sapb hashes_to_crack.txt`|SAP CODVN B (BCODE) password hashes|
-|sapg|`john --format=sapg hashes_to_crack.txt`|SAP CODVN G (PASSCODE) password hashes|
-|sha1-gen|`john --format=sha1-gen hashes_to_crack.txt`|Generic SHA1 password hashes|
-|skey|`john --format=skey hashes_to_crack.txt`|S/Key (One-time password) hashes|
-|ssh|`john --format=ssh hashes_to_crack.txt`|SSH (Secure Shell) password hashes|
-|sybasease|`john --format=sybasease hashes_to_crack.txt`|Sybase ASE password hashes|
-|xsha|`john --format=xsha hashes_to_crack.txt`|xsha (Extended SHA) password hashes|
-|zip|`john --format=zip hashes_to_crack.txt`|ZIP (WinZip) password hashes|
+---
 
+## Cracking Modes
 
-|**Tool**|**Description**|
+### Single Crack Mode
+
+JTR's fastest mode — derives candidates from the username, GECOS field, and home directory in the hash file. Run this first before touching a wordlist. Often cracks weak/default passwords in seconds.
+
+```bash
+john --single hashes.txt
+john --single --format=NT hashes.txt
+```
+
+> [!tip] For this to work well, the hash file must include the username. Format: `username:hash`. Secretsdump and unshadow output already include this.
+
+### Wordlist Mode
+
+```bash
+# Basic wordlist
+john --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt
+
+# Wordlist + rules (mutates entries on the fly — significantly increases coverage)
+john --wordlist=/usr/share/wordlists/rockyou.txt --rules hashes.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt --rules=best64 hashes.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt --rules=jumbo hashes.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt --rules=KoreLogic hashes.txt
+
+# List available rulesets
+john --list=rules
+
+# Pipe a custom wordlist from stdin
+cat custom.txt | john --pipe --rules hashes.txt
+```
+
+### Incremental (Brute Force) Mode
+
+```bash
+john --incremental hashes.txt            # default character set
+john --incremental=alpha hashes.txt      # letters only
+john --incremental=digits hashes.txt     # digits only
+john --incremental=alnum hashes.txt      # alphanumeric
+```
+
+### Loopback Mode
+
+Uses the pot file (previously cracked passwords) as a wordlist against new hashes. Essential mid-engagement — when you crack creds from one dump, try them immediately against others.
+
+```bash
+john --loopback hashes.txt
+john --loopback --rules hashes.txt       # also apply rules to pot entries
+```
+
+---
+
+## Basic Commands
+
+```bash
+# Auto-detect format and crack
+john hashes.txt
+
+# Specify format explicitly (more reliable than auto-detect)
+john --format=NT hashes.txt
+
+# Show cracked passwords
+john --show hashes.txt
+john --show --format=NT hashes.txt       # specify format if auto-detect fails
+
+# Multi-core — fork across CPU cores
+john --fork=4 --wordlist=rockyou.txt hashes.txt
+
+# Check status mid-run (or press Enter while running)
+john --status
+
+# Use a per-engagement pot file (keeps client results separate)
+john --pot=./client.pot --wordlist=rockyou.txt hashes.txt
+john --show --pot=./client.pot hashes.txt
+```
+
+> [!note] Results saved to `~/.john/john.pot` by default. Already-cracked hashes are skipped on re-run — use `--show` to view them. Clear with `> ~/.john/john.pot` to re-crack.
+
+---
+
+## Session Management
+
+```bash
+# Start a named session (survives interruption)
+john --session=client1 --wordlist=rockyou.txt hashes.txt
+
+# Restore a session
+john --restore=client1
+
+# List active/saved sessions
+ls ~/.john/*.rec
+```
+
+---
+
+## File-to-Hash Extraction (2john Tools)
+
+Convert protected files into a crackable hash before running john.
+
+```bash
+# SSH private key
+ssh2john id_rsa > ssh.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt ssh.hash
+
+# ZIP archive
+zip2john archive.zip > zip.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt zip.hash
+
+# RAR archive
+rar2john archive.rar > rar.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt rar.hash
+
+# PDF
+pdf2john document.pdf > pdf.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt pdf.hash
+
+# Office documents (Word, Excel, PowerPoint 2007+)
+office2john Protected.docx > office.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt office.hash
+
+# KeePass database
+keepass2john Database.kdbx > keepass.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt keepass.hash
+
+# PuTTY private key
+putty2john private.ppk > putty.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt putty.hash
+
+# PFX / PKCS#12 certificate
+pfx2john cert.pfx > pfx.hash
+john --wordlist=/usr/share/wordlists/rockyou.txt pfx.hash
+
+# TrueCrypt volume
+truecrypt_volume2john volume.tc > tc.hash
+
+# WPA/WPA2 handshake
+hccap2john capture.hccap > wpa.hash
+
+# VNC captured auth (PCAP)
+vncpcap2john capture.pcap > vnc.hash
+
+# OS X keychain
+keychain2john login.keychain > keychain.hash
+
+# MS Cache (domain cached credentials DCC2)
+mscash2john cache.txt > mscash.hash
+```
+
+---
+
+## Common Pentest Scenarios
+
+### Linux Shadow File
+
+```bash
+# Combine passwd + shadow, then crack
+unshadow /etc/passwd /etc/shadow > unshadowed.txt
+john --single unshadowed.txt                                         # try single mode first
+john --wordlist=/usr/share/wordlists/rockyou.txt --rules unshadowed.txt
+```
+
+### Windows NTLM Hashes
+
+```bash
+# Hashes from secretsdump, mimikatz, hashdump — format: user:RID:LM:NT:::
+john --format=NT --wordlist=/usr/share/wordlists/rockyou.txt ntlm.txt
+john --format=NT --rules --wordlist=/usr/share/wordlists/rockyou.txt ntlm.txt
+```
+
+### NTLMv2 (Responder / Inveigh Captures)
+
+```bash
+john --format=netntlmv2 --wordlist=/usr/share/wordlists/rockyou.txt ntlmv2.txt
+```
+
+### Kerberos Hashes
+
+```bash
+# Kerberoasting (TGS-REP hashes from GetUserSPNs / Rubeus)
+john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt spn_hashes.txt
+
+# ASREPRoasting (AS-REP hashes from GetNPUsers / Rubeus)
+john --format=krb5asrep --wordlist=/usr/share/wordlists/rockyou.txt asrep_hashes.txt
+```
+
+### MS Domain Cached Credentials (DCC2)
+
+```bash
+# Cached domain creds stored locally on Windows — very slow to crack
+john --format=mscash2 --wordlist=/usr/share/wordlists/rockyou.txt dcc2.txt
+```
+
+### Database Hashes
+
+```bash
+john --format=mssql hashes.txt
+john --format=mssql05 hashes.txt
+john --format=mysql-sha1 hashes.txt
+john --format=oracle11 hashes.txt
+```
+
+---
+
+## Format Reference
+
+| Format | Hash Type |
 |---|---|
-|`pdf2john`|Converts PDF documents for John|
-|`ssh2john`|Converts SSH private keys for John|
-|`mscash2john`|Converts MS Cash hashes for John|
-|`keychain2john`|Converts OS X keychain files for John|
-|`rar2john`|Converts RAR archives for John|
-|`pfx2john`|Converts PKCS#12 files for John|
-|`truecrypt_volume2john`|Converts TrueCrypt volumes for John|
-|`keepass2john`|Converts KeePass databases for John|
-|`vncpcap2john`|Converts VNC PCAP files for John|
-|`putty2john`|Converts PuTTY private keys for John|
-|`zip2john`|Converts ZIP archives for John|
-|`hccap2john`|Converts WPA/WPA2 handshake captures for John|
-|`office2john`|Converts MS Office documents for John|
-|`wpa2john`|Converts WPA/WPA2 handshakes for John|
+| `NT` | Windows NTLM |
+| `netntlmv2` | NTLMv2 (Responder captures) |
+| `netntlm` | NTLMv1 |
+| `krb5tgs` | Kerberoasting (TGS-REP) |
+| `krb5asrep` | ASREPRoasting (AS-REP) |
+| `mscash2` | MS Domain Cached Credentials v2 |
+| `sha512crypt` | Linux SHA-512 (`$6$`) |
+| `sha256crypt` | Linux SHA-256 (`$5$`) |
+| `md5crypt` | Linux MD5 (`$1$`) |
+| `bcrypt` | bcrypt (`$2a$`, `$2b$`) |
+| `raw-md5` | Unsalted MD5 |
+| `raw-sha1` | Unsalted SHA1 |
+| `raw-sha256` | Unsalted SHA256 |
+| `raw-sha512` | Unsalted SHA512 |
+| `mssql` | MS SQL Server |
+| `mssql05` | MS SQL Server 2005 |
+| `mysql-sha1` | MySQL |
+| `oracle11` | Oracle 11g |
+| `LM` | LAN Manager (legacy Windows) |
+| `mschapv2` | MS-CHAPv2 |
+| `pdf` | PDF password |
+| `zip` | ZIP password |
+| `rar` | RAR password |
+| `ssh` | SSH private key passphrase |
+| `office` | MS Office 2007+ |
+| `keepass` | KeePass database |
+| `vncpcap` | VNC captured auth |
+| `pfx` | PKCS#12 / PFX certificate |
+
+```bash
+# List all supported formats
+john --list=formats
+
+# Search formats by keyword
+john --list=formats | grep -i kerberos
+john --list=formats | grep -i sha
+```
+
+---
+
+## Recommended Attack Order
+
+```
+1. john --single                          # fast — try username-derived passwords first
+2. john --wordlist=rockyou.txt            # straight wordlist
+3. john --wordlist=rockyou.txt --rules    # wordlist + mutations
+4. john --loopback --rules                # try already-cracked passwords + mutations
+5. john --wordlist=<bigger list> --rules  # escalate to larger wordlists (SecLists)
+6. john --incremental                     # last resort brute force
+```
