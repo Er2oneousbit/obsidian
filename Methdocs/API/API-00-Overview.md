@@ -1,82 +1,34 @@
+#api-testing #rest #graphql #soap #grpc #websocket #owasp #methodology #checklist
+
 # API Penetration Testing Overview
 
-## Purpose
 Comprehensive methodology for assessing API security vulnerabilities, with focus on authentication, authorization, data exposure, and business logic flaws.
 
-## Document Structure
-- [[API-01-Admin-Checklist]] - Pre-engagement information gathering
-- [[API-02-Technical-Testing-Checklist]] - Hands-on testing methodology
-- [[API-03-Request-Tracker]] - Document successful/failed requests and payloads
-- [[API-04-Evidence-Collection]] - Screenshot and evidence tracking
-- [[API-05-Reporting-Template]] - Finding documentation structure
-- [[API-06-Quick-Reference]] - Fast lookup for common attacks
+---
 
 ## Engagement Workflow
+
 1. Complete [[API-01-Admin-Checklist|Admin Checklist]] during kickoff/discovery
 2. Use [[API-02-Technical-Testing-Checklist|Technical Checklist]] for systematic testing
 3. Log all attempts in [[API-03-Request-Tracker|Request Tracker]]
 4. Capture evidence per [[API-04-Evidence-Collection|Evidence Collection]]
 5. Document findings using [[API-05-Reporting-Template|Reporting Template]]
+6. Use [[API-06-Quick-Reference|Quick Reference]] for fast payload lookup during active testing
 
-## Key Concepts
+---
 
-### Attack Surface Areas
-- **Authentication** - Token theft, session hijacking, credential stuffing
-- **Authorization** - BOLA/IDOR, privilege escalation, function-level access control
-- **Data Exposure** - Excessive data exposure, sensitive data in responses
-- **Input Validation** - Injection attacks, mass assignment, parameter pollution
-- **Rate Limiting** - Resource exhaustion, brute force, scraping
-- **Business Logic** - Workflow manipulation, pricing abuse, state confusion
+## Document Structure
 
-### OWASP API Security Top 10 (2023)
+| File | Purpose |
+|------|---------|
+| [[API-01-Admin-Checklist]] | Pre-engagement — scope, access, architecture, auth model |
+| [[API-02-Technical-Testing-Checklist]] | 8-phase hands-on testing methodology |
+| [[API-03-Request-Tracker]] | Log all requests, payloads, and findings |
+| [[API-04-Evidence-Collection]] | Screenshot and evidence tracking per finding |
+| [[API-05-Reporting-Template]] | Standardized finding write-up and report structure |
+| [[API-06-Quick-Reference]] | Fast lookup — payloads, attack patterns, cURL templates |
 
-**API1:2023 - Broken Object Level Authorization (BOLA)**
-- Users accessing other users' data via predictable IDs
-- Most common and critical API vulnerability
-
-**API2:2023 - Broken Authentication**
-- Weak credential policies
-- Credential stuffing vulnerabilities
-- Missing or improper token validation
-
-**API3:2023 - Broken Object Property Level Authorization**
-- Mass assignment vulnerabilities
-- Excessive data exposure in responses
-
-**API4:2023 - Unrestricted Resource Access**
-- Missing rate limits
-- Lack of pagination
-- Resource exhaustion attacks
-
-**API5:2023 - Broken Function Level Authorization**
-- Accessing admin functions as regular user
-- Missing authorization checks on sensitive operations
-
-**API6:2023 - Unrestricted Access to Sensitive Business Flows**
-- Automating critical workflows
-- Bypassing intended business logic
-- Bulk operations on sensitive data
-
-**API7:2023 - Server Side Request Forgery (SSRF)**
-- API making unvalidated requests to internal resources
-- Cloud metadata exposure
-
-**API8:2023 - Security Misconfiguration**
-- Verbose error messages
-- CORS misconfiguration
-- Unnecessary HTTP methods enabled
-- Missing security headers
-
-**API9:2023 - Improper Inventory Management**
-- Undocumented endpoints
-- Old API versions still accessible
-- Shadow APIs
-
-**API10:2023 - Unsafe Consumption of APIs**
-- Trusting third-party API data without validation
-- Following redirects blindly
-
-Reference: [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
+---
 
 ## API Types Covered
 
@@ -95,65 +47,91 @@ Reference: [OWASP API Security Top 10](https://owasp.org/www-project-api-securit
 - XML-based messaging
 - WSDL enumeration
 - XXE vulnerabilities
+- XPath injection in authentication
+- SOAPAction header manipulation
+- WS-Security token attacks
+
+### gRPC APIs
+- Protocol Buffers (protobuf) serialization
+- Reflection service enumeration
+- BOLA testing via grpcurl
+- Input validation and injection in proto fields
+- Authentication metadata testing
 
 ### WebSocket APIs
 - Real-time bidirectional communication
 - Message injection
 - Session hijacking
 
-## Tools
-- Burp Suite (primary)
-- Postman/Insomnia (collections and automation)
-- Custom Python scripts (requests library)
-- Arjun (parameter discovery)
-- Kiterunner (endpoint discovery)
-- ffuf/wfuzz (fuzzing)
-- jwt_tool (JWT analysis)
-- GraphQL introspection tools
-- SecLists (wordlists)
+---
+
+## OWASP API Security Top 10 (2023)
+
+| # | Category | Key Risk |
+|---|----------|---------|
+| API1 | Broken Object Level Authorization (BOLA) | Users access other users' data via predictable IDs — most common critical finding |
+| API2 | Broken Authentication | Weak credentials, missing token validation, credential stuffing |
+| API3 | Broken Object Property Level Authorization | Mass assignment, excessive data exposure in responses |
+| API4 | Unrestricted Resource Consumption | No rate limits, no pagination, resource exhaustion |
+| API5 | Broken Function Level Authorization | Regular users invoking admin-only endpoints |
+| API6 | Unrestricted Access to Sensitive Business Flows | Automating workflows, bypassing business logic, bulk abuse |
+| API7 | Server-Side Request Forgery (SSRF) | API makes unvalidated requests internally, cloud metadata exposure |
+| API8 | Security Misconfiguration | Verbose errors, CORS wildcards, unnecessary HTTP methods, missing headers |
+| API9 | Improper Inventory Management | Undocumented endpoints, accessible old API versions, shadow APIs |
+| API10 | Unsafe Consumption of APIs | Trusting third-party API data without validation, blind redirects |
+
+Reference: [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
+
+---
 
 ## Testing Methodology
 
-### 1. Discovery Phase
-- Map all endpoints
-- Identify authentication mechanisms
-- Enumerate parameters
-- Document API specification (if available)
+The full methodology is broken into 8 phases in [[API-02-Technical-Testing-Checklist]]. Summary:
 
-### 2. Authentication Testing
-- Test credential policies
-- Analyze token structure
-- Session management review
-- Multi-factor authentication bypass attempts
-
-### 3. Authorization Testing
-- BOLA/IDOR testing (most critical)
-- Horizontal privilege escalation
-- Vertical privilege escalation
-- Function-level authorization
-
-### 4. Input Validation
-- Injection testing (SQL, NoSQL, Command, XXE)
-- Mass assignment
-- Type confusion
-- Parameter pollution
-
-### 5. Business Logic Testing
-- Workflow manipulation
-- Rate limit bypass
-- Pricing/payment abuse
-- State management flaws
-
-### 6. Information Disclosure
-- Verbose error messages
-- Sensitive data in responses
-- API version disclosure
-- Internal path disclosure
-
-## Tags for Obsidian
-#api-testing #rest #graphql #owasp #methodology #checklist
+| Phase | Focus |
+|-------|-------|
+| Phase 1 | Reconnaissance — endpoint discovery, spec analysis, version enumeration |
+| Phase 2 | Authentication — JWT attacks, credential brute force, token analysis |
+| Phase 3 | Authorization — BOLA/IDOR, BFLA, horizontal/vertical privilege escalation |
+| Phase 4 | Input Validation — SQLi, NoSQL injection, XXE, mass assignment, parameter pollution |
+| Phase 5 | Business Logic — workflow bypass, payment abuse, race conditions |
+| Phase 6 | Rate Limiting — brute force resilience, resource exhaustion, header bypass |
+| Phase 7 | Security Headers & Config — CORS, TLS, error disclosure, HTTP method abuse |
+| Phase 8 | Advanced — SSRF, GraphQL attacks, SOAP/gRPC, inventory management |
 
 ---
-*Last Updated: 2026-01-21*
+
+## Tools
+
+| Tool | Purpose |
+|------|---------|
+| Burp Suite | Primary proxy — intercept, repeat, intruder, scanner |
+| Postman / Insomnia | API collections, environment variables, automated flows |
+| ffuf | Endpoint and parameter fuzzing |
+| Arjun | Hidden parameter discovery |
+| Kiterunner | API-aware endpoint discovery (routes/wordlists) |
+| jwt_tool | JWT decode, brute force, algorithm confusion attacks |
+| sqlmap | Automated SQL injection detection and exploitation |
+| grpcurl | gRPC enumeration and testing via reflection |
+| SoapUI | SOAP/WSDL-based API testing |
+| nuclei | Template-based vulnerability scanning |
+| httpx | HTTP probing, response analysis at scale |
+| hashcat | JWT secret brute force, credential cracking |
+| SecLists | Wordlists — API endpoints, parameters, payloads |
+| Python requests | Custom scripted testing and PoC automation |
+
+---
+
+## Related Documents
+- [[API-01-Admin-Checklist|Admin Checklist]]
+- [[API-02-Technical-Testing-Checklist|Technical Testing Checklist]]
+- [[API-03-Request-Tracker|Request Tracker]]
+- [[API-04-Evidence-Collection|Evidence Collection]]
+- [[API-05-Reporting-Template|Reporting Template]]
+- [[API-06-Quick-Reference|Quick Reference]]
+
+---
+*Created: 2026-01-21*
+*Updated: 2026-03-05*
 *Owner: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*

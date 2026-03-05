@@ -1,3 +1,5 @@
+#admin #discovery #scoping #api-testing #graphql #soap #grpc
+
 # API Admin Checklist
 
 Quick reference for gathering administrative and architectural information before testing begins.
@@ -329,6 +331,52 @@ List operations that are most critical or dangerous:
 
 ---
 
+## SOAP-Specific (if applicable)
+
+### WSDL & Service Discovery
+- [ ] **WSDL provided**: Yes / No
+  - [ ] Location: ________________
+- [ ] **WSDL publicly accessible**: Yes / No (`?wsdl` / `?WSDL`)
+- [ ] **Number of operations**: ________
+- [ ] **Test/debug operations present**: Yes / No (`ping`, `echo`, `test`)
+
+### SOAP Authentication & Security
+- [ ] **WS-Security used**: Yes / No
+  - [ ] Type: [UsernameToken / X.509 Certificate / SAML / Kerberos]
+  - [ ] Password type: [PasswordText / PasswordDigest]
+- [ ] **Message-level encryption**: Yes / No
+- [ ] **Message-level signing**: Yes / No
+- [ ] **Timestamp/nonce enforcement**: Yes / No / Unknown
+- [ ] **Partner/client certificates required**: Yes / No
+  - [ ] Certificate provided for testing: Yes / No
+
+### SOAP Configuration
+- [ ] **SOAP version**: [1.1 / 1.2]
+- [ ] **SOAPAction header required**: Yes / No
+- [ ] **Attachments supported**: Yes / No (MTOM/SwA)
+- [ ] **SoapUI collection provided**: Yes / No
+
+---
+
+## gRPC-Specific (if applicable)
+
+### Proto & Service Discovery
+- [ ] **Proto files provided**: Yes / No
+  - [ ] Location: ________________
+- [ ] **Reflection service enabled**: Yes / No / Unknown
+  - [ ] Port: ________
+- [ ] **gRPC-Web exposed (HTTP/1.1 wrapper)**: Yes / No
+- [ ] **Services documented**: Yes / No
+  - [ ] Number of services: ________
+
+### gRPC Configuration
+- [ ] **Transport**: [TLS / Plaintext]
+- [ ] **Authentication**: [JWT metadata / mTLS / API key / None]
+- [ ] **Streaming used**: [Unary only / Server streaming / Client streaming / Bidirectional]
+- [ ] **grpcurl access confirmed**: Yes / No
+
+---
+
 ## GraphQL-Specific (if applicable)
 
 ### GraphQL Configuration
@@ -407,18 +455,17 @@ ________________
 
 ---
 
-## Tags
-#admin #discovery #scoping #api-testing
-
----
-
 ## Related Documents
 - [[API-00-Overview|Overview]]
 - [[API-02-Technical-Testing-Checklist|Technical Testing Checklist]]
 - [[API-03-Request-Tracker|Request Tracker]]
+- [[API-04-Evidence-Collection|Evidence Collection]]
+- [[API-05-Reporting-Template|Reporting Template]]
+- [[API-06-Quick-Reference|Quick Reference]]
 
 ---
 *Created: 2026-01-21*
+*Updated: 2026-03-05*
 *Engagement: ________________*
 *Tester: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*

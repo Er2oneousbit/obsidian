@@ -1,3 +1,5 @@
+#api-testing #checklist #methodology #rest #graphql #soap #grpc #websocket #owasp #bola #injection #jwt #ssrf
+
 # API Technical Testing Checklist
 
 Systematic methodology for hands-on security testing of APIs. Work through phases sequentially, documenting all attempts in [[API-03-Request-Tracker]].
