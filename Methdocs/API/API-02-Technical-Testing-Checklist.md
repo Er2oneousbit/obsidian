@@ -1049,6 +1049,167 @@ Look for different responses or errors.
 
 ---
 
+## SOAP-Specific Testing
+
+### WSDL Enumeration
+- [ ] Retrieve WSDL: `?wsdl`, `?WSDL`, `?singleWsdl`
+- [ ] Parse all operations, input/output types, and endpoints
+- [ ] Look for undocumented or internal operations
+- [ ] Check for test/debug operations (`ping`, `echo`, `test`)
+
+```bash
+# Download and parse WSDL
+curl https://api.target.com/service?wsdl -o service.wsdl
+
+# Use wsdl2requests (Burp) or SoapUI to auto-generate test requests
+```
+
+### SOAPAction Testing
+- [ ] Send request with no SOAPAction header
+- [ ] Send request with empty SOAPAction: `SOAPAction: ""`
+- [ ] Swap SOAPAction with another operation
+- [ ] Send SOAPAction not matching the request body
+
+```http
+POST /service HTTP/1.1
+Content-Type: text/xml
+SOAPAction: "http://target.com/GetUserData"
+
+<soap:Envelope>
+  <soap:Body>
+    <DeleteUser><id>1</id></DeleteUser>   <!-- Body says delete, action says read -->
+  </soap:Body>
+</soap:Envelope>
+```
+
+### XML Injection in SOAP
+- [ ] XXE in SOAP body (see Phase 4 XXE section)
+- [ ] XPath injection in authentication operations
+- [ ] SQL injection in SOAP parameters
+
+**XPath injection (SOAP auth bypass)**:
+```xml
+<username>admin' or '1'='1</username>
+<password>x</password>
+```
+
+### SOAP Authentication
+- [ ] Test WS-Security (UsernameToken) for weak credentials
+- [ ] Test token replay (no nonce/timestamp validation)
+- [ ] Test expired timestamps still accepted
+
+```xml
+<wsse:UsernameToken>
+  <wsse:Username>admin</wsse:Username>
+  <wsse:Password Type="PasswordText">password</wsse:Password>
+</wsse:UsernameToken>
+```
+
+---
+
+## gRPC Testing
+
+### Discovery
+- [ ] Check for gRPC reflection service (reveals all services/methods)
+- [ ] Look for `.proto` files in JS bundles, mobile apps, GitHub repos
+- [ ] Identify gRPC-Web endpoints (HTTP/1.1 wrapper)
+
+```bash
+# grpcurl — CLI tool for gRPC
+apt install grpcurl
+
+# List services via reflection
+grpcurl -plaintext api.target.com:50051 list
+
+# List methods on a service
+grpcurl -plaintext api.target.com:50051 list target.UserService
+
+# Describe a method (shows request/response schema)
+grpcurl -plaintext api.target.com:50051 describe target.UserService.GetUser
+```
+
+### Authentication Testing
+- [ ] Test without auth metadata
+- [ ] Test with invalid/expired token
+- [ ] Test token from another user
+
+```bash
+# Send request with bearer token
+grpcurl -plaintext \
+  -H "authorization: Bearer <token>" \
+  -d '{"user_id": 1}' \
+  api.target.com:50051 target.UserService/GetUser
+```
+
+### Authorization / BOLA
+- [ ] Test all methods with another user's IDs
+- [ ] Test admin methods as regular user
+- [ ] Enumerate method names for hidden admin RPCs
+
+```bash
+# Test BOLA — request user 2's data with user 1's token
+grpcurl -plaintext \
+  -H "authorization: Bearer <user1_token>" \
+  -d '{"user_id": 2}' \
+  api.target.com:50051 target.UserService/GetUser
+```
+
+### Input Validation
+- [ ] Inject SQL/NoSQL in string fields
+- [ ] Send negative/zero integers for ID fields
+- [ ] Send empty required fields
+- [ ] Send extremely large strings
+- [ ] Test proto field type confusion (string vs int)
+
+```bash
+# Injection attempt in gRPC
+grpcurl -plaintext \
+  -H "authorization: Bearer <token>" \
+  -d '{"user_id": "1 OR 1=1"}' \
+  api.target.com:50051 target.UserService/GetUser
+```
+
+### Tools
+```bash
+# grpcurl — primary CLI tool
+# Burp Suite with grpc-web plugin (for gRPC-Web)
+# Postman (supports gRPC natively)
+# BloomRPC / Kreya — GUI gRPC clients
+# protoc — compile .proto files
+```
+
+---
+
+## OWASP API Security Top 10 (2023) Coverage Map
+
+Use this to confirm all categories are covered before closing testing.
+
+| # | Category | Phases Covering It |
+|---|---|---|
+| API1 | Broken Object Level Authorization (BOLA) | Phase 3, Phase 8 |
+| API2 | Broken Authentication | Phase 2 |
+| API3 | Broken Object Property Level Authorization | Phase 3, Phase 4 (Mass Assignment) |
+| API4 | Unrestricted Resource Consumption | Phase 6 |
+| API5 | Broken Function Level Authorization | Phase 3 (Vertical) |
+| API6 | Unrestricted Access to Sensitive Business Flows | Phase 5 |
+| API7 | Server-Side Request Forgery (SSRF) | Phase 8 |
+| API8 | Security Misconfiguration | Phase 1, Phase 7 |
+| API9 | Improper Inventory Management | Phase 1 (Version Enum), Phase 8 |
+| API10 | Unsafe Consumption of APIs | Phase 4 (Injection), Phase 8 |
+
+- [ ] API1 — BOLA tested across all object types
+- [ ] API2 — Authentication fully tested (JWT, API keys, OAuth, session)
+- [ ] API3 — Mass assignment and property-level access tested
+- [ ] API4 — Rate limiting and resource exhaustion tested
+- [ ] API5 — Vertical privilege escalation and admin endpoints tested
+- [ ] API6 — Business logic and workflow bypass tested
+- [ ] API7 — SSRF tested on all URL-accepting parameters
+- [ ] API8 — Misconfigurations checked (headers, errors, debug info)
+- [ ] API9 — Old/deprecated API versions enumerated and tested
+- [ ] API10 — Third-party/downstream injection tested
+
+---
+
 ## Testing Completion Checklist
 
 ### Documentation Complete
@@ -1108,5 +1269,6 @@ Proceed to [[API-05-Reporting-Template]] to document findings.
 
 ---
 *Created: 2026-01-21*
+*Updated: 2026-03-05*
 *Tester: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*
