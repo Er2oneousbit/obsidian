@@ -1,8 +1,8 @@
+#evidence #screenshots #documentation #api-testing #burp #graphql #soap #grpc
+
 # API Evidence Collection Guide
 
 Systematic approach to capturing, organizing, and documenting evidence during API penetration testing. Proper evidence collection is critical for report writing and demonstrating impact to stakeholders.
-
-Related: [[API-02-Technical-Testing-Checklist]] | [[API-03-Request-Tracker]] | [[API-05-Reporting-Template]]
 
 ---
 
@@ -338,6 +338,81 @@ ACME_SSRF_F008_03_Internal-Service-Access.png
 
 ---
 
+### XXE Injection
+
+**Purpose**: Prove XML external entity processing with file read or OOB callback
+
+**Captures**:
+- [ ] Malicious DOCTYPE/entity declaration visible in request
+- [ ] File contents returned in response (in-band)
+- [ ] OOB callback received (Burp Collaborator / interactsh)
+- [ ] Escalation: internal port scan or cloud metadata response
+
+**Naming**: `[Engagement]_XXE_F[###]_[Sequence]_[Description].png`
+
+**Example**:
+```
+ACME_XXE_F010_01_Payload-Request.png
+ACME_XXE_F010_02_File-Read-Response.png
+ACME_XXE_F010_03_Collaborator-Callback.png
+```
+
+---
+
+### SOAP-Specific
+
+**Purpose**: Document SOAP-specific vulnerabilities (XPath injection, SOAPAction bypass, WS-Security issues)
+
+**Captures**:
+- [ ] Full SOAP envelope with malicious payload visible
+- [ ] WSDL showing operation/type definitions
+- [ ] XPath injection request and auth bypass response
+- [ ] SOAPAction mismatch (header vs body operation)
+- [ ] WS-Security token replay or weak credential
+
+**Critical Details**:
+- Show full `<soap:Envelope>` in request — Content-Type should be `text/xml`
+- For SOAPAction bypass: capture both the header value and body operation name
+- For XPath injection: show the injected `<username>` field and the authenticated response
+
+**Naming**: `[Engagement]_SOAP_F[###]_[Sequence]_[Description].png`
+
+**Example**:
+```
+ACME_SOAP_F011_01_WSDL-Operations.png
+ACME_SOAP_F011_02_XPath-Payload.png
+ACME_SOAP_F011_03_Auth-Bypass-Response.png
+ACME_SOAP_F011_04_SOAPAction-Mismatch.png
+```
+
+---
+
+### gRPC-Specific
+
+**Purpose**: Document gRPC vulnerabilities (reflection, BOLA, BFLA, injection)
+
+**Captures**:
+- [ ] `grpcurl` reflection output (services/methods listed)
+- [ ] BOLA: token from user A, user_id of user B, response with user B's data
+- [ ] BFLA: regular user calling admin method successfully
+- [ ] Injection: malformed proto field with error or data returned
+
+**Critical Details**:
+- Show full `grpcurl` command including `-H "authorization: Bearer ..."` and `-d '{...}'`
+- For BOLA: annotate which user owns which token vs which ID was requested
+- Terminal/CLI output screenshots are fine — ensure font size is legible
+
+**Naming**: `[Engagement]_gRPC_F[###]_[Sequence]_[Description].png`
+
+**Example**:
+```
+ACME_gRPC_F012_01_Reflection-Services.png
+ACME_gRPC_F012_02_BOLA-Request-Command.png
+ACME_gRPC_F012_03_BOLA-Response-Data.png
+```
+
+---
+
 ### GraphQL-Specific
 
 **Purpose**: Document GraphQL vulnerabilities
@@ -647,18 +722,16 @@ Before delivering evidence to client:
 
 ---
 
-## Tags
-#evidence #screenshots #documentation #api-testing #burp
-
----
-
 ## Related Documents
 - [[API-00-Overview|Overview]]
+- [[API-01-Admin-Checklist|Admin Checklist]]
 - [[API-02-Technical-Testing-Checklist|Technical Testing Checklist]]
 - [[API-03-Request-Tracker|Request Tracker]]
 - [[API-05-Reporting-Template|Reporting Template]]
+- [[API-06-Quick-Reference|Quick Reference]]
 
 ---
 *Created: 2026-01-21*
+*Updated: 2026-03-06*
 *Tester: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*

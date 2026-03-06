@@ -4,8 +4,6 @@
 
 Quick reference for gathering administrative and architectural information before testing begins.
 
-Related: [[API-02-Technical-Testing-Checklist]] | [[API-00-Overview]]
-
 ---
 
 ## Pre-Engagement
@@ -393,6 +391,31 @@ List operations that are most critical or dangerous:
 - [ ] **Query cost analysis**: Yes / No
 - [ ] **Persistent queries only**: Yes / No
 - [ ] **Automatic persisted queries**: Yes / No
+
+---
+
+## WebSocket-Specific (if applicable)
+
+### WebSocket Discovery
+- [ ] **WebSocket endpoints identified**: Yes / No
+  - [ ] URIs: ________________
+- [ ] **Upgrade path documented** (HTTP → WS): Yes / No
+- [ ] **Subprotocols in use**: Yes / No
+  - [ ] Values: ________________ (e.g., `chat`, `graphql-ws`)
+- [ ] **TLS (wss://) enforced**: Yes / No
+
+### WebSocket Authentication & Security
+- [ ] **Authentication mechanism**: [Cookie / JWT header / Token in first message / None]
+- [ ] **Session token sent on upgrade**: Yes / No
+- [ ] **Origin validation enforced**: Yes / No / Unknown
+- [ ] **Message format**: [JSON / Binary / Protocol Buffers / Plain text]
+- [ ] **Per-message authorization**: Yes / No / Unknown
+
+### WebSocket Configuration
+- [ ] **Reconnection behavior**: ________________
+- [ ] **Heartbeat/ping-pong**: Yes / No
+- [ ] **Max message size enforced**: Yes / No — ________ bytes
+- [ ] **Burp Suite WebSocket history capturing traffic**: Yes / No
 
 ---
 

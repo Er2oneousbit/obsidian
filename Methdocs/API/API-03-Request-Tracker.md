@@ -4,8 +4,6 @@
 
 Track all API requests, exploitation attempts, and findings during testing. This document serves as your testing log and helps identify patterns in what works vs. what fails.
 
-Related: [[API-02-Technical-Testing-Checklist]] | [[API-04-Evidence-Collection]] | [[API-05-Reporting-Template]]
-
 ---
 
 ## How to Use This Tracker

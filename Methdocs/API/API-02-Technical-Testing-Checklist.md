@@ -4,8 +4,6 @@
 
 Systematic methodology for hands-on security testing of APIs. Work through phases sequentially, documenting all attempts in [[API-03-Request-Tracker]].
 
-Related: [[API-01-Admin-Checklist]] | [[API-04-Evidence-Collection]] | [[API-05-Reporting-Template]]
-
 ---
 
 ## Testing Phases Overview

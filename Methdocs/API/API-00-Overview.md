@@ -4,6 +4,9 @@
 
 Comprehensive methodology for assessing API security vulnerabilities, with focus on authentication, authorization, data exposure, and business logic flaws.
 
+> [!note] Per-Engagement Setup
+> Copy the entire `Methdocs/API/` folder into `_Pentest Artifacts/[EngagementName]/` before testing begins. Fill in and track everything there — never edit the master templates directly.
+
 ---
 
 ## Engagement Workflow

