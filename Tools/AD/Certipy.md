@@ -321,3 +321,9 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 > [!tip] **ESC1 is the most common** finding in the wild. Always check it first. If `certipy find -vulnerable` shows any ESC1 templates where your user has Enroll rights, you have a straight path to Domain Admin in 2 commands.
 
 > [!warning] **Clean up after ESC4** — If you modify a template, always restore the original configuration. Leaving it modified is noisy and a reportable artifact.
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

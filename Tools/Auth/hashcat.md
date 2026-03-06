@@ -318,3 +318,9 @@ hashcat -a 0 -m 1000 hashes.txt rockyou.txt --force
 6. hashcat -a 0 -m <mode> hashes.txt <bigger_list> -r OneRuleToRuleThemAll  # escalate wordlist
 7. hashcat -a 3 -m <mode> hashes.txt '?a?a?a?a?a?a?a?a' --increment       # brute force last resort
 ```
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

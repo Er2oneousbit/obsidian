@@ -264,3 +264,9 @@ hydra --list-modules  # list all modules (newer versions)
 5. Escalate to wordlist if spray fails — start small (fasttrack.txt)
 6. Use rockyou.txt as last resort — flag lockout risk first
 ```
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

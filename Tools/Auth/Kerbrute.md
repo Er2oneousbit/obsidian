@@ -146,3 +146,9 @@ grep "VALID LOGIN" spray_results.txt
 ```
 
 > [!note] **Kerbrute vs other spray tools** — Kerbrute is preferred for initial unauthenticated enumeration and spraying. Once you have creds, **CrackMapExec / NetExec** (`--no-bruteforce`) or **Spray** are better for authenticated spraying across subnets.
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

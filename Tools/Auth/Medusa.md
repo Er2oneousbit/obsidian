@@ -1,39 +1,147 @@
-#medusa #passwordcracking 
-- [GitHub - jmk-foofus/medusa: Medusa is a speedy, parallel, and modular, login brute-forcer.](https://github.com/jmk-foofus/medusa)
-- Can target hosts in a file vs hydra which does not
-- `medusa [target_options] [credential_options] -M module [module_options]` basic format
-- `medusa -u fiona -P /usr/share/wordlists/rockyou.txt -h 10.129.203.7 -M ftp ` **FTP**
-- `medusa -h 94.237.54.116 -n 35594 -u ftpuser -P 2023-200_most_used_passwords.txt -M ftp -t 5` **FTP** on nonstandard port, 5 guesses at a time
-- `medusa -h 192.168.0.100 -U usernames.txt -P passwords.txt -M ssh` **SSH**
-- `medusa -H web_servers.txt -U usernames.txt -P passwords.txt -M http -m GET` **GET request**
-- `medusa -h 10.0.0.5 -U usernames.txt -e ns -M {service_name}` **empty usernames**
-- 
+# Medusa
 
+**Tags:** `#medusa` `#bruteforce` `#passwordattack` `#auth` `#spray` `#parallelbrute`
 
+Speedy, parallel, modular login brute-forcer. Similar to Hydra but stands out for multi-host targeting — feed it a host file and it attacks all targets simultaneously. Good for sweeping an entire subnet for a single credential set. Supports 20+ modules covering common services.
 
+**Source:** https://github.com/jmk-foofus/medusa
+**Install:** `sudo apt install medusa` — pre-installed on Kali
 
-| **Parameter**                  | **Explanation**                                                                                                                              | **Usage Example**                                                                                                                                                      |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `-h HOST` or `-H FILE`     | Target options: Specify either a single target hostname or IP address (`-h`) or a file containing a list of targets (`-H`).              | `medusa -h 192.168.1.10 ...` or `medusa -H targets.txt ...`                                                                                                        |
-| `-u USERNAME` or `-U FILE` | Username options: Provide either a single username (`-u`) or a file containing a list of usernames (`-U`).                               | `medusa -u admin ...` or `medusa -U usernames.txt ...`                                                                                                             |
-| `-p PASSWORD` or `-P FILE` | Password options: Specify either a single password (`-p`) or a file containing a list of passwords (`-P`).                               | `medusa -p password123 ...` or `medusa -P passwords.txt ...`                                                                                                       |
-| `-M MODULE`                | Module: Define the specific module to use for the attack (e.g., `ssh`, `ftp`, `http`).                                                   | `medusa -M ssh ...`                                                                                                                                                |
-| `-m "MODULE_OPTION"`       | Module options: Provide additional parameters required by the chosen module, enclosed in quotes.                                         | `medusa -M http -m "POST /login.php HTTP/1.1\r\nContent-Length: 30\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nusername=^USER^&password=^PASS^" ...` |
-| `-t TASKS`                 | Tasks: Define the number of parallel login attempts to run, potentially speeding up the attack.                                          | `medusa -t 4 ...`                                                                                                                                                  |
-| `-f` or `-F`               | Fast mode: Stop the attack after the first successful login is found, either on the current host (`-f`) or any host (`-F`).              | `medusa -f ...` or `medusa -F ...`                                                                                                                                 |
-| `-n PORT`                  | Port: Specify a non-default port for the target service.                                                                                 | `medusa -n 2222 ...`                                                                                                                                               |
-| `-v LEVEL`                 | Verbose output: Display detailed information about the attack's progress. The higher the `LEVEL` (up to 6), the more verbose the output. | `medusa -v 4 ...`                                                                                                                                                  |
+```bash
+# Basic syntax
+medusa -h <host> -u <user> -P <passlist> -M <module>
 
-| **Medusa Module** | **Service/Protocol**             | **Description**                                                                             | **Usage Example**                                                                                                           |
-| ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| FTP               | File Transfer Protocol           | Brute-forcing FTP login credentials, used for file transfers over a network.                | `medusa -M ftp -h 192.168.1.100 -u admin -P passwords.txt`                                                                  |
-| HTTP              | Hypertext Transfer Protocol      | Brute-forcing login forms on web applications over HTTP (GET/POST).                         | `medusa -M http -h www.example.com -U users.txt -P passwords.txt -m DIR:/login.php -m FORM:username=^USER^&password=^PASS^` |
-| IMAP              | Internet Message Access Protocol | Brute-forcing IMAP logins, often used to access email servers.                              | `medusa -M imap -h mail.example.com -U users.txt -P passwords.txt`                                                          |
-| MySQL             | MySQL Database                   | Brute-forcing MySQL database credentials, commonly used for web applications and databases. | `medusa -M mysql -h 192.168.1.100 -u root -P passwords.txt`                                                                 |
-| POP3              | Post Office Protocol 3           | Brute-forcing POP3 logins, typically used to retrieve emails from a mail server.            | `medusa -M pop3 -h mail.example.com -U users.txt -P passwords.txt`                                                          |
-| RDP               | Remote Desktop Protocol          | Brute-forcing RDP logins, commonly used for remote desktop access to Windows systems.       | `medusa -M rdp -h 192.168.1.100 -u admin -P passwords.txt`                                                                  |
-| SSHv2             | Secure Shell (SSH)               | Brute-forcing SSH logins, commonly used for secure remote access.                           | `medusa -M ssh -h 192.168.1.100 -u root -P passwords.txt`                                                                   |
-| Subversion (SVN)  | Version Control System           | Brute-forcing Subversion (SVN) repositories for version control.                            | `medusa -M svn -h 192.168.1.100 -u admin -P passwords.txt`                                                                  |
-| Telnet            | Telnet Protocol                  | Brute-forcing Telnet services for remote command execution on older systems.                | `medusa -M telnet -h 192.168.1.100 -u admin -P passwords.txt`                                                               |
-| VNC               | Virtual Network Computing        | Brute-forcing VNC login credentials for remote desktop access.                              | `medusa -M vnc -h 192.168.1.100 -P passwords.txt`                                                                           |
-| Web Form          | Brute-forcing Web Login Forms    | Brute-forcing login forms on websites using HTTP POST requests.                             |                                                                                                                             |
+# List available modules
+medusa -d
+
+# Check module options
+medusa -M ssh -q
+```
+
+> [!note] **Medusa vs Hydra** — Both are solid brute-forcers. Medusa's key advantage is multi-host targeting (`-H hosts.txt`) — it can sweep an entire subnet in one run. Hydra has broader protocol support and better HTTP form handling. Use Medusa when you need to spray credentials across many hosts at once.
+
+---
+
+## Parameters
+
+| Flag | Description |
+|---|---|
+| `-h HOST` / `-H FILE` | Single host or file of hosts |
+| `-u USER` / `-U FILE` | Single username or username list |
+| `-p PASS` / `-P FILE` | Single password or password list |
+| `-M MODULE` | Protocol module to use |
+| `-m "OPTIONS"` | Module-specific options |
+| `-t TASKS` | Parallel tasks per host (default: 4) |
+| `-T HOSTS` | Total number of hosts to test simultaneously |
+| `-f` | Stop after first valid login on current host |
+| `-F` | Stop after first valid login on any host |
+| `-n PORT` | Non-default port |
+| `-e ns` | Try null password and username-as-password |
+| `-v LEVEL` | Verbosity (0–6, default 5) |
+| `-O FILE` | Log output to file |
+
+---
+
+## Common Protocols
+
+### SSH
+
+```bash
+medusa -h 10.10.10.10 -u root -P /usr/share/wordlists/rockyou.txt -M ssh
+medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M ssh -t 4
+medusa -h 10.10.10.10 -u admin -P passwords.txt -M ssh -n 2222    # non-standard port
+```
+
+### FTP
+
+```bash
+medusa -h 10.10.10.10 -u fiona -P /usr/share/wordlists/rockyou.txt -M ftp
+medusa -h 10.10.10.10 -u ftpuser -P passwords.txt -M ftp -n 2121 -t 5
+```
+
+### RDP
+
+```bash
+medusa -h 10.10.10.10 -U users.txt -p 'Password123' -M rdp
+```
+
+### SMB
+
+```bash
+medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M smbnt
+```
+
+### HTTP Basic Auth
+
+```bash
+medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M http -m DIR:/admin
+```
+
+### HTTP Form (POST)
+
+```bash
+medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M web-form \
+  -m "FORM:username=^USER^&password=^PASS^" \
+  -m "DENY:Invalid credentials"
+```
+
+### MySQL / MSSQL
+
+```bash
+medusa -h 10.10.10.10 -u root -P passwords.txt -M mysql
+medusa -h 10.10.10.10 -u sa -P passwords.txt -M mssql
+```
+
+### IMAP / POP3 / SMTP
+
+```bash
+medusa -h mail.target.com -U users.txt -P passwords.txt -M imap
+medusa -h mail.target.com -U users.txt -P passwords.txt -M pop3
+medusa -h mail.target.com -U users.txt -P passwords.txt -M smtp
+```
+
+---
+
+## Multi-Host Targeting
+
+The main differentiator from Hydra — sweep an entire subnet or host list simultaneously.
+
+```bash
+# Spray one credential across all hosts in a file
+medusa -H hosts.txt -u administrator -p 'Welcome1' -M smbnt -F
+
+# Spray a credential list across all hosts — stop on first hit per host
+medusa -H hosts.txt -U users.txt -P passwords.txt -M ssh -f -t 4
+
+# Control total parallel hosts (-T) and tasks per host (-t)
+medusa -H hosts.txt -u admin -P passwords.txt -M ssh -T 10 -t 2
+```
+
+---
+
+## Supported Modules
+
+| Module | Protocol |
+|---|---|
+| `ssh` | SSH v2 |
+| `ftp` | FTP |
+| `rdp` | Remote Desktop Protocol |
+| `smbnt` | SMB / Windows auth |
+| `http` | HTTP Basic Auth |
+| `web-form` | HTTP form (GET/POST) |
+| `imap` | IMAP |
+| `pop3` | POP3 |
+| `smtp` | SMTP |
+| `mysql` | MySQL |
+| `mssql` | Microsoft SQL Server |
+| `postgres` | PostgreSQL |
+| `vnc` | VNC |
+| `telnet` | Telnet |
+| `svn` | Subversion |
+| `snmp` | SNMP community strings |
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

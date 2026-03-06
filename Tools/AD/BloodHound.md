@@ -260,3 +260,9 @@ MATCH (c:Computer {name:"WS01.CORP.LOCAL"}) SET c.owned=true
 # If LDAP collection is blocked, try RPC collection method
 .\SharpHound.exe -c All --CollectionMethods DcOnly    # DC-only, less noisy
 ```
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*

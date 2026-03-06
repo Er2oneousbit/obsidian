@@ -281,3 +281,9 @@ john --list=formats | grep -i sha
 5. john --wordlist=<bigger list> --rules  # escalate to larger wordlists (SecLists)
 6. john --incremental                     # last resort brute force
 ```
+
+---
+
+*Created: 2026-03-06*
+*Updated: 2026-03-06*
+*Model: claude-sonnet-4-6*
