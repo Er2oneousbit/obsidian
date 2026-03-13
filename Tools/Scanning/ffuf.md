@@ -1,22 +1,146 @@
-#ffuf #webenumeration #bruteforce #fuzzing
-- [GitHub - ffuf/ffuf: Fast web fuzzer written in Go](https://github.com/ffuf/ffuf)
-- Used for **fuzzing** verious things
-- `ffuf -w ./vhosts -u http://192.168.10.10 -H "HOST: FUZZ.randomtarget.com" -fs 612` **fuzz** a list of virtual hosts via host header
-- `ffuf -w ./folders.txt:FOLDERS,./wordlist.txt:WORDLIST,./extensions.txt:EXTENSIONS -u http://192.168.10.10/FOLDERS/WORDLISTEXTENSIONS` **fuzz** with a list of folders with files and extensions
-- `-w` Path to our wordlist
-- `-u` URL we want to **fuzz**
-- `-v` **enable** full URLs output **DO THIS**
-- `-debug-log error.log` send errors to `error.log` **DO THIS**
-- `-H "HOST: FUZZ.randomtarget.com"`: This is the `HOST` Header, and the word `FUZZ` will be used as the fuzzing point.
-- `-fs 612`: **Filter** responses with a size of 612, default response size in this case.
-- `-fc 404` **filter** out response code 404
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://SERVER_IP:PORT/FUZZ` use the `-w` wordlist to **fuzz** directories
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ -u http://SERVER_IP:PORT/blog/indexFUZZ` use the `-w` wordlist to **fuzz** file extensions based on 'index' existing
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://SERVER_IP:PORT/blog/FUZZ.php` use the `-w` wordlist to **fuzz** file names based on discovered file extensions
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://SERVER_IP:PORT/FUZZ -recursion -recursion-depth 1 -e .php -v` use the `-w` wordlist to recursively **scan** 1 level for `.php` files that might be in the root directory
-- `ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u https://FUZZ.inlanefreight.com/` use the `-w` wordlist to **fuzz** for DNS
-- `ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://academy.htb:PORT/ -H 'Host: FUZZ.academy.htb'` use the `-w` wordlist to **fuzz** for vhosts
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u http://admin.academy.htb:PORT/admin/admin.php?FUZZ=key -fs xxx` use the `-w` wordlist to **fuzz** for GET request parameters
-- `ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u http://admin.academy.htb:PORT/admin/admin.php -X POST -d 'FUZZ=key' -H 'Content-Type: application/x-www-form-urlencoded' -fs xxx` use the `-w` wordlist to **fuzz** for POST request parameters for a specific content type, check content type first
-- `ffuf -w /usr/share/seclists/Usernames/Names/names.txt:FUZZ -u http://faculty.academy.htb:50467/courses/linux-security.php7 -X POST -d 'username=FUZZ' -H 'Content-Type: application/x-www-form-urlencoded' -v -debug-log error.log -fs 781` **fuzz** the value of a POST parameter
-- `fuff -u http://example.com/FUZZ.FUZZ -w filenames.txt -w extensions.txt` fuzz **files** and **ext** the same time
+# ffuf
+
+**Tags:** `#ffuf` `#webenumeration` `#fuzzing` `#bruteforce` `#dirbusting`
+
+Fast web fuzzer written in Go. Place `FUZZ` anywhere in the request — URL, headers, POST body, Host header. Supports multiple wordlists with named keywords, advanced filtering, and rate limiting. The most flexible web fuzzing tool for CTFs and pentests.
+
+**Source:** https://github.com/ffuf/ffuf
+**Install:** `sudo apt install ffuf`
+
+```bash
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt:FUZZ \
+  -u http://10.129.14.128/FUZZ -v
+```
+
+> [!note]
+> Always add `-v` for full URLs and `-debug-log error.log` to catch errors. Filter noise with `-fs` (size), `-fc` (code), or `-fw` (words) — get the baseline response size first with a known-bad request, then filter it out.
+
+---
+
+## Directory / File Fuzzing
+
+```bash
+# Basic directory brute force
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://10.129.14.128/FUZZ -v
+
+# File extension fuzzing
+ffuf -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ \
+  -u http://10.129.14.128/indexFUZZ -v
+
+# Filename fuzzing (known extension)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://10.129.14.128/FUZZ.php -v
+
+# Recursive scan (-recursion-depth 1 = one level deep)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://10.129.14.128/FUZZ -recursion -recursion-depth 2 -e .php -v
+
+# Multiple extensions at once
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt:FUZZ \
+  -u http://10.129.14.128/FUZZ -e .php,.html,.txt,.bak,.conf -v
+```
+
+---
+
+## Subdomain & Vhost Fuzzing
+
+```bash
+# Public subdomain (DNS)
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
+  -u https://FUZZ.inlanefreight.com/ -v
+
+# Virtual host (Host header — finds internal vhosts)
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
+  -u http://10.129.14.128/ -H "Host: FUZZ.inlanefreight.htb" -fs 612 -v
+```
+
+---
+
+## Parameter Fuzzing
+
+```bash
+# GET parameter discovery
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
+  -u http://10.129.14.128/admin.php?FUZZ=test -fs 1234 -v
+
+# POST parameter discovery
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
+  -u http://10.129.14.128/admin.php \
+  -X POST -d "FUZZ=test" \
+  -H "Content-Type: application/x-www-form-urlencoded" -fs 1234 -v
+
+# POST value fuzzing (known parameter)
+ffuf -w /usr/share/seclists/Usernames/Names/names.txt:FUZZ \
+  -u http://10.129.14.128/login.php \
+  -X POST -d "username=FUZZ&password=test" \
+  -H "Content-Type: application/x-www-form-urlencoded" -fs 781 -v
+```
+
+---
+
+## Multiple Wordlists (Named Keywords)
+
+```bash
+# FUZZ folders, WORDLIST filenames, EXT extensions simultaneously
+ffuf -w folders.txt:FOLDERS \
+  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt:WORDLIST \
+  -w extensions.txt:EXT \
+  -u http://10.129.14.128/FOLDERS/WORDLISTEXT -v
+```
+
+---
+
+## Auth & Session
+
+```bash
+# Cookie
+ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
+  -b "PHPSESSID=abc123; security=low"
+
+# Bearer token
+ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
+  -H "Authorization: Bearer eyJ..."
+```
+
+---
+
+## Filtering & Matching
+
+| Flag | Description |
+|------|-------------|
+| `-fc <codes>` | Filter by status code (e.g. `-fc 404,403`) |
+| `-fs <size>` | Filter by response size |
+| `-fw <words>` | Filter by word count |
+| `-fl <lines>` | Filter by line count |
+| `-mc <codes>` | Match only these status codes |
+| `-ms <size>` | Match response size |
+
+---
+
+## Key Flags
+
+| Flag | Description |
+|------|-------------|
+| `-w <wordlist>:KEYWORD` | Wordlist with keyword |
+| `-u` | Target URL |
+| `-H` | Custom header |
+| `-X` | HTTP method |
+| `-d` | POST data |
+| `-b` | Cookies |
+| `-v` | Verbose — show full URLs |
+| `-debug-log <file>` | Log errors |
+| `-t <n>` | Threads (default 40) |
+| `-rate <n>` | Requests per second |
+| `-recursion` | Recursive scan |
+| `-recursion-depth <n>` | Max recursion depth |
+| `-e <ext>` | Extensions |
+| `-o <file>` | Output file |
+| `-of <format>` | Output format (json, csv, html) |
+| `-p <delay>` | Delay between requests |
+
+---
+
+*Created: 2026-03-13*
+*Updated: 2026-03-13*
+*Model: claude-sonnet-4-6*

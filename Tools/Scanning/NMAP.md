@@ -1,43 +1,190 @@
-#NMAP 
+# nmap
 
-- nmap -sV --open -oA initial_scan 10.129.200.170
-- nmap -p- --open -oA full_tcp_scan 10.129.200.170
-- nmap -sC -p 22,80 -oA script_scan  10.129.200.170
-- sudo nmap 10.129.2.0/24 -sn -oA tnet | grep for | cut -d" " -f5
-- `nmap -sn 192.168.0.1/24` Quick check of a network
+**Tags:** `#nmap` `#scanning` `#enumeration` `#portscan` `#nse`
 
+Industry-standard port scanner. Discovers open ports, service versions, OS fingerprints, and runs NSE scripts for deeper enumeration. Essential first step on every target.
 
-- nmap 10.129.2.28 --top-ports=10 # Top 10 most common ports
-- nmap 10.129.2.28 -p 21 --packet-trace -Pn -n --disable-arp-ping # Show packet sent rcvd, disable DNS, disable ARP ping
+**Source:** https://nmap.org
+**Install:** Pre-installed on Kali
 
-###### Convert XML output to nice HTML
-- xsltproc target.xml -o target.html
+```bash
+nmap -sV --open -oA initial_scan 10.129.200.170
+```
 
-###### NSE Nmap Scripting Engine
-- 14 categories based on script function
-- -sC default scripts
-- --script {1 of the 14 categories}
-- --script {specific script} # can use , to list more than 1
-- -A an aggressive scan, Performs service detection, OS detection, traceroute and uses defaults scripts to scan the target.
+> [!note]
+> Run as root for SYN scan (`-sS`) — faster and more reliable than connect scan (`-sT`). Always save output with `-oA` for all three formats (nmap, xml, gnmap). Use `-Pn` when ICMP is blocked.
 
-###### Tune timing for more efficient scanning
-- --initial-rtt-timeout 50ms # time out to start with
-- --max-rtt-timeout 100ms # max timeout 
-- --max-retries # tune how many tries before moving on
-- --min-rate # how many packets to send
+---
 
-###### IDS/IPS/Firewall bypass
-- Change scan types -sS Syn, -sA Ack, etc
-- Use decoys -D to mix in random IPs, random IPs should be online
-- -S # change source IP
-- --dns-server # specify a DNS server to use such as the victims internal
-- --source-port # change source port, such as 53. 53 might not be filtered/monitored
+## Standard Scan Workflow
 
+```bash
+# 1. Quick top-port scan + version detection
+nmap -sV --open -oA initial_scan 10.129.200.170
 
-###### Scripting
-- sudo nmap --script-updatedb # update the cached scripts
-- smtp-user-enum -M VRFY -U footprinting-wordlist.txt -t 10.129.209.62 -v # enumerate an open SMTP relay with a user list
+# 2. Full TCP port scan
+nmap -p- --open -oA full_tcp_scan 10.129.200.170
 
-###### Formatting
-- `cat scan.nmap| awk -F/ '/open/ {b=b","$1} END {print substr(b,2)}'`      # Parse ports into comma list
-- `-oA {path/filename}` output all report formats
+# 3. Script scan on discovered ports
+nmap -sC -sV -p 22,80,443 -oA script_scan 10.129.200.170
+
+# 4. UDP scan (top ports — slow)
+sudo nmap -sU --top-ports 20 10.129.200.170
+```
+
+---
+
+## Host Discovery
+
+```bash
+# Ping sweep (no port scan)
+sudo nmap -sn 10.129.14.0/24 -oA host_discovery
+
+# Extract live hosts from ping sweep
+sudo nmap 10.129.14.0/24 -sn -oA tnet | grep "for" | cut -d" " -f5
+
+# Disable ping (treat host as up)
+nmap -Pn 10.129.200.170
+
+# ARP scan (local network)
+sudo nmap -PR -sn 10.129.14.0/24
+```
+
+---
+
+## Scan Types
+
+| Flag | Scan Type | Notes |
+|------|-----------|-------|
+| `-sS` | SYN (stealth) | Default with root — fastest |
+| `-sT` | TCP connect | No root needed, noisier |
+| `-sU` | UDP | Slow — use `--top-ports` |
+| `-sA` | ACK | Maps firewall rules |
+| `-sV` | Version detection | Probes open ports |
+| `-sC` | Default scripts | Runs NSE default category |
+| `-O` | OS detection | Needs root |
+| `-A` | Aggressive | `-sV -sC -O --traceroute` |
+
+---
+
+## Port Specification
+
+```bash
+nmap -p 22,80,443 10.129.200.170        # specific ports
+nmap -p 1-1000 10.129.200.170           # port range
+nmap -p- 10.129.200.170                 # all 65535 ports
+nmap --top-ports 100 10.129.200.170     # top N most common
+nmap --open 10.129.200.170              # show only open ports
+```
+
+---
+
+## NSE Scripts
+
+```bash
+# Run default scripts
+nmap -sC 10.129.200.170
+
+# Specific script
+nmap --script smb-vuln-ms17-010 10.129.200.170
+
+# Multiple scripts
+nmap --script smb-enum-shares,smb-enum-users 10.129.200.170
+
+# Script category
+nmap --script vuln 10.129.200.170
+nmap --script discovery 10.129.200.170
+nmap --script auth 10.129.200.170
+
+# Script with args
+nmap --script http-brute --script-args userdb=users.txt,passdb=pass.txt \
+  -p 80 10.129.200.170
+
+# Update script DB
+sudo nmap --script-updatedb
+
+# Find scripts for a service
+ls /usr/share/nmap/scripts/ | grep smb
+```
+
+NSE categories: `auth`, `broadcast`, `brute`, `default`, `discovery`, `dos`, `exploit`, `external`, `fuzzer`, `intrusive`, `malware`, `safe`, `version`, `vuln`
+
+---
+
+## Timing & Performance
+
+```bash
+# Timing templates (T0=paranoid → T5=insane)
+nmap -T4 10.129.200.170     # fast, good default
+nmap -T1 10.129.200.170     # slow/evasive
+
+# Manual tuning
+nmap --min-rate 5000 --max-retries 1 -p- 10.129.200.170  # very fast full scan
+nmap --initial-rtt-timeout 50ms --max-rtt-timeout 100ms 10.129.200.170
+```
+
+---
+
+## Evasion / Firewall Bypass
+
+```bash
+# SYN vs ACK scan (map firewall rules)
+sudo nmap -sA -p 80,443 10.129.200.170
+
+# Decoys (mix fake IPs into scan)
+sudo nmap -D RND:5 10.129.200.170
+
+# Spoof source IP
+sudo nmap -S 10.10.10.1 10.129.200.170
+
+# Source port (bypass port-based filters)
+sudo nmap --source-port 53 10.129.200.170
+
+# Fragment packets
+sudo nmap -f 10.129.200.170
+
+# Use victim's internal DNS
+nmap --dns-server 172.16.5.5 10.129.200.170
+
+# Disable ARP ping + DNS
+nmap -Pn -n --disable-arp-ping 10.129.200.170
+```
+
+---
+
+## Output Formats
+
+```bash
+# All formats simultaneously (recommended)
+nmap -oA scan_results 10.129.200.170
+# Creates: scan_results.nmap, scan_results.xml, scan_results.gnmap
+
+# Individual formats
+nmap -oN output.txt 10.129.200.170      # normal
+nmap -oX output.xml 10.129.200.170      # XML
+nmap -oG output.gnmap 10.129.200.170    # grepable
+
+# Convert XML to HTML report
+xsltproc scan_results.xml -o scan_results.html
+
+# Parse open ports from .nmap file into comma list
+cat scan.nmap | awk -F/ '/open/ {b=b","$1} END {print substr(b,2)}'
+```
+
+---
+
+## Useful One-Liners
+
+```bash
+# Fast full scan with version + scripts on discovered ports
+ports=$(nmap -p- --min-rate 5000 -Pn -n 10.129.200.170 | grep ^[0-9] | cut -d'/' -f1 | tr '\n' ',' | sed 's/,$//') && nmap -sC -sV -p$ports 10.129.200.170 -oA targeted
+
+# Subnet sweep then scan live hosts
+sudo nmap -sn 10.129.14.0/24 | grep "for" | cut -d" " -f5 > hosts.txt && nmap -iL hosts.txt -sV --open -oA subnet_scan
+```
+
+---
+
+*Created: 2026-03-13*
+*Updated: 2026-03-13*
+*Model: claude-sonnet-4-6*

