@@ -1,4 +1,4 @@
-
+g
 # 🛡️ Windows Privilege Escalation
 
 **Tags:** `#Privesc` `#PrivilegeEscalation` `#Windows`
