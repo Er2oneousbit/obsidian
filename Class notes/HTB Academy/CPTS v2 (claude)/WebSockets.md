@@ -2,7 +2,7 @@
 
 #WebSockets #CSWSH #WebAppAttacks
 
-## What Are WebSockets?
+## What is this?
 
 WebSockets provide a **persistent, full-duplex** communication channel over a single TCP connection. Unlike HTTP (request → response → close), a WebSocket connection stays open — both sides can send messages at any time without a new request.
 
@@ -12,7 +12,7 @@ WebSockets provide a **persistent, full-duplex** communication channel over a si
 
 WebSocket connections start as HTTP, then upgrade:
 
-```
+```text
 Client → Server:
 GET /chat HTTP/1.1
 Host: target.com
@@ -109,7 +109,7 @@ websocat -H "Cookie: session=<value>" ws://target.com/chat
 The WebSocket handshake uses HTTP — if the server authenticates only via cookies and doesn't validate `Origin`, an attacker can initiate a WS connection from a malicious page using the victim's cookies.
 
 **Check:**
-```
+```http
 GET /ws HTTP/1.1
 Origin: https://evil.com
 Cookie: session=victim_cookie
@@ -257,7 +257,7 @@ Some reverse proxies (nginx, HAProxy) can be tricked into upgrading a non-WebSoc
 
 ## Testing Methodology
 
-```
+```bash
 1. Identify WS endpoints
    - Burp WebSockets history during normal app usage
    - Search JS files for ws:// or wss://
@@ -292,7 +292,7 @@ Some reverse proxies (nginx, HAProxy) can be tricked into upgrading a non-WebSoc
 
 ## Burp Workflow
 
-```
+```bash
 1. Browse the app normally with Burp running
 2. Proxy → WebSockets history → review captured frames
 3. Right-click a message → Send to Repeater
@@ -326,3 +326,9 @@ Array.from(performance.getEntries()).filter(e => e.initiatorType === 'websocket'
 | [WSSiP](https://github.com/nccgroup/wssip) | WS proxy for intercept/modify |
 | [STEWS](https://github.com/PalindromeLabs/STEWS) | WS security testing framework — fingerprint + vuln scan |
 | Browser DevTools | Network tab → WS — inspect frames in real time |
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

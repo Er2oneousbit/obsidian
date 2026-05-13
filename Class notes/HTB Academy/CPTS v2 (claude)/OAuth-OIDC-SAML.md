@@ -1,6 +1,24 @@
 # OAuth / OIDC / SAML Attacks
 
-Three auth delegation frameworks — each with distinct attack surfaces.
+#OAuth #OIDC #SAML #Authentication #WebAppAttacks
+
+
+## What is this?
+
+Attack techniques for the three major auth delegation frameworks: OAuth 2.0, OpenID Connect, and SAML. Covers token theft, redirect abuse, CSRF, XML signature attacks, and ATO chains. Pairs with [[JWT Attacks]], [[Web Attacks]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Intercept OAuth flows, tamper redirect_uri/state/code, match & replace rules |
+| `jwt_tool` | Attack JWT-based OAuth/OIDC tokens — algorithm confusion, none alg, brute force |
+| `SAMLRaider` | Burp extension — SAML manipulation, XXE in assertions, XSW attacks (BApp Store) |
+| `SAML-tracer` | Firefox extension — inspect full SAML flows in browser |
+| `TokenSpy` | Hunt for OAuth tokens exposed in JS — `git clone https://github.com/dub-flow/tokenspy` |
 
 ---
 
@@ -8,7 +26,7 @@ Three auth delegation frameworks — each with distinct attack surfaces.
 
 ### Flow Overview
 
-```
+```text
 Resource Owner (user) → Authorization Server → Access Token → Resource Server
 ```
 
@@ -276,29 +294,6 @@ python3 GoldenSAML.py --cert adfs-signing.pfx --certpass <pass> --target "https:
 
 ---
 
-## Tools
-
-```bash
-# jwt_tool — JWT attacks (OAuth tokens, OIDC ID tokens)
-python3 jwt_tool.py <token> -X -v
-
-# SAMLRaider (Burp extension) — SAML manipulation, XSW attacks
-# BApp Store → SAML Raider
-
-# SAML-tracer (Firefox extension) — inspect SAML flows
-
-# oauth2-proxy / Fiddler — intercept OAuth flows
-
-# TokenSpy — hunt for OAuth tokens in JS
-# git clone https://github.com/dub-flow/tokenspy
-
-# postman-to-graphql — if GraphQL OAuth flow
-
-# Burp → match & replace rules to tamper OAuth params on the fly
-```
-
----
-
 ## Quick Reference
 
 ```bash
@@ -323,3 +318,9 @@ python3 jwt_tool.py <token> -X a
 # SAML comment injection for NameID
 # admin<!--@target.com (parsed as "admin" by some libraries)
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

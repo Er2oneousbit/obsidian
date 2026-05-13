@@ -188,7 +188,7 @@ runas /savecred /user:SRV01\mcharles cmd
 
 **Vault paths:**
 
-```
+```bash
 %UserProfile%\AppData\Local\Microsoft\Vault\
 %UserProfile%\AppData\Local\Microsoft\Credentials\
 %UserProfile%\AppData\Roaming\Microsoft\Vault\
@@ -379,7 +379,7 @@ python3.9 firefox_decrypt.py
 
 ## Linux — PAM / /etc/passwd / /etc/shadow
 
-```
+```text
 /usr/lib/x86_64-linux-gnu/security/   ← PAM modules (pam_unix.so)
 /etc/passwd                            ← User accounts
 /etc/shadow                            ← Password hashes (root readable)
@@ -695,3 +695,9 @@ hashcat -m 22100 backup.hash /usr/share/wordlists/rockyou.txt -o backup.cracked
 keepass2john database.kdbx > keepass.hash
 hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

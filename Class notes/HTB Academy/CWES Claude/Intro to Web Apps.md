@@ -330,7 +330,7 @@ Forces an authenticated victim's browser to make unintended requests. Requires t
 
 ### Attack Flow
 
-```
+```text
 Attacker crafts malicious page → Victim visits it while authenticated → 
 Victim's browser sends forged request with session cookie → Action executes as victim
 ```

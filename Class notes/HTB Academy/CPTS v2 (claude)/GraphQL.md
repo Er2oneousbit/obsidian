@@ -1,6 +1,25 @@
 # GraphQL Attacks
 
-GraphQL — single-endpoint query language API. Uses queries (read), mutations (write), subscriptions (realtime). Introspection exposes the full schema.
+#GraphQL #APIAttacks #Injection #WebAppAttacks
+
+
+## What is this?
+
+GraphQL API attack techniques — introspection enumeration, batching abuse, injection via queries/mutations, and auth bypass. Single endpoint makes recon and exploitation differ from REST. Pairs with [[API Attacks]], [[Web Fuzzing]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Intercept GraphQL requests, modify queries/mutations, test auth bypass |
+| `InQL` | Burp extension — introspection, schema visualization, automated query generation (BApp Store) |
+| `GraphQL Voyager` | Visual schema explorer from introspection JSON |
+| `graphw00f` | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) — `pip3 install graphw00f` |
+| `clairvoyance` | Schema inference when introspection is disabled — `pip3 install clairvoyance` |
+| `curl` | Manual query/mutation testing |
 
 ---
 
@@ -251,3 +270,9 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 # SQLi test
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username } }"}'
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

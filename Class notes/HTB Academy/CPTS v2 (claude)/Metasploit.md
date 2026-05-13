@@ -130,7 +130,7 @@ jobs -k 1
 
 ### Staged vs Stageless
 
-```
+```bash
 Staged   (/)  : windows/x64/meterpreter/reverse_tcp  — stager downloads payload
 Stageless(_)  : windows/x64/meterpreter_reverse_tcp   — all-in-one, no callback
 ```
@@ -438,3 +438,9 @@ msfvenom -l encoders
 | Local privesc suggestions | `run post/multi/recon/local_exploit_suggester` |
 | Add pivot route | `route add 192.168.1.0/24 1` |
 | Forward port | `portfwd add -l 8080 -p 80 -r 192.168.1.10` |
+
+---
+
+*Created: 2026-03-02*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

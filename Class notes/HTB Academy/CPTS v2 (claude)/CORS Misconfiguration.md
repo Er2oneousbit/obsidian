@@ -1,15 +1,28 @@
 # CORS Misconfiguration
 
-Cross-Origin Resource Sharing — browser mechanism controlling which origins can read responses from cross-origin requests. Misconfigs allow attacker-controlled origins to read authenticated API responses.
+#CORS #WebAppAttacks #BrokenAccessControl #APIAttacks
 
-> [!note]
-> CORS is enforced by the **browser only** — curl/Burp ignore it. CORS bugs require a victim to visit the attacker's page while authenticated to the target.
+
+## What is this?
+
+Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Requests]], [[Cross-Site Scripting (XSS)]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Test Origin header reflection, craft PoC HTML pages via Repeater |
+| `curl` | Manual origin testing (`-H "Origin: https://evil.com"`) |
+| Browser DevTools | Observe CORS errors in console, inspect preflight responses |
 
 ---
 
 ## How CORS Works
 
-```
+```bash
 Browser sends:    Origin: https://attacker.com
 Server responds:  Access-Control-Allow-Origin: https://attacker.com
                   Access-Control-Allow-Credentials: true
@@ -215,3 +228,9 @@ done
 curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -Ei "access-control-(allow-origin|allow-credentials)"
 # Both headers present with arbitrary origin → exploitable
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

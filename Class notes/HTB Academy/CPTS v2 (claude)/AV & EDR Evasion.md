@@ -1,8 +1,12 @@
 # AV & EDR Evasion
 
-**Tags:** `#evasion` `#amsi` `#edr` `#av` `#redteam` `#windows`
+#evasion #amsi #edr #av #redteam #windows
 
-Techniques for evading antivirus, Windows Defender, and EDR solutions during offensive engagements. Covers AMSI bypass, payload obfuscation, EDR unhooking, process injection, and tradecraft.
+
+## What is this?
+
+Techniques for bypassing AV, Windows Defender, and EDR during red team engagements. Covers AMSI bypass, payload obfuscation, process injection, and EDR unhooking. Use when delivering payloads or running tools on hardened Windows hosts. Pairs with [[Shells & Payloads]], [[Windows Priv Esc]].
+
 
 ---
 
@@ -515,7 +519,7 @@ Spawn process with a different parent to avoid suspicious parent-child chains (W
 
 ## Quick Reference Checklist
 
-```
+```bash
 [ ] Identify AV/EDR product and version
 [ ] Check Tamper Protection status
 [ ] Check Defender exclusions — may already be usable
@@ -528,3 +532,9 @@ Spawn process with a different parent to avoid suspicious parent-child chains (W
 [ ] Spoof parent process for noisy child spawns
 [ ] Sleep before execution in automated pipelines
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

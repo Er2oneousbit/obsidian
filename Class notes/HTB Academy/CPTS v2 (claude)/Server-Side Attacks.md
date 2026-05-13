@@ -1,6 +1,24 @@
 # Server-Side Attacks
 
-Covers SSRF, SSTI, mass assignment, and open redirect — server-side vulnerabilities where attacker input is processed by the server in unintended ways.
+#SSRF #SSTI #ServerSide #WebAppAttacks
+
+
+## What is this?
+
+Server-side vulnerabilities where attacker-controlled input is processed by the server in unintended ways — SSRF, SSTI, mass assignment, and open redirect. Pairs with [[File Inclusion]], [[Web Attacks]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `Burp Suite` | Intercept and modify requests, Collaborator for OOB SSRF callbacks |
+| `interactsh-client` | OOB interaction detection for blind SSRF — `go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest` |
+| `tplmap` | Automated SSTI detection and exploitation — `git clone https://github.com/epinna/tplmap` |
+| `SSRFmap` | Automated SSRF exploitation with internal service probing — `git clone https://github.com/swisskyrepo/SSRFmap` |
+| `curl` | Manual SSRF probing, redirect tracing (`-L`), header inspection |
 
 ---
 
@@ -430,3 +448,9 @@ curl -s -X POST "http://<target>/api/register" -H "Content-Type: application/jso
 # Open redirect check
 curl -sv "http://<target>/redirect?url=https://example.com" 2>&1 | grep -i "^< location"
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

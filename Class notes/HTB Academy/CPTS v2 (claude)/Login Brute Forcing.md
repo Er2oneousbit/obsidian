@@ -268,3 +268,9 @@ ffuf -w /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt -X POST 
 ```bash
 ffuf -w passwords.txt -X POST -d "username=admin&password=FUZZ" -H "Content-Type: application/x-www-form-urlencoded" -u http://10.129.x.x/login -fs <failure_size>
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

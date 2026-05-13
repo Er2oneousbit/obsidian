@@ -1308,7 +1308,7 @@ wscat -c ws://target.com/ws -H "Cookie: session=abc123"
 
 ### Manual Fuzzing via Burp Repeater
 
-```
+```text
 # Intercept WS handshake → send upgrade request to Repeater
 # Or: WS History → right-click frame → Send to Repeater
 
@@ -1322,7 +1322,7 @@ wscat -c ws://target.com/ws -H "Cookie: session=abc123"
 
 ### Fuzzing with Burp Intruder (WS)
 
-```
+```text
 # WS History → right-click → Send to Intruder
 # Mark position in message payload
 # Set wordlist → Start Attack
@@ -1372,3 +1372,9 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 - **Match on redirect destination** — use `-mr "Location: /dashboard"` to catch redirects to success pages
 - **Response time spikes** — flag anything `>2s` as a potential blind injection candidate
 - **Soft 404s** — if every path returns 200 with the same size, filter by content with `-fr "Not Found"` or `-fs <size>`
+
+---
+
+*Created: 2026-03-02*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

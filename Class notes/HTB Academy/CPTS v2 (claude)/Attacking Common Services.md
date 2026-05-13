@@ -994,3 +994,9 @@ use post/multi/gather/vnc_password_file
 | VNC | `hydra -P pass.txt vnc://<ip>` |
 | IPMI hashes | `use auxiliary/scanner/ipmi/ipmi_dumphashes` |
 | LDAP anonymous | `ldapsearch -H ldap://<ip> -x -b "DC=x,DC=x"` |
+
+---
+
+*Created: 2026-03-02*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*

@@ -1,12 +1,30 @@
 # JWT Attacks
 
-JSON Web Tokens — three Base64url-encoded segments: `header.payload.signature`. Used for auth/session in APIs, web apps, OAuth flows.
+#JWT #Authentication #WebAppAttacks #APIAttacks
+
+
+## What is this?
+
+JSON Web Token attacks — algorithm confusion (RS256→HS256), none algorithm, weak secret brute-force, kid injection, and header injection. Pairs with [[OAuth-OIDC-SAML]], [[Web Attacks]].
+
+
+---
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `jwt_tool` | Algorithm attacks, none alg, brute force, kid injection — `git clone https://github.com/ticarpi/jwt_tool` |
+| `Burp JWT Editor` | In-proxy JWT modification and signing (BApp Store extension) |
+| `hashcat` | Brute-force HS256/HS384/HS512 secrets — `hashcat -a 0 -m 16500 <jwt> wordlist.txt` |
+| `john` | Alternative JWT secret cracking — `john jwt.txt --wordlist=wordlist.txt --format=HMAC-SHA256` |
+| `jwt.io` | Manual decode/inspect (offline use only for sensitive tokens) |
 
 ---
 
 ## Structure & Decoding
 
-```
+```bash
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0Iiwicm9sZSI6InVzZXIifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
            HEADER (b64url)                          PAYLOAD (b64url)                           SIGNATURE (b64url)
@@ -440,3 +458,9 @@ python3 jwt_tool.py <token> -I -hc kid -hv "../../dev/null" -S hs256 -p ""
 # Run all attacks
 python3 jwt_tool.py <token> -X -v
 ```
+
+---
+
+*Created: 2026-03-04*
+*Updated: 2026-05-13*
+*Model: claude-sonnet-4-6*
