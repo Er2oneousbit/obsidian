@@ -29,6 +29,13 @@ Automated technique for discovering hidden directories, files, parameters, vhost
 | `gobuster` | `go install github.com/OJ/gobuster/v3@latest` | Dir, vhost, DNS subdomain enum |
 | `feroxbuster` | `curl -sL https://raw.githubusercontent.com/epi052/feroxbuster/main/install-nix.sh \| sudo bash -s $HOME/.local/bin` | Recursive forced browsing |
 | `wenum` | `pipx install git+https://github.com/WebFuzzForge/wenum && pipx runpip wenum install setuptools` | Parameter/value fuzzing (wfuzz fork) |
+| `dirsearch` | `pip3 install dirsearch` | Directory/file enum with smart defaults, no tuning required |
+| `arjun` | `pip3 install arjun` | HTTP parameter discovery — smarter than wordlist fuzzing for params |
+| `kiterunner` | `go install github.com/assetnote/kiterunner/cmd/kr@latest` | API-aware route fuzzing using real Swagger/API wordlists |
+| `katana` | `go install github.com/projectdiscovery/katana/cmd/katana@latest` | Crawler-based endpoint discovery via JS parsing and form submission |
+| `Param Miner` | BApp Store → Param Miner | Burp extension — passive hidden parameter discovery while browsing |
+| `Turbo Intruder` | BApp Store → Turbo Intruder | Burp extension — high-speed fuzzing with session/macro context |
+| `CeWL` | pre-installed on Kali | Spider target and extract words for a domain-specific wordlist |
 
 > [!note]
 > `wenum` is a drop-in replacement for `wfuzz` — same syntax, actively maintained. wfuzz has install issues on modern systems; prefer wenum.
@@ -44,9 +51,27 @@ Automated technique for discovering hidden directories, files, parameters, vhost
 | `Discovery/Web-Content/raft-large-directories.txt` | Thorough directory campaigns |
 | `Discovery/Web-Content/big.txt` | Wide net — both dirs and files |
 | `Discovery/DNS/subdomains-top1million-5000.txt` | Subdomain enumeration |
+| `Discovery/Web-Content/raft-large-files.txt` | File-specific enum — use instead of directory lists when targeting files |
+| `Discovery/Web-Content/burp-parameter-names.txt` | Parameter name fuzzing — purpose-built, better than common.txt for params |
+| `Discovery/Web-Content/api/api-endpoints.txt` | API endpoint fuzzing — REST-focused paths |
 
 > [!note]
 > SecLists path on Kali/Pwnbox: `/usr/share/seclists/` (lowercase). Some systems use `/usr/share/SecLists/`. Check if a command errors on the wordlist path itself.
+
+### CeWL — Custom Wordlists from Target
+
+Spider the target site and extract words to build a domain-specific wordlist. Often finds paths that generic lists miss.
+
+```bash
+# Spider and extract words (min length 5, depth 3)
+cewl http://<TARGET_IP>:<PORT> -m 5 -d 3 -w custom_wordlist.txt
+
+# Include email addresses
+cewl http://<TARGET_IP>:<PORT> -m 5 -d 3 -e -w custom_wordlist.txt
+
+# Use with ffuf
+ffuf -w custom_wordlist.txt -u http://<TARGET_IP>:<PORT>/FUZZ -ac
+```
 
 ---
 
@@ -66,14 +91,37 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt 
 | `-fw` / `-mw` | Filter/match by word count |
 | `-fl` / `-ml` | Filter/match by line count |
 | `-mt` | Match by time-to-first-byte (e.g., `-mt >500`) |
+| `-o` | Save results to file — `-o results.json -of json` or `-of all` |
+| `-k` | Skip TLS certificate verification (self-signed certs on HTTPS targets) |
+| `-t` | Threads (default 40) — increase for speed, decrease to avoid detection/rate limits |
+| `-p` | Delay between requests in seconds — `-p 0.1` for WAF avoidance |
+| `-ac` | Auto-calibrate — send test requests to learn baseline response, auto-filter noise |
+| `-ic` | Ignore comment lines in wordlist (lines starting with `#`) |
+| `-x` | Proxy URL — route traffic through Burp: `-x http://127.0.0.1:8080` |
 
 ```bash
-# Filter common noise
+# Filter common noise manually
 ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -fc 404,401,302
 
-# Match only 200, filter responses with 427 words, size > 500 bytes
-ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -mc 200 -fw 427 -ms ">500"
+# Auto-calibrate — ffuf learns baseline and filters automatically
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -ac
+
+# Increase threads + route through Burp for real-time inspection
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -t 100 -x http://127.0.0.1:8080
+
+# Replay only matched results through Burp (speed of ffuf, Burp visibility on hits)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -ac -replay-proxy http://127.0.0.1:8080
+
+# Slow down for rate-limited targets; bypass IP-based rate limiting
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -t 5 -p 0.2 -ac -H "X-Forwarded-For: 127.0.0.1"
+
+# Save results + post-process with jq
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -ac -o results.json -of json
+jq '.results[] | {url, status, length}' results.json
 ```
+
+> [!tip]
+> Start with `-ac` on every run. It eliminates most false positives automatically and is faster than figuring out `-fs`/`-fw` filters from scratch.
 
 ---
 
@@ -93,25 +141,63 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_I
 ## Recursive Fuzzing
 
 ```bash
+# ffuf — manual recursion
 ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -ic -v -u http://<TARGET_IP>:<PORT>/FUZZ -e .html -recursion -recursion-depth 2 -rate 500
+
+# feroxbuster — auto-recursive with smart filtering
+feroxbuster -u http://<TARGET_IP>:<PORT> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt --depth 2 --rate-limit 100 -x php,html,txt
 ```
 
-| Flag | Description |
+| Flag (ffuf) | Description |
 |---|---|
 | `-recursion` | Auto-fuzz newly discovered directories |
 | `-recursion-depth` | Max depth — always set this, default is unlimited |
 | `-rate` | Requests per second — throttle to avoid overwhelming target |
-| `-ic` | Ignore comment lines in wordlist (lines starting with `#`) |
+
+| Flag (feroxbuster) | Description |
+|---|---|
+| `--depth` | Recursion depth limit |
+| `--rate-limit` | Requests per second |
+| `-x` | File extensions to append |
+| `-k` | Skip TLS cert verification |
+| `-o` | Save output to file |
 
 > [!warning]
-> Uncapped recursive fuzzing on a deep app generates millions of requests. Always set `-recursion-depth`. Check RoE for rate limits before running.
+> Uncapped recursive fuzzing on a deep app generates millions of requests. Always set `-recursion-depth` / `--depth`. Check RoE for rate limits before running.
+
+---
+
+## dirsearch
+
+Good defaults out of the box — no flag tuning required for a basic run.
+
+```bash
+# Basic run (uses built-in wordlist)
+dirsearch -u http://<TARGET_IP>:<PORT>
+
+# Custom wordlist
+dirsearch -u http://<TARGET_IP>:<PORT> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt
+
+# Specific extensions
+dirsearch -u http://<TARGET_IP>:<PORT> -e php,html,txt,bak
+
+# Recursive
+dirsearch -u http://<TARGET_IP>:<PORT> -r --max-recursion-depth 2
+
+# HTTPS + proxy
+dirsearch -u https://<TARGET_IP>:<PORT> --no-tls-errors --proxy http://127.0.0.1:8080
+```
 
 ---
 
 ## GET Parameter Fuzzing
 
 ```bash
+# Fuzz parameter VALUE (known parameter name)
 wenum -w /usr/share/seclists/Discovery/Web-Content/common.txt --hc 404 -u "http://<TARGET_IP>:<PORT>/page.php?x=FUZZ"
+
+# Fuzz parameter NAME (discover hidden params)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -u "http://<TARGET_IP>:<PORT>/page.php?FUZZ=value" -ac
 ```
 
 | Flag | Description |
@@ -128,6 +214,27 @@ curl "http://<TARGET_IP>:<PORT>/page.php?x=test"
 
 # Show only short responses (likely the valid hit)
 wenum -w /usr/share/seclists/Discovery/Web-Content/common.txt --sc 200 --sw 1-5 -u "http://<TARGET_IP>:<PORT>/page.php?x=FUZZ"
+```
+
+### arjun — Smart Parameter Discovery
+
+arjun uses heuristics to detect parameter existence by analyzing response differences, not just matching status codes.
+
+```bash
+# GET parameter discovery
+arjun -u "http://<TARGET_IP>:<PORT>/page.php"
+
+# POST parameter discovery
+arjun -u "http://<TARGET_IP>:<PORT>/page.php" -m POST
+
+# JSON body
+arjun -u "http://<TARGET_IP>:<PORT>/api/endpoint" -m JSON
+
+# With custom headers (auth)
+arjun -u "http://<TARGET_IP>:<PORT>/page.php" -H "Authorization: Bearer <token>"
+
+# Specify wordlist
+arjun -u "http://<TARGET_IP>:<PORT>/page.php" -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
 ```
 
 ---
@@ -151,6 +258,41 @@ ffuf -u http://<TARGET_IP>:<PORT>/post.php -X POST -H "Content-Type: application
 # Probe manually first
 curl -d "" http://<TARGET_IP>:<PORT>/post.php
 ```
+
+### Multi-Position Fuzzing
+
+Use `W1`/`W2` keywords with multiple `-w` flags to fuzz two positions simultaneously.
+
+```bash
+# Fuzz username + password (credential stuffing)
+ffuf -w /usr/share/seclists/Usernames/top-usernames-shortlist.txt:W1 -w /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-1000.txt:W2 -u http://<TARGET_IP>:<PORT>/login -X POST -d "username=W1&password=W2" -fc 302 -ac
+
+# Fuzz two path segments
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt:W1 -w /usr/share/seclists/Discovery/Web-Content/common.txt:W2 -u http://<TARGET_IP>:<PORT>/api/W1/W2 -mc 200,201
+```
+
+---
+
+## Authenticated Fuzzing
+
+Add auth context to any fuzz command when the target requires a session.
+
+```bash
+# Session cookie (grab from Burp/browser after login)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -H "Cookie: PHPSESSID=<session_token>" -fc 302
+
+# Bearer token (API)
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_IP>:<PORT>/api/FUZZ -H "Authorization: Bearer <token>" -mc 200,201,204,403
+
+# Basic auth
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_IP>:<PORT>/FUZZ -H "Authorization: Basic $(echo -n 'user:pass' | base64)"
+
+# HTTPS with self-signed cert
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u https://<TARGET_IP>:<PORT>/FUZZ -k
+```
+
+> [!note]
+> If the app redirects unauthenticated requests to `/login` (302), filter `-fc 302` to drop the noise and surface anything that actually responds.
 
 ---
 
@@ -235,6 +377,42 @@ curl -s -X POST http://<TARGET_IP>:<PORT>/graphql -H "Content-Type: application/
 
 Check these paths first before fuzzing: `/docs`, `/swagger`, `/api-docs`, `/openapi.json`
 
+### katana — Crawler-Based Discovery
+
+Finds endpoints through JS parsing, form submission, and crawling rather than brute force — surfaces routes that wordlists miss.
+
+```bash
+# Basic crawl
+katana -u http://<TARGET_IP>:<PORT>
+
+# JavaScript parsing mode (finds endpoints in JS files)
+katana -u http://<TARGET_IP>:<PORT> -js-crawl
+
+# Depth + output
+katana -u http://<TARGET_IP>:<PORT> -d 3 -o endpoints.txt
+
+# With auth cookie
+katana -u http://<TARGET_IP>:<PORT> -H "Cookie: session=<token>" -js-crawl -d 3
+```
+
+### kiterunner — API Route Fuzzing
+
+Uses real Swagger/API spec wordlists with correct HTTP methods per route — smarter than generic path fuzzing for APIs.
+
+```bash
+# Install wordlists (assetnote)
+# https://wordlists.assetnote.io/ — download routes-large.kite or swagger-wordlist
+
+# Scan with kiterunner
+kr scan http://<TARGET_IP>:<PORT> -w routes-large.kite
+
+# With auth header
+kr scan http://<TARGET_IP>:<PORT> -w routes-large.kite -H "Authorization: Bearer <token>"
+
+# Replay a hit through Burp
+kr scan http://<TARGET_IP>:<PORT> -w routes-large.kite --proxy http://127.0.0.1:8080
+```
+
 ---
 
 ## API Parameter Fuzzing
@@ -247,11 +425,7 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u "http://<TARGET_
 ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_IP>:<PORT>/api/v1/items -X POST -H "Content-Type: application/json" -d '{"name":"FUZZ"}' -mc 200,201
 ```
 
-| Flag | Description |
-|---|---|
-| `-mc` | Match status codes |
-| `-fc` | Filter status codes |
-| `-fs` | Filter by response size |
+Use `-mc`/`-fc`/`-fs` to filter — same flags as [[#Directory Fuzzing]].
 
 ---
 
@@ -269,5 +443,5 @@ See [[API Attacks]] for full exploitation methodology.
 ---
 
 *Created: 2026-05-12*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

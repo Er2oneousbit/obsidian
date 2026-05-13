@@ -2,7 +2,6 @@
 
 #CORS #WebAppAttacks #BrokenAccessControl #APIAttacks
 
-
 ## What is this?
 
 Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Requests]], [[Cross-Site Scripting (XSS)]].
@@ -101,6 +100,27 @@ curl -si "https://<target>/api/profile" -H "Origin: null" -b "session=<cookie>" 
 # Bypass: register a domain ending in target.com
 curl -si "https://<target>/api/profile" -H "Origin: https://eviltarget.com" -b "session=<cookie>" | grep -i "access-control"
 # OR: https://notatarget.com
+```
+
+### 6. Simple Request — Preflight Bypass
+
+Browsers only send a preflight OPTIONS request for "non-simple" requests. **Simple requests skip preflight entirely** and are sent directly, which means the CORS check happens on the actual response headers — not a preliminary OPTIONS.
+
+**Simple requests (no preflight):**
+- Methods: `GET`, `POST`, `HEAD`
+- Content-Type: `application/x-www-form-urlencoded`, `multipart/form-data`, `text/plain`
+- No custom headers (no `Authorization`, no `X-Custom-Header`)
+
+**Non-simple requests (preflight required):**
+- Methods: `PUT`, `DELETE`, `PATCH`
+- Content-Type: `application/json`
+- Any custom header (`Authorization`, `X-API-Key`, etc.)
+
+> [!tip] If an API accepts `GET` requests with sensitive data, the CORS vulnerability is directly exploitable without any OPTIONS preflight succeeding. Test simple GET endpoints separately — don't assume a blocked preflight means the endpoint is safe.
+
+```bash
+# Simple GET — no preflight, CORS headers on response determine exploitability
+curl -si "https://<target>/api/userdata" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -i "access-control"
 ```
 
 ### 5. Subdomain Trust + XSS
@@ -232,5 +252,5 @@ curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "sessio
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

