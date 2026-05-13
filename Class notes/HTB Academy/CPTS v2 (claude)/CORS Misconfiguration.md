@@ -25,46 +25,30 @@ Without `Access-Control-Allow-Credentials: true`, cookies are not sent — the r
 
 ```bash
 # Test 1: Reflect arbitrary origin
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: https://evil.com" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: https://evil.com" -H "Cookie: session=<valid-session>"
 # Look for: Access-Control-Allow-Origin: https://evil.com
 # AND:       Access-Control-Allow-Credentials: true
 
 # Test 2: Null origin
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: null" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: null" -H "Cookie: session=<valid-session>"
 # Look for: Access-Control-Allow-Origin: null
 
 # Test 3: Prefix/suffix match bypass
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: https://evil-target.com" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: https://evil-target.com" -H "Cookie: session=<valid-session>"
 # If ACAO: https://evil-target.com → ends-with check bypass
 
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: https://target.com.evil.com" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: https://target.com.evil.com" -H "Cookie: session=<valid-session>"
 # If ACAO: https://target.com.evil.com → prefix check bypass
 
 # Test 4: Subdomain trust
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: https://subdomain.target.com" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: https://subdomain.target.com" -H "Cookie: session=<valid-session>"
 # If ACAO: https://subdomain.target.com → find XSS on any subdomain
 
 # Test 5: HTTP downgrade
-curl -s -I "https://<target>/api/profile" \
-  -H "Origin: http://target.com" \
-  -H "Cookie: session=<valid-session>"
+curl -s -I "https://<target>/api/profile" -H "Origin: http://target.com" -H "Cookie: session=<valid-session>"
 
 # Test 6: Preflighted check (non-simple requests)
-curl -s -I "https://<target>/api/admin" \
-  -X OPTIONS \
-  -H "Origin: https://evil.com" \
-  -H "Access-Control-Request-Method: GET" \
-  -H "Access-Control-Request-Headers: Authorization"
+curl -s -I "https://<target>/api/admin" -X OPTIONS -H "Origin: https://evil.com" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: Authorization"
 # Look for: Access-Control-Allow-Methods, Access-Control-Allow-Headers
 ```
 
@@ -86,16 +70,14 @@ curl -si "https://<target>/api/data" -H "Origin: https://evil.com" | grep -i "ac
 
 ```bash
 # Server echoes back whatever Origin header is sent
-curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" \
-  | grep -i "access-control"
+curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -i "access-control"
 # ACAO: https://evil.com + ACAC: true → fully exploitable
 ```
 
 ### 3. Null Origin Trusted
 
 ```bash
-curl -si "https://<target>/api/profile" -H "Origin: null" -b "session=<cookie>" \
-  | grep -i "access-control"
+curl -si "https://<target>/api/profile" -H "Origin: null" -b "session=<cookie>" | grep -i "access-control"
 # ACAO: null + ACAC: true → sandbox iframe exploit (see below)
 ```
 
@@ -104,8 +86,7 @@ curl -si "https://<target>/api/profile" -H "Origin: null" -b "session=<cookie>" 
 ```bash
 # Server checks if origin ends with "target.com"
 # Bypass: register a domain ending in target.com
-curl -si "https://<target>/api/profile" -H "Origin: https://eviltarget.com" -b "session=<cookie>" \
-  | grep -i "access-control"
+curl -si "https://<target>/api/profile" -H "Origin: https://eviltarget.com" -b "session=<cookie>" | grep -i "access-control"
 # OR: https://notatarget.com
 ```
 
@@ -203,10 +184,7 @@ xhr.send();
 # Test CORS on high-value endpoints:
 for endpoint in /api/profile /api/user /api/keys /api/tokens /api/admin /api/credentials /api/export; do
   echo -n "$endpoint: "
-  curl -si "https://<target>$endpoint" \
-    -H "Origin: https://evil.com" \
-    -b "session=<cookie>" 2>/dev/null \
-    | grep -i "access-control-allow-origin" || echo "no CORS header"
+  curl -si "https://<target>$endpoint" -H "Origin: https://evil.com" -b "session=<cookie>" 2>/dev/null | grep -i "access-control-allow-origin" || echo "no CORS header"
 done
 ```
 
@@ -234,9 +212,6 @@ done
 
 ```bash
 # One-liner check
-curl -si "https://<target>/api/profile" \
-  -H "Origin: https://evil.com" \
-  -b "session=<cookie>" \
-  | grep -Ei "access-control-(allow-origin|allow-credentials)"
+curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -Ei "access-control-(allow-origin|allow-credentials)"
 # Both headers present with arbitrary origin → exploitable
 ```

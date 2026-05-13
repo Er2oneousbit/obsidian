@@ -388,8 +388,7 @@ python3 jwt_tool.py <token> -I -pc role -pv admin        # set payload claim
 python3 jwt_tool.py <token> -C -d /usr/share/wordlists/rockyou.txt
 
 # Scan endpoint for JWT vulnerabilities
-python3 jwt_tool.py <token> -t "https://<target>/api/profile" \
-  -rh "Authorization: Bearer <token>" -M pb
+python3 jwt_tool.py <token> -t "https://<target>/api/profile" -rh "Authorization: Bearer <token>" -M pb
 ```
 
 ---

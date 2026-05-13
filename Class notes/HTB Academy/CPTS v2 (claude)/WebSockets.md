@@ -140,13 +140,7 @@ ws.onmessage = function(event) {
 
 ```bash
 # Does the server accept connections with a modified Origin?
-curl -i -N \
-  -H "Connection: Upgrade" \
-  -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Version: 13" \
-  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-  -H "Origin: https://evil.com" \
-  http://target.com/ws
+curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Origin: https://evil.com" http://target.com/ws
 # If 101 Switching Protocols → no origin check → CSWSH possible
 ```
 

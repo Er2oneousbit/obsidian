@@ -248,13 +248,10 @@ gobuster dns -d example.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1
 gobuster dns -d example.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -r 8.8.8.8 -t 50
 
 # ffuf
-ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt \
-  -u https://FUZZ.example.com \
-  -mc 200,301,302,403 -t 50
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -u https://FUZZ.example.com -mc 200,301,302,403 -t 50
 
 # dnsenum
-dnsenum --dnsserver 8.8.8.8 --enum -p 0 -s 0 -o subdomains.txt \
-  -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt example.com
+dnsenum --dnsserver 8.8.8.8 --enum -p 0 -s 0 -o subdomains.txt -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt example.com
 
 # amass (comprehensive — passive + active)
 amass enum -d example.com
@@ -375,16 +372,10 @@ Web: [https://sitereport.netcraft.com](https://sitereport.netcraft.com) — host
 
 ```bash
 # ffuf — fuzz Host header (vhost mode)
-ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -u http://10.10.10.10 \
-  -H "Host: FUZZ.example.com" \
-  -fs <default_response_size>
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -u http://10.10.10.10 -H "Host: FUZZ.example.com" -fs <default_response_size>
 
 # gobuster vhost mode
-gobuster vhost -u http://example.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  --append-domain \
-  -t 50
+gobuster vhost -u http://example.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --append-domain -t 50
 
 # Manual curl test
 curl -s -I http://10.10.10.10 -H "Host: dev.example.com"
@@ -393,8 +384,7 @@ curl -s http://10.10.10.10 -H "Host: admin.example.com" | grep -i "title\|<h1"
 # Batch test from wordlist
 while read vhost; do
   echo -n "[$vhost] "
-  curl -sk -o /dev/null -w "%{http_code} %{size_download}\n" \
-    http://10.10.10.10 -H "Host: ${vhost}.example.com"
+  curl -sk -o /dev/null -w "%{http_code} %{size_download}\n" http://10.10.10.10 -H "Host: ${vhost}.example.com"
 done < /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 ```
 
@@ -410,30 +400,19 @@ echo "10.10.10.10  dev.example.com admin.example.com" | sudo tee -a /etc/hosts
 
 ```bash
 # ffuf — directory brute force
-ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -u https://example.com/FUZZ \
-  -mc 200,201,301,302,403 -t 50
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u https://example.com/FUZZ -mc 200,201,301,302,403 -t 50
 
 # ffuf — file brute force
-ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt \
-  -u https://example.com/FUZZ \
-  -mc 200,201,301,302,403
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt -u https://example.com/FUZZ -mc 200,201,301,302,403
 
 # ffuf — extension fuzzing
-ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt \
-  -u https://example.com/FUZZ \
-  -e .php,.asp,.aspx,.jsp,.txt,.bak,.zip,.conf,.log
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -u https://example.com/FUZZ -e .php,.asp,.aspx,.jsp,.txt,.bak,.zip,.conf,.log
 
 # gobuster dir
-gobuster dir -u https://example.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -x php,asp,aspx,txt,bak \
-  -t 50 -o gobuster_output.txt
+gobuster dir -u https://example.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,asp,aspx,txt,bak -t 50 -o gobuster_output.txt
 
 # feroxbuster — recursive
-feroxbuster -u https://example.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  --depth 3 -x php,html,txt -t 50
+feroxbuster -u https://example.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --depth 3 -x php,html,txt -t 50
 ```
 
 ### Always Check

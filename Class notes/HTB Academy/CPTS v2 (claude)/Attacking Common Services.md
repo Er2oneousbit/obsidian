@@ -758,8 +758,7 @@ ldapsearch -H ldap://10.10.10.10 -x -b "DC=domain,DC=local"
 ldapsearch -H ldap://10.10.10.10 -x -D "user@domain.local" -w 'Password123' -b "DC=domain,DC=local"
 
 # Dump all users
-ldapsearch -H ldap://10.10.10.10 -x -D "user@domain.local" -w 'Password123' \
-  -b "DC=domain,DC=local" "(objectClass=person)" sAMAccountName mail
+ldapsearch -H ldap://10.10.10.10 -x -D "user@domain.local" -w 'Password123' -b "DC=domain,DC=local" "(objectClass=person)" sAMAccountName mail
 
 # ldapdomaindump — HTML/JSON output, great for AD
 ldapdomaindump -u 'domain\user' -p 'Password123' 10.10.10.10 -o /tmp/ldap/

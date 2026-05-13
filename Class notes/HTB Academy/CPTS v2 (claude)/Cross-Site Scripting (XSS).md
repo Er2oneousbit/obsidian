@@ -188,14 +188,10 @@ data:text/html,<script>alert(1)</script>
 
 ```bash
 # Find reflective parameters
-ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
-     -u 'http://target.com/?FUZZ=xss_test' \
-     -fs 0 -mc 200
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=xss_test' -fs 0 -mc 200
 
 # Fuzz with payloads against known parameter
-ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ \
-     -u 'http://target.com/?search=FUZZ' \
-     -fs 0
+ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
 ```
 
 ---
@@ -643,18 +639,14 @@ When a site accepts image uploads and serves SVG files directly, the browser ren
 
 ```bash
 # Fuzz for reflective parameters
-ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
-     -u 'http://target.com/?FUZZ=xss_test_string' \
-     -fs 0 -mc 200
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=xss_test_string' -fs 0 -mc 200
 ```
 
 ### Payload Fuzzing
 
 ```bash
 # Fuzz with XSS payloads
-ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ \
-     -u 'http://target.com/?search=FUZZ' \
-     -fs 0
+ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
 
 # Alternative wordlists
 /usr/share/seclists/Fuzzing/XSS/XSS-Jhaddix.txt
