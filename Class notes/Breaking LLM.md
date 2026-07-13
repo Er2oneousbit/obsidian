@@ -1,0 +1,9 @@
+- Groq - run LLM on their server - they dont have their own model but you can run various ones on them
+	- They control the server so we cannot edit the response
+- Gentech AI
+	- Prompt Injection
+		- Get LLM do something it normally wouldn't
+		- Poison data
+	- Man in the browser
+		- Prompt injection
+			- Microprogram LLM  to do something the user wouldnty do but LLM replies like it did what the user wanted

@@ -1,0 +1,3 @@
+#wmiexec #impacket #localsystemmanagement
+
+#update 

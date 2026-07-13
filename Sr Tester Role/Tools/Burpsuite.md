@@ -1,0 +1,7 @@
+- **Repeater** create manually crafted requests - like a gentle knock on a door
+- **Intruder** this is more of an automated - depending on speed can be a jackhammer on the door
+- **Intercept** using the proxy to halt the HTTP request communication to review or alter the request
+- **Decoder** Used to assist in encoding/decoding such as B64 or URL
+- **Comparer** Highlight the difference between two requests by words or by byte
+- **Sequencer** look for mathematical patterns in tokens
+- **Collaborator** allows out of band requests to be made, like a data exfil PoC

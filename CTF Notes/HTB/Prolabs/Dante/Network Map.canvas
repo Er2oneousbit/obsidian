@@ -1,0 +1,29 @@
+{
+	"nodes":[
+		{"id":"4cdcfa2f9c32705d","type":"text","text":"Kali Box","x":-160,"y":-240,"width":250,"height":50},
+		{"id":"54dcdcd62d3d00fe","type":"text","text":"10.10.110.0/24 Network","x":-160,"y":-160,"width":250,"height":50},
+		{"id":"e735c9d3256f700b","type":"text","text":"[[172.16.1.13]]","x":-455,"y":520,"width":250,"height":60},
+		{"id":"f05fa1135fbc3414","type":"text","text":"[[172.16.1.101]]","x":730,"y":520,"width":250,"height":60},
+		{"id":"a4f6bcde57ad73a5","type":"text","text":"[[172.16.1.102]]","x":1030,"y":520,"width":250,"height":60},
+		{"id":"8ec24d7e4e07f2fe","type":"text","text":"[[172.16.1.12]]","x":-750,"y":520,"width":250,"height":60},
+		{"id":"a32f4b9682d83e4a","type":"text","text":"[[172.16.1.10]]","x":-1030,"y":520,"width":250,"height":60},
+		{"id":"7b2913ac2c6afa0b","type":"text","text":"[[172.16.1.5]]","x":-1350,"y":520,"width":250,"height":60},
+		{"id":"ba34cfce55f6ac1a","type":"text","text":"[[172.16.1.17]]\n","x":-160,"y":520,"width":250,"height":60},
+		{"id":"16abbac717252045","type":"text","text":"[[172.16.1.19]]","x":140,"y":520,"width":250,"height":60},
+		{"id":"2033024285829194","type":"text","text":"[[172.16.1.20]]","x":430,"y":520,"width":250,"height":60},
+		{"id":"9a48a15fd99dff61","type":"text","text":"##### external [[10.10.110.100]] \n- internal 172.16.1.100 \n- hostname DANTE-WEB-NIX01\n\n- Anon FTP\n- Found todo.txt in FTP\n- SSH\n\t- balthazar\n- Apache Default Page port 65000 \n- Worpress\n\t- admin james\n- mysql\n\t- admin shaun","x":-257,"y":-80,"width":445,"height":400}
+	],
+	"edges":[
+		{"id":"8a5ffbf84f352f06","fromNode":"4cdcfa2f9c32705d","fromSide":"bottom","toNode":"54dcdcd62d3d00fe","toSide":"top"},
+		{"id":"a17a0dad3ce8984c","fromNode":"54dcdcd62d3d00fe","fromSide":"bottom","toNode":"9a48a15fd99dff61","toSide":"top"},
+		{"id":"4e6e2bde833f6368","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"ba34cfce55f6ac1a","toSide":"top"},
+		{"id":"d24192a6dc557a58","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"e735c9d3256f700b","toSide":"top"},
+		{"id":"3fb88829b8685d81","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"8ec24d7e4e07f2fe","toSide":"top"},
+		{"id":"64b58bf096c31e80","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"a32f4b9682d83e4a","toSide":"top"},
+		{"id":"6a00096443ae2a9b","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"7b2913ac2c6afa0b","toSide":"top"},
+		{"id":"866b51553082d1b2","fromNode":"16abbac717252045","fromSide":"top","toNode":"9a48a15fd99dff61","toSide":"bottom"},
+		{"id":"537c8dd2179fe031","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"2033024285829194","toSide":"top"},
+		{"id":"d884bda63cbfaa43","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"f05fa1135fbc3414","toSide":"top"},
+		{"id":"05b55ea37263fa35","fromNode":"9a48a15fd99dff61","fromSide":"bottom","toNode":"a4f6bcde57ad73a5","toSide":"top"}
+	]
+}

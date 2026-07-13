@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)https://www.brunorochamoura.com/posts/cpts-report/ -->
+<html lang="en" dir="auto" data-darkreader-proxy-injected="true"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>HTB CPTS Reporting: The Easy Way | BRM</title>
+<meta name="keywords" content="CPTS 🗡️, CyberSec 🛡️, Certification 🎓">
+<meta name="description" content="Or “How I how i passed the HTB CPTS exam without ever writing a pentest report”.">
+<meta name="author" content="Bruno Rocha Moura">
+<link rel="canonical" href="https://www.brunorochamoura.com/posts/cpts-report/">
+<link crossorigin="anonymous" href="https://www.brunorochamoura.com/assets/css/stylesheet.9ce9445b89766c32a60c8cbd6e23323de60fc4333926727ac11ac07bc5a6b3e0.css" integrity="sha256-nOlEW4l2bDKmDIy9biMyPeYPxDM5JnJ6wRrAe8Wms+A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://www.brunorochamoura.com/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://www.brunorochamoura.com/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://www.brunorochamoura.com/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://www.brunorochamoura.com/apple-touch-icon.png">
+<link rel="mask-icon" href="https://www.brunorochamoura.com/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://www.brunorochamoura.com/posts/cpts-report/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="./HTB CPTS Reporting_ The Easy Way _ BRM_files/katex.min.css" integrity="sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ" crossorigin="anonymous">
+
+<script defer="" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/katex.min.js" integrity="sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY" crossorigin="anonymous"></script>
+
+<script defer="" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+        ]
+    });
+});
+</script>
+
+<meta property="og:title" content="HTB CPTS Reporting: The Easy Way">
+<meta property="og:description" content="Or “How I how i passed the HTB CPTS exam without ever writing a pentest report”.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.brunorochamoura.com/posts/cpts-report/">
+<meta property="og:image" content="https://www.brunorochamoura.com/cover.png"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-08-17T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-08-17T00:00:00+00:00">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.brunorochamoura.com/cover.png">
+<meta name="twitter:title" content="HTB CPTS Reporting: The Easy Way">
+<meta name="twitter:description" content="Or “How I how i passed the HTB CPTS exam without ever writing a pentest report”.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://www.brunorochamoura.com/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "HTB CPTS Reporting: The Easy Way",
+      "item": "https://www.brunorochamoura.com/posts/cpts-report/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "HTB CPTS Reporting: The Easy Way",
+  "name": "HTB CPTS Reporting: The Easy Way",
+  "description": "Or \u0026ldquo;How I how i passed the HTB CPTS exam without ever writing a pentest report\u0026rdquo;.",
+  "keywords": [
+    "CPTS 🗡️", "CyberSec 🛡️", "Certification 🎓"
+  ],
+  "articleBody": " Check this post for a breakdown of the time I spent studying for the exam. Check this post for my overall experience on the exam and what I learned from it. Check this post for general tips and tricks for the exam and its preparation. Introduction The HTB CPTS exam has two main criteria that you need to meet within the ten-day testing period:\nCapture at least twelve out of the fourteen available flags. Produce a high-quality, commercial-grade penetration testing report. If you’re anything like I was before the exam, you’re probably confident in your hacking skills but might not have much experience writing penetration testing reports.\nA good way to prepare, as recommended by the course material, is to create mock reports for the AEN module, Pro Labs, and other CTF boxes. This practice can help you build the skills needed to write a strong report when the exam day arrives.\nBut honestly, I didn’t do any of that (besides some CTF writeups). The first real penetration testing report I ever wrote was the one I submitted for my exam. And based on the feedback I received, I think it turned out pretty well.\nExaminer's feedback on my report.\nI achieved this by developing what I call a trigger-based reporting methodology beforehand, which I followed during the exam to great success.\nThis methodology allowed me to fill up the report as I worked through the engagement. It kept the process smooth and balanced, so writing the report didn’t interrupt my hacking flow and vice-versa.\nIn this post, I’ll share the tools I used to write my report and the unique methodology that helped me succeed.\nNote: Don’t take this post as a recommendation to skip reporting practice. If you feel the need to practice, definitely do it. I’m just sharing what worked for me.\nTools Before diving into the reporting methodology, let’s quickly cover the tools I used to write my report.\nWhile the methodology is the main focus, these tools were still crucial to my success.\nSysReptor When I started going through the course material, I was sure I’d just use a simple word processor like LibreOffice Writer to write my report. I didn’t want to deal with the overhead of specialized pentest reporting software, so I figured I’d just download a template from the internet and start typing.\nBut once I got to the Documentation \u0026 Reporting module, it was clear that wouldn’t cut it. Seeing the complexity and detail involved in a professional report, I realized I needed proper report writing software.\nI decided to try SysReptor, a report writing tool designed specifically for penetration testers. It’s free, open-source, and self-hosted.\nSysReptor banner.\nThis turned out to be an excellent decision, as it made the reporting process a lot easier than writing everything from scratch. SysReptor really delivers on its promise of making report writing painless.\nIn short, SysReptor works by letting you choose a report template that breaks the document down into sections, each with its own fields. You just edit the fields and add your findings to fill up the report. The heavy lifting of structuring and styling the report is already done for you.\nWhen you’re finished, you can export the report as either a PDF document or an HTML page.\nSysReptor usage example.\nEven better, there’s an official HTB CPTS template for SysReptor, endorsed by Hack The Box itself! Check out the demo to see how a finished report might look.\nYou can check out this blog post by HTB on how to install SysReptor and add the CPTS template.\nThe methodology I developed relies on filling out SysReptor’s HTB CPTS template, so having it installed is a prerequisite.\nChatGPT Another valuable resource for writing reports is ChatGPT or any other LLM chatbot of your choice.\nYou can enhance the quality and efficiency of your writing process by quickly drafting text without worrying too much about grammar or flow. The AI can then refine it by correcting any mistakes and adjusting the tone to match your needs.\nSimply asking the bot to “Rephrase the text in a way that’s clear and professional” can transform your draft into a polished, professional report in no time, freeing you up to focus on hacking.\nMe using ChatGPT on this very blog post.\nHowever, it’s important to carefully review what the bot produces to ensure it aligns with your vision. Also, limit its use to rephrasing your own writing rather than generating content from scratch, as the AI can sometimes spew nonsense.\nMethodology Alright, let’s dive into the actual methodology and how it came to be.\nA common piece of advice for this (and other) exams is to avoid leaving the reporting until the very end. Instead, you should work on it as you progress.\nThis is solid advice, but it doesn’t really address a crucial question: when should you take a break from hacking to update your report?\nIf you update your report too frequently, it disrupts your hacking flow and slows your progress. But if you take too few breaks, you’ll have too much to report at once, which can hurt the quality of your reporting. The key is to find a balance that’s predictable and manageable.\nThis is where my methodology comes in. As I mentioned earlier, we’ll be using the SysReptor HTB CPTS template, which handles the structure of the report for us. Now, we just need a clear strategy for when and how to fill it in.\nWhat I developed is a trigger-based approach, where I map the different fields in the report to specific milestones during the engagement.\nWhenever I hit a milestone, it triggers me to work on certain parts of the report. By establishing this beforehand, I always know when to take a break from hacking and exactly which sections of the report to focus on at that time.\nFollowing this methodology has several benefits:\nClear and easy to follow with an if-then approach. Removes guesswork on when to pause hacking for work on reporting. Breaks down reporting into small sessions related to what you just worked on. Reports are detailed because you write while things are fresh in your mind. No need to worry about styling or structuring the report thanks to SysReptor. Your report will be over 90% complete by the time you finish capturing flags. Let’s get into it.\nReporting Structure Before diving into the triggers I personally used and recommend, let’s first look at the structure of the HTB CPTS SysReptor template.\nHere are the sections and their respective fields:\nMeta Candidate name, title and email Engagement Information Document Control Customer Contacts Executive Summary Executive Summary Approach Scope Assessment Overview and Recommendations Network Penetration Testing Assessment Summary Network Summary Summary of Findings Internal Network Compromise Walkthrough Walkthrough Summary Detailed Walkthrough Remediation Summary Remediation Summary Short Term Medium Term Long Term Appendix Finding Severities Host \u0026 Service Discovery Subdomain Discovery Exploited Hosts Compromised Users Changes/Host Cleanup Flags Discovered Domain Password Review Findings Title CWE CVSS Overview Impact Affected Components Recommendations References Details Most fields already have default texts. These may be placeholders that you’ll need to fill in or stock text that’s pretty acceptable.\nNot all fields need to be drastically changed, as some already have text that works well for most reports. Those are the bullet points not highleted in bold. You can leave them mostly as is (but make sure to read them) or rephrase them with your own words.\nThe fields in bold are the ones where you will definetely need to swap out the default text for your own.\nTriggers Finally, let’s go over the triggers I used during the exam.\nWe’ll associate milestones that will naturally occur during the engagement with specific fields in the report. When you hit an event trigger, stop what you are doing and fill in the appropriate fields.\nThe idea is that by filling out the report as these milestones occur, you’ll have most of the report done by the time the engagement wraps up.\nThese are the triggers I used, but you can create your own based on what works best for you. Make sure to write them down and refer to them regularly during the exam. If you’d like, use the table of contents of this blog post open for periodic reference.\nWhen The Exam Starts These are the fields you should fill as soon as you start the exam and receive the information about the security assessment you’ll perform:\nMeta Candidate name, title and email Engagement Information Document Control Customer Contacts Network Penetration Testing Assessment Summary Network Summary Summary of Findings Executive Summary Executive Summary Approach Scope Basically, fill out the Meta, Document Control, and Network Penetration Testing Assessment Summary sections completely and most of the Executive Summary, leaving the Assessment Overview and Recommendations field for later.\nMost these fields are fairly standard and require little to no modifications. Read them carefully and decide for yourself if you need to change something or leave as is.\nWhen A Host Or Service Is Discovered Once you discover a live host and enumerate the available services (e.g., via an Nmap scan), you should fill in the appropriate appendix:\nAppendix Host \u0026 Service Discovery In this field, I slightly deviated from the default text provided by the template and created a table for each discovered host with its available services.\nFor each discovered host, create a table with the following columns:\nColumn Explanation Port The port(s) where the discovered service is running. E.g., “80” Service The name and version of the service. E.g., “nginx 1.18.0” Notes Any additional notes you have. E.g., “Hosts a custom support web application.” Ensure that each table is clearly labeled with a heading that identifies which host the information pertains to.\nWhen A Virtual Host Or Subdomain Is Discovered You should fill in the appropriate appendix with both the domains provided in the scope of the engagement (if any) and those you discover during your penetration test:\nAppendix Subdomain Discovery This field consists of a single table with the following columns:\nColumn Explanation URL The URL of the domain. E.g., “admin.target.htb” Description A description of what the domain is used for. E.g., “Administrator dashboard for the web application.” Discovery Method How you discovered it. E.g., “Revealed in HTML comment.” When A Security Finding Is Discovered This is one of the most important and time-consuming triggers, so it’s crucial to handle it correctly.\nFor each security finding, you need to add a Finding to the report.\nFill out all the fields:\nFindings Title CWE CVSS Overview Impact Affected Components Recommendations Details Remediation Summary Short Term Medium Term Long Term Remember, each security finding should be documented individually. Don’t group multiple vulnerabilities, like SQL Injection, into a single finding.\nLet’s break down the fields you’ll need to complete:\nFor the Title, while it can be challenging to come up with, there’s no strict standard you need to follow. As long as your title is clear and consistent, you can name the findings as you see fit.\nHere are some example titles based on those I compiled from Hack The Box sources that might inspire you:\nInsecure File Shares Sensitive Data on File Shares Unnecessary Exposed Services Insecure Direct Object Reference (IDOR) HTTP Verb Tampering Unrestricted File Upload Local File Inclusion (LFI) Weak Admin Credentials SQL Injection Cross-Site Scripting (XSS) SSRF to Local File Read XML External Entity (XXE) Injection Command Injection Excessive Active Directory Group Privileges Passwords in AD User Description Field Misconfigured Instance For the CWE, if you’re unsure, you can ask ChatGPT which CWE fits the vulnerability. Then, validate it by Googling MITRE and reviewing the description.\nFor CVSS, use the CVSS calculator built into SysReptor or find one online. If you need assistance, ChatGPT can help, but make sure to verify the result yourself.\nIn the Overview field, provide a high-level explanation of the vulnerability both generally and in the context of your finding. Avoid covering the impact or remediation here, as those will be addressed in later fields.\nIn the Impact section, describe the security implications of the vulnerability if it remains in the client’s environment. Provide specific examples relevant to this instance of the vulnerability. You can present this information as a paragraph or a bullet-point list, but keep the format consistent across all findings.\nIn the Affected Components field, provide the smallest label that encompasses all the components affected by the vulnerability.\nFor example:\nIf a vulnerability affects a single host or service, use a label that includes both the host and the service if relevant, like “HOST01 (SMB / 139,445 TCP)”. (e.g. EternalBlue) If it affects a specific subdomain, use a label such as app.target.htb. (e.g. SQLi on a web application) For vulnerabilities affecting an entire subnetwork or an Active Directory environment, don’t list each host individually. Instead, use a label like “target.htb Active Directory domain” or an IP range, such as 10.0.0.0/8. (e.g. Kerberoasting) In the Recommendations field, provide actionable steps to address the vulnerability. Never attempt to fix the issue yourself, such as by providing a “fixed” version of code. Instead, guide the client on how to resolve the issue. Each vulnerability covered in the course has an Academy section with mitigation suggestions that you can use as reference when writing recommendations. You can present these actions as a bullet-point list.\nIn the References field, include links to resources related to the security finding. Useful references might include:\nThe NIST page for the CVE if applicable, and any relevant blog posts by the researcher. The MITRE page for the CWE, if available. An OWASP Prevention Cheatsheet for the vulnerability, if there is one. If you used a Proof of Concept (PoC) script you haven’t wrote yourself, provide a link. Lastly, in the Details field, provide a step-by-step procedure to reproduce the discovery and exploitation of the finding, including explanations for each step. Be sure to include:\nPlenty of images and code blocks to illustrate your points. Label all images and code blocks clearly. Highlight important lines in code blocks. Crop images to show only the relevant portions. Redact any sensitive information from both images and code blocks. Mention tools and scripts used. With the finding section complete, take a moment to fill in the fields related to the Remediation Summary section by adding recommendations for addressing this specific finding.\nIn this step, you can generally copy-paste the remediation actions you suggested in the finding’s Recommendation field and distribute them across Short Term, Medium Term, and Long Term fields as appropriate.\nBy the end of the engagement, you should have a bullet point list of short, medium, and long-term remediation actions for all the security findings you discovered.\nWhen You Get Foothold On A Host Once you gain command execution on a host, it’s time to add it as exploited to the appropriate appendix.\nYou’ll also document the steps for this initial compromise in the compromise walkthrough.\nInternal Network Compromise Walkthrough Walkthrough Summary Detailed Walkthrough Appendix Exploited Hosts For the Exploited Hosts appendix, fill in a table with the following columns for each host:\nColumn Explanation Host The hostname and IP address of the host. E.g., “HOST01 (192.158.1.38)” Scope Indicate either “External” or “Internal,” depending on whether the host is external-facing or internal (e.g., in a DMZ). Method Describe the exploitation method used to compromise the host. E.g., “Command injection on web application.” Notes Include any additional notes about the host. E.g., “Domain Controller for target.htb.” For the compromise walkthrough, start by reviewing the Walkthrough Summary field. Make any necessary adjustments and see if it looks good to you. Feel free to rephrase it in your own words if needed, but otherwise you can leave it as is.\nFor the Detailed Walkthrough, you’ll document the steps related to the host you just exploited.\nUse the following structure, which is divided into two parts:\n{{ report.candidate.a_name }} (\"the tester\" herein) performed the following to fully compromise the domain. **Detailed reproduction steps for this attack chain are as follows:** For both parts, exclude any findings unrelated to the shortest attack path to domain compromise. Write in the third person, referring to yourself as “the tester.”\nBullet Point List: Keep it concise and focused. It’s fine to have multiple points for a single finding, but don’t overdo it. Don’t include images, code blocks, or any extraneous details.\nDetailed Walkthrough: Describe the steps thoroughly in a writeup format. Be highly descriptive and explain each technique or action in detail, at least once. Include plenty of images and code blocks—when in doubt, err on the side of including too many rather than too few. Add pertinent comments where appropriate, such as acknowledging effective security measures.\nAs you compromise more hosts during the engagement, this field will gradually fill up, resulting in a complete walkthrough of the attack chain by the end.\nWhen You Root A Host Once you’ve gained the highest local privilege on a host (root or SYSTEM), fill out the following fields:\nInternal Network Compromise Walkthrough Detailed Walkthrough Appendix Changes/Host Cleanup First, take a moment to recall all the changes you made to the host since gaining a foothold. This could include actions like adding a web shell, transferring an executable, creating a local user, etc.\nEven if you reverted a change, such as deleting a PoC script after using it, it’s important to document it in the report. The transfer might have triggered an EDR alert, and the client will need to know whether it was part of the pentest or a potential breach.\nAfter compiling your list, add a table to the Changes/Host Cleanup appendix with the following columns:\nColumn Explanation Host The hostname and IP address of the host. E.g., “HOST01 (192.158.1.38)” Scope Indicate either “External” or “Internal,” depending on whether the host is external-facing or internal (e.g., in a DMZ). Change/Cleanup Needed A description of the change made. If it involves creating or transferring a file, include the MD5 sum. E.g., “Uploaded a web shell to /var/www/html/shell.php. MD5: 6ea3393fd7a4544d2fda0e42d7634013” Make sure to add a heading before the table to identify which host the changes relate to.\nAfter documenting the changes, include the steps for this compromise in the Detailed Walkthrough field, both in the bullet point list and the detailed writeup.\nRefer to the “When You Get Foothold On A Host” trigger for guidance on structuring this field.\nWhen You Compromise A User Once you gain control of a user, whether by obtaining their passwords, NTLM hash or however else, add this information to the appropriate appendix.\nAppendix Compromised Users I recommend creating one table for local users and another for each Active Directory domain where you’ve compromised a user. Alternatively, you could create a separate table for local users on each individual host if that works better for you.\nThe tables should include the following columns:\nColumn Explanation Username The username for the user. E.g., “www-data” Method The method you used to gain control over this user. E.g., “Kerberoasted” Notes Notes about the user. For local users, specify the host they belong to. If the user has a specific purpose, mention that too. E.g., “HOST01’s local user for Tomcat service.” As always, ensure that tables are preceded by a heading identifying the host or domain they are associated with.\nWhen You Capture A Flag You captured a flag—great job! Now, add it to the appropriate appendix:\nAppendix Flags Discovered I recommend using a single table with the following columns:\nColumn Explanation Flag # The flag number. Sort the rows in ascending order. E.g., “9.” Host The hostname of the host where the flag was found. E.g., “HOST01” Flag Value The exact value of the flag as found. Flag Location Where the flag was found. If it was in a file, provide the full path. E.g., “/root/flag.txt” Method Used The method used to exploit your way to the flag. E.g., “Privilege escalation via sudo rights over the wget binary.” When The Engagement Is Done By the end of your engagement, if you followed the trigger methodology, your report should be over 90% complete. All that’s left is to finish the remaining fields and add some final polish.\nThe fields that need to be filled or revisited are:\nExecutive Summary Assessment Overview and Recommendations Remediation Summary Short Term Medium Term Long Term Appendix Domain Password Review Now that you have a complete walkthrough of the attack path in the Detailed Walkthrough field, it’s time to fill in the Assessment Overview and Recommendations section of the Executive Summary.\nFor this section, you’ll provide a plain-English summary of the attack path and your overall takeaways from the engagement. Avoid technical jargon, bullet points, and code blocks, as this part is intended for a non-technical audience.\nStart with a paragraph on your overall assessment of their security posture. Reflect on the security findings and what they reveal about the client’s security practices. For instance, if no password spray attack succeeded, praise their strong password policy.\nThen, write a paragraph for each security finding in the attack chain. Explain each vulnerability in simple terms that anyone can understand (without sounding patronizing) and include straightforward remediation suggestions.\nThe default text for this field is well-written, so definetely keep it and insert your own text where indicated.\nAfter that, revisit the Short Term, Medium Term, and Long Term remediation fields. By now, you should have remediation actions related to the specific security findings listed. However, it’s also important to add recommendations that address the overall security posture of the organization.\nFor example, if many findings were related to outdated software with known CVEs, you should recommend reviewing and improving their software update procedures. Additionally, offer broad advice such as conducting regular security audits and staying up to date with best practices.\nAn appendix not included in the SysReptor template but recommended by the course material is Domain Password Review.\nIn this appendix, you’ll provide statistics on the passwords of Active Directory domain users after achieving domain compromise and dumping NTDS.dit. Key statistics to include are:\nNumber of hashes obtained Number of unique hashes Percentage of hashes cracked Most commonly used passwords Password length breakdown To generate these statistics, I recommend using the DPAT Python script. Take the most insightful statistics it provides and create tables for them in the appendix.\nLastly, review your entire report thoroughly and add any final polish as needed. Proofread it multiple times. If you have the time, take a break once you think the report is done, sleep on it and then read it again the next morning with fresh eyes.\nAnd there you have it, a complete report! Submit it and you’re done.\nConclusion Most penetration testers love diving into the technical side of hacking but dread writing the report afterward. If you’re into the techy parts of penetration testing, writing reports for C-level executives and other business types probably isn’t your idea of fun.\nBut remember, the report at the end of an engagement, along with other deliverables, is what the client is actually paying us for. It’s not just an annoying formality, it’s the main reason our client hired us in the first place.\nI hope this post helps you write a great report for your HTB CPTS exam attempt.\n",
+  "wordCount" : "3907",
+  "inLanguage": "en",
+  "image":"https://www.brunorochamoura.com/cover.png","datePublished": "2024-08-17T00:00:00Z",
+  "dateModified": "2024-08-17T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "Bruno Rocha Moura"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://www.brunorochamoura.com/posts/cpts-report/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BRM",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://www.brunorochamoura.com/favicon.ico"
+    }
+  }
+}
+</script>
+
+    
+        <script id="MathJax-script" async="" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/tex-chtml.js"></script>
+<script>
+  MathJax = {
+    tex: {
+      displayMath: [['\\[', '\\]'], ['$$', '$$']],  
+      inlineMath: [['\\(', '\\)']]                  
+    }
+  };
+</script>
+
+
+    
+<style type="text/css">.CtxtMenu_InfoClose {  top:.2em; right:.2em;}
+.CtxtMenu_InfoContent {  overflow:auto; text-align:left; font-size:80%;  padding:.4em .6em; border:1px inset; margin:1em 0px;  max-height:20em; max-width:30em; background-color:#EEEEEE;  white-space:normal;}
+.CtxtMenu_Info.CtxtMenu_MousePost {outline:none;}
+.CtxtMenu_Info {  position:fixed; left:50%; width:auto; text-align:center;  border:3px outset; padding:1em 2em; background-color:#DDDDDD;  color:black;  cursor:default; font-family:message-box; font-size:120%;  font-style:normal; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 15px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius:15px;               /* Safari and Chrome */  -moz-border-radius:15px;                  /* Firefox */  -khtml-border-radius:15px;                /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */  filter:progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color="gray", Positive="true"); /* IE */}
+</style><style type="text/css">.CtxtMenu_MenuClose {  position:absolute;  cursor:pointer;  display:inline-block;  border:2px solid #AAA;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  font-family: "Courier New", Courier;  font-size:24px;  color:#F0F0F0}
+.CtxtMenu_MenuClose span {  display:block; background-color:#AAA; border:1.5px solid;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  line-height:0;  padding:8px 0 6px     /* may need to be browser-specific */}
+.CtxtMenu_MenuClose:hover {  color:white!important;  border:2px solid #CCC!important}
+.CtxtMenu_MenuClose:hover span {  background-color:#CCC!important}
+.CtxtMenu_MenuClose:hover:focus {  outline:none}
+</style><style type="text/css">.CtxtMenu_Menu {  position:absolute;  background-color:white;  color:black;  width:auto; padding:5px 0px;  border:1px solid #CCCCCC; margin:0; cursor:default;  font: menu; text-align:left; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 5px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius: 5px;             /* Safari and Chrome */  -moz-border-radius: 5px;                /* Firefox */  -khtml-border-radius: 5px;              /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */}
+.CtxtMenu_MenuItem {  padding: 1px 2em;  background:transparent;}
+.CtxtMenu_MenuArrow {  position:absolute; right:.5em; padding-top:.25em; color:#666666;  font-family: null; font-size: .75em}
+.CtxtMenu_MenuActive .CtxtMenu_MenuArrow {color:white}
+.CtxtMenu_MenuArrow.CtxtMenu_RTL {left:.5em; right:auto}
+.CtxtMenu_MenuCheck {  position:absolute; left:.7em;  font-family: null}
+.CtxtMenu_MenuCheck.CtxtMenu_RTL { right:.7em; left:auto }
+.CtxtMenu_MenuRadioCheck {  position:absolute; left: .7em;}
+.CtxtMenu_MenuRadioCheck.CtxtMenu_RTL {  right: .7em; left:auto}
+.CtxtMenu_MenuInputBox {  padding-left: 1em; right:.5em; color:#666666;  font-family: null;}
+.CtxtMenu_MenuInputBox.CtxtMenu_RTL {  left: .1em;}
+.CtxtMenu_MenuComboBox {  left:.1em; padding-bottom:.5em;}
+.CtxtMenu_MenuSlider {  left: .1em;}
+.CtxtMenu_SliderValue {  position:absolute; right:.1em; padding-top:.25em; color:#333333;  font-size: .75em}
+.CtxtMenu_SliderBar {  outline: none; background: #d3d3d3}
+.CtxtMenu_MenuLabel {  padding: 1px 2em 3px 1.33em;  font-style:italic}
+.CtxtMenu_MenuRule {  border-top: 1px solid #DDDDDD;  margin: 4px 3px;}
+.CtxtMenu_MenuDisabled {  color:GrayText}
+.CtxtMenu_MenuActive {  background-color: #606872;  color: white;}
+.CtxtMenu_MenuDisabled:focus {  background-color: #E8E8E8}
+.CtxtMenu_MenuLabel:focus {  background-color: #E8E8E8}
+.CtxtMenu_ContextMenu:focus {  outline:none}
+.CtxtMenu_ContextMenu .CtxtMenu_MenuItem:focus {  outline:none}
+.CtxtMenu_SelectionMenu {  position:relative; float:left;  border-bottom: none; -webkit-box-shadow:none; -webkit-border-radius:0px; }
+.CtxtMenu_SelectionItem {  padding-right: 1em;}
+.CtxtMenu_Selection {  right: 40%; width:50%; }
+.CtxtMenu_SelectionBox {  padding: 0em; max-height:20em; max-width: none;  background-color:#FFFFFF;}
+.CtxtMenu_SelectionDivider {  clear: both; border-top: 2px solid #000000;}
+.CtxtMenu_Menu .CtxtMenu_MenuClose {  top:-10px; left:-10px}
+</style><style id="MJX-CHTML-styles">
+mjx-container[jax="CHTML"] {
+  line-height: 0;
+}
+
+mjx-container [space="1"] {
+  margin-left: .111em;
+}
+
+mjx-container [space="2"] {
+  margin-left: .167em;
+}
+
+mjx-container [space="3"] {
+  margin-left: .222em;
+}
+
+mjx-container [space="4"] {
+  margin-left: .278em;
+}
+
+mjx-container [space="5"] {
+  margin-left: .333em;
+}
+
+mjx-container [rspace="1"] {
+  margin-right: .111em;
+}
+
+mjx-container [rspace="2"] {
+  margin-right: .167em;
+}
+
+mjx-container [rspace="3"] {
+  margin-right: .222em;
+}
+
+mjx-container [rspace="4"] {
+  margin-right: .278em;
+}
+
+mjx-container [rspace="5"] {
+  margin-right: .333em;
+}
+
+mjx-container [size="s"] {
+  font-size: 70.7%;
+}
+
+mjx-container [size="ss"] {
+  font-size: 50%;
+}
+
+mjx-container [size="Tn"] {
+  font-size: 60%;
+}
+
+mjx-container [size="sm"] {
+  font-size: 85%;
+}
+
+mjx-container [size="lg"] {
+  font-size: 120%;
+}
+
+mjx-container [size="Lg"] {
+  font-size: 144%;
+}
+
+mjx-container [size="LG"] {
+  font-size: 173%;
+}
+
+mjx-container [size="hg"] {
+  font-size: 207%;
+}
+
+mjx-container [size="HG"] {
+  font-size: 249%;
+}
+
+mjx-container [width="full"] {
+  width: 100%;
+}
+
+mjx-box {
+  display: inline-block;
+}
+
+mjx-block {
+  display: block;
+}
+
+mjx-itable {
+  display: inline-table;
+}
+
+mjx-row {
+  display: table-row;
+}
+
+mjx-row > * {
+  display: table-cell;
+}
+
+mjx-mtext {
+  display: inline-block;
+}
+
+mjx-mstyle {
+  display: inline-block;
+}
+
+mjx-merror {
+  display: inline-block;
+  color: red;
+  background-color: yellow;
+}
+
+mjx-mphantom {
+  visibility: hidden;
+}
+
+_::-webkit-full-page-media, _:future, :root mjx-container {
+  will-change: opacity;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-c::before {
+  display: block;
+  width: 0;
+}
+
+.MJX-TEX {
+  font-family: MJXZERO, MJXTEX;
+}
+
+.TEX-B {
+  font-family: MJXZERO, MJXTEX-B;
+}
+
+.TEX-I {
+  font-family: MJXZERO, MJXTEX-I;
+}
+
+.TEX-MI {
+  font-family: MJXZERO, MJXTEX-MI;
+}
+
+.TEX-BI {
+  font-family: MJXZERO, MJXTEX-BI;
+}
+
+.TEX-S1 {
+  font-family: MJXZERO, MJXTEX-S1;
+}
+
+.TEX-S2 {
+  font-family: MJXZERO, MJXTEX-S2;
+}
+
+.TEX-S3 {
+  font-family: MJXZERO, MJXTEX-S3;
+}
+
+.TEX-S4 {
+  font-family: MJXZERO, MJXTEX-S4;
+}
+
+.TEX-A {
+  font-family: MJXZERO, MJXTEX-A;
+}
+
+.TEX-C {
+  font-family: MJXZERO, MJXTEX-C;
+}
+
+.TEX-CB {
+  font-family: MJXZERO, MJXTEX-CB;
+}
+
+.TEX-FR {
+  font-family: MJXZERO, MJXTEX-FR;
+}
+
+.TEX-FRB {
+  font-family: MJXZERO, MJXTEX-FRB;
+}
+
+.TEX-SS {
+  font-family: MJXZERO, MJXTEX-SS;
+}
+
+.TEX-SSB {
+  font-family: MJXZERO, MJXTEX-SSB;
+}
+
+.TEX-SSI {
+  font-family: MJXZERO, MJXTEX-SSI;
+}
+
+.TEX-SC {
+  font-family: MJXZERO, MJXTEX-SC;
+}
+
+.TEX-T {
+  font-family: MJXZERO, MJXTEX-T;
+}
+
+.TEX-V {
+  font-family: MJXZERO, MJXTEX-V;
+}
+
+.TEX-VB {
+  font-family: MJXZERO, MJXTEX-VB;
+}
+
+mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
+  font-family: MJXZERO, MJXTEX-S1, MJXTEX-S4, MJXTEX, MJXTEX-A ! important;
+}
+
+@font-face /* 0 */ {
+  font-family: MJXZERO;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff") format("woff");
+}
+
+@font-face /* 1 */ {
+  font-family: MJXTEX;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff") format("woff");
+}
+
+@font-face /* 2 */ {
+  font-family: MJXTEX-B;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff") format("woff");
+}
+
+@font-face /* 3 */ {
+  font-family: MJXTEX-I;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff") format("woff");
+}
+
+@font-face /* 4 */ {
+  font-family: MJXTEX-MI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff") format("woff");
+}
+
+@font-face /* 5 */ {
+  font-family: MJXTEX-BI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff") format("woff");
+}
+
+@font-face /* 6 */ {
+  font-family: MJXTEX-S1;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff") format("woff");
+}
+
+@font-face /* 7 */ {
+  font-family: MJXTEX-S2;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff") format("woff");
+}
+
+@font-face /* 8 */ {
+  font-family: MJXTEX-S3;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff") format("woff");
+}
+
+@font-face /* 9 */ {
+  font-family: MJXTEX-S4;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff") format("woff");
+}
+
+@font-face /* 10 */ {
+  font-family: MJXTEX-A;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff") format("woff");
+}
+
+@font-face /* 11 */ {
+  font-family: MJXTEX-C;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff") format("woff");
+}
+
+@font-face /* 12 */ {
+  font-family: MJXTEX-CB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff") format("woff");
+}
+
+@font-face /* 13 */ {
+  font-family: MJXTEX-FR;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff") format("woff");
+}
+
+@font-face /* 14 */ {
+  font-family: MJXTEX-FRB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff") format("woff");
+}
+
+@font-face /* 15 */ {
+  font-family: MJXTEX-SS;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff") format("woff");
+}
+
+@font-face /* 16 */ {
+  font-family: MJXTEX-SSB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff") format("woff");
+}
+
+@font-face /* 17 */ {
+  font-family: MJXTEX-SSI;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff") format("woff");
+}
+
+@font-face /* 18 */ {
+  font-family: MJXTEX-SC;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff") format("woff");
+}
+
+@font-face /* 19 */ {
+  font-family: MJXTEX-T;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff") format("woff");
+}
+
+@font-face /* 20 */ {
+  font-family: MJXTEX-V;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff") format("woff");
+}
+
+@font-face /* 21 */ {
+  font-family: MJXTEX-VB;
+  src: url("https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
+}
+</style></head>
+
+<body class=" dark" id="top">
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://www.brunorochamoura.com/" accesskey="h" title="BRM (Alt + H)">BRM</a>
+            <div class="logo-switches">
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://field-manual.brunorochamoura.com/manual/" title="Field Manual">
+                    <span>Field Manual</span>&nbsp;
+                    <svg fill="none" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12" data-darkreader-inline-stroke="" style="--darkreader-inline-stroke: currentColor;">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+                        <path d="M15 3h6v6"></path>
+                        <path d="M10 14L21 3"></path>
+                    </svg>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.brunorochamoura.com/posts" title="Posts">
+                    <span>Posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.brunorochamoura.com/tags" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.brunorochamoura.com/about" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      HTB CPTS Reporting: The Easy Way
+    </h1>
+    <div class="post-meta"><span title="2024-08-17 00:00:00 +0000 UTC">August 17, 2024</span>&nbsp;·&nbsp;19 min&nbsp;·&nbsp;Bruno Rocha Moura
+
+</div>
+  </header> 
+<figure class="entry-cover">
+        <img loading="eager" srcset="https://www.brunorochamoura.com/posts/cpts-report/cover_hu_2e3981a4cfbf0753.png 360w ,https://www.brunorochamoura.com/posts/cpts-report/cover_hu_e91c29957341d1c5.png 480w ,https://www.brunorochamoura.com/posts/cpts-report/cover_hu_a45145c519de4668.png 720w ,https://www.brunorochamoura.com/posts/cpts-report/cover.png 803w" sizes="(min-width: 768px) 720px, 100vw" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/cover.png" alt="" width="803" height="425">
+        
+</figure><div class="toc">
+    <details>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#introduction" aria-label="Introduction">Introduction</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#tools" aria-label="Tools">Tools</a><ul>
+                        
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#sysreptor" aria-label="SysReptor">SysReptor</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#chatgpt" aria-label="ChatGPT">ChatGPT</a></li></ul>
+                </li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#methodology" aria-label="Methodology">Methodology</a><ul>
+                        
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#reporting-structure" aria-label="Reporting Structure">Reporting Structure</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#triggers" aria-label="Triggers">Triggers</a><ul>
+                        
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-the-exam-starts" aria-label="When The Exam Starts">When The Exam Starts</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-host-or-service-is-discovered" aria-label="When A Host Or Service Is Discovered">When A Host Or Service Is Discovered</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-virtual-host-or-subdomain-is-discovered" aria-label="When A Virtual Host Or Subdomain Is Discovered">When A Virtual Host Or Subdomain Is Discovered</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-security-finding-is-discovered" aria-label="When A Security Finding Is Discovered">When A Security Finding Is Discovered</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-get-foothold-on-a-host" aria-label="When You Get Foothold On A Host">When You Get Foothold On A Host</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-root-a-host" aria-label="When You Root A Host">When You Root A Host</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-compromise-a-user" aria-label="When You Compromise A User">When You Compromise A User</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-capture-a-flag" aria-label="When You Capture A Flag">When You Capture A Flag</a></li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#when-the-engagement-is-done" aria-label="When The Engagement Is Done">When The Engagement Is Done</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="https://www.brunorochamoura.com/posts/cpts-report/#conclusion" aria-label="Conclusion">Conclusion</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><!-- raw HTML omitted -->
+<ul>
+<li>Check <a href="https://www.brunorochamoura.com/posts/road-to-cpts/">this post</a> for a breakdown of the time I spent studying for the exam.</li>
+<li>Check <a href="https://www.brunorochamoura.com/posts/cpts-experience/">this post</a> for my overall experience on the exam and what I learned from it.</li>
+<li>Check <a href="https://www.brunorochamoura.com/posts/cpts-tips/">this post</a> for general tips and tricks for the exam and its preparation.
+<!-- raw HTML omitted --></li>
+</ul>
+<h1 id="introduction">Introduction<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#introduction">#</a></h1>
+<p>The HTB CPTS exam has two main criteria that you need to meet within the ten-day testing period:</p>
+<ol>
+<li>Capture at least twelve out of the fourteen available flags.</li>
+<li>Produce a high-quality, commercial-grade penetration testing report.</li>
+</ol>
+<p>If you’re anything like I was before the exam, you’re probably confident in your hacking skills but might not have much experience writing penetration testing reports.</p>
+<p>A good way to prepare, as recommended by the course material, is to create mock reports for the AEN module, Pro Labs, and other CTF boxes. This practice can help you build the skills needed to write a strong report when the exam day arrives.</p>
+<p>But honestly, I didn’t do any of that (besides some CTF writeups). The first real penetration testing report I ever wrote was the one I submitted for my exam. And based on the feedback I received, I think it turned out pretty well.</p>
+
+
+
+  
+  
+  <figure>
+    <a href="./HTB CPTS Reporting_ The Easy Way _ BRM_files/report.png">
+      <img srcset="
+          /posts/cpts-report/report_hu_3e6916e6f5f4eb8f.png 240w,
+          /posts/cpts-report/report_hu_42028ba49a33cf00.png 320w,
+          /posts/cpts-report/report_hu_3cdce4be6f402434.png 600w,
+          /posts/cpts-report/report_hu_c456d27ede8aa2e8.png 720w,
+          /posts/cpts-report/report.png 788w" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/report.png" alt="Examiner&#39;s feedback on my report." style="display:block; margin:auto; height:auto;" width="788" height="608">
+    </a>
+    <figcaption style="text-align: center; margin-top: 0.5em;">
+        <p>Examiner's feedback on my report.</p>
+    </figcaption>
+  </figure>
+
+
+<p>I achieved this by developing what I call a <strong>trigger-based reporting methodology</strong> beforehand, which I followed during the exam to great success.</p>
+<p>This methodology allowed me to fill up the report as I worked through the engagement. It kept the process smooth and balanced, so writing the report didn’t interrupt my hacking flow and vice-versa.</p>
+<p>In this post, I’ll share the tools I used to write my report and the unique methodology that helped me succeed.</p>
+<p><strong>Note:</strong> Don’t take this post as a recommendation to skip reporting practice. If you feel the need to practice, definitely do it. I’m just sharing what worked for me.</p>
+<h1 id="tools">Tools<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#tools">#</a></h1>
+<p>Before diving into the reporting methodology, let’s quickly cover the tools I used to write my report.</p>
+<p>While the methodology is the main focus, these tools were still crucial to my success.</p>
+<h2 id="sysreptor">SysReptor<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#sysreptor">#</a></h2>
+<p>When I started going through the course material, I was sure I’d just use a simple word processor like LibreOffice Writer to write my report. I didn’t want to deal with the overhead of specialized pentest reporting software, so I figured I’d just download a template from the internet and start typing.</p>
+<p>But once I got to the Documentation &amp; Reporting module, it was clear that wouldn’t cut it. Seeing the complexity and detail involved in a professional report, I realized I needed proper report writing software.</p>
+<p>I decided to try <a href="https://docs.sysreptor.com/">SysReptor</a>, a report writing tool designed specifically for penetration testers. It’s free, open-source, and self-hosted.</p>
+
+
+
+  
+  
+  <figure>
+    <a href="./HTB CPTS Reporting_ The Easy Way _ BRM_files/sysreptor.png">
+      <img srcset="
+          /posts/cpts-report/sysreptor_hu_e262af030d4db05a.png 240w,
+          /posts/cpts-report/sysreptor_hu_4163c7974365977b.png 320w,
+          /posts/cpts-report/sysreptor_hu_a95cfa3fb27583d4.png 600w,
+          /posts/cpts-report/sysreptor_hu_110d1abb88e511dc.png 720w,
+          /posts/cpts-report/sysreptor.png 1584w" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/sysreptor.png" alt="SysReptor banner." style="display:block; margin:auto; height:auto;" width="1584" height="396">
+    </a>
+    <figcaption style="text-align: center; margin-top: 0.5em;">
+        <p>SysReptor banner.</p>
+    </figcaption>
+  </figure>
+
+
+<p>This turned out to be an excellent decision, as it made the reporting process a lot easier than writing everything from scratch. SysReptor really delivers on its promise of making report writing painless.</p>
+<p>In short, SysReptor works by letting you choose a report template that breaks the document down into sections, each with its own fields. You just edit the fields and add your findings to fill up the report. The heavy lifting of structuring and styling the report is already done for you.</p>
+<p>When you’re finished, you can export the report as either a PDF document or an HTML page.</p>
+
+
+
+  
+  
+  <figure>
+    <a href="./HTB CPTS Reporting_ The Easy Way _ BRM_files/sysreptor-example.gif">
+      <img srcset="
+          /posts/cpts-report/sysreptor-example_hu_cda367865c3c3f64.gif 240w,
+          /posts/cpts-report/sysreptor-example_hu_78c0098176a0c409.gif 320w,
+          /posts/cpts-report/sysreptor-example_hu_116dd4ecc3c85bd3.gif 600w,
+          /posts/cpts-report/sysreptor-example_hu_6883bace1ad687f.gif 720w,
+          /posts/cpts-report/sysreptor-example.gif 998w" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/sysreptor-example.gif" alt="SysReptor usage example." style="display:block; margin:auto; height:auto;" width="998" height="622">
+    </a>
+    <figcaption style="text-align: center; margin-top: 0.5em;">
+        <p>SysReptor usage example.</p>
+    </figcaption>
+  </figure>
+
+
+<p>Even better, there’s an <a href="https://docs.sysreptor.com/assets/reports/HTB-CPTS-Report.pdf">official HTB CPTS template</a> for SysReptor, endorsed by Hack The Box itself! Check out the demo to see how a finished report might look.</p>
+<p>You can check out this <a href="https://www.hackthebox.com/blog/certification-templates">blog post by HTB</a> on how to install SysReptor and add the CPTS template.</p>
+<p>The methodology I developed relies on filling out SysReptor’s HTB CPTS template, so having it installed is a prerequisite.</p>
+<h2 id="chatgpt">ChatGPT<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#chatgpt">#</a></h2>
+<p>Another valuable resource for writing reports is ChatGPT or any other LLM chatbot of your choice.</p>
+<p>You can enhance the quality and efficiency of your writing process by quickly drafting text without worrying too much about grammar or flow. The AI can then refine it by correcting any mistakes and adjusting the tone to match your needs.</p>
+<p>Simply asking the bot to “Rephrase the text in a way that’s clear and professional” can transform your draft into a polished, professional report in no time, freeing you up to focus on hacking.</p>
+
+
+
+  
+  
+  <figure>
+    <a href="./HTB CPTS Reporting_ The Easy Way _ BRM_files/chatgpt.png">
+      <img srcset="
+          /posts/cpts-report/chatgpt_hu_55ee44ebf8231497.png 240w,
+          /posts/cpts-report/chatgpt_hu_34e325606fd6aabb.png 320w,
+          /posts/cpts-report/chatgpt_hu_cdee76e28af47668.png 600w,
+          /posts/cpts-report/chatgpt_hu_551e466a5821d372.png 720w,
+          /posts/cpts-report/chatgpt.png 807w" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/chatgpt.png" alt="Me using ChatGPT on this very blog post." style="display:block; margin:auto; height:auto;" width="807" height="697">
+    </a>
+    <figcaption style="text-align: center; margin-top: 0.5em;">
+        <p>Me using ChatGPT on this very blog post.</p>
+    </figcaption>
+  </figure>
+
+
+<p>However, it’s important to carefully review what the bot produces to ensure it aligns with your vision. Also, limit its use to rephrasing your own writing rather than generating content from scratch, as the AI can sometimes spew nonsense.</p>
+<h1 id="methodology">Methodology<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#methodology">#</a></h1>
+<p>Alright, let’s dive into the actual methodology and how it came to be.</p>
+<p>A common piece of advice for this (and other) exams is to avoid leaving the reporting until the very end. Instead, you should work on it as you progress.</p>
+<p>This is solid advice, but it doesn’t really address a crucial question: when should you take a break from hacking to update your report?</p>
+<p>If you update your report too frequently, it disrupts your hacking flow and slows your progress. But if you take too few breaks, you’ll have too much to report at once, which can hurt the quality of your reporting. The key is to find a balance that’s predictable and manageable.</p>
+<p>This is where my methodology comes in. As I mentioned earlier, we’ll be using the SysReptor HTB CPTS template, which handles the structure of the report for us. Now, we just need a clear strategy for when and how to fill it in.</p>
+<p>What I developed is a <strong>trigger-based approach</strong>, where I map the different fields in the report to specific milestones during the engagement.</p>
+<p>Whenever I hit a milestone, it triggers me to work on certain parts of the report. By establishing this beforehand, I always know when to take a break from hacking and exactly which sections of the report to focus on at that time.</p>
+<p>Following this methodology has several benefits:</p>
+<ul>
+<li><strong>Clear and easy to follow with an if-then approach.</strong></li>
+<li><strong>Removes guesswork on when to pause hacking for work on reporting.</strong></li>
+<li><strong>Breaks down reporting into small sessions related to what you just worked on.</strong></li>
+<li><strong>Reports are detailed because you write while things are fresh in your mind.</strong></li>
+<li><strong>No need to worry about styling or structuring the report thanks to SysReptor.</strong></li>
+<li><strong>Your report will be over 90% complete by the time you finish capturing flags.</strong></li>
+</ul>
+<p>Let’s get into it.</p>
+<h2 id="reporting-structure">Reporting Structure<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#reporting-structure">#</a></h2>
+<p>Before diving into the triggers I personally used and recommend, let’s first look at the structure of the HTB CPTS SysReptor template.</p>
+<p>Here are the sections and their respective fields:</p>
+<ul>
+<li>Meta
+<ul>
+<li><strong>Candidate name, title and email</strong></li>
+<li><strong>Engagement Information</strong></li>
+</ul>
+</li>
+<li>Document Control
+<ul>
+<li><strong>Customer Contacts</strong></li>
+</ul>
+</li>
+<li>Executive Summary
+<ul>
+<li>Executive Summary</li>
+<li>Approach</li>
+<li><strong>Scope</strong></li>
+<li><strong>Assessment Overview and Recommendations</strong></li>
+</ul>
+</li>
+<li>Network Penetration Testing Assessment Summary
+<ul>
+<li>Network Summary</li>
+<li>Summary of Findings</li>
+</ul>
+</li>
+<li>Internal Network Compromise Walkthrough
+<ul>
+<li>Walkthrough Summary</li>
+<li><strong>Detailed Walkthrough</strong></li>
+</ul>
+</li>
+<li>Remediation Summary
+<ul>
+<li>Remediation Summary</li>
+<li><strong>Short Term</strong></li>
+<li><strong>Medium Term</strong></li>
+<li><strong>Long Term</strong></li>
+</ul>
+</li>
+<li>Appendix
+<ul>
+<li>Finding Severities</li>
+<li><strong>Host &amp; Service Discovery</strong></li>
+<li><strong>Subdomain Discovery</strong></li>
+<li><strong>Exploited Hosts</strong></li>
+<li><strong>Compromised Users</strong></li>
+<li><strong>Changes/Host Cleanup</strong></li>
+<li><strong>Flags Discovered</strong></li>
+<li><strong>Domain Password Review</strong></li>
+</ul>
+</li>
+<li>Findings
+<ul>
+<li><strong>Title</strong></li>
+<li><strong>CWE</strong></li>
+<li><strong>CVSS</strong></li>
+<li><strong>Overview</strong></li>
+<li><strong>Impact</strong></li>
+<li><strong>Affected Components</strong></li>
+<li><strong>Recommendations</strong></li>
+<li><strong>References</strong></li>
+<li><strong>Details</strong></li>
+</ul>
+</li>
+</ul>
+<p>Most fields already have default texts. These may be placeholders that you’ll need to fill in or stock text that’s pretty acceptable.</p>
+<p>Not all fields need to be drastically changed, as some already have text that works well for most reports. Those are the bullet points not highleted in bold. You can leave them mostly as is (but make sure to read them) or rephrase them with your own words.</p>
+<p>The fields in <strong>bold</strong> are the ones where you will definetely need to swap out the default text for your own.</p>
+<h2 id="triggers">Triggers<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#triggers">#</a></h2>
+<p>Finally, let’s go over the triggers I used during the exam.</p>
+<p>We’ll associate milestones that will naturally occur during the engagement with specific fields in the report. <strong>When you hit an event trigger, stop what you are doing and fill in the appropriate fields.</strong></p>
+<p>The idea is that by filling out the report as these milestones occur, you’ll have most of the report done by the time the engagement wraps up.</p>
+<p>These are the triggers I used, but you can create your own based on what works best for you. Make sure to write them down and refer to them regularly during the exam. If you’d like, use the table of contents of this blog post open for periodic reference.</p>
+<h3 id="when-the-exam-starts">When The Exam Starts<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-the-exam-starts">#</a></h3>
+<p>These are the fields you should fill as soon as you start the exam and receive the information about the security assessment you’ll perform:</p>
+<ul>
+<li>Meta
+<ul>
+<li><strong>Candidate name, title and email</strong></li>
+<li><strong>Engagement Information</strong></li>
+</ul>
+</li>
+<li>Document Control
+<ul>
+<li><strong>Customer Contacts</strong></li>
+</ul>
+</li>
+<li>Network Penetration Testing Assessment Summary
+<ul>
+<li>Network Summary</li>
+<li>Summary of Findings</li>
+</ul>
+</li>
+<li>Executive Summary
+<ul>
+<li>Executive Summary</li>
+<li>Approach</li>
+<li><strong>Scope</strong></li>
+</ul>
+</li>
+</ul>
+<p>Basically, fill out the <strong>Meta</strong>, <strong>Document Control</strong>, and <strong>Network Penetration Testing Assessment Summary</strong> sections completely and most of the <strong>Executive Summary</strong>, leaving the <strong>Assessment Overview and Recommendations</strong> field for later.</p>
+<p>Most these fields are fairly standard and require little to no modifications. Read them carefully and decide for yourself if you need to change something or leave as is.</p>
+<h3 id="when-a-host-or-service-is-discovered">When A Host Or Service Is Discovered<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-host-or-service-is-discovered">#</a></h3>
+<p>Once you discover a live host and enumerate the available services (e.g., via an Nmap scan), you should fill in the appropriate appendix:</p>
+<ul>
+<li>Appendix
+<ul>
+<li><strong>Host &amp; Service Discovery</strong></li>
+</ul>
+</li>
+</ul>
+<p>In this field, I slightly deviated from the default text provided by the template and created a table for each discovered host with its available services.</p>
+<p>For each discovered host, create a table with the following columns:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Port</td>
+          <td>The port(s) where the discovered service is running. E.g., “80”</td>
+      </tr>
+      <tr>
+          <td>Service</td>
+          <td>The name and version of the service. E.g., “<code>nginx 1.18.0</code>”</td>
+      </tr>
+      <tr>
+          <td>Notes</td>
+          <td>Any additional notes you have. E.g., “Hosts a custom support web application.”</td>
+      </tr>
+  </tbody>
+</table>
+<p>Ensure that each table is clearly labeled with a heading that identifies which host the information pertains to.</p>
+<h3 id="when-a-virtual-host-or-subdomain-is-discovered">When A Virtual Host Or Subdomain Is Discovered<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-virtual-host-or-subdomain-is-discovered">#</a></h3>
+<p>You should fill in the appropriate appendix with both the domains provided in the scope of the engagement (if any) and those you discover during your penetration test:</p>
+<ul>
+<li>Appendix
+<ul>
+<li><strong>Subdomain Discovery</strong></li>
+</ul>
+</li>
+</ul>
+<p>This field consists of a single table with the following columns:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>URL</td>
+          <td>The URL of the domain. E.g., “<code>admin.target.htb</code>”</td>
+      </tr>
+      <tr>
+          <td>Description</td>
+          <td>A description of what the domain is used for. E.g., “Administrator dashboard for the web application.”</td>
+      </tr>
+      <tr>
+          <td>Discovery Method</td>
+          <td>How you discovered it. E.g., “Revealed in HTML comment.”</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="when-a-security-finding-is-discovered">When A Security Finding Is Discovered<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-a-security-finding-is-discovered">#</a></h3>
+<p>This is one of the most important and time-consuming triggers, so it’s crucial to handle it correctly.</p>
+<p>For each security finding, you need to add a <strong>Finding</strong> to the report.</p>
+<p>Fill out all the fields:</p>
+<ul>
+<li>Findings
+<ul>
+<li><strong>Title</strong></li>
+<li><strong>CWE</strong></li>
+<li><strong>CVSS</strong></li>
+<li><strong>Overview</strong></li>
+<li><strong>Impact</strong></li>
+<li><strong>Affected Components</strong></li>
+<li><strong>Recommendations</strong></li>
+<li><strong>Details</strong></li>
+</ul>
+</li>
+<li>Remediation Summary
+<ul>
+<li><strong>Short Term</strong></li>
+<li><strong>Medium Term</strong></li>
+<li><strong>Long Term</strong></li>
+</ul>
+</li>
+</ul>
+<p>Remember, each security finding should be documented individually. Don’t group multiple vulnerabilities, like SQL Injection, into a single finding.</p>
+<p>Let’s break down the fields you’ll need to complete:</p>
+<p>For the <strong>Title</strong>, while it can be challenging to come up with, there’s no strict standard you need to follow. As long as your title is clear and consistent, you can name the findings as you see fit.</p>
+<p>Here are some example titles based on those I compiled from Hack The Box sources that might inspire you:</p>
+<pre tabindex="0"><code>Insecure File Shares
+Sensitive Data on File Shares
+Unnecessary Exposed Services
+Insecure Direct Object Reference (IDOR)
+HTTP Verb Tampering
+Unrestricted File Upload
+Local File Inclusion (LFI)
+Weak &lt;APPLICATION&gt; Admin Credentials
+SQL Injection
+Cross-Site Scripting (XSS)
+SSRF to Local File Read
+XML External Entity (XXE) Injection
+Command Injection
+Excessive Active Directory Group Privileges
+Passwords in AD User Description Field 
+Misconfigured &lt;APPLICATION&gt; Instance
+</code></pre><p>For the <strong>CWE</strong>, if you’re unsure, you can ask ChatGPT which CWE fits the vulnerability. Then, validate it by Googling <code>&lt;CWE&gt; MITRE</code> and reviewing the description.</p>
+<p>For <strong>CVSS</strong>, use the CVSS calculator built into SysReptor or find one online. If you need assistance, ChatGPT can help, but make sure to verify the result yourself.</p>
+<p>In the <strong>Overview</strong> field, provide a high-level explanation of the vulnerability both generally and in the context of your finding. Avoid covering the impact or remediation here, as those will be addressed in later fields.</p>
+<p>In the <strong>Impact</strong> section, describe the security implications of the vulnerability if it remains in the client’s environment. Provide specific examples relevant to this instance of the vulnerability. You can present this information as a paragraph or a bullet-point list, but keep the format consistent across all findings.</p>
+<p>In the <strong>Affected Components</strong> field, provide the smallest label that encompasses all the components affected by the vulnerability.</p>
+<p>For example:</p>
+<ul>
+<li>If a vulnerability affects a single host or service, use a label that includes both the host and the service if relevant, like “<code>HOST01</code> (SMB / 139,445 TCP)”. (e.g. EternalBlue)</li>
+<li>If it affects a specific subdomain, use a label such as <code>app.target.htb</code>. (e.g. SQLi on a web application)</li>
+<li>For vulnerabilities affecting an entire subnetwork or an Active Directory environment, don’t list each host individually. Instead, use a label like “target.htb Active Directory domain” or an IP range, such as <code>10.0.0.0/8</code>. (e.g. Kerberoasting)</li>
+</ul>
+<p>In the <strong>Recommendations</strong> field, provide actionable steps to address the vulnerability. Never attempt to fix the issue yourself, such as by providing a “fixed” version of code. Instead, guide the client on how to resolve the issue. Each vulnerability covered in the course has an Academy section with mitigation suggestions that you can use as reference when writing recommendations. You can present these actions as a bullet-point list.</p>
+<p>In the <strong>References</strong> field, include links to resources related to the security finding. Useful references might include:</p>
+<ul>
+<li>The NIST page for the CVE if applicable, and any relevant blog posts by the researcher.</li>
+<li>The MITRE page for the CWE, if available.</li>
+<li>An OWASP Prevention Cheatsheet for the vulnerability, if there is one.</li>
+<li>If you used a Proof of Concept (PoC) script you haven’t wrote yourself, provide a link.</li>
+</ul>
+<p>Lastly, in the <strong>Details</strong> field, provide a step-by-step procedure to reproduce the discovery and exploitation of the finding, including explanations for each step. Be sure to include:</p>
+<ul>
+<li>Plenty of images and code blocks to illustrate your points.</li>
+<li>Label all images and code blocks clearly.</li>
+<li>Highlight important lines in code blocks.</li>
+<li>Crop images to show only the relevant portions.</li>
+<li>Redact any sensitive information from both images and code blocks.</li>
+<li>Mention tools and scripts used.</li>
+</ul>
+<p>With the finding section complete, take a moment to fill in the fields related to the <strong>Remediation Summary</strong> section by adding recommendations for addressing this specific finding.</p>
+<p>In this step, you can generally copy-paste the remediation actions you suggested in the finding’s Recommendation field and distribute them across <strong>Short Term</strong>, <strong>Medium Term</strong>, and <strong>Long Term</strong> fields as appropriate.</p>
+<p>By the end of the engagement, you should have a bullet point list of short, medium, and long-term remediation actions for all the security findings you discovered.</p>
+<h3 id="when-you-get-foothold-on-a-host">When You Get Foothold On A Host<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-get-foothold-on-a-host">#</a></h3>
+<p>Once you gain command execution on a host, it’s time to add it as exploited to the appropriate appendix.</p>
+<p>You’ll also document the steps for this initial compromise in the compromise walkthrough.</p>
+<ul>
+<li>Internal Network Compromise Walkthrough
+<ul>
+<li>Walkthrough Summary</li>
+<li><strong>Detailed Walkthrough</strong></li>
+</ul>
+</li>
+<li>Appendix
+<ul>
+<li><strong>Exploited Hosts</strong></li>
+</ul>
+</li>
+</ul>
+<p>For the <strong>Exploited Hosts</strong> appendix, fill in a table with the following columns for each host:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Host</td>
+          <td>The hostname and IP address of the host. E.g., “<code>HOST01</code> (<code>192.158.1.38</code>)”</td>
+      </tr>
+      <tr>
+          <td>Scope</td>
+          <td>Indicate either “External” or “Internal,” depending on whether the host is external-facing or internal (e.g., in a DMZ).</td>
+      </tr>
+      <tr>
+          <td>Method</td>
+          <td>Describe the exploitation method used to compromise the host. E.g., “Command injection on web application.”</td>
+      </tr>
+      <tr>
+          <td>Notes</td>
+          <td>Include any additional notes about the host. E.g., “Domain Controller for target.htb.”</td>
+      </tr>
+  </tbody>
+</table>
+<p>For the compromise walkthrough, start by reviewing the <strong>Walkthrough Summary</strong> field. Make any necessary adjustments and see if it looks good to you. Feel free to rephrase it in your own words if needed, but otherwise you can leave it as is.</p>
+<p>For the <strong>Detailed Walkthrough</strong>, you’ll document the steps related to the host you just exploited.</p>
+<p>Use the following structure, which is divided into two parts:</p>
+<pre tabindex="0"><code>{{ report.candidate.a_name }} ("the tester" herein) performed the following to fully compromise the &lt;DOMAIN&gt; domain.
+
+&lt;Here, include a numbered bullet point list where each point outlines a step in the attack chain.&gt;
+
+**Detailed reproduction steps for this attack chain are as follows:**
+
+&lt;Here, provide detailed steps in a writeup format.&gt;
+</code></pre><p>For both parts, exclude any findings unrelated to the shortest attack path to domain compromise. Write in the third person, referring to yourself as “the tester.”</p>
+<ul>
+<li>
+<p><strong>Bullet Point List:</strong> Keep it concise and focused. It’s fine to have multiple points for a single finding, but don’t overdo it. Don’t include images, code blocks, or any extraneous details.</p>
+</li>
+<li>
+<p><strong>Detailed Walkthrough:</strong> Describe the steps thoroughly in a writeup format. Be highly descriptive and explain each technique or action in detail, at least once. Include plenty of images and code blocks—when in doubt, err on the side of including too many rather than too few. Add pertinent comments where appropriate, such as acknowledging effective security measures.</p>
+</li>
+</ul>
+<p>As you compromise more hosts during the engagement, this field will gradually fill up, resulting in a complete walkthrough of the attack chain by the end.</p>
+<h3 id="when-you-root-a-host">When You Root A Host<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-root-a-host">#</a></h3>
+<p>Once you’ve gained the highest local privilege on a host (root or SYSTEM), fill out the following fields:</p>
+<ul>
+<li>Internal Network Compromise Walkthrough
+<ul>
+<li><strong>Detailed Walkthrough</strong></li>
+</ul>
+</li>
+<li>Appendix
+<ul>
+<li><strong>Changes/Host Cleanup</strong></li>
+</ul>
+</li>
+</ul>
+<p>First, take a moment to recall all the changes you made to the host since gaining a foothold. This could include actions like adding a web shell, transferring an executable, creating a local user, etc.</p>
+<p>Even if you reverted a change, such as deleting a PoC script after using it, it’s important to document it in the report. The transfer might have triggered an EDR alert, and the client will need to know whether it was part of the pentest or a potential breach.</p>
+<p>After compiling your list, add a table to the <strong>Changes/Host Cleanup</strong> appendix with the following columns:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Host</td>
+          <td>The hostname and IP address of the host. E.g., “<code>HOST01</code> (<code>192.158.1.38</code>)”</td>
+      </tr>
+      <tr>
+          <td>Scope</td>
+          <td>Indicate either “External” or “Internal,” depending on whether the host is external-facing or internal (e.g., in a DMZ).</td>
+      </tr>
+      <tr>
+          <td>Change/Cleanup Needed</td>
+          <td>A description of the change made. If it involves creating or transferring a file, include the MD5 sum. E.g., “Uploaded a web shell to <code>/var/www/html/shell.php</code>. MD5: <code>6ea3393fd7a4544d2fda0e42d7634013</code>”</td>
+      </tr>
+  </tbody>
+</table>
+<p>Make sure to add a heading before the table to identify which host the changes relate to.</p>
+<p>After documenting the changes, include the steps for this compromise in the <strong>Detailed Walkthrough</strong> field, both in the bullet point list and the detailed writeup.</p>
+<p>Refer to the “When You Get Foothold On A Host” trigger for guidance on structuring this field.</p>
+<h3 id="when-you-compromise-a-user">When You Compromise A User<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-compromise-a-user">#</a></h3>
+<p>Once you gain control of a user, whether by obtaining their passwords, NTLM hash or however else, add this information to the appropriate appendix.</p>
+<ul>
+<li>Appendix
+<ul>
+<li><strong>Compromised Users</strong></li>
+</ul>
+</li>
+</ul>
+<p>I recommend creating one table for local users and another for each Active Directory domain where you’ve compromised a user. Alternatively, you could create a separate table for local users on each individual host if that works better for you.</p>
+<p>The tables should include the following columns:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Username</td>
+          <td>The username for the user. E.g., “<code>www-data</code>”</td>
+      </tr>
+      <tr>
+          <td>Method</td>
+          <td>The method you used to gain control over this user. E.g., “Kerberoasted”</td>
+      </tr>
+      <tr>
+          <td>Notes</td>
+          <td>Notes about the user. For local users, specify the host they belong to. If the user has a specific purpose, mention that too. E.g., “<code>HOST01</code>’s local user for Tomcat service.”</td>
+      </tr>
+  </tbody>
+</table>
+<p>As always, ensure that tables are preceded by a heading identifying the host or domain they are associated with.</p>
+<h3 id="when-you-capture-a-flag">When You Capture A Flag<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-you-capture-a-flag">#</a></h3>
+<p>You captured a flag—great job! Now, add it to the appropriate appendix:</p>
+<ul>
+<li>Appendix
+<ul>
+<li><strong>Flags Discovered</strong></li>
+</ul>
+</li>
+</ul>
+<p>I recommend using a single table with the following columns:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Column</th>
+          <th>Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Flag #</td>
+          <td>The flag number. Sort the rows in ascending order. E.g., “9.”</td>
+      </tr>
+      <tr>
+          <td>Host</td>
+          <td>The hostname of the host where the flag was found. E.g., “<code>HOST01</code>”</td>
+      </tr>
+      <tr>
+          <td>Flag Value</td>
+          <td>The exact value of the flag as found.</td>
+      </tr>
+      <tr>
+          <td>Flag Location</td>
+          <td>Where the flag was found. If it was in a file, provide the full path. E.g., “<code>/root/flag.txt</code>”</td>
+      </tr>
+      <tr>
+          <td>Method Used</td>
+          <td>The method used to exploit your way to the flag. E.g., “Privilege escalation via sudo rights over the <code>wget</code> binary.”</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="when-the-engagement-is-done">When The Engagement Is Done<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#when-the-engagement-is-done">#</a></h3>
+<p>By the end of your engagement, if you followed the trigger methodology, your report should be over 90% complete. All that’s left is to finish the remaining fields and add some final polish.</p>
+<p>The fields that need to be filled or revisited are:</p>
+<ul>
+<li>Executive Summary
+<ul>
+<li><strong>Assessment Overview and Recommendations</strong></li>
+</ul>
+</li>
+<li>Remediation Summary
+<ul>
+<li><strong>Short Term</strong></li>
+<li><strong>Medium Term</strong></li>
+<li><strong>Long Term</strong></li>
+</ul>
+</li>
+<li>Appendix
+<ul>
+<li><strong>Domain Password Review</strong></li>
+</ul>
+</li>
+</ul>
+<p>Now that you have a complete walkthrough of the attack path in the Detailed Walkthrough field, it’s time to fill in the <strong>Assessment Overview and Recommendations</strong> section of the Executive Summary.</p>
+<p>For this section, you’ll provide a plain-English summary of the attack path and your overall takeaways from the engagement. Avoid technical jargon, bullet points, and code blocks, as this part is intended for a non-technical audience.</p>
+<p>Start with a paragraph on your overall assessment of their security posture. Reflect on the security findings and what they reveal about the client’s security practices. For instance, if no password spray attack succeeded, praise their strong password policy.</p>
+<p>Then, write a paragraph for each security finding in the attack chain. Explain each vulnerability in simple terms that anyone can understand (without sounding patronizing) and include straightforward remediation suggestions.</p>
+<p>The default text for this field is well-written, so definetely keep it and insert your own text where indicated.</p>
+<p>After that, revisit the <strong>Short Term</strong>, <strong>Medium Term</strong>, and <strong>Long Term</strong> remediation fields. By now, you should have remediation actions related to the specific security findings listed. However, it’s also important to add recommendations that address the overall security posture of the organization.</p>
+<p>For example, if many findings were related to outdated software with known CVEs, you should recommend reviewing and improving their software update procedures. Additionally, offer broad advice such as conducting regular security audits and staying up to date with best practices.</p>
+<p>An appendix not included in the SysReptor template but recommended by the course material is <strong>Domain Password Review</strong>.</p>
+<p>In this appendix, you’ll provide statistics on the passwords of Active Directory domain users after achieving domain compromise and dumping <code>NTDS.dit</code>. Key statistics to include are:</p>
+<ul>
+<li>Number of hashes obtained</li>
+<li>Number of unique hashes</li>
+<li>Percentage of hashes cracked</li>
+<li>Most commonly used passwords</li>
+<li>Password length breakdown</li>
+</ul>
+<p>To generate these statistics, I recommend using the <a href="https://github.com/clr2of8/DPAT">DPAT</a> Python script. Take the most insightful statistics it provides and create tables for them in the appendix.</p>
+<p>Lastly, review your entire report thoroughly and add any final polish as needed. Proofread it multiple times. If you have the time, take a break once you think the report is done, sleep on it and then read it again the next morning with fresh eyes.</p>
+<p>And there you have it, a complete report! Submit it and you’re done.</p>
+<h1 id="conclusion">Conclusion<a hidden="" class="anchor" aria-hidden="true" href="https://www.brunorochamoura.com/posts/cpts-report/#conclusion">#</a></h1>
+<p>Most penetration testers love diving into the technical side of hacking but dread writing the report afterward. If you’re into the techy parts of penetration testing, writing reports for C-level executives and other business types probably isn’t your idea of fun.</p>
+<p>But remember, the report at the end of an engagement, along with other deliverables, is what the client is actually paying us for. It’s not just an annoying formality, it’s the main reason our client hired us in the first place.</p>
+<p>I hope this post helps you write a great report for your HTB CPTS exam attempt.</p>
+
+
+  </div><br>
+<div style="text-align: center;">
+    <a href="https://app.hackthebox.com/profile/1402920" target="_blank" style="display: inline-block; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background-color: var(--entry); --darkreader-inline-border-short: 1px solid var(--darkreader-border--border); --darkreader-inline-bgcolor: var(--darkreader-bg--entry, var(--darkreader-background-ffffff, #181a1b));" data-darkreader-inline-border-short="" data-darkreader-inline-bgcolor="">
+        <span>
+            If you enjoyed this, please give me some <b style="color: rgb(221, 46, 68); --darkreader-inline-color: var(--darkreader-text-dd2e44, #e04155);" data-darkreader-inline-color="">Respect ❤️</b> on Hack The Box!
+        </span>
+    </a>
+</div>
+
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://www.brunorochamoura.com/tags/cpts-%EF%B8%8F/">CPTS 🗡️</a></li>
+      <li><a href="https://www.brunorochamoura.com/tags/cybersec-%EF%B8%8F/">CyberSec 🛡️</a></li>
+      <li><a href="https://www.brunorochamoura.com/tags/certification-/">Certification 🎓</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span><a href="https://creativecommons.org/publicdomain/zero/1.0/">No rights reserved</a>. Use my content freely. Permission not needed, credit appreciated.</span>
+</footer>
+<a href="https://www.brunorochamoura.com/posts/cpts-report/#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z"></path>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script defer="" src="./HTB CPTS Reporting_ The Easy Way _ BRM_files/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;c7bc6ee1237a460e900e1048adab46bb&quot;,&quot;r&quot;:1,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}" crossorigin="anonymous"></script>
+
+
+
+</body></html>

@@ -1,0 +1,18 @@
+
+- nmap scan
+- visit grafana login
+- find version
+- find exploit
+- use exploit
+- get copies of the grafana configuration file
+- find where the DB is stored
+- get copy of DB file
+- check DB file for user names
+- research how the password is created
+- reverse engineer the password code
+- crack password
+- log in as user
+- cat user flag
+- get a list of sudo commands and see its docker exec
+- figure out how to pass the root folder to the container and give root privs inside the container
+- cat root flag
