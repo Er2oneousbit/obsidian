@@ -1,0 +1,44 @@
+#PrivilegeEscalation #Privesc
+- [Hacktricks](book.hacktricks.xyz)
+- [PayloadsAllTheThings]([GitHub - swisskyrepo/PayloadsAllTheThings: A list of useful payloads and bypass for Web Application Security and Pentest/CTF](https://github.com/swisskyrepo/PayloadsAllTheThings))
+- #Linux
+	- [LinEnum](https://github.com/rebootuser/LinEnum.git)
+	- [linuxprivchecker](https://github.com/sleventyeleven/linuxprivchecker)
+	- [LinPEAS]([PEASS-ng/linPEAS at master · peass-ng/PEASS-ng · GitHub](https://github.com/peass-ng/PEASS-ng/tree/master/linPEAS))
+	- [GTFOBins](https://gtfobins.github.io/)
+- #Windows
+	- [seatbelt](https://github.com/GhostPack/Seatbelt)
+	- [JAWS](https://github.com/411Hall/JAWS)
+	- [WinPEAS]([PEASS-ng/winPEAS at master · peass-ng/PEASS-ng · GitHub](https://github.com/peass-ng/PEASS-ng/tree/master/winPEAS))
+	- [LOLBAS](https://lolbas-project.github.io/#)
+	- [Windows Client Privilege Escalation-Shared.pptx](https://www.slideshare.net/slideshow/windows-client-privilege-escalation-shared-pptx/277239036)
+- Changing privilege level to something with more access typically refers to admin level
+- Kernel Exploits
+	- Use a vuln in kernel to get it to run something with higher privs
+	- Find a vuln software that runs with higher privs
+	- Look at automated processes
+		- cronjob
+			- /etc/crontab
+			- /etc/cron.d
+			- /var/spool/cron/crontabs/root
+		- scheduled tasks
+		- autoruns
+		- startup apps
+	- Find exposed credentials
+		- command or bash history
+		- loose documents
+		- config files
+		- scripts
+	- Check for password reuse
+	- Find SSH keys or certificates
+		- depending on access we may able to implant our own keys/certs
+	- Examples
+		- linux dirtycow
+		- open sudo
+			- All commands
+			- no password
+		- archive cron job as root
+		- run a script as system in task scheduler
+		- local admin password in a txt file on user desktop
+		- find a user's rsa file that allows root access on another system
+- 

