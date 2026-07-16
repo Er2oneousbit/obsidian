@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Class notes/HTB Academy/CWES Claude/Web Fuzzing.md",
-                "mode": "source",
+                "file": "Misc/CVSSv3.md",
+                "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "Web Fuzzing"
+              "title": "CVSSv3"
             }
           }
         ]
@@ -178,33 +178,27 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "907caa4b570fed2e",
+  "active": "f07b39a19c949ab2",
   "lastOpenFiles": [
-    "Class notes/HTB Academy/CWES Claude/JavaScript Deobfuscation.md",
-    "Class notes/HTB Academy/CWES Claude/Intro to Web Apps.md",
-    "Class notes/HTB Academy/CPTS Path/Topics/Command Injection.md",
-    "Class notes/HTB Academy/CPTS Path/Topics/Attacking Common Applications.md",
-    "Class notes/HTB Academy/CPTS Path/Topics/Active Directory Attacks.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/WebSockets.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers.md",
+    "Misc/HITRUST.md",
+    "Misc/HITRUST.md.tmp.5589.8f9b3d951e58",
+    "Misc/HIPAA.md",
+    "Misc/HIPAA.md.tmp.5589.5b00c239735e",
+    "Misc/PCI-DSS-v4.md",
+    "Misc/PCI-DSS-v4.md.tmp.5589.f4e2a10569b7",
+    "Misc/CVSSv4.md",
+    "Misc/CVSSv4.md.tmp.5589.6576577f8062",
     "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Command Injection.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/AV & EDR Evasion.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications.md",
+    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md",
     "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md.tmp.3272.1771896316664",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896090805",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896069532",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896051276",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896037726",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771895905615",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771895900430",
-    "desktop.ini"
+    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771895905615"
   ]
 }
