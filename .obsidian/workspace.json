@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Class notes/HTB Academy/CWES Claude/Web Fuzzing.md",
-                "mode": "source",
+                "file": "Sr Tester Role/Topics/_Buzz Terms.md",
+                "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "Web Fuzzing"
+              "title": "_Buzz Terms"
             }
           }
         ]
@@ -184,6 +184,7 @@
   },
   "active": "907caa4b570fed2e",
   "lastOpenFiles": [
+    "Class notes/HTB Academy/CWES Claude/Web Fuzzing.md",
     "Class notes/HTB Academy/CWES Claude/JavaScript Deobfuscation.md",
     "Class notes/HTB Academy/CWES Claude/Intro to Web Apps.md",
     "Class notes/HTB Academy/CPTS Path/Topics/Command Injection.md",
