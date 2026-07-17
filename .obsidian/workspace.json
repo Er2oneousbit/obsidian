@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sr Tester Role/Topics/_Buzz Terms.md",
+                "file": "Sr Tester Role/Topics/SSRF.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "_Buzz Terms"
+              "title": "SSRF"
             }
           }
         ]
@@ -184,8 +184,13 @@
   },
   "active": "907caa4b570fed2e",
   "lastOpenFiles": [
-    "Sr Tester Role/Cheat sheets/This VS That.md",
+    "Sr Tester Role/Topics/SSTI.md",
+    "Sr Tester Role/Topics/Websockets.md",
+    "Sr Tester Role/Topics/XSS.md",
+    "Sr Tester Role/Topics/XXE.md",
+    "Sr Tester Role/Tools/Burpsuite.md",
     "Sr Tester Role/Topics/_Buzz Terms.md",
+    "Sr Tester Role/Cheat sheets/This VS That.md",
     "Class notes/HTB Academy/CWES Claude/Web Fuzzing.md",
     "Class notes/HTB Academy/CWES Claude/JavaScript Deobfuscation.md",
     "Class notes/HTB Academy/CWES Claude/Intro to Web Apps.md",
