@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sr Tester Role/Topics/SSRF.md",
+                "file": "Class notes/HTB Academy/API Attacks.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "SSRF"
+              "title": "API Attacks"
             }
           }
         ]
@@ -184,6 +184,10 @@
   },
   "active": "907caa4b570fed2e",
   "lastOpenFiles": [
+    "Sr Tester Role/Topics/SOAP.md",
+    "Sr Tester Role/Topics/Soft Skill.md",
+    "Sr Tester Role/Topics/SQLi.md",
+    "Sr Tester Role/Topics/SSRF.md",
     "Sr Tester Role/Topics/SSTI.md",
     "Sr Tester Role/Topics/Websockets.md",
     "Sr Tester Role/Topics/XSS.md",
@@ -206,7 +210,6 @@
     "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md",
     "Class notes/HTB Academy/CPTS v2 (claude)/Command Injection.md",
     "Class notes/HTB Academy/CPTS v2 (claude)/AV & EDR Evasion.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications.md",
     "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md.tmp.3272.1771896316664",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896090805",
     "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896069532",
