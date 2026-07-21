@@ -1,4 +1,8 @@
-# HITRUST CSF Reference Guide
+# HITRUST CSF
+
+#Compliance #Healthcare #HITRUST #CSF #Frameworks
+
+## What is this?
 
 **Health Information Trust Alliance (HITRUST) Common Security Framework (CSF)** — comprehensive security/privacy/compliance framework for healthcare. Combines HIPAA, NIST, ISO, and PCI-DSS requirements into a single harmonized standard. De facto "gold standard" in healthcare security.
 
@@ -34,9 +38,25 @@ Compliance typically required for: covered entities, business associates, vendor
 
 ## Control Framework Structure
 
-HITRUST CSF organizes controls into **22 domains**, grouped by function:
+The HITRUST CSF organizes **156 controls** into **14 control categories**, **19 assessment domains**, and 49 control objectives. The official **19 domains** are:
 
-### Information Protection (Domain 01-06)
+| # | Domain | # | Domain |
+|---|---|---|---|
+| 1 | Information Protection Program | 11 | Access Control |
+| 2 | Endpoint Protection | 12 | Audit Logging & Monitoring |
+| 3 | Portable Media Security | 13 | Education, Training & Awareness |
+| 4 | Mobile Device Security | 14 | Third-Party Assurance |
+| 5 | Wireless Security | 15 | Incident Management |
+| 6 | Configuration Management | 16 | Business Continuity & Disaster Recovery |
+| 7 | Vulnerability Management | 17 | Risk Management |
+| 8 | Network Protection | 18 | Physical & Environmental Security |
+| 9 | Transmission Protection | 19 | Data Protection & Privacy |
+| 10 | Password Management | | |
+
+> [!note]
+> The groupings below are an illustrative walkthrough of the control areas HITRUST covers — they are **not** the official domain names/numbers (use the table above for those).
+
+### Information Protection (illustrative control areas)
 
 **01 – Data Governance**
 - Classification of information (public, internal, confidential, ePHI).
@@ -71,7 +91,7 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 - Endpoint DLP: block exfiltration of sensitive data.
 - Data watermarking or classification tagging.
 
-### Infrastructure Protection (Domain 07-09)
+### Infrastructure Protection
 
 **07 – Transmission Security**
 - Encryption for all ePHI in transit.
@@ -90,7 +110,7 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 - Environmental controls: cooling, fire suppression, power backup.
 - Video surveillance recommended.
 
-### Personnel Security (Domain 10-12)
+### Personnel Security
 
 **10 – Security Awareness & Training**
 - Annual training for all staff (mandatory).
@@ -109,7 +129,7 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 - User provisioning/deprovisioning workflows.
 - Exception procedures if someone needs elevated access (documented, temporary).
 
-### Technical Safeguards (Domain 13-16)
+### Technical Safeguards
 
 **13 – Audit, Logging & Monitoring**
 - Logging on all ePHI systems (database, firewall, servers, applications).
@@ -133,7 +153,7 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 - Security alerts: process for reviewing/triaging vendor advisories.
 - Malware protection: anti-malware on all systems, real-time scanning.
 
-### Incident Management (Domain 17-19)
+### Incident Management
 
 **17 – Incident Response & Management**
 - Incident response plan: written, roles defined, reviewed annually.
@@ -153,7 +173,7 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 - Vendor audit rights: right to audit vendor controls.
 - Subcontractors: vendor responsible for subcontractor compliance (transitives).
 
-### Governance & Management (Domain 20-22)
+### Governance & Management
 
 **20 – Compliance & Risk Management**
 - Risk management program: identify, assess, mitigate, monitor risks.
@@ -172,29 +192,17 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 
 ---
 
-## HITRUST Certification Levels
+## HITRUST Assessment Types (CSF v11)
 
-### Validated (Highest Assurance)
+HITRUST's current "threat-adaptive" portfolio has three assessment types (the older "Validated / Self-Assessment" naming is retired):
 
-- Third-party assessor conducts on-site audit.
-- 2-year assessment cycle; must address all 19 control domains.
-- Requirements: ≥75% pass rate; can have minor findings.
-- Cost: $5K–$100K+ depending on org size.
-- Carries significant compliance weight (often required by enterprise customers).
+| Type | Name | Requirements | Validity | Assurance |
+|---|---|---|---|---|
+| **e1** | Essentials, 1-year | ~44 requirement statements | 1 year | Entry-level (foundational cyber hygiene) |
+| **i1** | Implemented, 1-year | ~182 requirement statements | 1 year | Moderate (leading practices, broad threats) |
+| **r2** | Risk-based, 2-year | 200+ tailored to risk factors | 2 years (interim review at 1 year) | Highest (the former "CSF Certified / Validated") |
 
-### Certified (Standard)
-
-- Organization can self-certify OR use third-party assessor.
-- Less rigorous than Validated; shorter assessment.
-- Requirements: ≥60% pass rate.
-- Cost: $2K–$20K.
-
-### Submitted (Self-Reported)
-
-- Organization completes CSF questionnaire; HITRUST reviews.
-- No on-site audit.
-- Least assurance level.
-- Cost: minimal.
+Results are scored on a maturity model (policy → process → implemented → measured → managed); certification requires meeting HITRUST's scoring threshold across in-scope requirements. Work from lower assessments can be inherited upward (e1 → i1 → r2). Current framework version is **CSF v11.x**.
 
 ---
 
@@ -257,4 +265,11 @@ HITRUST CSF organizes controls into **22 domains**, grouped by function:
 
 ---
 
-*Created: 2026-07-15*
+
+## See also
+
+[[HIPAA]], [[ISO-27001-27002]], [[NIST-CSF]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
+
+*Created: 2026-07-17*
+*Updated: 2026-07-21*
+*Model: claude-haiku-4-5*

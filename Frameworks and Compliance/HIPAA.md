@@ -1,4 +1,8 @@
-# HIPAA Reference Guide
+# HIPAA
+
+#Compliance #Healthcare #HIPAA #PHI #Privacy #Regulatory
+
+## What is this?
 
 **Health Insurance Portability and Accountability Act** — US federal law requiring privacy, security, and breach notification safeguards for protected health information (PHI). Applies to covered entities (healthcare providers, plans, clearinghouses) and business associates.
 
@@ -163,7 +167,7 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 
 - **Individuals**: within 60 calendar days of discovery of breach.
 - **Media**: within 60 days if 500+ individuals affected (local/national press).
-- **Secretary of HHS**: within 60 days (always); report form submitted.
+- **Secretary of HHS**: within 60 days if 500+ individuals affected; for breaches under 500, log and report annually (within 60 days after the calendar year ends).
 
 ### Notification Content
 
@@ -198,7 +202,7 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 ### Business Associates
 - Bound by Business Associate Agreement (BAA).
 - Security Rule compliance required (administrative, physical, technical safeguards).
-- Breach Notification: notify covered entity within 24 hours; covered entity handles external notification.
+- Breach Notification: notify the covered entity without unreasonable delay and no later than 60 days from discovery (BAAs often require faster contractually); the covered entity handles external notification.
 - **Key focus**: subcontractor agreements (if you work with another vendor, they need a BAA too).
 
 ---
@@ -242,4 +246,11 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 
 ---
 
-*Created: 2026-07-15*
+
+## See also
+
+[[HITRUST]], [[GDPR]], [[GLBA]], [[FERPA]]  ·  Index: [[_Frameworks and Compliance]]
+
+*Created: 2026-07-17*
+*Updated: 2026-07-21*
+*Model: claude-haiku-4-5*

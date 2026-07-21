@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Techniques for locating, deobfuscating, and analyzing obfuscated JavaScript — useful when hunting hidden functionality in web apps, analyzing malicious scripts, or reversing client-side logic. Pairs with [[Web Requests]], [[Web Fuzzing]].
+Techniques for locating, deobfuscating, and analyzing obfuscated JavaScript — useful when hunting hidden functionality in web apps, analyzing malicious scripts, or reversing client-side logic. Pairs with [[API Attacks]], [[Web Fuzzing]].
 
 ---
 
@@ -21,7 +21,7 @@ Techniques for locating, deobfuscating, and analyzing obfuscated JavaScript — 
 | [JJEncode Decoder](https://utf-8.jp/public/jjencode.html) | Decode JJEncode-obfuscated code |
 | [AAEncode Decoder](https://cat-in-136.github.io/2010/12/aadecode-decode-encoded-as-aaencode.html) | Decode AAEncode-obfuscated code |
 | [Cipher Identifier](https://www.dcode.fr/cipher-identifier) | Fingerprint unknown encoding type |
-| [LinkFinder](https://github.com/GerbenJavado/LinkFinder) | Extract hidden endpoints and params from JS files — `pip3 install linkfinder` |
+| [LinkFinder](https://github.com/GerbenJavado/LinkFinder) | Extract hidden endpoints and params from JS files — `git clone …/LinkFinder && cd LinkFinder && pip3 install -r requirements.txt` |
 | [SecretFinder](https://github.com/m4ll0k/SecretFinder) | Scan JS for API keys, tokens, hardcoded creds — `git clone https://github.com/m4ll0k/SecretFinder` |
 | [subjs](https://github.com/lc/subjs) | Enumerate all JS file URLs from a target — `go install github.com/lc/subjs@latest` |
 | [getJS](https://github.com/003random/getJS) | Collect JS URLs via crawling — `go install github.com/003random/getJS@latest` |
@@ -338,11 +338,11 @@ node -e "console.log(decodeURIComponent('%68%74%74%70%73%3A%2F%2F'))"
 
 ### Unicode Escapes
 
-Recognized by: `\uXXXX` sequences in JS strings. `H` = `H`, `T` = `T`.
+Recognized by: `\uXXXX` sequences in JS strings. `\u0048` = `H`, `\u0054` = `T`.
 
 ```bash
 # Decode in node
-node -e 'console.log("HTB")'
+node -e 'console.log("\u0048\u0054\u0042")'
 # HTB
 
 # Decode with Python
@@ -497,5 +497,5 @@ curl -s "http://<target>/serial.php" -X POST -b "session=<token>"
 ---
 
 *Created: 2026-05-13*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Automated technique for discovering hidden directories, files, parameters, vhosts, and API endpoints by systematically sending wordlist entries as inputs and analyzing server responses. Use throughout recon and vuln discovery phases. Pairs with [[API Attacks]], [[Web Requests]], [[Information Gathering - Web Edition]].
+Automated technique for discovering hidden directories, files, parameters, vhosts, and API endpoints by systematically sending wordlist entries as inputs and analyzing server responses. Use throughout recon and vuln discovery phases. Pairs with [[API Attacks]], [[Server-Side Attacks]].
 
 ---
 
@@ -443,5 +443,5 @@ See [[API Attacks]] for full exploitation methodology.
 ---
 
 *Created: 2026-05-12*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

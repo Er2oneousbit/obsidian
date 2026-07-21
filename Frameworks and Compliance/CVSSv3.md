@@ -1,5 +1,12 @@
+# CVSS v3.1
 
-# CVSS Reference Guide
+#CVSS #Scoring #VulnerabilityManagement #Severity
+
+## What is this?
+
+**CVSS v3.1 (Common Vulnerability Scoring System)** — Framework for rating vulnerability severity on a 0–10 scale using Base, Temporal, and Environmental metric groups. This note breaks down each v3.1 metric; see [[CVSSv4]] for the current v4.0 revision.
+
+---
 
 ## Attack Vector (AV)
 Describes how the vulnerability is exploited:
@@ -121,3 +128,11 @@ Reflects the importance of each security objective in the operational environmen
 > *For example, if a vulnerability is remotely exploitable in general (AV:N), but in your environment it is only exploitable locally due to network segmentation, you can set the modified AV to Local (AV:L).* 
 > *This customization helps produce a more accurate risk score tailored to your organization's actual exposure and impact.*
 
+
+## See also
+
+[[CVSSv4]], [[CWE-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
+
+*Created: 2026-07-17*
+*Updated: 2026-07-21*
+*Model: claude-haiku-4-5*
