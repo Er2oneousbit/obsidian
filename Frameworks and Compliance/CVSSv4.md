@@ -1,4 +1,8 @@
-# CVSS v4.0 Reference Guide
+# CVSS v4.0
+
+#CVSS #Scoring #VulnerabilityManagement #Severity
+
+## What is this?
 
 CVSSv4.0 introduces refinements to scoring including a new **User Interaction** metric with three levels (None, Passive, Active), reorganized environmental metrics, and updated scoring algorithms. Use this guide for vulnerability assessments published or updated after November 2023.
 
@@ -27,6 +31,14 @@ Describes conditions beyond the attacker's control that must exist for exploitat
 
 ---
 
+### Attack Requirements (AT) — NEW in v4.0
+Prerequisite deployment/execution conditions the attack depends on (split out of AC):
+
+- **None (N)**: No specific conditions required.
+- **Present (P)**: Exploitation depends on specific conditions (e.g., a race window, a particular configuration, or a machine-in-the-middle position).
+
+---
+
 ### Privileges Required (PR)
 Describes the level of privileges an attacker must have before exploiting the vulnerability:
 
@@ -51,50 +63,18 @@ Describes whether exploitation requires user interaction. **NEW in v4.0: Three l
 
 ---
 
-### Scope (S)
-Describes whether the vulnerability affects only the vulnerable component or extends beyond it:
+> [!warning]
+> **v4.0 removed the Scope metric.** Instead of Unchanged/Changed, v4.0 splits impact into two sets: the **Vulnerable System** (VC/VI/VA) and any **Subsequent System(s)** (SC/SI/SA) affected downstream — a more precise way to express what "scope change" tried to capture.
 
-- **Unchanged (U)**: Impact is limited to the vulnerable component and its authority.
-- **Changed (C)**: Exploitation affects components beyond the vulnerable one (e.g., SSRF, XSS affecting browser, web vuln leading to OS access).
+### Impact — Vulnerable System (VC, VI, VA)
+Impact on the component that contains the vulnerability. Rate Confidentiality (**VC**), Integrity (**VI**), and Availability (**VA**) each:
 
-> *Note: Changed scope often implies a privilege boundary is crossed, such as from a web app to the underlying OS or from one tenant to another in a multi-tenant environment.*
-
----
-
-### Confidentiality Impact (C)
-Measures the impact on the confidentiality of information:
-
-- **None (N)**: No data is disclosed.
-- **Low (L)**: Partial disclosure of non-critical data.
-- **High (H)**: Full disclosure of non-critical data or any disclosure of critical data.
-
-> *Note: Only consider unauthorized access to data.*  
-
-> *Note: Critical data includes anything that could lead to further compromise or legal/regulatory impact.*
-
----
-
-### Integrity Impact (I)
-Measures the impact on the trustworthiness and accuracy of data:
-
-- **None (N)**: No modification of data.
-- **Low (L)**: Partial modification of non-critical data (e.g., config changes).
-- **High (H)**: Modification of critical data or widespread data tampering (e.g., password list).
-
-> *Note: These impacts should be assessed based on the worst-case outcome that is reasonably expected from successful exploitation.*  
-
-> *Note: Examples of high impact include tampering with logs, altering audit trails, or modifying authentication mechanisms.*
-
----
-
-### Availability Impact (A)
-Measures the impact on the availability of the system or data:
-
+- **High (H)**: Total loss (full disclosure, full modification, or full denial).
+- **Low (L)**: Partial/limited loss.
 - **None (N)**: No impact.
-- **Low (L)**: Partial denial of service or reduced performance; non-critical resources affected.
-- **High (H)**: Full denial of service or impact to critical resources (e.g., CPU, RAM, disk space).
 
-> *Note: These impacts should be assessed based on the worst-case outcome that is reasonably expected from successful exploitation.*
+### Impact — Subsequent System (SC, SI, SA)
+Impact on **other** systems beyond the vulnerable component — the replacement for "Scope: Changed." Same High/Low/None scale for Confidentiality (**SC**), Integrity (**SI**), Availability (**SA**). Example: an SSRF whose real damage lands on internal services scores that damage under the Subsequent-System metrics.
 
 ---
 
@@ -166,14 +146,13 @@ Reflects the importance of each security objective in the operational environmen
 
 - **AV: Network (N)** — remotely exploitable
 - **AC: Low (L)** — no special conditions required
+- **AT: None (N)** — no additional attack requirements
 - **PR: None (N)** — no authentication needed
 - **UI: None (N)** — no user interaction required
-- **S: Changed (C)** — can read internal files and reach internal services
-- **C: High (H)** — can read /etc/passwd, cloud credentials, internal docs
-- **I: High (H)** — can modify internal systems via SSRF chaining
-- **A: High (H)** — can DOS internal services
+- **VC/VI/VA: High** — full impact on the vulnerable web system
+- **SC/SI/SA: High** — reaches and impacts internal (subsequent) systems
 
-**Vector: `CVSS:4.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H`**
+**Vector: `CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H`**
 
 **Base Score: 10.0 (Critical)**
 
@@ -184,13 +163,23 @@ Reflects the importance of each security objective in the operational environmen
 | Feature | v3.1 | v4.0 | Impact |
 |---|---|---|---|
 | User Interaction | 2 levels (N, R) | 3 levels (N, P, A) | More granular; passive interactions now distinguishable |
-| Scope | Unchanged/Changed | Same | No change |
-| Temporal Metrics | Exploit Maturity, Release Date, Report Confidence | Threat Exploitation (TE) | Simplified and renamed |
-| Environmental Metrics | CR, IR, AR + Modified Base | Same + Modified Base | More flexible but similar |
-| Scoring Algorithm | Base × Temporal × Environmental | Revised calculation | Scores may differ; not directly comparable |
+| Attack Requirements | — | **New: AT (None/Present)** | Prerequisite conditions split out of AC |
+| Scope | Unchanged/Changed | **Removed** | Replaced by Vulnerable-System (VC/VI/VA) vs Subsequent-System (SC/SI/SA) impacts |
+| Impact metrics | C/I/A (one set) | VC/VI/VA + SC/SI/SA (two sets) | Separates impact on the vulnerable system from downstream systems |
+| Temporal → Threat | Exploit Maturity, Report Confidence, Remediation Level | Exploit Maturity only | Simplified |
+| Supplemental metrics | — | **New** (Safety, Automatable, Recovery, etc.) | Extra context; no effect on the score |
+| Nomenclature | Base/Temporal/Env | CVSS-B / BT / BE / BTE | Names reflect which metric groups were scored |
+| Scoring Algorithm | Base × Temporal × Environmental | Revised calculation | Scores not directly comparable to v3.1 |
 
 > *Note: CVSSv4.0 scores are not directly comparable to v3.1 scores. Use the published version when comparing vulnerabilities.*
 
 ---
 
-*Created: 2026-07-15*
+
+## See also
+
+[[CVSSv3]], [[CWE-Top-25]], [[SANS-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
+
+*Created: 2026-07-17*
+*Updated: 2026-07-21*
+*Model: claude-haiku-4-5*

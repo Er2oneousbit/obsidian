@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Misc/CVSSv3.md",
+                "file": "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md",
                 "mode": "preview",
-                "source": true
+                "source": false
               },
               "icon": "lucide-file",
-              "title": "CVSSv3"
+              "title": "Cross-Site Scripting (XSS)"
             }
           }
         ]
@@ -184,21 +184,41 @@
   },
   "active": "f07b39a19c949ab2",
   "lastOpenFiles": [
-    "Misc/HITRUST.md",
-    "Misc/HITRUST.md.tmp.5589.8f9b3d951e58",
-    "Misc/HIPAA.md",
-    "Misc/HIPAA.md.tmp.5589.5b00c239735e",
-    "Misc/PCI-DSS-v4.md",
-    "Misc/PCI-DSS-v4.md.tmp.5589.f4e2a10569b7",
-    "Misc/CVSSv4.md",
-    "Misc/CVSSv4.md.tmp.5589.6576577f8062",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md",
-    "Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS).md.tmp.3272.1771896316664",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896090805",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896069532",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896051276",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771896037726",
-    "Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion.md.tmp.3272.1771895905615"
+    "Frameworks and Compliance/Critical-Infrastructure-ICS-Security.md.tmp.5589.cee44c4a2bc2",
+    "Frameworks and Compliance/Zero-Trust-Architecture.md.tmp.5589.30435978ff31",
+    "Frameworks and Compliance/Secure-SDLC.md.tmp.5589.e8008ac21106",
+    "Frameworks and Compliance/OWASP-Secure-Coding-Practices.md.tmp.5589.a40751b4171b",
+    "Frameworks and Compliance/Supply-Chain-Security.md.tmp.5589.a8950fd13ce6",
+    "Frameworks and Compliance/Supply-Chain-Security.md.tmp.5589.760e3b2ccd0f",
+    "Frameworks and Compliance/OWASP-SAMM.md.tmp.5589.ef430049ffa8",
+    "Frameworks and Compliance/OWASP-SAMM.md.tmp.5589.2f42e54e97c1",
+    "Frameworks and Compliance/OWASP-API-Top-10.md.tmp.5589.a2e10b7846d9",
+    "Frameworks and Compliance/OWASP-API-Top-10.md.tmp.5589.ef96f166f841",
+    "Frameworks and Compliance/OWASP-API-Top-10.md.tmp.5589.b5b26bb9ca3f",
+    "Frameworks and Compliance/_Frameworks and Compliance.md",
+    "Frameworks and Compliance/Threat-Intelligence-Frameworks.md",
+    "Frameworks and Compliance/Supply-Chain-Security.md",
+    "Frameworks and Compliance/Secure-SDLC.md",
+    "Frameworks and Compliance/Critical-Infrastructure-ICS-Security.md",
+    "Frameworks and Compliance/Zero-Trust-Architecture.md",
+    "Frameworks and Compliance/SANS-Top-25.md",
+    "Frameworks and Compliance/PTES.md",
+    "Frameworks and Compliance/OWASP-Top-10.md",
+    "Frameworks and Compliance/OWASP-Secure-Coding-Practices.md",
+    "Frameworks and Compliance/OWASP-SAMM.md",
+    "Frameworks and Compliance/OWASP-Proactive-Controls.md",
+    "Frameworks and Compliance/OWASP-Mobile-Top-10.md",
+    "Frameworks and Compliance/OWASP-MASVS.md",
+    "Frameworks and Compliance/OWASP-LLM-Top-10.md",
+    "Frameworks and Compliance/OWASP-ASVS.md",
+    "Frameworks and Compliance/OWASP-API-Top-10.md",
+    "Frameworks and Compliance/NIST-SP-800-115.md",
+    "Frameworks and Compliance/NIST-SP-800-53.md",
+    "Frameworks and Compliance/NIST-CSF.md",
+    "Frameworks and Compliance/MITRE-ATT-CK.md",
+    "Frameworks and Compliance/ISO-27001-27002.md",
+    "Frameworks and Compliance/GLBA.md",
+    "Frameworks and Compliance/GDPR.md",
+    "Frameworks and Compliance/FERPA.md"
   ]
 }

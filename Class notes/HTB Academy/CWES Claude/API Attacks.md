@@ -224,10 +224,12 @@ done
 Inspect and manipulate JWT tokens to escalate privileges or reuse tokens across services.
 
 ```bash
-# Decode a JWT (it's just base64)
+# Decode a JWT — it's base64URL (uses -_ instead of +/, no = padding),
+# so plain `base64 -d` often errors "invalid input" on real tokens.
 TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-echo $TOKEN | cut -d. -f1 | base64 -d | jq  # header
-echo $TOKEN | cut -d. -f2 | base64 -d | jq  # payload (claims)
+# Robust decode — translate to std base64 and let jq handle padding:
+echo $TOKEN | cut -d. -f1 | jq -R 'gsub("-";"+")|gsub("_";"/")|@base64d|fromjson'  # header
+echo $TOKEN | cut -d. -f2 | jq -R 'gsub("-";"+")|gsub("_";"/")|@base64d|fromjson'  # payload (claims)
 
 # Look for role claims, user IDs, expiry
 # Example claims: {"sub":"user123","role":"admin","exp":1720000000}
@@ -410,6 +412,32 @@ curl -H "Authorization: Bearer $JWT" \
 
 ---
 
+## Unrestricted Access to Sensitive Business Flows (API6:2023)
+
+The endpoint is technically authorized, but the *business flow* behind it can be automated at a scale the business never intended — bulk-buying limited stock for resale, mass-creating accounts, spamming invites, scraping the full catalog. Each individual request is legitimate; the abuse is volume + automation, so there's no broken authz check to point at.
+
+### Identify
+
+```bash
+# Flows worth automating (real-world value when scripted):
+#  - purchase/checkout  → scalping limited stock
+#  - account/invite create → spam, referral/discount abuse
+#  - comment/review    → reputation manipulation
+#  - search/pagination → full catalogue scrape
+
+# Test: can the flow be scripted with no CAPTCHA / device check / velocity limit?
+for i in $(seq 1 100); do
+  curl -s -H "Authorization: Bearer $JWT" -X POST "http://<api>/api/v1/checkout" \
+    -d '{"item_id":"limited-drop","qty":1}'
+done
+# All 100 succeed with no throttling/CAPTCHA → API6
+```
+
+> [!note]
+> API6 is about the *rate of legitimate use*, not a broken auth check — mitigations are business-flow controls (CAPTCHA, device fingerprinting, velocity limits), not just authorization.
+
+---
+
 ## HTTP Method Override
 
 The API filters certain HTTP methods (DELETE blocked, but POST allowed). Bypass by telling the server to treat POST as DELETE via a header or parameter.
@@ -573,6 +601,30 @@ curl "http://<api>/api/v1/users/123" \
 
 ---
 
+## Security Misconfiguration (API8:2023)
+
+Missing hardening rather than a single logic flaw: verbose stack traces, permissive CORS, absent security headers, unnecessary HTTP methods enabled, default creds on admin tooling, or unpatched components. Several checks in this note map here — see [[#CORS Misconfiguration]], [[#Caching Abuse]], and [[#HTTP Method Override]].
+
+### Identify
+
+```bash
+# Verbose errors leaking stack traces / framework versions
+curl -s "http://<api>/api/v1/users/%27" | head
+
+# Missing security headers
+curl -sI "http://<api>/api/v1/health" \
+  | grep -iE "x-frame-options|content-security-policy|strict-transport|x-content-type"
+# absent → misconfiguration
+
+# Unnecessary methods enabled (TRACE, PUT, DELETE on a read endpoint)
+curl -s -X OPTIONS "http://<api>/api/v1/users" -i | grep -i "^allow"
+
+# Debug/admin surfaces reachable (also see API Key & Credential Leakage below)
+curl -s "http://<api>/api/v1/debug/config"
+```
+
+---
+
 ## API Key & Credential Leakage
 
 API keys, tokens, and secrets often leak in plain sight — error messages, logs, source maps, public repos, or debug endpoints.
@@ -729,7 +781,7 @@ done
 | Test weak password | `curl -X PATCH ... -d '{"password":"123456"}'` |
 | Brute-force login | `ffuf -w emails.txt:EMAIL -w passwords.txt:PASS -d '{"Email":"EMAIL","Password":"PASS"}' -fr "Invalid"` |
 | Rate-limit bypass (IP rotation) | `-H "X-Forwarded-For: 192.168.$RANDOM.$RANDOM"` |
-| Decode JWT | `echo $TOKEN \| cut -d. -f2 \| base64 -d \| jq` |
+| Decode JWT (base64URL) | `echo $TOKEN \| cut -d. -f2 \| tr '_-' '/+' \| base64 -d \| jq` |
 | Algorithm confusion JWT | Craft token with `{"alg":"none"}` and no signature |
 | Mass assignment | `curl -X PATCH ... -d '{"field_you_shouldnt_touch":1}'` |
 | Race condition exploit | `seq 1 10 \| parallel -j 10 'curl -X POST <url>' ` |
@@ -751,5 +803,5 @@ done
 ---
 
 *Created: 2026-07-15*
-*Updated: 2026-07-15*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-5*

@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Foundational reference for web application architecture, front/back end components, and core vulnerability classes. Covers the attack angle for each concept — use as a primer before diving into technique-specific modules. Pairs with [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting]], and [[Web Requests]].
+Foundational reference for web application architecture, front/back end components, and core vulnerability classes. Covers the attack angle for each concept — use as a primer before diving into technique-specific modules. Pairs with [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting (XSS)]], and [[Command Injection]].
 
 ---
 
@@ -294,11 +294,11 @@ JS execution in victim's browser context. Enables cookie theft, credential harve
 // Case variation
 <ScRiPt>alert(1)</ScRiPt>
 
-// HTML entities
-<script>al&#101;rt(1)</script>
+// HTML entities — decoded in ATTRIBUTE/handler context, NOT inside <script> text
+<img src=x onerror="al&#x65;rt(1)">
 
-// Encoding
-<script>alert(1)</script>
+// JS unicode escape in an identifier — decoded by the JS engine, so this DOES run inside <script>
+<script>\u0061lert(1)</script>
 
 // No parentheses (CSP bypass)
 <script>onerror=alert;throw 1</script>
@@ -541,7 +541,7 @@ get <key>
 | Express | Node.js | `X-Powered-By: Express` | Prototype pollution, SSTI |
 | Rails | Ruby | `_session_id` cookie, `rack` headers | Mass assignment, YAML deserialization |
 | Spring | Java | `.do`/`.action` extensions, `JSESSIONID` | Log4Shell (if old), SpEL injection |
-| ASP.NET | C#/.NET | `ASPXAUTH` cookie, `X-Powered-By: ASP.NET` | ViewState deserialization, padding oracle |
+| ASP.NET | C#/.NET | `.ASPXAUTH` cookie, `X-AspNet-Version` header | ViewState deserialization, padding oracle |
 
 ### APIs
 
@@ -594,8 +594,12 @@ SOAPAction: "getUser"
 
 ```bash
 # SOAP injection — test XXE and SQLi in XML body
-# Replace userId value with XXE payload
-<userId><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>&xxe;</userId>
+# DOCTYPE goes in the prolog (before the root element), NOT inside <userId>
+<?xml version="1.0"?>
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body><getUser><userId>&xxe;</userId></getUser></soap:Body>
+</soap:Envelope>
 
 # Find WSDL (service definition — lists all methods)
 http://target.com/service?wsdl
@@ -762,7 +766,7 @@ use <module>
 | CVSS v3 | High | 7.0 – 8.9 |
 | CVSS v3 | Critical | 9.0 – 10.0 |
 
-**Prioritize during assessments:** Focus on CVSS ≥ 8.0 or any vuln leading to RCE. Use [[NVD]] / Rapid7 DB for quick scoring reference.
+**Prioritize during assessments:** Focus on CVSS ≥ 8.0 or any vuln leading to RCE. Use [[CVSSv3]] / Rapid7 DB for quick scoring reference.
 
 **CVSS Base Metric Groups:**
 - **Exploitability:** Attack Vector, Attack Complexity, Privileges Required, User Interaction
@@ -780,13 +784,12 @@ use <module>
 - [[XSS]]
 - [[Command Injection]]
 - [[File Upload Attacks]]
-- [[Web Requests]]
 - [[Tools/Web/Burpsuite]]
-- [[Tools/Web/ffuf]]
-- [[Tools/Web/sqlmap]]
+- [[Tools/Scanning/ffuf]]
+- [[Tools/Database/SQLMap|sqlmap]]
 
 ---
 
 *Created: 2026-04-24*
-*Updated: 2026-04-24*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

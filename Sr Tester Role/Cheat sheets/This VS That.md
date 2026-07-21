@@ -61,6 +61,13 @@ _A quick-reference sheet for vulnerabilities and attack types that sound similar
 
 ---
 
+### 🔄 CSP vs CORS
+- **CSP (Content Security Policy)** → HTTP header controlling where resources (scripts, styles, images) can be loaded from. Prevents XSS by restricting inline scripts, external script injection.  
+- **CORS (Cross-Origin Resource Sharing)** → HTTP header controlling which external domains can make requests to your API/app. Prevents unauthorized cross-origin requests.  
+- **Key Diff**: CSP is about *what can execute in the browser*; CORS is about *who can talk to the server*.
+
+---
+
 ### 🔄 OAuth vs OIDC
 - **OAuth 2.0** → Authorization (“app can act on your behalf”).  
 - **OIDC** → Authentication layer on top of OAuth (“who you are”).  
