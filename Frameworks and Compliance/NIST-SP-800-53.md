@@ -13,7 +13,7 @@
 **NIST SP 800-53 vs. Related Standards:**
 - **NIST CSF** = high-level framework (6 functions); tells you what to do.
 - **NIST SP 800-53** = detailed control catalog (1000+ controls); tells you how to implement it; prescriptive.
-- **NIST SP 800-171** = tailored subset of 800-53 for non-federal contractors (CMMC, DoD). More digestible; ~110 controls.
+- **NIST SP 800-171** = tailored subset of 800-53 for non-federal contractors (CMMC, DoD). More digestible; **97 requirements across 17 families as of Rev 3 (May 2024)** — down from 110 in Rev 2, though the consolidation folded in requirements from ~156 distinct underlying controls rather than dropping coverage.
 - **ISO 27001** = international, process-focused; fewer controls (~93) but more flexible.
 
 **When you need 800-53**: Federal contracts, DoD work, FISMA compliance, high-security environments (financial, healthcare, critical infrastructure).
@@ -407,5 +407,5 @@ Organizations using 800-53 typically follow the FISMA (Federal Information Secur
 [[NIST-CSF]], [[FedRAMP]], [[ISO-27001-27002]], [[CIS-Controls]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

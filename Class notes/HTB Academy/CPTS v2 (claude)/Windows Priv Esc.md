@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Elevating from a low-privilege shell to SYSTEM/Administrator via misconfigurations, weak permissions, vulnerable services, token abuse, or credential exposure. Goal: SYSTEM shell or admin-level access.
+Elevating from a low-privilege shell to SYSTEM/Administrator via misconfigurations, weak permissions, vulnerable services, token abuse, or credential exposure. Goal: SYSTEM shell or admin-level access. Pairs with [[Linux Priv Esc]], [[Password Attacks]], [[Pivoting, Tunneling & Port Forwarding]].
 
 Common writable staging dir: `C:\Windows\Temp`
 
@@ -946,5 +946,5 @@ OTHER VECTORS
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

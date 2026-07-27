@@ -442,6 +442,31 @@ See [[API Attacks]] for full exploitation methodology.
 
 ---
 
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Dir fuzz (auto-calibrate) | `ffuf -w directory-list-2.3-medium.txt -u http://<TARGET>/FUZZ -ac` |
+| Recursive dir fuzz | `feroxbuster -u http://<TARGET> -w directory-list-2.3-medium.txt --depth 2 --rate-limit 100` |
+| File extension fuzz | `ffuf -w common.txt -u http://<TARGET>/DIR/FUZZ -e .php,.html,.bak -v` |
+| Quick default-wordlist scan | `dirsearch -u http://<TARGET>` |
+| GET param value fuzz | `wenum -w common.txt --hc 404 -u "http://<TARGET>/page.php?x=FUZZ"` |
+| GET param name discovery | `ffuf -w burp-parameter-names.txt -u "http://<TARGET>/page.php?FUZZ=value" -ac` |
+| Smart param discovery | `arjun -u "http://<TARGET>/page.php" -m POST` |
+| POST body fuzz | `ffuf -u http://<TARGET>/post.php -X POST -d "y=FUZZ" -w common.txt -mc 200` |
+| Credential stuffing (2-position) | `ffuf -w users.txt:W1 -w passwords.txt:W2 -u http://<TARGET>/login -X POST -d "username=W1&password=W2" -fc 302` |
+| Authenticated fuzz (cookie) | `ffuf -w directory-list-2.3-medium.txt -u http://<TARGET>/FUZZ -H "Cookie: PHPSESSID=<token>" -fc 302` |
+| VHost fuzz | `gobuster vhost -u http://target.htb -w common.txt --append-domain -b 400,404` |
+| Subdomain DNS fuzz | `gobuster dns --domain target.com -w subdomains-top1million-5000.txt` |
+| Validate a hit without pulling body | `curl -I http://<TARGET>/backup/password.txt` |
+| GraphQL introspection | `curl -s -X POST http://<TARGET>/graphql -d '{"query":"{__schema{types{name}}}"}'` |
+| Crawler-based endpoint discovery | `katana -u http://<TARGET> -js-crawl -d 3` |
+| API-aware route fuzzing | `kr scan http://<TARGET> -w routes-large.kite` |
+| BOLA/IDOR probe | Fuzz object IDs in path: `/items/FUZZ`, check for other users' data |
+| Custom wordlist from target | `cewl http://<TARGET> -m 5 -d 3 -w custom_wordlist.txt` |
+
+---
+
 *Created: 2026-05-12*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

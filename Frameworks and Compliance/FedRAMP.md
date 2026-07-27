@@ -120,7 +120,7 @@ FedRAMP uses FIPS 199 impact categories to define authorization rigor:
 - Indicates the cloud service is approved for federal use at that impact level.
 
 > [!note]
-> Governance modernized recently: the **JAB P-ATO** path ended in 2024 (JAB dissolved under the 2022 FedRAMP Authorization Act; the **FedRAMP Board** now oversees the program), and the **FedRAMP 20x** initiative (2025) is streamlining authorization toward automation and continuous validation. Expect process and terminology to keep shifting.
+> Governance modernized recently: the **JAB P-ATO** path ended in 2024 (JAB dissolved under the 2022 FedRAMP Authorization Act; the **FedRAMP Board** now oversees the program). **FedRAMP 20x** (announced March 2025) targets a 20x reduction in authorization time — ~22 months down to ~90 days — via machine-readable OSCAL submissions and continuous/streaming monitoring instead of periodic assessment. Rollout: Phase 1 (Low impact, completed Sept 2025, first pilot authorized in 119 days) → Phase 2 (Moderate impact pilot, ~14 CSPs, Nov 2025–Mar 2026) → Phase 3 (public rollout for Low/Moderate, targeted Q3–Q4 2026, expected to become the default path for new authorizations). Verify current phase status at fedramp.gov before citing specifics — this is still actively moving.
 
 ---
 
@@ -347,5 +347,5 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 [[NIST-SP-800-53]], [[NIST-CSF]], [[Cloud-Security]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

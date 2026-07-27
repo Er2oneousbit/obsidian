@@ -93,3 +93,196 @@ We successfully identified the valid username consuelo. We could now proceed by 
 
 User Enumeration via Side-Channel Attacks
 While differences in the web application's response are the simplest and most obvious way to enumerate valid usernames, we might also be able to enumerate valid usernames via side channels. Side-channel attacks do not directly target the web application's response, but rather extra information that can be obtained or inferred from it. An example of a side channel is the response timing, i.e., the time it takes for the web application's response to reach us. Suppose a web application does database lookups only for valid usernames. In that case, we might be able to measure a difference in the response time and enumerate valid usernames this way, even if the response is the same. User enumeration based on response timing is covered in the Whitebox Attacks module.
+
+
+
+Brute-Forcing Passwords
+After successfully identifying valid users, password-based authentication relies on the password as a sole measure for authenticating the user. Since users tend to select easy-to-remember passwords, attackers may be able to guess or brute-force them.
+
+While password brute-forcing is not the focus of this module (it is covered in more detail in other modules referenced at the end of this section), we will still discuss an example of brute-forcing a password-based login form, as it is one of the most common examples of broken authentication.
+
+Brute-Forcing Passwords
+Passwords remain one of the most common online authentication methods, yet they are plagued by many issues. One prominent issue is password reuse, where individuals use the same password across multiple accounts. This practice poses a significant security risk because if one account is compromised, attackers can potentially gain access to other accounts with the same credentials. Password reuse enables an attacker who obtained a list of passwords from a password leak to try the same passwords on other web applications ("Password Spraying"). Another issue is the use of weak passwords based on typical phrases, dictionary words, or simple patterns. These passwords are vulnerable to brute-force attacks, where automated tools systematically try different combinations until they find the correct one, compromising the account's security.
+
+When accessing the sample web application, we can see the following information on the login page:
+
+http://<SERVER_IP>:<PORT>/
+Password update notice due to security issue. Requirements: one uppercase, one lowercase, one digit, minimum 10 characters.
+The success of a brute-force attack depends entirely on the number of attempts an attacker can perform and the time it takes to complete the attack. As such, ensuring that a good wordlist is used for the attack is crucial. If a web application enforces a password policy, we should ensure that our wordlist only contains passwords that match the implemented password policy. Otherwise, we are wasting valuable time with passwords that users cannot use on the web application, as the password policy does not allow them.
+
+For instance, the popular password wordlist rockyou.txt contains more than 14 million passwords:
+
+        shellsession
+er2oneousbit@htb[/htb]$ wc -l /opt/useful/seclists/Passwords/Leaked-Databases/rockyou.txt
+
+14344391 /opt/useful/seclists/Passwords/Leaked-Databases/rockyou.txt
+
+Now, we can use grep to match only those passwords that match the password policy implemented by our target web application, which brings down the wordlist to about 150,000 passwords, a reduction of about 99%:
+
+        shellsession
+er2oneousbit@htb[/htb]$ grep '[[:upper:]]' /opt/useful/seclists/Passwords/Leaked-Databases/rockyou.txt | grep '[[:lower:]]' | grep '[[:digit:]]' | grep -E '.{10}' > custom_wordlist.txt
+
+er2oneousbit@htb[/htb]$ wc -l custom_wordlist.txt
+
+151647 custom_wordlist.txt
+
+Alternatively, we could also combine the search parameters into a single awk command:
+
+        shellsession
+er2oneousbit@htb[/htb]$ awk 'length($0) >= 10 && /[a-z]/ && /[A-Z]/ && /[0-9]/' /opt/useful/seclists/Passwords/Leaked-Databases/rockyou.txt > custom_wordlist.txt
+
+To start brute-forcing passwords, we need a user or a list of users to target. Using the techniques covered in the previous section, we determine that admin is a valid username. Therefore, we will attempt brute-forcing the account's password.
+
+However, first, let us intercept the login request to know the names of the POST parameters and the error message returned within the response:
+
+HTTP request and response. Request: POST to /index.php with username and password as "admin". Response: "Invalid username or password."
+
+Upon providing an incorrect username, the login response contains the message (substring) "Invalid username", therefore, we can use this information to build our ffuf command to brute-force the user's password:
+
+        shellsession
+er2oneousbit@htb[/htb]$ ffuf -w ./custom_wordlist.txt -u http://172.17.0.2/index.php -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "username=admin&password=FUZZ" -fr "Invalid username"
+
+<SNIP>
+
+[Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 4764ms]
+    * FUZZ: Buttercup1
+
+After some time, we can successfully obtain the admin user's password, enabling us to log in to the web application:
+
+http://<SERVER_IP>:<PORT>/admin.php
+Dashboard showing statistics: 283,000 monthly visitors, 105 blog posts, 1,200 comments, 350 users. Navigation includes Dashboard, Posts, Categories, Comments, Users.
+For more details on creating custom wordlists and attacking password-based authentication, check out the Cracking Passwords with Hashcat and Password Attacks modules. Further details on brute-forcing different variations of web application logins are provided in the Login Brute Forcing module
+
+
+
+Brute-Forcing Password Reset Tokens
+Many web applications implement a password recovery functionality in case a user forgets their password. This password-recovery functionality typically relies on a one-time reset token, which is transmitted to the user, for instance, via SMS or email. The user can then authenticate using this token, enabling them to reset their password and access their account.
+
+As such, a weak password-reset token may be brute-forced or predicted by an attacker to gain unauthorized access to a victim's account.
+
+Identifying Weak Reset Tokens
+Reset tokens (in the form of a code or temporary password) are secret data generated by an application when a user requests a password reset. The user can then change their password by presenting the reset token.
+
+Since password reset tokens enable an attacker to reset an account's password without knowledge of the password, they can be leveraged as an attack vector to take over a victim's account if implemented incorrectly. Password reset flows can be complicated because they consist of several sequential steps; a basic password reset flow is shown below:
+
+Password reset flowchart: User forgets password, requests reset, receives token, uses it to log in, and changes password. Webapp generates and sends token, verifies it, grants login, and forces new password.
+
+To identify weak reset tokens, we typically need to create an account on the target web application, request a password reset token, and then analyze it to determine its strength. In this example, let us assume we have received the following password reset email:
+
+        txt
+Hello,
+
+We have received a request to reset the password associated with your account. To proceed with resetting your password, please follow the instructions below:
+
+1. Click on the following link to reset your password: Click
+
+2. If the above link doesn't work, copy and paste the following URL into your web browser: http://weak_reset.htb/reset_password.php?token=7351
+
+Please note that this link will expire in 24 hours, so please complete the password reset process as soon as possible. If you did not request a password reset, please disregard this email.
+
+Thank you.
+
+As we can see, the password reset link contains the reset token in the GET parameter token. In this example, the token is 7351. Given that the token consists of only a 4-digit number, there can be only 10,000 possible values. This allows us to hijack users' accounts by requesting a password reset and then brute-forcing the token.
+
+Attacking Weak Reset Tokens
+We will use ffuf to brute-force all possible reset tokens. First, we need to create a wordlist of all possible tokens from 0000 to 9999, which we can achieve with seq:
+
+        shellsession
+er2oneousbit@htb[/htb]$ seq -w 0 9999 > tokens.txt
+
+The -w flag pads all numbers to the same length by prepending zeroes, which we can verify by looking at the first few lines of the output file:
+
+        shellsession
+er2oneousbit@htb[/htb]$ head tokens.txt
+
+0000
+0001
+0002
+0003
+0004
+0005
+0006
+0007
+0008
+0009
+
+Assuming that there are users currently in the process of resetting their passwords, we can try to brute-force all active reset tokens. If we want to target a specific user, we should first send a password reset request for that user to create a reset token. We can then specify the wordlist in ffuf to brute-force all active reset-tokens:
+
+        shellsession
+er2oneousbit@htb[/htb]$ ffuf -w ./tokens.txt -u http://weak_reset.htb/reset_password.php?token=FUZZ -fr "The provided token is invalid"
+
+<SNIP>
+
+[Status: 200, Size: 2667, Words: 538, Lines: 90, Duration: 1ms]
+    * FUZZ: 6182
+
+By specifying the reset token in the GET parameter token in the /reset_password.php endpoint, we can reset the password of the corresponding account, enabling us to take over the account:
+
+
+
+
+Brute-Forcing Password Reset Tokens
+Many web applications implement a password recovery functionality in case a user forgets their password. This password-recovery functionality typically relies on a one-time reset token, which is transmitted to the user, for instance, via SMS or email. The user can then authenticate using this token, enabling them to reset their password and access their account.
+
+As such, a weak password-reset token may be brute-forced or predicted by an attacker to gain unauthorized access to a victim's account.
+
+Identifying Weak Reset Tokens
+Reset tokens (in the form of a code or temporary password) are secret data generated by an application when a user requests a password reset. The user can then change their password by presenting the reset token.
+
+Since password reset tokens enable an attacker to reset an account's password without knowledge of the password, they can be leveraged as an attack vector to take over a victim's account if implemented incorrectly. Password reset flows can be complicated because they consist of several sequential steps; a basic password reset flow is shown below:
+
+Password reset flowchart: User forgets password, requests reset, receives token, uses it to log in, and changes password. Webapp generates and sends token, verifies it, grants login, and forces new password.
+
+To identify weak reset tokens, we typically need to create an account on the target web application, request a password reset token, and then analyze it to determine its strength. In this example, let us assume we have received the following password reset email:
+
+        txt
+Hello,
+
+We have received a request to reset the password associated with your account. To proceed with resetting your password, please follow the instructions below:
+
+1. Click on the following link to reset your password: Click
+
+2. If the above link doesn't work, copy and paste the following URL into your web browser: http://weak_reset.htb/reset_password.php?token=7351
+
+Please note that this link will expire in 24 hours, so please complete the password reset process as soon as possible. If you did not request a password reset, please disregard this email.
+
+Thank you.
+
+As we can see, the password reset link contains the reset token in the GET parameter token. In this example, the token is 7351. Given that the token consists of only a 4-digit number, there can be only 10,000 possible values. This allows us to hijack users' accounts by requesting a password reset and then brute-forcing the token.
+
+Attacking Weak Reset Tokens
+We will use ffuf to brute-force all possible reset tokens. First, we need to create a wordlist of all possible tokens from 0000 to 9999, which we can achieve with seq:
+
+        shellsession
+er2oneousbit@htb[/htb]$ seq -w 0 9999 > tokens.txt
+
+The -w flag pads all numbers to the same length by prepending zeroes, which we can verify by looking at the first few lines of the output file:
+
+        shellsession
+er2oneousbit@htb[/htb]$ head tokens.txt
+
+0000
+0001
+0002
+0003
+0004
+0005
+0006
+0007
+0008
+0009
+
+Assuming that there are users currently in the process of resetting their passwords, we can try to brute-force all active reset tokens. If we want to target a specific user, we should first send a password reset request for that user to create a reset token. We can then specify the wordlist in ffuf to brute-force all active reset-tokens:
+
+        shellsession
+er2oneousbit@htb[/htb]$ ffuf -w ./tokens.txt -u http://weak_reset.htb/reset_password.php?token=FUZZ -fr "The provided token is invalid"
+
+<SNIP>
+
+[Status: 200, Size: 2667, Words: 538, Lines: 90, Duration: 1ms]
+    * FUZZ: 6182
+
+By specifying the reset token in the GET parameter token in the /reset_password.php endpoint, we can reset the password of the corresponding account, enabling us to take over the account:
+
+
+

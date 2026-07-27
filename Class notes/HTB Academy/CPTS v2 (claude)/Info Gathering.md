@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Map the full attack surface before touching the target. Passive: OSINT, WHOIS, certificate transparency, subdomain enumeration via third-party sources, dorking. Active: DNS brute force, port scanning, vhost/dir discovery, tech stack fingerprinting. Goal: complete picture of exposed assets, services, and entry points.
+Map the full attack surface before touching the target. Passive: OSINT, WHOIS, certificate transparency, subdomain enumeration via third-party sources, dorking. Active: DNS brute force, port scanning, vhost/dir discovery, tech stack fingerprinting. Goal: complete picture of exposed assets, services, and entry points. Pairs with [[Fuzzing]], [[Attacking Common Services]], [[Network Device Pentesting]].
 
 ---
 
@@ -246,8 +246,8 @@ curl https://example.s3.amazonaws.com
 curl https://example-backup.s3.amazonaws.com
 curl https://example-dev.s3.amazonaws.com
 
-# s3scanner
-pip3 install s3scanner
+# s3scanner (current version is Go — sa7mon/S3Scanner)
+go install github.com/sa7mon/s3scanner@latest
 s3scanner scan --buckets-file buckets.txt
 
 # Azure blobs
@@ -309,8 +309,8 @@ A CNAME points to an external service (GitHub Pages, Heroku, AWS S3, Azure, Fast
 go install github.com/haccer/subjack@latest
 subjack -w subdomains.txt -t 50 -timeout 30 -ssl -c ~/go/pkg/mod/github.com/haccer/subjack*/fingerprints.json -o takeover_findings.txt
 
-# nuclei takeover templates (built-in)
-nuclei -l subdomains.txt -t takeovers/ -o nuclei_takeover.txt
+# nuclei takeover templates (built-in) — tag is more robust than a shifting path
+nuclei -l subdomains.txt -tags takeover -o nuclei_takeover.txt
 
 # Manual check — look for CNAME pointing to unclaimed resource
 dig sub.example.com CNAME
@@ -398,11 +398,11 @@ wafw00f -a https://example.com          # try all WAF fingerprints
 
 ### Wappalyzer
 
-Browser extension or CLI:
+The official CLI/npm package is discontinued — use the **browser extension**, or get the
+same tech-detection from `whatweb` / `httpx -tech-detect`:
 
 ```bash
-npm install -g wappalyzer
-wappalyzer https://example.com
+httpx -u https://example.com -tech-detect -title -status-code
 ```
 
 ### eyewitness — screenshot at scale
@@ -534,8 +534,8 @@ nmap --script banner 10.10.10.10
 # ZAP — spider via CLI
 zap-cli spider https://example.com
 
-# hakrawler
-echo "https://example.com" | hakrawler -depth 3 -plain | tee crawl_output.txt
+# hakrawler (v2 simplified the flags — depth via -d; no -plain)
+echo "https://example.com" | hakrawler -d 3 | tee crawl_output.txt
 
 # gospider
 gospider -s https://example.com -o output/ -c 10 -d 3
@@ -715,5 +715,5 @@ Active
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

