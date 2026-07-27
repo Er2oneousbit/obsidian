@@ -15,9 +15,11 @@ Describes how the vulnerability is exploited:
 
 - **Network (N)**: Exploitable remotely over a network, including the internet or same NAT/private network.
 - **Adjacent (A)**: Requires access to the same physical or logical network segment (e.g., Bluetooth, Wi-Fi, ARP, L2 broadcast domains, Zigbee, local mesh networks, etc).
-- **Local (L)**: Requires local access, such as downloading a file or using a local shell.  
-  > *Note: If access is via SSH but the exploit occurs in the local shell, this is still considered Local.*
+- **Local (L)**: Requires local access, such as downloading a file or using a local shell.
 - **Physical (P)**: Requires physical interaction with the device (e.g., hands on keyboard or hardware).
+
+> [!note]
+> If access is via SSH but the exploit occurs in the local shell, this is still considered Local.
 
 ---
 
@@ -27,7 +29,8 @@ Describes conditions beyond the attacker's control that must exist for exploitat
 - **Low (L)**: No special conditions required; the attacker can exploit the vulnerability at will.
 - **High (H)**: Requires specific conditions or configurations that are not always present.
 
-> *Note: AC does not account for the skill level of the attacker—only the presence of conditions outside their control (e.g., timing windows, race conditions, or specific system states).*
+> [!note]
+> AC does not account for the skill level of the attacker—only the presence of conditions outside their control (e.g., timing windows, race conditions, or specific system states).
 
 ---
 
@@ -46,7 +49,8 @@ Describes the level of privileges an attacker must have before exploiting the vu
 - **Low (L)**: Requires basic user privileges or authentication.
 - **High (H)**: Requires administrative or elevated privileges.
 
-> *Note: This metric assumes the attacker has already obtained the required level of access before attempting the exploit.*
+> [!note]
+> This metric assumes the attacker has already obtained the required level of access before attempting the exploit.
 
 ---
 
@@ -57,9 +61,8 @@ Describes whether exploitation requires user interaction. **NEW in v4.0: Three l
 - **Passive (P)**: Requires the user to perform some action, but not necessarily awareness of the exploit (e.g., visiting a malicious page, opening an email).
 - **Active (A)**: Requires the user to actively engage or be aware (e.g., clicking a malicious link, running an executable, typing credentials).
 
-> *Note: UI refers to the victim's interaction, not the attacker's actions.*
-
-> *Note: In v3.1, "Required" is now split into Passive and Active. Passive is closer to the old Required for web-based attacks; Active requires more deliberate user action.*
+> [!note]
+> UI refers to the victim's interaction, not the attacker's actions. In v3.1, "Required" is now split into Passive and Active. Passive is closer to the old Required for web-based attacks; Active requires more deliberate user action.
 
 ---
 
@@ -91,7 +94,8 @@ Reflects the current availability and reliability of exploit code or active expl
 - **Functional (F)**: Exploit code exists and works in most situations; active exploitation is limited.
 - **High (H)**: Exploit code is widely available, reliable, and actively exploited.
 
-> *Note: This reflects the current state of the threat landscape, not the theoretical exploitability.*
+> [!note]
+> This reflects the current state of the threat landscape, not the theoretical exploitability.
 
 ---
 
@@ -109,7 +113,8 @@ Override the base metrics if your environment differs from the default assumptio
 - **Modified Scope (MS)**: Adjust if component isolation is stronger/weaker.
 - **Modified Confidentiality/Integrity/Availability (MC/MI/MA)**: Override if impacts differ from base assumptions.
 
-> *Example: A vulnerability is remotely exploitable (AV:N) in general, but in your environment it is only exploitable locally due to network segmentation. Set MAV:L to reflect your actual exposure.*
+> [!tip]
+> A vulnerability is remotely exploitable (AV:N) in general, but in your environment it is only exploitable locally due to network segmentation. Set MAV:L to reflect your actual exposure.
 
 ---
 
@@ -120,9 +125,8 @@ Reflects the importance of each security objective in the operational environmen
 - **Medium (M)**: Objective has moderate importance (default assumption).
 - **High (H)**: Objective is critical to your environment (e.g., healthcare systems, financial services).
 
-> *Note: These values should reflect the actual importance of each security objective (C/I/A) in your specific operational context.*
-
-> *Note: Increasing a requirement multiplier increases the final score, reflecting higher organizational risk if that objective is compromised.*
+> [!note]
+> These values should reflect the actual importance of each security objective (C/I/A) in your specific operational context. Increasing a requirement multiplier increases the final score, reflecting higher organizational risk if that objective is compromised.
 
 ---
 
@@ -171,7 +175,8 @@ Reflects the importance of each security objective in the operational environmen
 | Nomenclature | Base/Temporal/Env | CVSS-B / BT / BE / BTE | Names reflect which metric groups were scored |
 | Scoring Algorithm | Base × Temporal × Environmental | Revised calculation | Scores not directly comparable to v3.1 |
 
-> *Note: CVSSv4.0 scores are not directly comparable to v3.1 scores. Use the published version when comparing vulnerabilities.*
+> [!note]
+> CVSSv4.0 scores are not directly comparable to v3.1 scores. Use the published version when comparing vulnerabilities.
 
 ---
 
@@ -181,5 +186,5 @@ Reflects the importance of each security objective in the operational environmen
 [[CVSSv3]], [[CWE-Top-25]], [[SANS-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

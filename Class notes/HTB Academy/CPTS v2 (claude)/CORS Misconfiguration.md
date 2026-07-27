@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Requests]], [[Cross-Site Scripting (XSS)]].
+Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]].
 
 
 ---
@@ -102,7 +102,7 @@ curl -si "https://<target>/api/profile" -H "Origin: https://eviltarget.com" -b "
 # OR: https://notatarget.com
 ```
 
-### 6. Simple Request — Preflight Bypass
+### 5. Simple Request — Preflight Bypass
 
 Browsers only send a preflight OPTIONS request for "non-simple" requests. **Simple requests skip preflight entirely** and are sent directly, which means the CORS check happens on the actual response headers — not a preliminary OPTIONS.
 
@@ -123,7 +123,7 @@ Browsers only send a preflight OPTIONS request for "non-simple" requests. **Simp
 curl -si "https://<target>/api/userdata" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -i "access-control"
 ```
 
-### 5. Subdomain Trust + XSS
+### 6. Subdomain Trust + XSS
 
 ```bash
 # Server trusts *.target.com
@@ -134,6 +134,8 @@ curl -si "https://<target>/api/userdata" -H "Origin: https://evil.com" -b "sessi
 ---
 
 ## Exploitation PoC
+
+> [!warning] SameSite is the real gatekeeper. Every PoC below relies on `withCredentials`/`credentials:'include'` to attach the victim's session cookie — but modern browsers default cookies to **`SameSite=Lax`**, which blocks that cross-site cookie from being sent. These attacks land only when the session cookie is explicitly **`SameSite=None; Secure`** (common on APIs/SSO, less so elsewhere). Confirm the `Set-Cookie` attributes before assuming a reflected-origin misconfig is exploitable.
 
 ### Basic Reflected Origin Exploit
 
@@ -241,7 +243,7 @@ done
 | `ACAO: *` + `ACAC: true` | Spec violation — browser blocks | Not exploitable |
 | `ACAO: <origin>` + `ACAC: true` | Yes | **Fully exploitable** |
 | `ACAO: null` + `ACAC: true` | Yes (via sandbox) | Exploitable |
-| `ACAO: *.target.com` | Yes (subdomain) | Exploitable if XSS on subdomain |
+| Server matches `*.target.com`, echoes the origin | Yes (subdomain) | Exploitable if XSS on any subdomain |
 
 ```bash
 # One-liner check
@@ -252,5 +254,5 @@ curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "sessio
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

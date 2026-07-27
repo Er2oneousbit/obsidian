@@ -29,7 +29,8 @@ HIPAA comprises three main rules; compliance requires addressing all three:
 - Examples: IT vendors, billing companies, cloud storage providers, transcription services.
 - **Business Associate Agreement (BAA) required** between covered entity and associate.
 
-> *Note: If you process healthcare data for a client, you need a BAA or you're violating HIPAA.*
+> [!note]
+> If you process healthcare data for a client, you need a BAA or you're violating HIPAA.
 
 ---
 
@@ -182,7 +183,8 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 - **Encrypted data** (if encryption key was not compromised).
 - **Low risk of harm** (access logs show data was not actually viewed).
 
-> *Note: If breach is discovered years later, notification still required. HIPAA has no statute of limitations.*
+> [!note]
+> If breach is discovered years later, notification still required. HIPAA has no statute of limitations.
 
 ---
 
@@ -242,7 +244,8 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 | Willful neglect (not corrected within 30 days) | $10,000–$1.5M per violation category per year | Ignored breach notification requirements |
 | Criminal violations (knowingly obtaining/disclosing PHI) | Up to $250,000 fine + 10 years imprisonment | Selling patient data, unauthorized access |
 
-> *Note: OCR (Office for Civil Rights) has actively pursued enforcement; average settlement is $1-10M.*
+> [!note]
+> OCR (Office for Civil Rights) has actively pursued enforcement; average settlement is $1-10M.
 
 ---
 
@@ -252,5 +255,5 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 [[HITRUST]], [[GDPR]], [[GLBA]], [[FERPA]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

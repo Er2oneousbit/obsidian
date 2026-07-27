@@ -496,6 +496,36 @@ curl -s "http://<target>/serial.php" -X POST -b "session=<token>"
 
 ---
 
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Enumerate JS files (crawl) | `echo "http://<target>" \| subjs` |
+| Fuzz for JS files | `ffuf -w raft-large-files.txt -u http://<target>/FUZZ -e .js -mc 200` |
+| Pretty-print minified JS | Browser DevTools → Debugger → `{ }` (Pretty Print) |
+| Unpack `function(p,a,c,k,e,d)` | Paste into [UnPacker](https://matthewfl.com/unPacker.html), or swap `eval(` → `console.log(` |
+| Decode JSFuck/JJEncode/AAEncode | Run in [JSConsole](https://jsconsole.com) or matching online decoder |
+| Check for source map | `curl -s -o /dev/null -w "%{http_code}" "http://<target>/secret.js.map"` |
+| Extract source-map original files | `curl -s ".../secret.js.map" \| python3 -c "import json,sys; ..."` (see Source Maps section) |
+| Set conditional breakpoint | DevTools → Sources → line number → "Add conditional breakpoint" |
+| Dump localStorage | `for (let i=0;i<localStorage.length;i++){let k=localStorage.key(i); console.log(k, localStorage.getItem(k));}` |
+| Run deobfuscated code locally | `node -e "..."` with `XMLHttpRequest`/`fetch` stubbed out |
+| Decode base64 | `echo "<b64>" \| base64 -d` |
+| Decode hex | `echo "<hex>" \| xxd -p -r` |
+| Decode/encode ROT13 | `echo "<text>" \| tr 'A-Za-z' 'N-ZA-Mn-za-m'` |
+| Decode URL encoding | `python3 -c "from urllib.parse import unquote; print(unquote('...'))"` |
+| Decode JS unicode escapes | `node -e 'console.log("HTB")'` |
+| Fingerprint unknown encoding | [Cipher Identifier](https://www.dcode.fr/cipher-identifier) |
+| Find/download WASM | `curl -s "http://<target>/" \| grep -oP '[^"]+\.wasm'` |
+| Disassemble WASM | `wasm2wat app.wasm -o app.wat` |
+| Decompile WASM to pseudo-C | `wasm-decompile app.wasm -o app.dcmp` |
+| Scan JS for hardcoded secrets | `python3 SecretFinder.py -i "http://<target>/app.js" -o cli` |
+| Grep for AWS keys | `grep -oP 'AKIA[0-9A-Z]{16}'` |
+| Grep for JWTs | `grep -oP 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'` |
+| Replay discovered endpoint | `curl -s "http://<target>/serial.php" -X POST -d "param1=sample"` |
+
+---
+
 *Created: 2026-05-13*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

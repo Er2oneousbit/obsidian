@@ -18,7 +18,7 @@
 
 **History**: First published 2015 (Enterprise ATT&CK). Expanded to: ATT&CK for Cloud, Mobile, ICS (Industrial Control Systems).
 
-**Current Size** (Enterprise): **14 tactics**, ~200 techniques, and 450+ sub-techniques; updated roughly twice a year (e.g. v15 April 2024, v16 October 2024).
+**Current Size** (Enterprise): **14 tactics**, ~200 techniques, and 450+ sub-techniques; updated roughly twice a year (e.g. v16 October 2024, v17 April 2025 — added the ESXi platform and renamed the Network platform to Network Devices). Check [attack.mitre.org/resources/versions](https://attack.mitre.org/resources/versions/) for the current version before citing specifics.
 
 ---
 
@@ -360,5 +360,5 @@ Exfiltration → Impact
 [[Threat-Intelligence-Frameworks]], [[PTES]], [[NIST-SP-800-115]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*

