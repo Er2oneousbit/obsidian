@@ -14,7 +14,7 @@ nmap -sV --open -oA initial_scan 10.129.200.170
 > [!note]
 > Run as root for SYN scan (`-sS`) — faster and more reliable than connect scan (`-sT`). Always save output with `-oA` for all three formats (nmap, xml, gnmap). Use `-Pn` when ICMP is blocked.
 
-> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script).
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script); [[Services/Cloud & Data/Flink|Apache Flink]] (identifying Flink ports/version).
 
 ---
 

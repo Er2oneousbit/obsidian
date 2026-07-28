@@ -6,7 +6,7 @@ This vault contains 100+ cross‑linked notes covering pentesting techniques, se
 ## Purpose
 
 This repo documents how I learn, test, break, and analyze systems.
-It reflects my offensive methodology, my curiosity, and my commitment to building repeatable processes rather than one-off exploits. Some content was AI-assisted (Claude/Copilot) during research or drafting, but every note represents material I studied, validated, or practiced hands-on.
+It reflects my offensive methodology, my curiosity, and my commitment to building repeatable processes rather than one-off exploits. Some content was AI-assisted (Claude/Copilot) during research or drafting.  Report an issue if something is missing or incorrect.
 
 ## Structure
 
@@ -37,3 +37,5 @@ AI/LLM security testing notes (prompt injection, jailbreaks, model behavior)
 
 Clone the repo and open the vault root in Obsidian.
 The graph view provides a high-level map of how concepts connect across services, tools, and methodologies.
+As I am refactoring old notes and adding new notes, they should have cross and back links to and from service to tool usage.
+Hack the box notes are per module/topic and the tooling or service should be linked to the corresponding link (this is in progress).

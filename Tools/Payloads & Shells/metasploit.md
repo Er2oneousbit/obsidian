@@ -199,6 +199,10 @@ There may also be a `~/.msf4/modules/` folder (per-user) with the same structure
 
 ---
 
+> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules.
+
+---
+
 *Created: 2026-03-13*
 *Updated: 2026-03-13*
 *Model: claude-sonnet-4-6*
