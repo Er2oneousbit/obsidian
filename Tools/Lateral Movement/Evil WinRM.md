@@ -17,6 +17,8 @@ evil-winrm -i 192.168.1.10 -u Administrator -H NTLMhash
 
 > [!note] **WinRM requirements** — Target must have WinRM enabled (default on Server 2012+, disabled on workstations by default). User must be in `Remote Management Users` group or be a local admin. Port 5985 (HTTP) or 5986 (HTTPS).
 
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for using a cert-derived NT hash to get a shell; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket.
+
 ---
 
 ## Connecting

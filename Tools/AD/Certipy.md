@@ -20,6 +20,8 @@ certipy -h
 
 > [!note] The companion tool **Certify** (C# — Windows) is also commonly used. Certipy is the Linux equivalent and handles most of the same attacks. For Windows targets, Certify can be run directly on the host.
 
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against.
+
 ---
 
 ## Quick Reference — ESC Attacks

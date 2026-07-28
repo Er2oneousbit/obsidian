@@ -16,6 +16,8 @@ netexec smb 192.168.1.0/24 --gen-relay-list no_signing.txt
 
 > [!note] **ntlmrelayx requires SMB signing disabled** — Domain Controllers have SMB signing enabled by default. Workstations and member servers often do not. Always generate a relay list first with NetExec before running ntlmrelayx. You cannot relay back to the same host that sent the auth.
 
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] ESC8/ESC11, for relaying coerced auth to the CA Web Enrollment/RPC endpoint.
+
 ---
 
 ## Setup — Find Relay Targets

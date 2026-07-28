@@ -13,6 +13,8 @@ Rubeus.exe dump /nowrap
 
 > [!note] **Rubeus vs Impacket Kerberos tools** — Rubeus runs on the Windows target using the local Kerberos API — requests and injects tickets into live sessions. Impacket tools (GetUserSPNs, GetNPUsers, getTGT) run from Kali over the network. Use both: Impacket for remote/external attacks, Rubeus for on-host ticket manipulation and injection.
 
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] Connect / Access section, for requesting a TGT from a certificate; [[Services/Active Directory/Kerberos|Kerberos]], for ticket dumping/forging (Golden/Diamond/Sapphire), PTT, and S4U/Bronze Bit abuse.
+
 ---
 
 ## Ticket Dumping

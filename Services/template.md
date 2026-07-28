@@ -116,6 +116,10 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 **`## Tools`** — new section, not present in any existing Services note. This is what makes the Service → Tool cross-linking design work: every tool named anywhere in this note should appear here once, wikilinked to its actual `Tools/` note. Use the **full path** in the link (`[[Tools/Auth/Hydra|Hydra]]`, not `[[Hydra]]`) — several tools currently exist in two places (a full note and a not-yet-expanded stub in a shadow folder, see `TODO.md`), and a bare filename link is ambiguous. Always link to the fuller note, not the stub, until the stub gets expanded.
 
+**No "no vault note yet" plain text.** If a tool named in the note doesn't have a `Tools/` note at all, don't leave it as bare text in the Tools table — create a stub note for it and link to that instead. A stub is: `# ToolName` → `**Tags:**` line → a 2–4 sentence description (what it does, why it's relevant here) → `**Source:**` (repo/docs link) and `**Install:**` if known → one small usage example pulled from the context you already have in the Services note → `> [!note] **See also**` callout linking back to the Services note(s) that reference it → footer. File it in the `Tools/` subfolder that matches its category (mirror where sibling tools already live — e.g. a coercion script goes next to `Coercer.md`, a cloud/M365 tool goes in `Tools/Cloud/`). This is a real note meant to be expanded later, not a placeholder — don't write `#update` markers or leave it at one line.
+
+**Every linked tool needs a backlink, not just new stubs.** Whenever a `Tools/` note gets linked from a Services note's Tools table — whether it's a brand-new stub or an existing full note that just didn't have this yet — open that tool note and make sure it has a `> [!note] **See also**` callout pointing back to the Services note(s) that use it (`[[Services/<Category>/<Service>|<Service>]]`), same as the AADInternals/GraphRunner/Certify examples. If the tool is already linked from multiple Services notes, list all of them in the one callout rather than adding several. This is what makes the cross-linking bidirectional — check it every time you add a link to the Tools table, not only when creating a new stub.
+
 **`## Enumeration`** — how to identify/fingerprint the service and pull version info. Nmap NSE scripts first if they exist for the service.
 
 **`## Connect / Access`** — the basic "get in" commands: standard auth, anonymous/default access if commonly open, then `### ` subsections for variants (TLS wrapper, Windows-native client, alternate ports).
@@ -130,10 +134,27 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 ---
 
+## Content completeness check (do this for every note, not just formatting)
+
+Refactoring a note into this skeleton is a structural pass — it does not by itself verify the note's *content* is current or complete. Do both, every time:
+
+1. **Inventory what the note currently covers** — list the named techniques/CVEs/attack classes it documents (e.g. for ADCS: which ESC numbers are present).
+2. **Web-search the current state of the art for that service** — e.g. "`<service>` attack techniques {current year}", "`<primary tool>` privilege escalation techniques list" — and diff against the inventory. Look specifically for:
+   - Newer named/numbered technique variants added since the note was last touched (CVE-numbered or scheme-numbered, like ADCS's ESC*).
+   - Tool command syntax drift — flags renamed or added across the primary tool's versions (verify against the tool's own docs/wiki, not just older blog posts).
+   - Structural gaps the template expects but this specific service doesn't need forced content for (e.g. a service with no natural "Connect / Access" step — it's fine to omit or repurpose a section rather than pad it).
+3. **Report gaps before writing hundreds of lines unprompted.** If the gap is small (a couple of missing rows), just fix it. If it's substantial (multiple missing techniques, like ADCS's missing ESC5/11-16), summarize what's missing and ask whether to add it all, stub it, or skip — don't assume silently.
+4. **Match the existing depth when filling gaps** — same structure as sibling techniques already in the note (a `### ` subsection with a **Conditions** line and a runnable command block), not a lighter-weight summary.
+
+This is what "no issues found" should mean going forward for any note in this folder: structurally compliant *and* content-checked against current sources — not just "the file parses and has the right headings."
+
+---
+
 ## Migration checklist (per existing note)
 
 When refactoring an existing `Services/*.md` note into this template:
 
+- [ ] Run the **content completeness check** above first — this determines how much of the rest of the checklist actually matters
 - [ ] Add `# <Service Name>` H1 if missing
 - [ ] Rename `## What is it?` → `## What is <Service>?` if it's one of the 8 alternate-style notes
 - [ ] Add a `## Tools` section — pull every tool name mentioned in commands throughout the note, wikilink each to its `Tools/` note (full path, pointing at the fuller version per the cross-linking TODO)

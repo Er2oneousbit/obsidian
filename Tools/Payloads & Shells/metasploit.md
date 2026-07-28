@@ -193,6 +193,10 @@ reload_all
 
 Naming: snake_case `.rb`. Match structure: `exploits/`, `auxiliary/`, `post/`, `payloads/`.
 
+There may also be a `~/.msf4/modules/` folder (per-user) with the same structure — drop modules there to avoid touching the system path. Reload the entire path with `msfconsole -m /usr/share/metasploit-framework/modules/` at startup, or `reload_all` from within.
+
+**Porting a standalone Ruby exploit into a module:** copy the `.rb` into the matching folder, then adapt it against a similar existing module — copy that module's `include` lines, then customize the `info` section (name, description, references, targets) and the `options` section (RHOSTS/RPORT/etc.) to match the new exploit.
+
 ---
 
 *Created: 2026-03-13*

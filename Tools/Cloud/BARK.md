@@ -14,6 +14,8 @@ git clone https://github.com/BloodHoundAD/BARK
 
 > [!note] **BARK workflow** — Collect with AzureHound → import into BloodHound → identify attack path → execute each hop with the matching BARK primitive. BARK functions map 1:1 to BloodHound Azure edges (AZAddMember, AZGrantAppRoles, AZResetPassword, AZOwns, etc.).
 
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Service Principal & App Registration Abuse section.
+
 ---
 
 ## AzureHound — BloodHound Data Collection

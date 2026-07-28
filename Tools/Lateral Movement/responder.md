@@ -16,6 +16,8 @@ sudo responder -I tun0
 
 > [!note] **Responder + ntlmrelayx** — When SMB signing is disabled, don't just capture hashes — relay them for instant code execution. Run Responder with `-w -d` alongside ntlmrelayx. Set SMB and HTTP to Off in Responder.conf to avoid competing with the relay tool.
 
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Seamless SSO section, for capturing the NTLM hash triggered by the `autologon` endpoint.
+
 ---
 
 ## Basic Usage

@@ -300,6 +300,10 @@ aws sts get-caller-identity
 
 ---
 
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — after stealing IAM role creds from a cluster's IMDS, use Pacu for deeper AWS enumeration/privesc in the underlying account.
+
+---
+
 *Created: 2026-03-06*
 *Updated: 2026-03-06*
 *Model: claude-sonnet-4-6*

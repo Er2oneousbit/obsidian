@@ -14,6 +14,8 @@ pip install roadtx       # roadtx component
 
 > [!note] **ROADtools vs AADInternals** — ROADtools is Python (runs natively on Kali), AADInternals is PowerShell (needs Windows or pwsh). Use ROADtools from your attack box for recon and token work; use AADInternals when you're already on a Windows host or need PTA/Connect-specific attacks.
 
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] for the broader attack methodology this tool supports (PRT abuse, FOCI token swapping, tenant enumeration).
+
 ---
 
 ## roadrecon — Tenant Enumeration
