@@ -1,1 +1,0 @@
-- [GitHub - drego85/JoomlaScan: A free software to find the components installed in Joomla CMS, built out of the ashes of Joomscan.](https://github.com/drego85/JoomlaScan)
