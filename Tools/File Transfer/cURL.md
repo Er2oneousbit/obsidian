@@ -205,7 +205,7 @@ curl -b cookies.txt http://target.com/dashboard
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] uses cURL for all REST API interaction (PAT/OAuth token exchange, enumeration, data exfil).
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] (PAT/OAuth token exchange, enumeration, data exfil) and [[Services/Cloud & Data/Flink|Apache Flink]] (REST API enumeration, JAR upload, SQL Gateway) both drive their entire attack surface through cURL.
 
 ---
 
