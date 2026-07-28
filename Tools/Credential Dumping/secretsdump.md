@@ -17,6 +17,8 @@ secretsdump.py -hashes :NTLMhash DOMAIN/user@<target-ip>
 
 > [!note] **secretsdump vs Mimikatz** — secretsdump runs entirely from your attack box over the network — no binary touches the target beyond what SMB/WMI normally does. Mimikatz requires execution on the target. Use secretsdump when you have valid creds/hash and want minimal footprint. Use Mimikatz when you need live LSASS (WDigest, Kerberos tickets, DPAPI).
 
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] (DCSync with a recovered machine-account hash) and [[Services/Active Directory/Entra ID|Entra ID]] (DCSync with stolen MSOL/Azure AD Connect credentials).
+
 ---
 
 ## Remote Dump (Admin Access Required)

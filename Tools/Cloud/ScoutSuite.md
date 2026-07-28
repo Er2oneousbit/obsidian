@@ -151,6 +151,10 @@ EOF
 
 ---
 
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — once you pivot from a cluster into the underlying cloud account, ScoutSuite audits its overall config posture.
+
+---
+
 *Created: 2026-03-06*
 *Updated: 2026-03-06*
 *Model: claude-sonnet-4-6*

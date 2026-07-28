@@ -9,6 +9,8 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 
 > [!warning] **Account Lockout** — Always verify lockout policy before attacking. Password spraying (one password, many users) is far safer than per-account brute force on production systems. Use `-t 1` and add delays (`-W`) when stealth matters.
 
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365.
+
 ---
 
 ## Core Flags

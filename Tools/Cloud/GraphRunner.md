@@ -13,6 +13,8 @@ Import-Module .\GraphRunner.ps1
 
 > [!note] **GraphRunner use case** — Once you have a valid M365 access token (via spray, phishing, device code, or token theft), GraphRunner automates the pillaging phase: searching Teams for passwords, pulling SharePoint files, reading emails, finding stored credentials. It's the post-auth M365 data harvesting tool.
 
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Post-Auth Graph Enumeration and Illicit Consent Grant sections.
+
 ---
 
 ## Authentication & Token Management

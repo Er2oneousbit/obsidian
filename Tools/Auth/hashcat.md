@@ -18,6 +18,8 @@ hashcat --force    # add to any command to force CPU mode
 
 > [!note] **Hashcat vs JTR** — Use hashcat for GPU-accelerated bulk cracking of large hash dumps. Use JTR for the 2john file extraction workflow (SSH keys, KeePass, Office docs) and quick single-mode runs. They complement each other.
 
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] AS-REP Roasting (mode 18200) and Kerberoasting (mode 13100/19700) sections.
+
 ---
 
 ## Hash Identification

@@ -10,6 +10,8 @@ Offline password cracker supporting hundreds of hash types. Best used for cracki
 
 > [!note] **JTR vs Hashcat** — Use JTR for the 2john file extraction workflow (SSH keys, ZIP, KeePass, Office docs, etc.) and quick single/wordlist runs. Use hashcat when you need GPU acceleration for bulk cracking — hashcat is significantly faster on large hash dumps. Both tools are complementary, not interchangeable.
 
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] AS-REP Roasting and Kerberoasting sections.
+
 ---
 
 ## Common Wordlist Paths (Kali)

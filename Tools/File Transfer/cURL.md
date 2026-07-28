@@ -205,6 +205,10 @@ curl -b cookies.txt http://target.com/dashboard
 
 ---
 
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] uses cURL for all REST API interaction (PAT/OAuth token exchange, enumeration, data exfil).
+
+---
+
 *Created: 2026-03-06*
 *Updated: 2026-03-06*
 *Model: claude-sonnet-4-6*
