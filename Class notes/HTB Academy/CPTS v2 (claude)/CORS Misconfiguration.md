@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]].
+Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CSRF Attacks]].
 
 
 ---

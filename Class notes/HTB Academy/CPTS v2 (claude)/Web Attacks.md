@@ -5,7 +5,7 @@
 
 ## What is this?
 
-Three core web attack classes: HTTP Verb Tampering, IDOR, and XXE. Use alongside Burp for intercepting and manipulating requests. Pairs with [[SQL Injection]], [[File Inclusion]], [[CORS Misconfiguration]].
+Three core web attack classes: HTTP Verb Tampering, IDOR, and XXE. Use alongside Burp for intercepting and manipulating requests. Pairs with [[SQL Injection]], [[File Inclusion]], [[CORS Misconfiguration]], [[CSRF Attacks]].
 
 
 ---

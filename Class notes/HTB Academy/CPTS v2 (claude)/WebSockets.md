@@ -8,7 +8,7 @@ WebSockets provide a **persistent, full-duplex** communication channel over a si
 
 **Common uses:** live chat, real-time dashboards, trading platforms, multiplayer games, live notifications, collaborative tools.
 
-Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]].
+Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]], [[CSRF Attacks]].
 
 ### The Handshake
 
