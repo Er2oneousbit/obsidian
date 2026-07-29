@@ -812,7 +812,8 @@ Understanding defenses helps you spot gaps:
 
 **Modules:**
 - [[File Upload Attacks]] - Upload HTML/SVG with XSS payloads
-- [[Web Attacks]] - CSRF, other injection types
+- [[Web Attacks]] - HTTP verb tampering, IDOR, XXE
+- [[CSRF Attacks]] - XSS reads the CSRF token from the DOM, defeating every CSRF control
 - [[JWT Attacks]] - Token/session theft and tampering post-XSS
 - [[SQL Injection]] - Sometimes chainable with XSS
 
