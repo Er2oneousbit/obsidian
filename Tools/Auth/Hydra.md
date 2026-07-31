@@ -12,6 +12,7 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — HTTP login-form brute force / spraying.
 
 ---
 
