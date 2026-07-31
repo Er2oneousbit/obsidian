@@ -1,5 +1,14 @@
+# --- Claude Code / internal working files (not part of the published vault) ---
 CLAUDE.md
-/Class notes/HTB Academy/Notes.md
-.claude/settings.local.json
-.obsidian/
 TODO.md
+.claude/
+.obsidian/
+
+# --- Raw personal HTB Academy course notes — excluded from the public release ---
+# These are rough personal notes taken while working through paid Hack The Box
+# Academy material. The polished, independently-rewritten reference versions live
+# in "CPTS v2 (claude)/" and "CWES Claude/" and ARE published.
+/Class notes/HTB Academy/CWES/
+/Class notes/HTB Academy/CPTS Path/
+/Class notes/HTB Academy/AI Red Teaming/
+/Class notes/HTB Academy/Boxes/

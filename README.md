@@ -3,6 +3,8 @@
 A personal, continuously‑evolving offensive security knowledge base built in Obsidian.
 This vault contains 100+ cross‑linked notes covering pentesting techniques, service exploitation, methodologies, tooling, and training material. It serves as my structured learning system and reference library for real-world testing.
 
+> ⚠️ **Authorized and educational use only.** Everything here is for authorized penetration testing, CTF competitions, security research, and defensive learning. Using these techniques against systems you don't own or have explicit written permission to test is illegal. You are responsible for how you use this material. Verify commands and CVE details against primary sources before relying on them on an engagement.
+
 ## Purpose
 
 This repo documents how I learn, test, break, and analyze systems.
@@ -39,3 +41,15 @@ Clone the repo and open the vault root in Obsidian.
 The graph view provides a high-level map of how concepts connect across services, tools, and methodologies.
 As I am refactoring old notes and adding new notes, they should have cross and back links to and from service to tool usage.
 Hack the box notes are per module/topic and the tooling or service should be linked to the corresponding link (this is in progress).
+
+## Not affiliated with Hack The Box
+
+The `Class notes/HTB Academy/CPTS v2 (claude)` and `CWES Claude` folders are **independently‑written reference notes** covering the same general topic areas as common certification curricula. They are **not** affiliated with, endorsed by, or reproductions of any Hack The Box Academy course or other paid material. My raw personal course notes are intentionally excluded from this repository.
+
+## AI assistance
+
+Large portions of the reference notes were drafted and standardized with AI assistance (Anthropic's Claude), then organized, fact‑checked against current sources, and curated by me. Footers on individual notes record the model used. Treat everything as a starting point, not gospel.
+
+## License
+
+Licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE) — you're free to share and adapt with attribution. See [`LICENSE`](LICENSE) for the full terms.
