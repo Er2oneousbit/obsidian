@@ -1,6 +1,6 @@
 # Non-PHP Web App Attacks
 
-#WebAttacks #SSTI #Deserialization #Java #NodeJS #Python #DotNET #RubyOnRails
+#WebAttacks #SSTI #Deserialization #Java #NodeJS #Python #DotNET #RubyOnRails #Go #Log4Shell #Spring4Shell #PrototypePollution #XPath #ysoserial
 
 ## What is this?
 
@@ -12,12 +12,12 @@ Attack reference for non-PHP stacks commonly encountered in HTB boxes and labs. 
 
 | Tool | Purpose |
 |---|---|
-| `ysoserial` | Java deserialization gadget chain generator |
-| `ysoserial.net` | .NET deserialization payloads |
-| `tplmap` | SSTI scanner and exploitation |
-| `Burp Suite` | Manual SSTI testing, active scan, deserialization detection |
-| `GadgetProbe` | Enumerate loaded Java classes for deserialization |
-| `marshalsec` | Java deserialization JNDI/marshalling exploits |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Java deserialization gadget chain generator |
+| [[Tools/Payloads & Shells/ysoserial.net\|ysoserial.net]] | .NET deserialization payloads |
+| [SSTImap](https://github.com/vladko312/SSTImap) | SSTI scanner + exploitation — maintained fork of the abandoned tplmap |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Manual SSTI testing, active scan, deserialization detection |
+| [GadgetProbe](https://github.com/BishopFox/GadgetProbe) | Burp extension — enumerate loaded Java classes for deserialization |
+| [[Tools/Payloads & Shells/marshalsec\|marshalsec]] | Java deserialization JNDI/marshalling exploits |
 
 ---
 
@@ -182,6 +182,8 @@ CommonsCollections1    → older CC versions
 Spring1 / Spring2      → Spring Framework targets
 URLDNS                 → detection only (DNS callback, no exec)
 ```
+
+> [!note] Full Java deser workflow — gadget selection, Shiro, the **JDK 16+ / JEP 396 gotcha** (ysoserial chains fail with `InaccessibleObjectException` on modern JVMs, which reads as "patched" when it isn't), and inspecting streams with SerializationDumper — lives in [[Deserialization]]. This is the per-stack quick-hit; go there when a chain "should" work but doesn't.
 
 ```bash
 # Detection via DNS callback (no RCE, just confirms deserialization)
@@ -781,15 +783,15 @@ If `text/template` is used instead of `html/template` (or `Execute` vs `ExecuteT
 
 | Tool | Use |
 |------|-----|
-| [tplmap](https://github.com/epinna/tplmap) | Automated SSTI detection + exploitation (multi-engine) |
-| [ysoserial](https://github.com/frohoff/ysoserial) | Java deserialization gadget chain generator |
-| [ysoserial.net](https://github.com/pwntester/ysoserial.net) | .NET deserialization + ViewState payloads |
-| [marshalsec](https://github.com/mbechler/marshalsec) | Java JNDI/LDAP redirect for Log4Shell |
-| [whatweb](https://github.com/urbanadventurer/WhatWeb) | Web stack fingerprinting |
+| [SSTImap](https://github.com/vladko312/SSTImap) | Automated SSTI detection + exploitation (multi-engine) — maintained successor to tplmap |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Java deserialization gadget chain generator |
+| [[Tools/Payloads & Shells/ysoserial.net\|ysoserial.net]] | .NET deserialization + ViewState payloads |
+| [[Tools/Payloads & Shells/marshalsec\|marshalsec]] | Java JNDI/LDAP redirect for Log4Shell |
+| [[Tools/Web/whatweb\|whatweb]] | Web stack fingerprinting |
 | [Wappalyzer](https://www.wappalyzer.com/) | Browser extension — passive stack detection |
 | [padbuster](https://github.com/AonCyberLabs/PadBuster) | Padding oracle attacks |
-| [sqlmap](https://sqlmap.org/) | SQL injection → xp_cmdshell for MSSQL |
-| [Burp Suite](https://portswigger.net/) | Manual testing, Intruder for brute-forcing parameters |
+| [[Tools/Database/SQLMap\|sqlmap]] | SQL injection → xp_cmdshell for MSSQL |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Manual testing, Intruder for brute-forcing parameters |
 
 ---
 
@@ -855,5 +857,5 @@ Identify stack (whatweb, headers, cookies, error pages)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

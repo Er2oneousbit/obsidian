@@ -1,11 +1,10 @@
 # CORS Misconfiguration
 
-#CORS #WebAppAttacks #BrokenAccessControl #APIAttacks
+#CORS #WebAppAttacks #BrokenAccessControl #APIAttacks #CachePoisoning #DNSRebinding #BurpSuite #cURL
 
 ## What is this?
 
 Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CSRF Attacks]].
-
 
 ---
 
@@ -13,9 +12,10 @@ Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled orig
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Test Origin header reflection, craft PoC HTML pages via Repeater |
-| `curl` | Manual origin testing (`-H "Origin: https://evil.com"`) |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Test Origin header reflection, craft PoC HTML pages via Repeater |
+| [[Tools/File Transfer/cURL\|curl]] | Manual origin testing (`-H "Origin: https://evil.com"`) |
 | Browser DevTools | Observe CORS errors in console, inspect preflight responses |
+| [CORScanner](https://github.com/chenjj/CORScanner) | Bulk-scan a host list for the common misconfiguration classes |
 
 ---
 
@@ -131,6 +131,43 @@ curl -si "https://<target>/api/userdata" -H "Origin: https://evil.com" -b "sessi
 # Test all subdomains found in recon for reflected/stored XSS
 ```
 
+### 7. Missing `Vary: Origin` → CORS Cache Poisoning
+
+When the server reflects the origin but omits `Vary: Origin`, any cache in front of it (CDN, reverse proxy) stores **one** response for the URL — including whichever `Access-Control-Allow-Origin` value was in it. Poison the cache with your origin and every subsequent victim gets a response that authorises `evil.com`.
+
+```bash
+# Confirm the origin is reflected AND Vary: Origin is absent
+curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" | grep -Ei "access-control-allow-origin|^vary"
+# ACAO: https://evil.com  with no "Vary: Origin" line → cacheable misconfig
+
+# Check whether the endpoint is actually cached (look for a cache status header)
+curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" | grep -Ei "x-cache|cf-cache-status|age:"
+```
+
+> [!note] Works in reverse too — a *victim*-origin response cached under an attacker-reachable key. The reflection alone is enough to report; caching just widens blast radius from "victim must visit my page" to "everyone hitting the CDN".
+
+### 8. Private Network Access (`Access-Control-Allow-Private-Network`)
+
+Chromium blocks public→private (RFC1918 / localhost) subresource requests unless the private server answers the preflight with `Access-Control-Allow-Private-Network: true`. A server that sets it — deliberately or via a framework default — lets **any** public web page reach an internal service through a victim's browser.
+
+```bash
+# Preflight a suspected internal service as a public page would
+curl -si "http://192.168.1.1/api/status" -X OPTIONS \
+  -H "Origin: https://evil.com" \
+  -H "Access-Control-Request-Method: GET" \
+  -H "Access-Control-Request-Private-Network: true" \
+  | grep -Ei "access-control-allow-(origin|private-network|credentials)"
+# ACAPN: true + reflected ACAO → internal service reachable from the public web
+```
+
+| Finding | Why it matters |
+|---|---|
+| `Access-Control-Allow-Private-Network: true` on an internal app | Public page can read internal responses via the victim's browser |
+| flask-cors `<= 4.0.1` (CVE-2024-6221) | Sets the header `true` by default — check the dependency, not just the response |
+| Target audience uses Firefox | PNA still unenforced there (as of Firefox 148, Mar 2026) — the block doesn't apply |
+
+> [!tip] Where PNA does block you, DNS rebinding sidesteps it entirely — the browser believes it never left the origin, so no preflight is required (see VU#652514). Chain it when a router/admin panel refuses the direct cross-origin read.
+
 ---
 
 ## Exploitation PoC
@@ -244,15 +281,18 @@ done
 | `ACAO: <origin>` + `ACAC: true` | Yes | **Fully exploitable** |
 | `ACAO: null` + `ACAC: true` | Yes (via sandbox) | Exploitable |
 | Server matches `*.target.com`, echoes the origin | Yes (subdomain) | Exploitable if XSS on any subdomain |
+| Reflected `ACAO` with **no** `Vary: Origin` | Yes | Exploitable + cache-poisonable (widens to all users) |
+| `Access-Control-Allow-Private-Network: true` | Yes | Internal/RFC1918 service reachable from any public page |
 
 ```bash
 # One-liner check
-curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -Ei "access-control-(allow-origin|allow-credentials)"
+curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "session=<cookie>" | grep -Ei "access-control-(allow-origin|allow-credentials)|^vary"
 # Both headers present with arbitrary origin → exploitable
+# No "Vary: Origin" alongside them → also cache-poisonable
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

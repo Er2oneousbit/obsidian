@@ -133,8 +133,11 @@ net use \\KALI-IP\share /user:pentest pentest
 sudo impacket-smbserver share /opt/tools    # omit -smb2support
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

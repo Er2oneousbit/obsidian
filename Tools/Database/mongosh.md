@@ -240,6 +240,10 @@ hashcat -m 24100 mongo_hashes.txt /usr/share/wordlists/rockyou.txt
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection|NoSQL Injection]] — testing operator/aggregation-pipeline payloads directly against a MongoDB instance.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

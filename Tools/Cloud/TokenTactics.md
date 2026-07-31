@@ -24,9 +24,10 @@ ConvertFrom-JWT -token $response.access_token
 ```
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Token Theft & Abuse and FOCI Abuse sections — this tool automates the manual `curl` refresh-token exchanges shown there.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] (device code phishing, FOCI pivot, PRT escalation).
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

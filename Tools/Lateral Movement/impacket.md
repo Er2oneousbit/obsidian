@@ -16,6 +16,7 @@ Impacket's remote execution tools — run commands on Windows targets from Kali 
 > [!note] **Choosing the right tool** — `wmiexec` is the quietest (no service install, no binary drop). `psexec` is noisiest but most reliable. `smbexec` is a middle ground. Use `wmiexec` by default; fall back to `psexec` if WMI is blocked.
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for general post-cert tooling; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket to get a shell.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] (CPTS v2).
 
 ---
 
@@ -132,5 +133,5 @@ KRB5CCNAME=admin.ccache wmiexec.py -k -no-pass DOMAIN/Administrator@target.domai
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

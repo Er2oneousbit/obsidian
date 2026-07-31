@@ -275,8 +275,11 @@ File → Save state (Community)
 File → Project file (Pro — saves everything)
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]], [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]], [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection|NoSQL Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth-OIDC-SAML]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

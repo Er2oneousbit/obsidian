@@ -15,6 +15,7 @@ nmap -sV --open -oA initial_scan 10.129.200.170
 > Run as root for SYN scan (`-sS`) — faster and more reliable than connect scan (`-sT`). Always save output with `-oA` for all three formats (nmap, xml, gnmap). Use `-Pn` when ICMP is blocked.
 
 > [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script); [[Services/Cloud & Data/Flink|Apache Flink]] (identifying Flink ports/version).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 
 ---
 
@@ -188,5 +189,5 @@ sudo nmap -sn 10.129.14.0/24 | grep "for" | cut -d" " -f5 > hosts.txt && nmap -i
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

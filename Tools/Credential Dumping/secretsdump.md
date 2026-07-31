@@ -18,6 +18,7 @@ secretsdump.py -hashes :NTLMhash DOMAIN/user@<target-ip>
 > [!note] **secretsdump vs Mimikatz** — secretsdump runs entirely from your attack box over the network — no binary touches the target beyond what SMB/WMI normally does. Mimikatz requires execution on the target. Use secretsdump when you have valid creds/hash and want minimal footprint. Use Mimikatz when you need live LSASS (WDigest, Kerberos tickets, DPAPI).
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] (DCSync with a recovered machine-account hash) and [[Services/Active Directory/Entra ID|Entra ID]] (DCSync with stolen MSOL/Azure AD Connect credentials).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
@@ -200,5 +201,5 @@ secretsdump.py DOMAIN/user:Password@dc01.domain.local -dc-ip 192.168.1.1
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

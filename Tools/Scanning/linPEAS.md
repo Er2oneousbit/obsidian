@@ -101,8 +101,11 @@ Cross-reference red findings with:
 - `exploit-db.com` / searchsploit — kernel/software CVEs
 - Manual verification of cron scripts and writable paths
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

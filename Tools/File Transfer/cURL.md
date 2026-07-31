@@ -206,9 +206,10 @@ curl -b cookies.txt http://target.com/dashboard
 ---
 
 > [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] (PAT/OAuth token exchange, enumeration, data exfil) and [[Services/Cloud & Data/Flink|Apache Flink]] (REST API enumeration, JAR upload, SQL Gateway) both drive their entire attack surface through cURL.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]], [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]], [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

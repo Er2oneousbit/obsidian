@@ -223,8 +223,11 @@ sqlmap -u "http://target.com/page?id=1" -v 3
 # Results saved to: ~/.local/share/sqlmap/output/<target>/
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

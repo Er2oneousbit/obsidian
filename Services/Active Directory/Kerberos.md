@@ -367,6 +367,10 @@ impacket-wmiexec <domain>/Administrator@<target> -k -no-pass
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] — the Kerberos/AD module suite (forge_ticket golden/silver/diamond/sapphire, pass-the-ticket → DCSync) that mirrors these techniques from inside the framework.
+
+---
+
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

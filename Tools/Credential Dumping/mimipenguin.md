@@ -116,8 +116,11 @@ sudo cat /proc/$(pgrep sshd)/environ | tr '\0' '\n' | grep -i pass
 - On hardened systems (`ptrace_scope >= 1`), execution will fail or produce no output without root + kernel parameter change
 - Modern GNOME/KDE no longer cache passwords in recoverable plaintext in many configurations — results vary heavily by distro version
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

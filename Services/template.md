@@ -120,6 +120,8 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 **Every linked tool needs a backlink, not just new stubs.** Whenever a `Tools/` note gets linked from a Services note's Tools table — whether it's a brand-new stub or an existing full note that just didn't have this yet — open that tool note and make sure it has a `> [!note] **See also**` callout pointing back to the Services note(s) that use it (`[[Services/<Category>/<Service>|<Service>]]`), same as the AADInternals/GraphRunner/Certify examples. If the tool is already linked from multiple Services notes, list all of them in the one callout rather than adding several. This is what makes the cross-linking bidirectional — check it every time you add a link to the Tools table, not only when creating a new stub.
 
+**The same reciprocal rule applies to any `Services/` note you link as a secondary target** — a Service note that cross-references another Service note (e.g. an ADCS note linking `[[Services/Active Directory/Kerberos]]`) must leave a `> [!note] **See also**` backlink in that other note pointing here, listing every note that references it, footer bumped. Tools *and* Services: every vault note touched as a backlink target lists the note currently being audited. Do it inline, before the note is considered done — never defer to a later sweep.
+
 **`## Enumeration`** — how to identify/fingerprint the service and pull version info. Nmap NSE scripts first if they exist for the service.
 
 **`## Connect / Access`** — the basic "get in" commands: standard auth, anonymous/default access if commonly open, then `### ` subsections for variants (TLS wrapper, Windows-native client, alternate ports).

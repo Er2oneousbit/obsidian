@@ -159,8 +159,11 @@ cupp -w hobbies.txt
 crackmapexec smb dc01.corp.local -u users.txt -p users.txt --no-bruteforce
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

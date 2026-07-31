@@ -14,6 +14,7 @@ Rubeus.exe dump /nowrap
 > [!note] **Rubeus vs Impacket Kerberos tools** — Rubeus runs on the Windows target using the local Kerberos API — requests and injects tickets into live sessions. Impacket tools (GetUserSPNs, GetNPUsers, getTGT) run from Kali over the network. Use both: Impacket for remote/external attacks, Rubeus for on-host ticket manipulation and injection.
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] Connect / Access section, for requesting a TGT from a certificate; [[Services/Active Directory/Kerberos|Kerberos]], for ticket dumping/forging (Golden/Diamond/Sapphire), PTT, and S4U/Bronze Bit abuse.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
@@ -224,5 +225,5 @@ $bytes = [System.IO.File]::ReadAllBytes('Rubeus.exe')
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

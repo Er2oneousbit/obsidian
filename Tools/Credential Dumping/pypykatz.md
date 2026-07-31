@@ -167,8 +167,11 @@ for session in data.get('logon_sessions', {}).values():
 - comsvcs.dll MiniDump is the most LOLBin-friendly dump method but still triggers EDR on LSASS handle acquisition
 - Dump file contains raw credential material — handle carefully, encrypt at rest if storing
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

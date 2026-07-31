@@ -10,6 +10,7 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 > [!warning] **Account Lockout** — Always verify lockout policy before attacking. Password spraying (one password, many users) is far safer than per-account brute force on production systems. Use `-t 1` and add delays (`-W`) when stealth matters.
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
@@ -270,5 +271,5 @@ hydra --list-modules  # list all modules (newer versions)
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

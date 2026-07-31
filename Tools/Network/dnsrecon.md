@@ -84,8 +84,11 @@ dnsrecon -d inlanefreight.htb -n 10.129.14.128 -t std --db results.db
 [*] A: web01.internal.inlanefreight.htb 172.16.5.10
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

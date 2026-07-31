@@ -129,8 +129,11 @@ grep -i "vpn\|citrix\|rdweb\|outlook\|admin\|jira\|confluence\|gitlab" ff_creds.
 
 > [!note] **Related tools** — LaZagne (`lazagne.py browsers`) covers Firefox plus Chrome, IE, and other browsers in one run and is often the better choice on Windows targets when you want all browser creds at once.
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

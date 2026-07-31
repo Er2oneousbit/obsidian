@@ -1,6 +1,6 @@
 # Fuzzing
 
-#Fuzzing #ffuf #wfuzz #WebSecurity #recon #gobuster #feroxbuster #nuclei
+#Fuzzing #ffuf #wfuzz #WebSecurity #recon #gobuster #feroxbuster #nuclei #dirsearch #kiterunner #katana #Arjun #nikto #GraphQL #JWT #WebSockets #WAFEvasion
 
 ## What is this?
 
@@ -12,22 +12,24 @@ Automated input injection to discover hidden endpoints, parameters, files, vhost
 
 | Tool | Purpose |
 |---|---|
-| `ffuf` | Fast web fuzzer — dirs, files, params, vhosts, headers |
-| `gobuster` | Dir/DNS/vhost brute force, S3 buckets |
-| `feroxbuster` | Recursive directory fuzzing with auto-filtering |
-| `wfuzz` | Flexible web fuzzer, good for multi-position |
-| `dirsearch` | Simple directory brute force |
-| `nikto` | Web server scanner — known vulns, misconfigs, interesting files |
-| `nuclei` | Template-based vuln/misconfig scanner |
-| `arjun` | Hidden GET/POST/JSON/XML parameter discovery |
-| `kiterunner` | API-aware endpoint fuzzing (Assetnote .kite wordlists) |
-| `Burp Intruder` | GUI fuzzing — 4 attack modes |
-| `Turbo Intruder` | High-speed fuzzing + race condition attacks |
-| `Param Miner` | Burp extension — hidden param + header discovery |
-| `InQL` | Burp extension — GraphQL schema analysis + fuzzing |
-| `clairvoyance` | GraphQL schema recovery when introspection disabled |
-| `graphw00f` | Fingerprint GraphQL engine type |
-| `wscat` | WebSocket CLI client for manual/fuzzing interaction |
+| [[Tools/Scanning/ffuf\|ffuf]] | Fast web fuzzer — dirs, files, params, vhosts, headers |
+| [[Tools/Scanning/gobuster\|gobuster]] | Dir/DNS/vhost brute force, S3 buckets |
+| [[Tools/Scanning/feroxbuster\|feroxbuster]] | Recursive directory fuzzing with auto-filtering |
+| [[Tools/Scanning/wfuzz\|wfuzz]] | Flexible web fuzzer, good for multi-position |
+| [[Tools/Scanning/dirsearch\|dirsearch]] | Simple directory brute force |
+| [[Tools/Web/Nikto\|nikto]] | Web server scanner — known vulns, misconfigs, interesting files |
+| [[Tools/Scanning/nuclei\|nuclei]] | Template-based vuln/misconfig scanner |
+| [[Tools/Web/Arjun\|arjun]] | Hidden GET/POST/JSON/XML parameter discovery |
+| [[Tools/Scanning/kiterunner\|kiterunner]] | API-aware endpoint fuzzing (Assetnote .kite wordlists) |
+| [[Tools/Recon/katana\|katana]] | Headless crawler — extracts endpoints from JS-heavy SPAs |
+| [[Tools/Web/Burpsuite\|Burp Intruder]] | GUI fuzzing — 4 attack modes |
+| [Turbo Intruder](https://github.com/PortSwigger/turbo-intruder) | Burp extension — high-speed fuzzing + race condition attacks |
+| [Param Miner](https://github.com/PortSwigger/param-miner) | Burp extension — hidden param + header discovery |
+| [InQL](https://github.com/doyensec/inql) | Burp extension — GraphQL schema analysis + fuzzing |
+| [[Tools/Web/clairvoyance\|clairvoyance]] | GraphQL schema recovery when introspection disabled |
+| [[Tools/Web/graphw00f\|graphw00f]] | Fingerprint GraphQL engine type |
+| [[Tools/Web/wscat\|wscat]] | WebSocket CLI client for manual/fuzzing interaction |
+| [[Tools/Web/jwt_tool\|jwt_tool]] | JWT decoding, tampering, and secret cracking |
 
 ---
 
@@ -277,6 +279,59 @@ find /usr/share/seclists -name "*.txt" | grep -i "raft\|directory\|param"
 ls /usr/share/seclists/Discovery/Web-Content/
 ls /usr/share/seclists/Fuzzing/
 ```
+
+---
+
+## Crawling & JS Endpoint Extraction
+
+Brute-forcing a single-page app usually returns nothing — there are no directories to find, because every route is client-side and every API path is a string inside a JavaScript bundle. **Crawl and read the JS before concluding the target has no attack surface.** This routinely finds endpoints no wordlist contains, including internal and deprecated ones.
+
+### katana — headless crawler
+
+```bash
+# Standard crawl
+katana -u https://target.com
+
+# Headless mode — executes JS, so it sees routes a static crawler misses
+katana -u https://target.com -headless -jc -d 3
+# -jc = crawl JS files for endpoints, -d = depth
+
+# Crawl authenticated, and keep it in scope
+katana -u https://target.com -headless -jc \
+  -H "Cookie: session=<token>" \
+  -fs fqdn -o endpoints.txt
+
+# Feed the results straight into a parameter or vuln pass
+katana -u https://target.com -jc -silent | httpx -silent -mc 200 | tee live.txt
+```
+
+| Flag | Description |
+|---|---|
+| `-headless` | Drive a real browser — required for JS-rendered routes |
+| `-jc` | Parse JavaScript files for endpoints |
+| `-d` | Crawl depth |
+| `-fs fqdn` | Scope filter — stay on the target's domain |
+| `-kf robotstxt,sitemapxml` | Seed from known files |
+| `-silent` | Machine-readable output for piping |
+
+### Pull endpoints out of JS bundles by hand
+
+```bash
+# Collect every script the page references
+curl -s https://target.com | grep -oE 'src="[^"]+\.js' | cut -d'"' -f2 > js.txt
+
+# Grep each bundle for path-like strings and full URLs
+while read -r j; do
+  curl -s "https://target.com/$j" | grep -oE '"(/[a-zA-Z0-9_/.-]{3,})"' | tr -d '"'
+done < js.txt | sort -u > js-endpoints.txt
+
+# Also worth grepping for: api keys, internal hostnames, version strings
+curl -s https://target.com/static/main.js | grep -oiE '(api[_-]?key|secret|token|bearer)["'"'"']?\s*[:=]\s*["'"'"'][^"'"'"']+' 
+```
+
+> [!tip] Source maps are the jackpot when present — a `//# sourceMappingURL=main.js.map` comment at the end of a bundle means you can reconstruct the app's original source, comments and all. Try fetching the `.map` file directly; teams frequently forget to strip them from production builds.
+
+> [!note] Feed `js-endpoints.txt` back in as a wordlist (`ffuf -w js-endpoints.txt`) rather than treating it as a finished list — many extracted paths are fragments or need a prefix.
 
 ---
 
@@ -1412,6 +1467,7 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 - **Match on redirect destination** — use `-mr "Location: /dashboard"` to catch redirects to success pages
 - **Response time spikes** — flag anything `>2s` as a potential blind injection candidate
 - **Soft 404s** — if every path returns 200 with the same size, filter by content with `-fr "Not Found"` or `-fs <size>`
+- **Wordlists find nothing? It's probably an SPA** — stop brute-forcing and crawl instead (see [[#Crawling & JS Endpoint Extraction]]); the routes are in the JS bundle, not on the filesystem
 
 ---
 
@@ -1430,6 +1486,8 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 | Gobuster vhost | `gobuster vhost -u http://target.com -w subdomains-top1million-5000.txt --append-domain -t 50` |
 | Recursive discovery (auto) | `feroxbuster -u http://target.com -w raft-medium-directories.txt` |
 | API-aware fuzzing | `kr scan http://target.com -w routes-large.kite` |
+| Crawl a JS-heavy SPA | `katana -u https://target.com -headless -jc -d 3` |
+| Extract endpoints from a JS bundle | `curl -s https://target.com/static/main.js \| grep -oE '"(/[a-zA-Z0-9_/.-]{3,})"'` |
 | Hidden parameter discovery | `arjun -u http://target.com/search -m GET` |
 | Template-based vuln scan | `nuclei -u http://target.com -tags cve,exposure,default-login -severity high,critical` |
 | First-pass web scan | `nikto -h http://target.com` |
@@ -1444,5 +1502,5 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

@@ -18,6 +18,7 @@ evil-winrm -i 192.168.1.10 -u Administrator -H NTLMhash
 > [!note] **WinRM requirements** — Target must have WinRM enabled (default on Server 2012+, disabled on workstations by default). User must be in `Remote Management Users` group or be a local admin. Port 5985 (HTTP) or 5986 (HTTPS).
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for using a cert-derived NT hash to get a shell; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
@@ -168,5 +169,5 @@ Test-WSMan -ComputerName 192.168.1.10
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

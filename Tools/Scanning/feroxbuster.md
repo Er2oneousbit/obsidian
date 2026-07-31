@@ -121,8 +121,11 @@ feroxbuster -u http://10.129.14.128 -w wordlist.txt -o results.txt
 /usr/share/seclists/Discovery/Web-Content/common.txt                    # fast/small
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

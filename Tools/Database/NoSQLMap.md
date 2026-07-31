@@ -205,6 +205,10 @@ while True:
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection|NoSQL Injection]] — automated MongoDB/CouchDB/Redis injection and enumeration.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

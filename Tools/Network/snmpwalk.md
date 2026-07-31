@@ -82,8 +82,11 @@ snmpwalk -v2c -c public 10.129.14.128 > snmpwalk-output.txt
 snmpwalk -v2c -c public 10.129.14.128 .1.3.6.1.2.1.25.4.2.1.2 | awk -F'"' '{print $2}'
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

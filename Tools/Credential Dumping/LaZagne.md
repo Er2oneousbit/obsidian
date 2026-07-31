@@ -169,8 +169,11 @@ for category in data:
 - The Python script is less likely to be flagged than the compiled exe
 - Running with SYSTEM/admin rights captures significantly more (LSA secrets, DPAPI, all user profiles)
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

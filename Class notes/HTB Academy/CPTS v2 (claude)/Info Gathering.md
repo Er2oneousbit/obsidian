@@ -1,6 +1,6 @@
 # Information Gathering & Reconnaissance
 
-#enumeration #informationgathering #OSINT #recon #DNS #subdomain
+#enumeration #informationgathering #OSINT #recon #DNS #subdomain #SubdomainTakeover #PassiveRecon #shodan #amass #subfinder #bbot #nmap #GoogleDorking
 
 ## What is this?
 
@@ -12,22 +12,24 @@ Map the full attack surface before touching the target. Passive: OSINT, WHOIS, c
 
 | Tool | Purpose |
 |---|---|
-| `nmap` | Port scanning, service fingerprinting, OS detection |
-| `theHarvester` | Email, subdomain, and host OSINT aggregation |
-| `subfinder` | Fast passive subdomain enumeration |
-| `amass` | Subdomain enum + OSINT + ASN/IP range mapping |
-| `gobuster` | DNS/vhost/directory brute force |
-| `ffuf` | Directory, file, vhost fuzzing |
-| `dnsenum` / `dnsrecon` | DNS enumeration + zone transfer attempts |
-| `whatweb` | Web technology fingerprinting |
-| `wafw00f` | WAF detection and identification |
-| `httpx` | HTTP probing — live hosts, status codes, titles |
-| `nuclei` | Template-based CVE/misconfig/exposure scanning |
-| `eyewitness` | Screenshots + reports of discovered web assets |
-| `shodan` (CLI) | Search internet-exposed services and devices |
-| `recon-ng` | Modular OSINT framework |
-| `bbot` | Modern automated OSINT framework — replaces Recon-ng; recursive subdomain enum + OSINT |
-| `subjack` | Subdomain takeover detection — checks for unclaimed CNAMEs |
+| [[Tools/Scanning/NMAP\|nmap]] | Port scanning, service fingerprinting, OS detection |
+| [[Tools/Recon/The Harvester\|theHarvester]] | Email, subdomain, and host OSINT aggregation |
+| [[Tools/Recon/subfinder\|subfinder]] | Fast passive subdomain enumeration |
+| [[Tools/Recon/amass\|amass]] | Subdomain enum + OSINT + ASN/IP range mapping |
+| [[Tools/Scanning/gobuster\|gobuster]] | DNS/vhost/directory brute force |
+| [[Tools/Scanning/ffuf\|ffuf]] | Directory, file, vhost fuzzing |
+| [[Tools/Network/dnsenum\|dnsenum]] / [[Tools/Network/dnsrecon\|dnsrecon]] | DNS enumeration + zone transfer attempts |
+| [[Tools/Web/whatweb\|whatweb]] | Web technology fingerprinting |
+| [[Tools/Web/WafWoof\|wafw00f]] | WAF detection and identification |
+| [[Tools/Web/httpx\|httpx]] | HTTP probing — live hosts, status codes, titles |
+| [[Tools/Scanning/nuclei\|nuclei]] | Template-based CVE/misconfig/exposure scanning |
+| [[Tools/Web/eyewitness\|eyewitness]] / [[Tools/Web/aquatone\|aquatone]] | Screenshots + reports of discovered web assets |
+| [[Tools/Recon/katana\|katana]] | Headless crawler — endpoints from JS-heavy apps |
+| [[Tools/Recon/exiftool\|exiftool]] | Metadata harvesting from scraped documents |
+| [[Tools/Recon/shodan\|shodan]] (CLI) | Search internet-exposed services and devices |
+| [[Tools/Recon/recon-ng\|recon-ng]] | Modular OSINT framework |
+| [[Tools/Recon/bbot\|bbot]] | Modern automated OSINT framework — replaces Recon-ng; recursive subdomain enum + OSINT |
+| [[Tools/Recon/subjack\|subjack]] | Subdomain takeover detection — checks for unclaimed CNAMEs |
 
 ---
 
@@ -299,6 +301,40 @@ subfinder -d example.com -all -recursive
 # Resolve discovered subdomains
 cat subdomains.txt | dnsx -silent -a -o resolved.txt
 ```
+
+### Permutation / Alteration Scanning
+
+Static wordlists only find names someone thought to put in a wordlist. Once you have a few real subdomains, **permute them** — organisations name things consistently, so `api.example.com` and `dev.example.com` strongly imply `dev-api`, `api-dev`, `api2`, `staging-api`, `api.dev`. This routinely finds hosts no brute force will, and the seeds come free from the passive pass above.
+
+```bash
+# Generate permutations from your existing findings
+gotator -sub subdomains.txt -perm permutations.txt -depth 1 -numbers 5 -mindup -adv -md > perms.txt
+
+# dnsgen — alternative generator, reads seeds from stdin
+cat subdomains.txt | dnsgen - > perms.txt
+
+# Resolve the (large) candidate list — this is where a mass resolver matters
+puredns resolve perms.txt -r resolvers.txt -w resolved-perms.txt
+
+# Or with dnsx if puredns isn't installed
+dnsx -l perms.txt -silent -a -o resolved-perms.txt
+
+# Feed survivors straight into the live-host + screenshot pass
+cat resolved-perms.txt | httpx -silent -sc -title -o live-perms.txt
+```
+
+| Flag (gotator) | Description |
+|---|---|
+| `-sub` | Seed subdomain list |
+| `-perm` | Permutation wordlist (words to combine with) |
+| `-depth` | How many permutation rounds — `1` is usually plenty |
+| `-numbers` | Append/increment numeric suffixes up to N |
+| `-mindup` | Reduce duplicate output |
+| `-adv` | Advanced permutation mode |
+
+> [!warning] Permutation lists explode fast — a few hundred seeds can produce millions of candidates. Always resolve with a mass resolver against a **vetted resolver list**, never against a single public DNS server: you'll get rate-limited, and worse, you'll get wildcard false positives. `puredns` filters wildcards for you; plain `dnsx` does not.
+
+> [!tip] Check for a DNS wildcard before trusting any brute-force or permutation result — `dig random-garbage-string.example.com`. If it resolves, every candidate will "resolve" too, and your findings are noise.
 
 ### Subdomain Takeover
 
@@ -700,6 +736,8 @@ Passive
 Active
 [ ] Zone transfer attempt against all NS records
 [ ] Subdomain brute force (gobuster/ffuf/amass/subfinder/bbot)
+[ ] Wildcard DNS check before trusting brute-force results (dig random-string.example.com)
+[ ] Permutation scan from discovered subdomains (gotator/dnsgen + puredns)
 [ ] Subdomain takeover check (subjack/nuclei takeovers/)
 [ ] Port scan — full TCP then targeted version/script
 [ ] UDP scan (top 100)
@@ -715,5 +753,5 @@ Active
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

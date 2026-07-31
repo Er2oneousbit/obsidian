@@ -21,6 +21,7 @@ mv kerbrute_linux_amd64 /usr/local/bin/kerbrute
 > [!note] Kerbrute requires network connectivity to the DC on port **TCP/UDP 88** (Kerberos). Ensure DNS resolves the domain or specify the DC IP directly with `--dc`.
 
 > [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section.
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2).
 
 ---
 
@@ -152,5 +153,5 @@ grep "VALID LOGIN" spray_results.txt
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*
