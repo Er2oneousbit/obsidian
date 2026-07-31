@@ -155,8 +155,11 @@ smbclient //192.168.1.10/share -u user -p Password \
 - Null session auth attempts generate **4625** (failed logon) if the server requires auth
 - SYSVOL access is normal domain behavior — less suspicious than C$ / ADMIN$ access
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

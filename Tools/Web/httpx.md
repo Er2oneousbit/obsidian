@@ -174,6 +174,7 @@ cat hosts.txt | httpx -silent -match-string "login\|signin\|password"
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2).
 
 ---
 

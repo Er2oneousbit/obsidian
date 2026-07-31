@@ -122,6 +122,10 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 **The same reciprocal rule applies to any `Services/` note you link as a secondary target** — a Service note that cross-references another Service note (e.g. an ADCS note linking `[[Services/Active Directory/Kerberos]]`) must leave a `> [!note] **See also**` backlink in that other note pointing here, listing every note that references it, footer bumped. Tools *and* Services: every vault note touched as a backlink target lists the note currently being audited. Do it inline, before the note is considered done — never defer to a later sweep.
 
+> **Bump the footer when you add a backlink.** Adding (or extending) a `See also` callout is a material edit to that tool note — update its footer the same as any other edit: `*Updated:*` to the current date and `*Model:*` to the model actually making the edit (never leave a stale `claude-sonnet-4-6`/old date behind). This applies to existing full notes you're only touching to add the backlink, not just to notes you rewrite.
+>
+> **Legacy notes with no footer get one added when you touch them.** If the tool note you're adding a backlink to has no footer at all, add the standard three-line footer as part of the same edit — touching the file is modifying it, so it must carry an `*Updated:*` date afterward. Set `*Created:*` to the file's first-commit date (`git log --diff-filter=A --format=%ad --date=short -- <path>`; fall back to today only if git has no record), `*Updated:*` to today, and `*Model:*` to the editing model. Don't defer this to a later refactor pass.
+
 **`## Enumeration`** — how to identify/fingerprint the service and pull version info. Nmap NSE scripts first if they exist for the service.
 
 **`## Connect / Access`** — the basic "get in" commands: standard auth, anonymous/default access if commonly open, then `### ` subsections for variants (TLS wrapper, Windows-native client, alternate ports).

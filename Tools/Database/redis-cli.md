@@ -213,8 +213,11 @@ redis-cli -h 192.168.1.10 system.exec "id"
 - `SAVE` writes a new dump file to disk — file timestamps reveal activity
 - Redis 7.0+ enables ACLs and auth by default — older versions are the primary target
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

@@ -17,6 +17,7 @@ Impacket's remote execution tools — run commands on Windows targets from Kali 
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for general post-cert tooling; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket to get a shell.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

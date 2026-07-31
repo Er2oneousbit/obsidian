@@ -228,8 +228,11 @@ exit
 - UNC path coercion (`xp_dirtree`) generates outbound SMB — caught by network monitoring
 - Service account running SQL Server is often over-privileged (Local System, Network Service, or a domain account) — `xp_cmdshell` commands run as that account
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

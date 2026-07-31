@@ -19,6 +19,7 @@ evil-winrm -i 192.168.1.10 -u Administrator -H NTLMhash
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for using a cert-derived NT hash to get a shell; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

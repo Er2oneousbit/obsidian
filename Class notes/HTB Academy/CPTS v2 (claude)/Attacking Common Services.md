@@ -12,36 +12,36 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 
 | Tool | Service(s) | Purpose |
 |---|---|---|
-| `nmap` | All | Port scan, version detection, NSE scripts |
-| `crackmapexec` | SMB, WinRM, MSSQL, SSH | Auth, exec, spray, enum |
-| `impacket-psexec` / `smbexec` | SMB | Remote shell via SMB |
-| `impacket-ntlmrelayx` | SMB | NTLM relay → SAM dump / command exec |
-| `smbclient` | SMB | Interactive share browser |
-| `smbmap` | SMB | List shares and permissions |
-| `enum4linux-ng` | SMB/RPC | AD/Samba enumeration |
-| `rpcclient` | RPC/SMB | RPC enumeration (users, groups, shares) |
-| `evil-winrm` | WinRM | Interactive PS shell, PTH, file transfer |
-| `hydra` | FTP, SSH, RDP, SMTP, MySQL, VNC | Multi-service brute force |
-| `medusa` | FTP, SSH, MSSQL | Multi-service brute force |
-| `crowbar` | RDP | RDP-specific brute force |
-| `impacket-mssqlclient` | MSSQL | Interactive MSSQL client |
-| `sqsh` | MSSQL, MySQL | CLI DB client (Linux) |
-| `redis-cli` | Redis | Interactive Redis client |
-| `ldapsearch` | LDAP | LDAP query tool |
-| `ldapdomaindump` | LDAP | AD LDAP dump → HTML/JSON |
-| `windapsearch` | LDAP | AD-targeted LDAP queries |
-| `smtp-user-enum` | SMTP | SMTP user enumeration (VRFY/RCPT) |
-| `o365spray` | SMTP/O365 | O365 user enum and password spray |
-| `swaks` | SMTP | Send/test emails via CLI |
-| `onesixtyone` | SNMP | Community string brute force |
-| `snmpwalk` | SNMP | SNMP tree walk |
-| `dig` / `fierce` / `subfinder` | DNS | DNS enum and subdomain discovery |
-| `showmount` | NFS | List NFS exports |
+| [[Tools/Scanning/NMAP\|nmap]] | All | Port scan, version detection, NSE scripts |
+| [[Tools/Lateral Movement/crackmapexec\|crackmapexec]] | SMB, WinRM, MSSQL, SSH | Auth, exec, spray, enum |
+| [[Tools/Auth/impacket-psexec\|impacket-psexec]] / [[Tools/Lateral Movement/impacket\|smbexec]] | SMB | Remote shell via SMB |
+| [[Tools/Lateral Movement/ntlmrelayx\|impacket-ntlmrelayx]] | SMB | NTLM relay → SAM dump / command exec |
+| [[Tools/Lateral Movement/smbclient\|smbclient]] | SMB | Interactive share browser |
+| [[Tools/Lateral Movement/smbmap\|smbmap]] | SMB | List shares and permissions |
+| [[Tools/Lateral Movement/enum4linux\|enum4linux-ng]] | SMB/RPC | AD/Samba enumeration |
+| [[Tools/Lateral Movement/RPCclient\|rpcclient]] | RPC/SMB | RPC enumeration (users, groups, shares) |
+| [[Tools/Lateral Movement/Evil WinRM\|evil-winrm]] | WinRM | Interactive PS shell, PTH, file transfer |
+| [[Tools/Auth/Hydra\|hydra]] | FTP, SSH, RDP, SMTP, MySQL, VNC | Multi-service brute force |
+| [[Tools/Auth/Medusa\|medusa]] | FTP, SSH, MSSQL | Multi-service brute force |
+| [[Tools/Auth/crowbar\|crowbar]] | RDP | RDP-specific brute force |
+| [[Tools/Database/mssqlclient\|impacket-mssqlclient]] | MSSQL | Interactive MSSQL client |
+| [[Tools/Database/sqsh\|sqsh]] | MSSQL, MySQL | CLI DB client (Linux) |
+| [[Tools/Database/redis-cli\|redis-cli]] | Redis | Interactive Redis client |
+| `ldapsearch` | LDAP | LDAP query tool (OpenLDAP client) |
+| [[Tools/AD/ldapdomaindump\|ldapdomaindump]] | LDAP | AD LDAP dump → HTML/JSON |
+| [[Tools/AD/windapsearch\|windapsearch]] | LDAP | AD-targeted LDAP queries |
+| [[Tools/Email/smtp-user-enum\|smtp-user-enum]] | SMTP | SMTP user enumeration (VRFY/RCPT) |
+| [[Tools/Auth/o365spray\|o365spray]] | SMTP/O365 | O365 user enum and password spray |
+| [[Tools/Email/swaks\|swaks]] | SMTP | Send/test emails via CLI |
+| [[Tools/Network/onesixtyone\|onesixtyone]] | SNMP | Community string brute force |
+| [[Tools/Network/snmpwalk\|snmpwalk]] | SNMP | SNMP tree walk |
+| [[Tools/Network/dig\|dig]] / [[Tools/Network/fierce\|fierce]] / [[Tools/Recon/subfinder\|subfinder]] | DNS | DNS enum and subdomain discovery |
+| `showmount` | NFS | List NFS exports (nfs-common) |
 | `rsync` | Rsync | List/download/upload rsync modules |
 | `vncviewer` | VNC | Connect to VNC sessions |
-| `xfreerdp` | RDP, VNC | Connect with PTH support |
-| `MSF ipmi_dumphashes` | IPMI | Unauthenticated IPMI hash dump |
-| `hashcat -m 7300` | IPMI | Crack IPMI RAKP hashes |
+| [[Tools/Remote Access/Xfreerdp\|xfreerdp]] | RDP, VNC | Connect with PTH support |
+| [[Tools/Payloads & Shells/metasploit\|MSF]] `ipmi_dumphashes` | IPMI | Unauthenticated IPMI hash dump |
+| [[Tools/Auth/hashcat\|hashcat]] `-m 7300` | IPMI | Crack IPMI RAKP hashes |
 
 ---
 
@@ -998,5 +998,5 @@ use post/multi/gather/vnc_password_file
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-30*
+*Model: claude-opus-4-8*

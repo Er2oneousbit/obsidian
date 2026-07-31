@@ -20,6 +20,7 @@ hashcat --force    # add to any command to force CPU mode
 
 > [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] AS-REP Roasting (mode 18200) and Kerberoasting (mode 13100/19700) sections.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

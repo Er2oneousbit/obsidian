@@ -4,6 +4,7 @@
 - See also: [[Services/Active Directory/ADCS|ADCS]] — PtH/PtT shell after obtaining a cert-derived hash or ticket
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

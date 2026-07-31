@@ -103,6 +103,7 @@ proxychains ldapdomaindump -u 'DOMAIN\user' -p 'Password' <dc-ip>
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

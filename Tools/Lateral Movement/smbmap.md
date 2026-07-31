@@ -128,8 +128,11 @@ smbmap -H 192.168.1.10 -u Administrator -p Password -x 'net user hacker Password
 - `-A` pattern search reads file metadata to match — triggers access events on matching files
 - Subnet scanning (`-H 192.168.1.0/24`) hits every host — noisy, generates many auth events
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

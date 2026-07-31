@@ -142,6 +142,7 @@ medusa -H hosts.txt -u admin -P passwords.txt -M ssh -T 10 -t 2
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 

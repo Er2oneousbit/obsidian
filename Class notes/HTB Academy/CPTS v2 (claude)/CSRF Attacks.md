@@ -20,7 +20,7 @@ Pairs with [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]], [[WebSocke
 | `curl` | Confirm the endpoint accepts the request without token / `Origin` / `Referer` |
 | Browser DevTools | Inspect `Set-Cookie` attributes (`SameSite`, `Secure`, `HttpOnly`), watch blocked cross-site requests in the console |
 | `python3 -m http.server` | Host the PoC page on the attacker origin |
-| `ngrok` / `socat` | Give the PoC an internet-reachable origin when the target can't reach your LAN |
+| [ngrok](https://ngrok.com) / `socat` | Give the PoC an internet-reachable origin when the target can't reach your LAN |
 
 ---
 
@@ -132,7 +132,7 @@ curl -s -X POST "https://target.com/api/account" \
 # 200 / accepted → CSRF-able. 415 Unsupported Media Type → properly locked down.
 ```
 
-> [!tip] Same trick applies to GraphQL — see `## Chained Vectors` and [[GraphQL]].
+> [!tip] Same trick applies to GraphQL — see [[#Chained Vectors]] and [[GraphQL]].
 
 ### Multipart / File Upload
 
@@ -484,23 +484,23 @@ Each of these has a fuller home elsewhere in the vault — cross-referenced rath
 
 ### XSS → CSRF
 
-The complete bypass. Attacker JS runs in the victim's origin, so it can read the token from the DOM and send the request with correct cookies and correct origin. No CSRF control survives it. Full payloads in [[Cross-Site Scripting (XSS)]] (`### XSS → CSRF`).
+The complete bypass. Attacker JS runs in the victim's origin, so it can read the token from the DOM and send the request with correct cookies and correct origin. No CSRF control survives it. Full payloads in [[Cross-Site Scripting (XSS)#XSS → CSRF (Perform Actions as Victim)]].
 
 ### CORS → Token Read
 
-A reflected-origin CORS misconfiguration with `Access-Control-Allow-Credentials: true` gives the attacker page read access — which is precisely what `## Token Prefetch Bypass` above builds on. Detection and PoCs in [[CORS Misconfiguration]].
+A reflected-origin CORS misconfiguration with `Access-Control-Allow-Credentials: true` gives the attacker page read access — which is precisely what [[#Token Prefetch Bypass]] above builds on. Detection and PoCs in [[CORS Misconfiguration]].
 
 ### CSWSH (WebSocket)
 
-Cross-Site WebSocket Hijacking is CSRF applied to the WebSocket handshake: the upgrade is an HTTP request, and if the server authenticates it with cookies and skips `Origin` validation, an attacker page can open an authenticated socket — and *read* from it, unlike classic CSRF. Fully covered in [[WebSockets]] (`### 1. Cross-Site WebSocket Hijacking (CSWSH)`).
+Cross-Site WebSocket Hijacking is CSRF applied to the WebSocket handshake: the upgrade is an HTTP request, and if the server authenticates it with cookies and skips `Origin` validation, an attacker page can open an authenticated socket — and *read* from it, unlike classic CSRF. Fully covered in [[WebSockets#1. Cross-Site WebSocket Hijacking (CSWSH)]].
 
 ### GraphQL CSRF
 
-A GraphQL endpoint that accepts `application/x-www-form-urlencoded` or mutations over `GET` is directly CSRF-able — no preflight, so a plain cross-site form fires a mutation. See [[GraphQL]] (`## CSRF via GraphQL`).
+A GraphQL endpoint that accepts `application/x-www-form-urlencoded` or mutations over `GET` is directly CSRF-able — no preflight, so a plain cross-site form fires a mutation. See [[GraphQL#CSRF via GraphQL]].
 
 ### OAuth `state` CSRF
 
-A missing or fixed `state` parameter makes the OAuth callback forgeable, letting an attacker bind *their* authorization code to the victim's session — account linking takeover. See [[OAuth-OIDC-SAML]] (`### state CSRF`).
+A missing or fixed `state` parameter makes the OAuth callback forgeable, letting an attacker bind *their* authorization code to the victim's session — account linking takeover. See [[OAuth-OIDC-SAML#`state` CSRF]].
 
 ### Clickjacking-Assisted CSRF
 
@@ -611,3 +611,4 @@ An open redirect on the target turns a cross-site request into a same-site one, 
 
 *Created: 2026-07-29*
 *Updated: 2026-07-29*
+*Model: claude-opus-4-8*

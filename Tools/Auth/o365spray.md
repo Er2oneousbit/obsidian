@@ -125,8 +125,11 @@ python3 o365spray.py --spray -U valid_users.txt -p 'Summer2024!' \
 
 > [!warning] **Smart Lockout** — Azure AD Smart Lockout tracks failed attempts per account. Default threshold is ~10 attempts before a 60-second lockout. Keep threads low, use `--sleep`, and spray 1 password per round with 60+ minute gaps between rounds.
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-5*

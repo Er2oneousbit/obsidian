@@ -16,6 +16,7 @@ nmap -sV --open -oA initial_scan 10.129.200.170
 
 > [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script); [[Services/Cloud & Data/Flink|Apache Flink]] (identifying Flink ports/version).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]], [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
