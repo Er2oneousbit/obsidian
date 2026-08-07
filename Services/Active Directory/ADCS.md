@@ -6,6 +6,9 @@
 
 Active Directory Certificate Services — Microsoft PKI implementation. Issues digital certificates for auth, encryption, and code signing. Misconfigurations in certificate templates and CA settings allow privilege escalation to Domain Admin via certificate-based authentication (PKINIT). Primary attack research: SpecterOps "Certified Pre-Owned" (2021).
 
+> [!note] Protocol reference — the NTLM challenge-response that **ESC8** relays to web enrollment: [[Standards & Protocols/NTLM|NTLM]].
+> [!note] Protocol reference — the X.509 certificate model (EKU / SAN / PKINIT) every ESC abuses: [[Standards & Protocols/X509-PKI|X.509 / PKI]].
+
 - **Web Enrollment**: TCP 80/443 — `http://<CA>/certsrv/`
 - **RPC/DCOM**: TCP 135 + dynamic — certificate enrollment via RPC
 - **LDAP**: TCP 389 — template and CA object enumeration

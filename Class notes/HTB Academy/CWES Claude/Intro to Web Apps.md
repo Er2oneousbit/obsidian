@@ -6,6 +6,8 @@
 
 Foundational reference for web application architecture, front/back end components, and core vulnerability classes. Covers the attack angle for each concept — use as a primer before diving into technique-specific modules. Pairs with [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting (XSS)]], and [[Command Injection]].
 
+> [!note] Protocol reference — how HTML parsing and the DOM actually work (the substrate under the HTML injection, XSS, and CSRF covered here): [[Standards & Protocols/HTML|HTML]].
+
 ---
 
 ## Web Application Layout
@@ -29,6 +31,23 @@ Foundational reference for web application architecture, front/back end componen
 | Presentation Layer | UI rendered in browser (HTML/CSS/JS) |
 | Application Layer | Business logic, auth checks, API handling |
 | Data Layer | Database — stores/retrieves data |
+
+```mermaid
+flowchart LR
+    subgraph P["Presentation Layer"]
+        B["Browser<br/>HTML / CSS / JS"]
+    end
+    subgraph A["Application Layer"]
+        S["Web / App Server<br/>business logic · auth · APIs"]
+    end
+    subgraph D["Data Layer"]
+        DB[("Database")]
+    end
+    B -->|"HTTP request"| S
+    S -->|"HTML response"| B
+    S -->|"SQL query"| DB
+    DB -->|"rows"| S
+```
 
 ### Other Patterns
 
@@ -330,9 +349,17 @@ Forces an authenticated victim's browser to make unintended requests. Requires t
 
 ### Attack Flow
 
-```text
-Attacker crafts malicious page → Victim visits it while authenticated → 
-Victim's browser sends forged request with session cookie → Action executes as victim
+```mermaid
+sequenceDiagram
+    autonumber
+    actor V as Victim
+    participant Atk as Attacker Page
+    participant App as Target App
+
+    Note over V,App: Victim is already logged in — holds a valid session cookie for App
+    Atk-->>V: Victim visits the attacker's malicious page
+    V->>App: Browser auto-submits a forged request (carries the session cookie)
+    App-->>V: Action runs as the victim — no CSRF token / SameSite to stop it
 ```
 
 ### Payloads
@@ -815,5 +842,5 @@ use <module>
 ---
 
 *Created: 2026-04-24*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-4-8*

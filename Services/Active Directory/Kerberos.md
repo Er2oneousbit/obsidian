@@ -6,6 +6,8 @@
 
 Network authentication protocol used by Active Directory. Based on tickets — clients obtain a Ticket-Granting Ticket (TGT) from the KDC, then request Service Tickets (TGS) for individual services. Replaces NTLM for AD auth in modern environments.
 
+> [!note] How a client/server *chooses* Kerberos vs NTLM on the wire (`Authorization: Negotiate`), and where it gets downgraded to NTLM: [[Standards & Protocols/SPNEGO-GSS|SPNEGO / GSS-API]].
+
 - Port: **TCP/UDP 88** — Kerberos
 - Port: **TCP/UDP 464** — kpasswd (password change)
 - KDC runs on every Domain Controller

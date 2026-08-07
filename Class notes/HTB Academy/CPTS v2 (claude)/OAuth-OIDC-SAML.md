@@ -23,6 +23,8 @@ Attack techniques for the three major auth delegation frameworks: OAuth 2.0, Ope
 
 ## OAuth 2.0
 
+> [!note] Protocol reference — how OAuth 2.0 / OIDC works and *why* each attack maps to a broken trust assumption: [[Standards & Protocols/OAuth-OIDC|OAuth 2.0 & OIDC]].
+
 ### Flow Overview
 
 ```text
@@ -293,6 +295,8 @@ curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" \
 ## SAML
 
 XML-based SSO protocol. IdP signs assertion, SP verifies. Attacks target signature validation.
+
+> [!note] Protocol reference — how SAML actually works and *why* each attack below maps to one broken trust assumption: [[Standards & Protocols/SAML|SAML]].
 
 ### Identify
 

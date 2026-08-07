@@ -3,6 +3,8 @@
 ## What is TLS?
 Transport Layer Security — cryptographic protocol providing confidentiality, integrity, and authentication over TCP. Successor to SSL (deprecated). Relevant to almost every service: HTTPS, SMTPS, LDAPS, IMAPS, MSSQL, MySQL, RDP, etc.
 
+> [!note] Protocol reference — the X.509 certificates TLS presents, and how the chain is validated (or bypassed): [[Standards & Protocols/X509-PKI|X.509 / PKI]].
+
 - **TLS 1.3** — current standard (2018), forward secrecy mandatory
 - **TLS 1.2** — widely deployed, acceptable with strong ciphers
 - **TLS 1.1 / 1.0** — deprecated (RFC 8996, 2021), vulnerable to BEAST, POODLE

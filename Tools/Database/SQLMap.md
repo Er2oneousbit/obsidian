@@ -224,7 +224,7 @@ sqlmap -u "http://target.com/page?id=1" -v 3
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — SQL injection in API endpoints.
 
 ---
 

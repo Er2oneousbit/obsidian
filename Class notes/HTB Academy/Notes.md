@@ -99,6 +99,8 @@ command --with FLAGS
 - `> [!tip]` — a shortcut or better default (e.g. "start with `-ac`, it's faster than manual filtering").
 - `> [!warning]` — anything destructive, noisy, or scope-sensitive (uncapped recursion, DoS-risk flags, rate limits).
 
+**Diagrams & images** — when a flow or relationship is clearer as a picture than as ASCII/prose/a table, use one. Prefer a fenced ` ```mermaid ` block (flowcharts, sequence/attack flows, graphs — it's text, diffs cleanly, and renders in both Obsidian and GitHub). For anything mermaid can't express, author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]` — don't paste raw inline `<svg>` into the body (Obsidian reading-mode is inconsistent and GitHub strips it). Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`. Reserve them for real structure (attack chains, auth flows, trust relationships, network topology); a small table or short ASCII is still fine — don't add decorative pictures.
+
 **Cross-links** — `[[Note Name]]` to other notes, `[[Note Name#Section]]` or same-doc `[[#Section Name]]` to jump to a specific technique instead of repeating it (e.g. Command Injection's API section says "same flags as [[#Directory Fuzzing]]" instead of restating the flag table).
 
 **`## Quick Reference`** — last content section before the footer, in the longer/more technique-dense notes (skip it on short single-concept notes). A `Goal | Payload/Command` copy-paste table condensing the whole doc into one scroll-free cheat sheet.

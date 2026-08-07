@@ -136,6 +136,8 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 **`## Quick Reference`** — always a `Goal | Command` table (not the bash-comment-block style some alternate notes use) — scroll-free copy-paste cheat sheet condensing the whole note.
 
+**Diagrams & images** — when a flow or relationship is clearer as a picture than as ASCII/prose/a table, use one. Prefer a fenced ` ```mermaid ` block (attack chains, relay/pivot paths, protocol handshakes — it's text, diffs cleanly, and renders in both Obsidian and GitHub). For anything mermaid can't express, author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]` — don't paste raw inline `<svg>` into the body (Obsidian reading-mode is inconsistent and GitHub strips it). Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`. Reserve them for real structure (relay chains, trust paths, network topology); a small table or short ASCII is still fine — don't add decorative pictures.
+
 **Footer** — new for this folder (no existing Services note has one). Matches every other folder's convention: `*Created:*` set once and never changed, `*Updated:*` bumped on material edits, `*Model:*` set to whichever model actually wrote/edited it.
 
 ---

@@ -333,7 +333,7 @@ A weak/guessable trusted-device cookie (predictable value, no binding to user/de
 Check the verify **response body and JS** — some apps return the OTP (or a comparison value) client-side for "convenience."
 
 > [!note]
-> Out of scope for login-form testing but worth flagging in a report as the real-world MFA threat: **AiTM phishing proxies** (Evilginx-style reverse proxies that relay the OTP and steal the *session token*), **MFA-fatigue / push-bombing**, **SIM-swap** against SMS OTP, and **help-desk social engineering** to reset MFA. Token theft + replay bypasses MFA entirely because it rides an already-authenticated session — see [[JWT Attacks]] and [[OAuth-OIDC-SAML]] for the token side.
+> Out of scope for login-form testing but worth flagging in a report as the real-world MFA threat: **AiTM phishing proxies** (Evilginx-style reverse proxies that relay the OTP and steal the *session token*), **MFA-fatigue / push-bombing**, **SIM-swap** against SMS OTP, and **help-desk social engineering** to reset MFA. Token theft + replay bypasses MFA entirely because it rides an already-authenticated session — see [[JWT Attacks]] and [[OAuth-OIDC-SAML]] for the token side. The phishing-resistant countermeasure is [[Standards & Protocols/WebAuthn-FIDO2|WebAuthn/FIDO2]] (passkeys) — which is exactly why AiTM shifts to forcing a **downgrade** to a weaker factor instead of relaying it.
 
 ---
 
@@ -345,12 +345,18 @@ Once authenticated, the session token *is* the identity. Two flaws in how tokens
 
 The app **reuses the same session token before and after login** instead of issuing a fresh one. If you can force a victim onto a token you already know, you inherit their authenticated session.
 
-```
-1. Attacker gets a valid token (e.g. session=a1b2c3d4e5f6), then logs out.
-2. Attacker lures victim to a link that sets that token:
-     http://vulnerable.htb/?sid=a1b2c3d4e5f6   → Set-Cookie: session=a1b2c3d4e5f6
-3. Victim logs in. App does NOT rotate the token → victim is authed under a1b2c3d4e5f6.
-4. Attacker already knows a1b2c3d4e5f6 → full session hijack.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Atk as Attacker
+    participant App as Web App
+    actor V as Victim
+
+    Atk->>App: Get a valid session token (sid=a1b2c3), then log out
+    Atk-->>V: Lure victim to a link that SETS that token (?sid=a1b2c3)
+    V->>App: Victim logs in — app does NOT rotate the token
+    Note over V,App: Victim now authenticated under a1b2c3 (attacker-known)
+    Atk->>App: Reuse a1b2c3 → full session hijack
 ```
 
 > [!note]

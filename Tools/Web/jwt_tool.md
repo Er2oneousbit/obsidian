@@ -211,7 +211,7 @@ curl http://target.com/api/admin -H "Authorization: Bearer FORGED_TOKEN"
 | `-M at` | Run all tests |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth-OIDC-SAML]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth-OIDC-SAML]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — JWT/token attacks against APIs. Protocol reference: [[Standards & Protocols/JWT|JWT]].
 
 ---
 

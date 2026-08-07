@@ -135,6 +135,17 @@ done
 
 ---
 
+## Argument Discovery via Errors
+
+Even with introspection *and* field suggestions locked down, a query missing a **required argument** usually errors with that argument's name and type — free black-box recon for injectable inputs before the injection tests below:
+
+```bash
+curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d '{"query":"{ postByAuthor { id } }"}'
+# → "argument \"author\" of type \"String!\" is required but not provided"
+```
+
+---
+
 ## GraphQL Injection
 
 ### SQL Injection via GraphQL Arguments
@@ -414,5 +425,5 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" \
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-30*
-*Model: claude-opus-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-4-8*

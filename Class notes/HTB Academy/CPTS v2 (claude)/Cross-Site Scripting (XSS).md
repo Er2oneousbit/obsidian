@@ -6,6 +6,8 @@
 
 Web app fails to sanitize user input, allowing injection of JavaScript that executes in other users' browsers. Impact ranges from cookie theft and session hijacking to full account takeover. The attack targets the **client** (victim's browser), not the server.
 
+> [!note] Protocol reference — how the browser parses HTML into the DOM and *why* input becomes script (injection contexts, mXSS): [[Standards & Protocols/HTML|HTML]].
+
 **Vulnerable code:** `document.innerHTML = userInput;` or server rendering `<p>Hello, <?= $name ?></p>`
 
 ---

@@ -38,7 +38,7 @@ graphql-cop -t http://<TARGET>/graphql -o json --proxy http://127.0.0.1:8080
 
 > [!note] It reports *capabilities and missing hardening*, not exploited vulnerabilities. A finding here is the start of a test, not a finished one — you still have to show impact.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] — first-pass endpoint audit; pairs with [[Tools/Web/graphw00f|graphw00f]] for engine fingerprinting.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] — first-pass endpoint audit; pairs with [[Tools/Web/graphw00f|graphw00f]] for engine fingerprinting. Also [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]] (CWES).
 
 ---
 

@@ -6,18 +6,22 @@
 
 Attacks on RESTful APIs targeting the OWASP API Security Top 10 — object-level and function-level auth bypass, data exposure, credential compromise, resource exhaustion, SSRF, injection, and poor inventory management. Unlike traditional web app attacks, API flaws are exploited through direct HTTP calls without a browser UI, often returning unfiltered JSON that exposes structure. Pairs with [[Server-Side Attacks]], [[SQL Injection]], [[Web Attacks]].
 
+> [!note] A high-value concrete instance of every flaw here is a **SCIM** user-provisioning API (`/scim/v2/Users`) — bearer-token CRUD, BOLA on user IDs, mass-assignment ATO via `userName`/`active`: [[Standards & Protocols/SCIM|SCIM]].
+
 ---
 
 ## Tools
 
 | Tool | Use |
 |---|---|
-| `curl` / `Burp Suite` | Manual API requests, JWT token inspection, response body analysis |
-| `ffuf` | Brute-force API parameters (user IDs, email+password pairs, file IDs, endpoint discovery) |
+| `curl` / [[Tools/Web/Burpsuite\|Burp Suite]] | Manual API requests, JWT token inspection, response body analysis |
+| [[Tools/Scanning/ffuf\|ffuf]] | Brute-force API parameters (user IDs, email+password pairs, file IDs, endpoint discovery) |
+| [[Tools/Web/jwt_tool\|jwt_tool]] | Decode/tamper JWTs — `alg:none`, algorithm confusion, weak-secret cracking |
+| [[Tools/Database/SQLMap\|sqlmap]] | Automate the SQL-injection-in-API-endpoints testing |
 | `jq` | Parse and filter JSON responses, extract specific fields from API dumps |
-| `CyberChef` | Decode base64 payloads, encode/decode tokens, analyze obfuscated data |
-| Swagger UI | Explore API endpoints, test RBAC, inject payloads directly in the UI |
-| [Burp Scanner](https://portswigger.net/burp) | Automated API scanning, crawling, active checks |
+| [CyberChef](https://gchq.github.io/CyberChef/) | Decode base64 payloads, encode/decode tokens, analyze obfuscated data |
+| [Swagger UI](https://swagger.io/tools/swagger-ui/) | Explore API endpoints, test RBAC, inject payloads directly in the UI |
+| [[Tools/Web/Burpsuite\|Burp Scanner]] | Automated API scanning, crawling, active checks |
 | [OpenAPI generator tools](https://openapi-generator.tech/) | Convert OpenAPI/Swagger specs into client code for easier testing |
 
 ---
@@ -142,6 +146,8 @@ done
 
 The API fails to enforce rate-limiting on login/password-reset endpoints, or uses weak password policies, making credential brute-force feasible.
 
+> [!note] The web-login view of these same flaws — user enumeration, credential stuffing, MFA/reset abuse — is in [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]]; brute-force tradecraft in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] and [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]].
+
 ### Weak Password Policy
 
 ```bash
@@ -222,6 +228,8 @@ done
 ### JWT / Token Attacks
 
 Inspect and manipulate JWT tokens to escalate privileges or reuse tokens across services.
+
+> [!note] Full JWT attack methodology (algorithm confusion, `kid`/`jwks` injection, key cracking) in [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]] with [[Tools/Web/jwt_tool|jwt_tool]]; the token model behind it in [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth-OIDC-SAML]].
 
 ```bash
 # Decode a JWT — it's base64URL (uses -_ instead of +/, no = padding),
@@ -714,6 +722,22 @@ Your API calls another API (third-party service) and trusts its response without
 
 Real-world exploits rarely rely on a single flaw. Combine multiple low-impact vulnerabilities to escalate privilege or maximize data theft.
 
+```mermaid
+flowchart TB
+    subgraph C1["Chain 1 — full marketplace compromise"]
+        direction LR
+        A1["BOLA<br/>enumerate supplier IDs"] --> A2["Mass Assignment<br/>set fee-exempt flag"] --> A3["SSRF<br/>read internal config"] --> A4["Admin creds → takeover"]
+    end
+    subgraph C2["Chain 2 — fraud + denial of service"]
+        direction LR
+        B1["Broken Auth<br/>brute-force weak pw"] --> B2["BFLA<br/>hit discount endpoint"] --> B3["Unrestricted Upload<br/>fill the disk"] --> B4["Resell + DoS"]
+    end
+    subgraph C3["Chain 3 — inventory theft"]
+        direction LR
+        D1["Data Exposure<br/>emails + phones"] --> D2["IDOR<br/>enumerate supplier IDs"] --> D3["Race Condition<br/>bypass stock check"] --> D4["Buy all stock cheap"]
+    end
+```
+
 ### Example Chain 1: BOLA + Mass Assignment + SSRF
 
 ```
@@ -803,5 +827,5 @@ done
 ---
 
 *Created: 2026-07-15*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-4-8*

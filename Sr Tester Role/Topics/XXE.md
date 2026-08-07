@@ -10,9 +10,11 @@
 
 ---
 
+> 📚 **Protocol reference:** XML structure, DTDs, and the entity mechanism XXE abuses — [[Standards & Protocols/XML|XML]].
+
 ### 🧪 How to Detect and Exploit XXE
 - Look for XML-based inputs:  
-  - SOAP APIs, SAML assertions, SVG uploads, XML file uploads  
+  - SOAP APIs, [[Standards & Protocols/SAML|SAML]] assertions (signed-XML SSO — a first-class XXE sink), SVG uploads, XML file uploads  
 
 - Classic malicious DTD injection (defanged example):  
   ```xml

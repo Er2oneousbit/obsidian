@@ -6,6 +6,8 @@
 
 Server-side attacks target the application/server itself rather than the client (contrast with XSS). This note covers four injection classes: **SSRF** (server coerced into making unauthorized requests), **SSTI** (attacker code runs inside a server-rendered template), **SSI Injection** (attacker directives run inside Apache/IIS server-side includes), and **XSLT Injection** (attacker XSL elements run inside an XML→output transform). All four can escalate to LFI or RCE depending on engine/library configuration. Pairs with [[File Inclusion]], [[Command Injection]], [[Web Attacks]].
 
+> [!note] Protocol reference — the XML document model that XSLT transforms and XXE abuse: [[Standards & Protocols/XML|XML]].
+
 ---
 
 ## Tools
@@ -30,6 +32,19 @@ Any parameter where the server fetches a URL on your behalf (`dateserver=`, `url
 | `http://` / `https://` | Normal request — reach internal endpoints, bypass WAFs/firewalls that only see the frontend |
 | `file://` | Read local files (LFI) |
 | `gopher://` | Send arbitrary raw bytes to a TCP socket — forge POST requests or speak to non-HTTP services (Redis, SMTP, MySQL) |
+
+```mermaid
+flowchart LR
+    Atk["Attacker"] -->|"inject url= param<br/>http / file / gopher"| Srv["Vulnerable Server<br/>fetches the URL for you"]
+    Srv -->|"server-side request<br/>from a trusted position"| Zone
+    subgraph Zone["Reachable only from the server"]
+        direction TB
+        Meta["Cloud metadata<br/>169.254.169.254"]
+        Intn["Internal apps / admin<br/>127.0.0.1 · 10.0.0.0/8"]
+        Files["Local files<br/>file:///etc/passwd"]
+        Svc["Non-HTTP services<br/>Redis / SMTP via gopher"]
+    end
+```
 
 ### Confirm
 
@@ -207,6 +222,19 @@ ${{<%[%'"}}%\.
 #                     no:  try ${7*7} instead (Freemarker/Mako use ${ } syntax)
 
 {{7*'7'}}   # step 2 (only if {{7*7}} rendered) — Jinja2 -> 7777777   |   Twig -> 49
+```
+
+```mermaid
+flowchart TD
+    P["Inject {{7*7}}"] --> Q{"Renders as 49?"}
+    Q -->|"No"| F["Try ${7*7}"]
+    F --> G{"Renders as 49?"}
+    G -->|"Yes"| FM["Freemarker / Mako"]
+    G -->|"No"| NV["Not SSTI / unknown"]
+    Q -->|"Yes"| R["Inject {{7*'7'}}"]
+    R --> S{"Distinguish"}
+    S -->|"7777777"| Jinja["Jinja2 (Python)"]
+    S -->|"49"| Twig["Twig (PHP)"]
 ```
 
 > [!tip]
@@ -421,5 +449,5 @@ Product Version: <xsl:value-of select="system-property('xsl:product-version')" /
 ---
 
 *Created: 2026-07-14*
-*Updated: 2026-07-14*
-*Model: claude-sonnet-5*
+*Updated: 2026-07-31*
+*Model: claude-opus-4-8*

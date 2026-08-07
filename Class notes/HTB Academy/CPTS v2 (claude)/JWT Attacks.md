@@ -6,6 +6,8 @@
 
 JSON Web Token attacks — algorithm confusion (RS256→HS256), none algorithm, weak secret brute-force, kid injection, and header injection. Pairs with [[OAuth-OIDC-SAML]], [[Web Attacks]].
 
+> [!note] Protocol reference — JWT structure (JWS/JWE/JWK), the signing/verification trust model, and *why* each attack below works: [[Standards & Protocols/JWT|JWT]].
+
 ---
 
 ## Tools

@@ -38,6 +38,23 @@ Use a compromised host (pivot/beachhead) to relay traffic into internal network 
 | **SOCKS5** | TCP proxy — supports auth and UDP |
 | **Transparent Proxy** | Intercepts traffic from non-proxy-aware tools and routes it through a tunnel |
 
+```mermaid
+flowchart LR
+    Atk["Attacker<br/>10.10.14.x"] -->|"initial access"| Pivot
+    subgraph Pivot["Pivot / Beachhead — dual-homed"]
+        direction TB
+        Ext["ext NIC<br/>10.129.x.x"]
+        Int["int NIC<br/>172.16.5.129"]
+    end
+    Pivot -->|"relays traffic"| Net
+    subgraph Net["Internal subnet 172.16.5.0/24 — no direct route from attacker"]
+        direction TB
+        H1["172.16.5.19<br/>SMB / RDP"]
+        H2["172.16.5.25"]
+        DC["172.16.5.5<br/>Domain Controller"]
+    end
+```
+
 ---
 
 ## Network Enumeration (from pivot host)
@@ -74,6 +91,24 @@ run post/multi/gather/ping_sweep RHOSTS=172.16.5.0/23
 ---
 
 ## SSH Port Forwarding
+
+Which side hosts the listener is the whole game — `-L` and `-D` listen on the attacker, `-R` listens on the pivot:
+
+```mermaid
+flowchart LR
+    subgraph L["-L  local forward"]
+        direction LR
+        La["Attacker<br/>listen :1234"] -->|"SSH"| Lp["Pivot"] -->|"connects"| Lt["Target :3306"]
+    end
+    subgraph R["-R  remote / reverse forward"]
+        direction LR
+        Rp["Pivot<br/>listen :9090"] -->|"SSH back"| Ra["Attacker"] -->|"connects"| Rs["Attacker svc :9050"]
+    end
+    subgraph D["-D  dynamic SOCKS"]
+        direction LR
+        Da["Attacker<br/>SOCKS :9050"] -->|"SSH"| Dp["Pivot"] -->|"any host : any port"| Dn["Internal network"]
+    end
+```
 
 ### Local port forwarding (-L)
 
@@ -537,6 +572,23 @@ proxychains nmap -sV -sT 172.16.5.19 -p3389
 
 Goal: Attacker → Pivot1 → Pivot2 → Internal target (three hops)
 
+```mermaid
+flowchart LR
+    Atk["Attacker"] --> P1
+    subgraph P1["Pivot1 — dual-homed"]
+        direction TB
+        P1e["10.129.x.x"]
+        P1i["172.16.5.129"]
+    end
+    P1 -->|"route 172.16.5.0/24"| P2
+    subgraph P2["Pivot2 — dual-homed"]
+        direction TB
+        P2e["172.16.5.19"]
+        P2i["172.16.6.x"]
+    end
+    P2 -->|"route 172.16.6.0/24"| T["Target<br/>172.16.6.10"]
+```
+
 ### With ligolo-ng (recommended)
 
 ```bash
@@ -696,5 +748,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-07-31*
+*Model: claude-opus-4-8*

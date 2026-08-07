@@ -6,6 +6,8 @@
 
 Extract, capture, and crack credentials from Windows and Linux systems. Windows: SAM/LSASS/NTDS.dit hash extraction, Pass-the-Hash (PTH), Pass-the-Ticket (PTT). Linux: harvesting from configs, history, and memory. Network captures for cleartext creds. Offline cracking with hashcat and john. Pairs with [[Login Brute Forcing]], [[Windows Priv Esc]], [[Pivoting, Tunneling & Port Forwarding]].
 
+> [!note] Protocol reference — how NTLM challenge-response works, and *why* hash-dumping / PtH / Net-NTLMv2 capture / relay are possible: [[Standards & Protocols/NTLM|NTLM]].
+
 ---
 
 ## Tools
