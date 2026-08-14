@@ -125,8 +125,8 @@ nslookup
 
 ```bash
 # gobuster DNS
-gobuster dns -d <domain> -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt
-gobuster dns -d inlanefreight.com -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -r <nameserver>
+gobuster dns -domain <domain> -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt
+gobuster dns -domain inlanefreight.com -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -r <nameserver>
 
 # dnsenum
 dnsenum --dnsserver <nameserver> --enum -p 0 -s 0 <domain>

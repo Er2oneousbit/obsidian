@@ -178,6 +178,11 @@ openssl s_client -connect target.com:443 -status </dev/null 2>/dev/null | \
 
 ---
 
+> [!note] **See also**
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — `s_client -starttls smtp` for STARTTLS on 25/587 and direct TLS on 465, to reach an authenticated session or inspect the mail server's certificate.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

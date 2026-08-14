@@ -9,7 +9,7 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 
 > [!warning] **Account Lockout** — Always verify lockout policy before attacking. Password spraying (one password, many users) is far safer than per-account brute force on production systems. Use `-t 1` and add delays (`-W`) when stealth matters.
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365; [[Services/Remote Access/R-Services|R-Services]] — Hydra's `rlogin://`, `rexec://`, and `rsh://` modules are the only practical way to brute-force rsh (Nmap has no `rsh-brute` script).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — HTTP login-form brute force / spraying.
@@ -273,5 +273,5 @@ hydra --list-modules  # list all modules (newer versions)
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-08-13*
 *Model: claude-opus-5*

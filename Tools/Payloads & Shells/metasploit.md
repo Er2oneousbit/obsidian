@@ -199,12 +199,12 @@ There may also be a `~/.msf4/modules/` folder (per-user) with the same structure
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules.
+> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules; [[Services/Email/SMTP|SMTP]] uses `auxiliary/scanner/smtp/smtp_enum`; [[Services/Remote Access/R-Services|R-Services]] uses the `auxiliary/scanner/rservices/{rexec,rlogin,rsh}_login` modules.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]], [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-08-13*
 *Model: claude-opus-5*

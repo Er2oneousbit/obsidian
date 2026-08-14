@@ -90,6 +90,12 @@ EXPN postmaster
 
 ---
 
+> [!note] **See also**
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — automated `VRFY` / `EXPN` / `RCPT TO` user enumeration. Valid local usernames found here feed directly into **mail spool poisoning** (`RCPT TO: <user>` → `/var/mail/<user>`).
+> Related: [[Tools/Email/swaks|swaks]] for sending once you have valid recipients.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

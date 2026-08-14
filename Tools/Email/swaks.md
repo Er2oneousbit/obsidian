@@ -21,10 +21,10 @@ swaks --to victim@target.com --server mail.target.com:587 -tls \
   --auth LOGIN --auth-user user@target.com --auth-password 'Password123'
 ```
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] — SMTP relay abuse / test email delivery; pairs with [[Tools/Email/smtp-user-enum|smtp-user-enum]].
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] — SMTP relay abuse / test email delivery; pairs with [[Tools/Email/smtp-user-enum|smtp-user-enum]]. Service note: [[Services/Email/SMTP|SMTP]] — phishing/relay testing and scripted **mail spool poisoning** (`--body '<?php … ?>'` to a local user, then include `/var/mail/<user>` via an LFI).
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

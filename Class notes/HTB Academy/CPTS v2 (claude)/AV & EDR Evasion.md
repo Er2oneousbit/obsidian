@@ -426,6 +426,36 @@ Execute 64-bit syscalls from a 32-bit process — bypasses 32-bit hooks entirely
 
 ---
 
+## Bring Your Own Vulnerable Driver (BYOVD)
+
+Instead of *evading* the EDR, **blind or kill it from kernel mode**. Load a legitimately-signed but vulnerable driver, then abuse its IOCTLs to terminate protected processes — user-mode EDR protection (PPL, tamper protection, process hooks) can't stop a kernel-mode kill. Requires **local admin** (to load a driver) and surviving a **UAC** prompt.
+
+### Spyboy "Terminator" (and clones)
+
+The canonical example — a tool sold on the RAMP forum (2023) by **spyboy**, claiming to disable 24 AV/EDR/XDR products. Not a novel exploit: it's a **BYOVD dropper**.
+
+**How it works:**
+1. Drops the signed **Zemana** anti-malware driver — `zamguard64.sys` / `zam64.sys` — into `System32` under a **randomized filename**. Signed by *Zemana Ltd.* (cert thumbprint `96A7749D856CB49DE32005BCDD8621F38E2B4C05`).
+2. Loads it as a kernel service (needs admin + UAC accept).
+3. Sends the driver's process-kill IOCTL to terminate every AV/EDR user-mode process by name — from the kernel, where they can't defend themselves.
+
+**Open-source reproductions** (for authorized red-team/lab use): [ZeroMemoryEx/Terminator](https://github.com/ZeroMemoryEx/Terminator), [EvilBytecode/EDR-XDR-AV-Killer](https://github.com/EvilBytecode/EDR-XDR-AV-Killer).
+
+> [!warning] The BYOVD *technique* is general, not tied to one driver. Terminator's Zemana driver is only one of hundreds of abusable signed drivers — see **[loldrivers.io](https://www.loldrivers.io/)** for the catalog. When one driver gets blocklisted, operators swap in another (`Backstab` → RTCore64, `Blackout`, `Bright`, `spkl`/`kEVP64`, etc.).
+
+**Detection & defense (blue-team / what to flag in a report):**
+
+| Control | Why it catches Terminator |
+|---|---|
+| **Microsoft Vulnerable Driver Blocklist** (HVCI) | `zam64.sys` / `zamguard64.sys` are on the blocklist — enable it; blocks the load outright |
+| **Sysmon Event ID 6** (driver load) | Flags a signed-but-known-vulnerable driver loading, especially from `System32` under an odd name |
+| **Service-creation events** (7045 / 4697) | A new kernel service pointing at a randomly-named `.sys` |
+| YARA / Sigma rules (Florian Roth, Nasreddine Bencherchali) | Signature the known driver + loader behavior |
+
+> [!note] This is a Windows **local-admin → disable-defenses** step, not a privilege escalation — you need admin first (see [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]]). Not to be confused with the **[[Tools/Command Shell/Terminator|Terminator terminal emulator]]** (an unrelated tool that shares the name).
+
+---
+
 ## Defender-Specific Bypasses
 
 ```powershell
@@ -592,5 +622,5 @@ Spawn process with a different parent to avoid suspicious parent-child chains (W
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-05-14*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-13*
+*Model: claude-opus-5*

