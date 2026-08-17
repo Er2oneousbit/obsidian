@@ -101,7 +101,7 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 *Created: YYYY-MM-DD*
 *Updated: YYYY-MM-DD*
-*Model: claude-sonnet-5*
+*Model: <editing-model>*
 ```
 
 ---
@@ -136,7 +136,18 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 **`## Quick Reference`** — always a `Goal | Command` table (not the bash-comment-block style some alternate notes use) — scroll-free copy-paste cheat sheet condensing the whole note.
 
-**Diagrams & images** — when a flow or relationship is clearer as a picture than as ASCII/prose/a table, use one. Prefer a fenced ` ```mermaid ` block (attack chains, relay/pivot paths, protocol handshakes — it's text, diffs cleanly, and renders in both Obsidian and GitHub). For anything mermaid can't express, author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]` — don't paste raw inline `<svg>` into the body (Obsidian reading-mode is inconsistent and GitHub strips it). Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`. Reserve them for real structure (relay chains, trust paths, network topology); a small table or short ASCII is still fine — don't add decorative pictures.
+**Diagrams & images** — when a flow or relationship is clearer as a picture, use one.
+
+> [!warning] **No ASCII diagrams.** Box-drawing / ASCII-art figures are not acceptable in this vault — they break on reflow, don't scale with the reader's font, and are unreadable on the public GitHub render. Every diagram is either a mermaid block or an `.svg`. This applies retroactively: if you touch a note containing an ASCII figure, convert it.
+
+- **mermaid — first choice.** A fenced ` ```mermaid ` block for attack chains, relay/pivot paths, protocol handshakes, trust relationships. Stays text, diffs cleanly, renders natively in both Obsidian and GitHub.
+- **SVG — for what mermaid can't express.** Packet/field layouts, annotated illustrations, custom topology. Author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]`. Don't paste raw inline `<svg>` into the body — Obsidian reading-mode is inconsistent and GitHub strips it.
+
+Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`.
+
+> [!warning] **`currentColor` does not work in an embedded SVG.** Obsidian renders `![[x.svg]]` as an `<img>`, which makes the SVG an isolated document — `currentColor` resolves to black regardless of theme, so the figure vanishes on a dark background. Set colours explicitly: define light-theme values on `svg { --fg: …; --muted: …; }` and override them in an `@media (prefers-color-scheme: dark)` block (that media query *does* reach an img-embedded SVG). Mid-tone accent colours like `#4a9eff` / `#ff6b7a` read on both themes without a swap.
+
+**A markdown table is not a diagram.** Tabular data stays in a table — this rule is about figures. Reserve diagrams for real structure (relay chains, trust paths, network topology); don't add decorative pictures.
 
 **Footer** — new for this folder (no existing Services note has one). Matches every other folder's convention: `*Created:*` set once and never changed, `*Updated:*` bumped on material edits, `*Model:*` set to whichever model actually wrote/edited it.
 

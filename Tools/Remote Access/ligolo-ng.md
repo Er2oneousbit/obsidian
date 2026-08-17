@@ -148,6 +148,10 @@ listener_add --addr 0.0.0.0:1234 --to 127.0.0.1:4444 --tcp
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting, Tunneling & Port Forwarding]] (CPTS v2) — the preferred TUN-based pivot: v0.6+ console workflow (`interface_create`/`interface_add_route`/`tunnel_start`), the `240.0.0.1/32` agent-localhost trick, and double-pivot via `listener_add`.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

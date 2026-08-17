@@ -72,8 +72,8 @@ The browser treats the page's bytes as authoritative: it parses *anything* into 
 
 ## See also
 
-[[XML]] (the sibling markup — same "parser is too trusting" problem, different attack), [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]]  ·  Index: [[_Standards & Protocols]]
+[[XML]] (the sibling markup — same "parser is too trusting" problem, different attack), [[JSON]] (the sibling *data* format — schemaless text → live object, the third of the browser's core formats), [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]]  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

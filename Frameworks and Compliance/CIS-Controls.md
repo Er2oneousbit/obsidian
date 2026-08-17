@@ -17,7 +17,7 @@
 
 CIS Controls prioritize by **Implementation Groups (IGs)**: IG1 (foundational, quick wins), IG2 (intermediate), IG3 (advanced/specialized).
 
-**Versions:** CIS Controls v7 (2019), v8 (2021), **v8.1 (2024, current)** — v8 reorganized the old 20 controls into 18; v8.1 added a governance emphasis and minor updates.
+**Versions:** CIS Controls v7 (2018; v7.1 in 2019), v8 (May 2021), **v8.1 (2024, current)** — v8 reorganized the old 20 controls into 18 and reframed them around activities rather than device ownership; v8.1 added a governance emphasis, mapped to NIST CSF 2.0, and made minor updates. v8/v8.1 comprise **18 controls and 153 safeguards**.
 
 ---
 
@@ -455,5 +455,5 @@ Example: Excessive file shares → Control 12 (Network Infrastructure Management
 [[NIST-CSF]], [[NIST-SP-800-53]], [[ISO-27001-27002]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

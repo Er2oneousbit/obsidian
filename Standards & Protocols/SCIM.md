@@ -64,8 +64,8 @@ The SP grants a bearer token the power to *be the source of truth for who exists
 
 ## See also
 
-[[OAuth-OIDC]] / [[SAML]] (the *login* half — SCIM is the *lifecycle* half), [[JWT]] (what the bearer token often is)  ·  Index: [[_Standards & Protocols]]
+[[OAuth-OIDC]] / [[SAML]] (the *login* half — SCIM is the *lifecycle* half), [[JWT]] (what the bearer token often is), [[REST]] / [[JSON]] (SCIM *is* a REST+JSON API — its bugs are ordinary API bugs)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

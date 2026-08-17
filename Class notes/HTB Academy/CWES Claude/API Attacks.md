@@ -8,6 +8,8 @@ Attacks on RESTful APIs targeting the OWASP API Security Top 10 — object-level
 
 > [!note] A high-value concrete instance of every flaw here is a **SCIM** user-provisioning API (`/scim/v2/Users`) — bearer-token CRUD, BOLA on user IDs, mass-assignment ATO via `userName`/`active`: [[Standards & Protocols/SCIM|SCIM]].
 
+> [!note] **Protocol reference** — for *why* these design properties are attackable (the concept side): [[Standards & Protocols/REST|REST]] (client-supplied IDs → BOLA, stateless tokens, verb tampering), [[Standards & Protocols/JSON|JSON]] (schemaless bodies → mass assignment / type confusion), and [[Standards & Protocols/SOAP|SOAP]] (the XML/WSDL/WS-Security API style — same authz bugs, plus XXE).
+
 ---
 
 ## Tools
@@ -827,5 +829,5 @@ done
 ---
 
 *Created: 2026-07-15*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

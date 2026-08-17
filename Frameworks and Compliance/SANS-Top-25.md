@@ -22,7 +22,7 @@
 - **[[CWE-Top-25]]** = the authoritative ranked list with formal CWE IDs.
 - **This note** = the same weaknesses framed as practical developer errors.
 
-**Note**: SANS Top 25 and CWE Top 25 overlap significantly but have different emphasis. SANS is slightly broader (includes architecture, deployment issues).
+**Note**: These are not two competing rankings — SANS republishes the MITRE/CISA **CWE Top 25**. Where this note differs is framing, not content: it groups the same weaknesses by the developer mistake that causes them. For the authoritative ranked list and CWE IDs, use [[CWE-Top-25]].
 
 ---
 
@@ -510,5 +510,5 @@
 [[CWE-Top-25]], [[OWASP-Top-10]], [[CVSSv4]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

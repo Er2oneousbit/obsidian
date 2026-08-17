@@ -16,7 +16,14 @@
 - **Audience**: API developers, API security testers, DevOps teams.
 - **Why Different from Top 10**: APIs have unique attack surface (stateless, no sessions, token-based auth, massive scale).
 
-**Versions**: 2019, **2023 (current)** — added SSRF (API7) and Unrestricted Access to Sensitive Business Flows (API6); merged the old Mass Assignment + Excessive Data Exposure into Broken Object Property Level Authorization (API3); dropped Insufficient Logging & Monitoring as a standalone item.
+**Versions**: 2019, **2023 (current)**. Changes from 2019:
+
+| Change | Detail |
+|---|---|
+| **New** | API6 Unrestricted Access to Sensitive Business Flows; API7 Server-Side Request Forgery; API10 Unsafe Consumption of APIs |
+| **Merged** | 2019's API3 Excessive Data Exposure + API6 Mass Assignment → API3 Broken Object Property Level Authorization |
+| **Dropped** | 2019's API8 Injection (covered by the web Top 10); API10 Insufficient Logging & Monitoring |
+| **Renamed** | Broken User Authentication → Broken Authentication; Lack of Resources & Rate Limiting → Unrestricted Resource Consumption; Improper Assets Management → Improper Inventory Management |
 
 ---
 
@@ -53,12 +60,15 @@ def get_user(user_id):
     return user.to_json()
 
 # SECURE
-@app.route('/api/users/<user_id>')
+# <int:user_id> makes Flask reject non-numeric ids with a 404 before the view
+# runs — don't int() inside the handler, that raises ValueError -> 500.
+@app.route('/api/users/<int:user_id>')
 @require_auth
 def get_user(user_id):
-    if int(user_id) != current_user.id:
+    user = User.query.get_or_404(user_id)
+    # Authorize against the OBJECT, not just the id — owner or admin.
+    if not current_user.can_view(user):
         abort(403)
-    user = User.query.get(user_id)
     return user.to_json()
 ```
 
@@ -234,7 +244,9 @@ Attacker uploads 1GB files; fills disk
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-limiter = Limiter(app, key_func=get_remote_address)
+# Flask-Limiter 3.x signature: key_func is positional, app is a keyword.
+# (Pre-3.0 was Limiter(app, key_func=...) — that raises TypeError on 3.x.)
+limiter = Limiter(get_remote_address, app=app)
 
 @app.route('/api/login', methods=['POST'])
 @limiter.limit("5 per minute")  # 5 login attempts per minute
@@ -543,8 +555,8 @@ return external.json()   # returned directly — if the upstream is compromised,
 
 ## See also
 
-[[OWASP-Top-10]], [[OWASP-ASVS]], [[OWASP-LLM-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
+[[OWASP-Top-10]], [[OWASP-ASVS]], [[OWASP-LLM-Top-10]], [[OWASP Top 10 Lists]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

@@ -254,7 +254,7 @@ CSF 2.0 introduces:
 | **NIST CSF** | Framework | Broad (risk management) | High (guidance, not prescriptive) | Strategic planning, governance |
 | **NIST SP 800-53** | Controls Standard | Detailed (federal systems) | Low (prescriptive, detailed) | Federal contractors, high-risk |
 | **ISO 27001** | Management System | Information security | Medium (balanced) | Global orgs, certification |
-| **CIS Controls** | Prioritized Controls | Practical (20 controls) | Medium (prioritized baseline) | SMBs, quick wins |
+| **CIS Controls** | Prioritized Controls | Practical (18 controls, 153 safeguards) | Medium (prioritized baseline) | SMBs, quick wins |
 | **HITRUST** | Compliance Framework | Healthcare | Low (prescriptive, strict) | Healthcare, compliance-heavy |
 
 **CSF is the starting framework** — most orgs begin with CSF to structure thinking, then map to 800-53/ISO/CIS for detailed implementation.
@@ -323,5 +323,5 @@ CSF is a **living document** — not a checkbox exercise.
 [[NIST-SP-800-53]], [[ISO-27001-27002]], [[CIS-Controls]], [[Zero-Trust-Architecture]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

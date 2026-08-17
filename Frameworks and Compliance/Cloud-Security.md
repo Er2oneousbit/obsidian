@@ -473,4 +473,4 @@ aws cloudtrail create-event-selector --trail-name MyTrail --event-selectors Read
 
 *Created: 2026-07-17*
 *Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Model: claude-opus-5*

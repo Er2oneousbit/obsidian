@@ -99,7 +99,18 @@ command --with FLAGS
 - `> [!tip]` — a shortcut or better default (e.g. "start with `-ac`, it's faster than manual filtering").
 - `> [!warning]` — anything destructive, noisy, or scope-sensitive (uncapped recursion, DoS-risk flags, rate limits).
 
-**Diagrams & images** — when a flow or relationship is clearer as a picture than as ASCII/prose/a table, use one. Prefer a fenced ` ```mermaid ` block (flowcharts, sequence/attack flows, graphs — it's text, diffs cleanly, and renders in both Obsidian and GitHub). For anything mermaid can't express, author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]` — don't paste raw inline `<svg>` into the body (Obsidian reading-mode is inconsistent and GitHub strips it). Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`. Reserve them for real structure (attack chains, auth flows, trust relationships, network topology); a small table or short ASCII is still fine — don't add decorative pictures.
+**Diagrams & images** — when a flow, layout, or relationship is clearer as a picture, use one.
+
+> [!warning] **No ASCII diagrams.** Box-drawing / ASCII-art figures are not acceptable in this vault — they break on reflow, don't scale with the reader's font, and are unreadable on the public GitHub render. Every diagram is either a mermaid block or an `.svg`. This applies retroactively: if you touch a note containing an ASCII figure, convert it.
+
+- **mermaid — first choice.** A fenced ` ```mermaid ` block for flowcharts, sequence/attack flows, graphs, state machines, decision trees. Stays text, diffs cleanly, renders natively in both Obsidian and GitHub.
+- **SVG — for what mermaid can't express.** Bit-field/register layouts, memory maps, annotated illustrations, custom topology. Author a **self-contained** `.svg` (no external fonts/scripts/refs), drop it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]`. Don't paste raw inline `<svg>` into the body — Obsidian reading-mode is inconsistent and GitHub strips it.
+
+Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`.
+
+> [!warning] **`currentColor` does not work in an embedded SVG.** Obsidian renders `![[x.svg]]` as an `<img>`, which makes the SVG an isolated document — `currentColor` resolves to black regardless of theme, so the figure vanishes on a dark background. Set colours explicitly: define light-theme values on `svg { --fg: …; --muted: …; }` and override them in an `@media (prefers-color-scheme: dark)` block (that media query *does* reach an img-embedded SVG). Mid-tone accent colours like `#4a9eff` / `#ff6b7a` read on both themes without a swap.
+
+**A markdown table is not a diagram.** Tabular data stays in a table — this rule is about figures, not about replacing tables. Reserve diagrams for real structure (attack chains, auth flows, trust relationships, network topology, memory layout); don't add decorative pictures.
 
 **Cross-links** — `[[Note Name]]` to other notes, `[[Note Name#Section]]` or same-doc `[[#Section Name]]` to jump to a specific technique instead of repeating it (e.g. Command Injection's API section says "same flags as [[#Directory Fuzzing]]" instead of restating the flag table).
 

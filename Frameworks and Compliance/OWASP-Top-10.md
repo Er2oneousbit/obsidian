@@ -214,8 +214,8 @@ except Exception:
 
 ## See also
 
-[[OWASP-ASVS]], [[OWASP-Proactive-Controls]], [[OWASP-API-Top-10]], [[CWE-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
+[[OWASP-ASVS]], [[OWASP-Proactive-Controls]], [[OWASP-API-Top-10]], [[CWE-Top-25]], [[OWASP Top 10 Lists]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

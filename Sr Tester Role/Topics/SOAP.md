@@ -1,5 +1,7 @@
 ## 🛡️ Interview Notes: What Is SOAP API Testing?
 
+> [!note] **Protocol reference** — for the concept side (SOAP envelope/WSDL/WS-Security structure and *why* its design is attackable): [[Standards & Protocols/SOAP|SOAP]]. This note is the hands-on/interview counterpart.
+
 ### What is SOAP?
 - **SOAP (Simple Object Access Protocol)** is a protocol for exchanging structured XML messages between systems.  
 - Unlike REST, SOAP is **strictly structured** and usually uses **WSDL (Web Services Description Language)** to define endpoints, parameters, and data types.  

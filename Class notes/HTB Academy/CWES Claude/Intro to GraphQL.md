@@ -4,7 +4,7 @@
 
 ## What is this?
 
-GraphQL is a query language for APIs — a **single endpoint** (usually `/graphql`) where the client asks for exactly the fields it wants across related objects, instead of REST's many fixed endpoints. That flexibility *is* the security story: one endpoint exposes the whole data graph, **introspection** hands an attacker the entire schema, and every REST bug class (IDOR, SQLi, XSS, broken authz) still applies — plus GraphQL-native ones: **nested-query DoS**, **batching** brute-force amplification, and **mutation**-driven privilege escalation. This note is the foundational tour + the core attacks; for the deep toolkit (NoSQL/SSRF, introspection-disabled schema recovery, directive abuse, subscription DoS, and the current DoS CVEs) see [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]]. Pairs with [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]], [[SQL Injection]], [[Web Attacks]].
+GraphQL is a query language for APIs — a **single endpoint** (usually `/graphql`) where the client asks for exactly the fields it wants across related objects, instead of REST's many fixed endpoints. That flexibility *is* the security story: one endpoint exposes the whole data graph, **introspection** hands an attacker the entire schema, and every REST bug class (IDOR, SQLi, XSS, broken authz) still applies — plus GraphQL-native ones: **nested-query DoS**, **batching** brute-force amplification, and **mutation**-driven privilege escalation. This note is the foundational tour + the core attacks; for the deep toolkit (NoSQL/SSRF, introspection-disabled schema recovery, directive abuse, subscription DoS, and the current DoS CVEs) see [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]]. Pairs with [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]], [[SQL Injection]], [[Web Attacks]]. Protocol context — GraphQL is the third API style alongside [[Standards & Protocols/REST|REST]] and [[Standards & Protocols/SOAP|SOAP]] (one endpoint + a typed schema instead of many REST routes).
 
 ---
 
@@ -220,5 +220,5 @@ Reference: OWASP GraphQL Cheat Sheet.
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

@@ -121,6 +121,10 @@ proxychains chisel client 172.16.5.10:9090 R:1081:socks
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting, Tunneling & Port Forwarding]] (CPTS v2) — reverse-SOCKS and port-forward pivoting over HTTP; contrast with [[Tools/Remote Access/ligolo-ng|ligolo-ng]] (TUN, no proxychains).
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

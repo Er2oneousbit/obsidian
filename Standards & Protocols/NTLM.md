@@ -86,7 +86,7 @@ flowchart LR
 - [[Services/Active Directory/ADCS|ADCS]] — **ESC8**: relay a coerced machine account's NTLM auth to the AD CS web-enrollment endpoint → attacker-controlled cert → DA.
 - Also surfaces in the AD attack chain around [[Services/Active Directory/Kerberos|Kerberos]] (Overpass-the-Hash) and LDAP/SMB relay targets.
 
-**Tooling:** [[Tools/Lateral Movement/responder|Responder]] / [[Tools/Lateral Movement/inveigh|Inveigh]] (poison + capture Net-NTLMv2), [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (relay), [[Tools/Lateral Movement/mitm6|mitm6]] (IPv6/WPAD-driven capture), [[Tools/Lateral Movement/Coercer|Coercer]] (coercion multi-tool), [[Tools/Network/PCredz|PCredz]] (passive Net-NTLM harvest from pcap).
+**Tooling:** [[Tools/Lateral Movement/responder|Responder]] / [[Tools/Lateral Movement/inveigh|Inveigh]] (poison + capture Net-NTLMv2), [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (relay), [[Tools/Lateral Movement/mitm6|mitm6]] (IPv6/WPAD-driven capture), [[Tools/Lateral Movement/Coercer|Coercer]] (coercion multi-tool), [[Tools/Network/PCredz|PCredz]] (passive Net-NTLM harvest from pcap), [[Tools/Network/NTLMRawUnHide|NTLMRawUnHide]] (extract Net-NTLMv2 from a raw pcap/`.etl` capture when Responder wasn't in the path).
 
 ---
 
@@ -95,5 +95,5 @@ flowchart LR
 [[Services/Active Directory/Kerberos|Kerberos]] (the successor — ticket-based, what NTLM falls back *from*), [[SPNEGO-GSS|SPNEGO / GSS-API]] (the Negotiate layer that picks Kerberos vs NTLM — and downgrades to it), [[SAML]] / [[OAuth-OIDC]] / [[JWT]] (the web-era auth standards)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

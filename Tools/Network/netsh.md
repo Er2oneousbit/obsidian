@@ -117,6 +117,10 @@ Convert `.etl` to `.pcap` with `etl2pcapng` or open in Windows Performance Analy
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting, Tunneling & Port Forwarding]] (CPTS v2) — `netsh interface portproxy` as the built-in Windows port-forward when no SSH/third-party binary is available on the pivot.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

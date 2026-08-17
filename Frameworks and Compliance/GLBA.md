@@ -20,7 +20,7 @@
 - **GDPR** = any personal data of EU residents.
 - **GLBA** = financial data specifically; US focus, but applies globally to financial institutions operating in the US.
 
-**Versions**: Original GLBA (1999); Privacy Rule & Safeguards Rule enforced since 2001. Safeguards Rule substantially updated in 2023 (new comprehensive security standards).
+**Versions**: Original GLBA (1999); Privacy Rule & Safeguards Rule enforced since 2001. The FTC **amended the Safeguards Rule in October 2021**, adding prescriptive technical requirements (designated qualified individual, written risk assessment, encryption of NPI in transit and at rest, MFA, continuous monitoring or annual pentest + semi-annual vulnerability assessment). Full compliance deadline was **9 June 2023** — the amendment and the deadline are different dates and often get conflated. A further amendment effective **May 2024** added a breach-notification requirement to the FTC for incidents affecting 500+ consumers.
 
 ---
 
@@ -350,5 +350,5 @@ The FTC's amended Safeguards Rule added a breach/security-event notification dut
 [[GDPR]], [[HIPAA]], [[FERPA]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

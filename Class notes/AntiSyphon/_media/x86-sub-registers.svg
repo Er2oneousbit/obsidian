@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" width="640" height="250" role="img" aria-labelledby="t d">
+  <title id="t">x86 sub-register layout: EAX / AX / AH / AL</title>
+  <desc id="d">EAX is 32 bits. Its low 16 bits are addressable as AX; AX splits into AH (bits 15-8) and AL (bits 7-0). The same pattern applies to EBX, ECX and EDX. Addressing AL instead of EAX is how shellcode avoids null bytes.</desc>
+
+  <style><![CDATA[
+    /* This file is embedded with an HTML image element, which makes the SVG an
+       isolated document: currentColor does NOT inherit from the page and would
+       resolve to black, invisible on a dark theme. So colours are explicit —
+       light by default, swapped under prefers-color-scheme, which DOES reach an
+       image-embedded SVG. Style content is CDATA-wrapped so CSS can never be
+       mis-parsed as XML. */
+    svg   { --fg: #24292f; --muted: #57606a; }
+    @media (prefers-color-scheme: dark) {
+      svg { --fg: #e6edf3; --muted: #9198a1; }
+    }
+
+    .bx   { fill: none; stroke: var(--fg); stroke-width: 2; }
+    .hi   { fill: none; stroke: #4a9eff; stroke-width: 2.5; }
+    .lo   { fill: none; stroke: #ff6b7a; stroke-width: 2.5; }
+    .tick { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 3; fill: none; }
+    .lbl  { fill: var(--fg);    font: 600 15px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    .bit  { fill: var(--muted); font: 11px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    .note { fill: var(--muted); font: italic 12.5px ui-sans-serif, system-ui, sans-serif; }
+    .kh   { fill: #4a9eff; font: 600 15px ui-monospace, Menlo, Consolas, monospace; }
+    .kl   { fill: #ff6b7a; font: 600 15px ui-monospace, Menlo, Consolas, monospace; }
+  ]]></style>
+
+  <text class="bit" x="40"  y="26">31</text>
+  <text class="bit" x="316" y="26">16</text>
+  <text class="bit" x="356" y="26">15</text>
+  <text class="bit" x="476" y="26">8</text>
+  <text class="bit" x="516" y="26">7</text>
+  <text class="bit" x="606" y="26">0</text>
+
+  <rect class="bx" x="40" y="36" width="580" height="44" rx="4"/>
+  <text class="lbl" x="330" y="64" text-anchor="middle">EAX &#8212; 32 bits</text>
+
+  <rect class="bx" x="340" y="96" width="280" height="44" rx="4"/>
+  <text class="lbl" x="480" y="124" text-anchor="middle">AX &#8212; low 16 bits</text>
+
+  <rect class="hi" x="340" y="156" width="140" height="44" rx="4"/>
+  <text class="kh" x="410" y="184" text-anchor="middle">AH</text>
+
+  <rect class="lo" x="480" y="156" width="140" height="44" rx="4"/>
+  <text class="kl" x="550" y="184" text-anchor="middle">AL</text>
+
+  <path class="tick" d="M340 80 L340 96 M620 80 L620 96"/>
+  <path class="tick" d="M340 140 L340 156 M480 140 L480 156 M620 140 L620 156"/>
+
+  <text class="note" x="40" y="182">Same pattern for</text>
+  <text class="note" x="40" y="200">EBX / ECX / EDX</text>
+
+  <text class="note" x="40" y="232">mov al, 11 &#8594; 1 byte, no NULs &#160;&#160;&#183;&#160;&#160; mov eax, 11 &#8594; 3 leading 0x00 bytes</text>
+</svg>

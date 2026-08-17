@@ -73,8 +73,8 @@ The design deliberately lets a document *direct* the parser — declare entities
 
 ## See also
 
-[[SAML]] (the signed-XML standard built directly on this), [[OAuth-OIDC]] / [[JWT]] (the JSON-era auth standards that largely displaced XML/SOAP)  ·  Index: [[_Standards & Protocols]]
+[[SOAP]] (XML envelopes on the wire — every SOAP body is XML, so XXE applies directly), [[SAML]] (the signed-XML standard built directly on this), [[JSON]] / [[OAuth-OIDC]] / [[JWT]] (the JSON-era format & auth standards that largely displaced XML/SOAP)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

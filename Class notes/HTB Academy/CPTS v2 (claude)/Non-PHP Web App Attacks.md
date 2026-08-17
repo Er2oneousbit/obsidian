@@ -345,6 +345,8 @@ curl "http://target.com/tomcatwar.jsp?pwd=j&cmd=id"
 
 ### Prototype Pollution
 
+> [!note] **Format reference** — this is a [[Standards & Protocols/JSON|JSON]]-specific bug: JS turns JSON object keys into real property names, so a `__proto__`/`constructor` key in the parsed body climbs the prototype chain. See [[Standards & Protocols/JSON|JSON]] → Trust model for *why* the format allows it.
+
 If user input merges into objects without sanitization:
 
 ```javascript
@@ -857,5 +859,5 @@ Identify stack (whatweb, headers, cookies, error pages)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-31*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*

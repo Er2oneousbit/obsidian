@@ -1,4 +1,8 @@
+# Werkzeug
+
 #Werkzeug #Flask #Python #debugconsole #RCE #webservices
+
+> [!note] **See also** — [[Services/Web Services/Flask|Flask]]: Werkzeug is Flask's WSGI/debugger layer. This note owns the **debug-console / PIN RCE**; the Flask note covers the rest of the framework surface (blueprint enumeration, `SECRET_KEY` session forgery, Jinja2 SSTI, `subprocess` RCE, dependency/backup loot).
 
 ## What is Werkzeug?
 WSGI utility library underlying Flask. When debug mode is enabled, Werkzeug exposes an interactive Python console at `/console` — accessible in-browser, no auth by default. Execution happens as the web app user (often `www-data`, `root`, or the app's service account). Extremely common in HTB web boxes.
@@ -286,3 +290,9 @@ pty.spawn('/bin/bash')
 | Get MAC | `curl "http://host/lfi?file=/sys/class/net/eth0/address"` |
 | Get machine-id | `curl "http://host/lfi?file=/etc/machine-id"` |
 | Calculate PIN | Run PIN Python script with gathered values |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

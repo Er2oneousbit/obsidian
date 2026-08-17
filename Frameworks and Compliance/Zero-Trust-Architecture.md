@@ -368,4 +368,4 @@ Official NIST Zero Trust guideline (2020). Its **seven tenets** are (paraphrased
 
 *Created: 2026-07-17*
 *Updated: 2026-07-21*
-*Model: claude-haiku-4-5*
+*Model: claude-opus-5*

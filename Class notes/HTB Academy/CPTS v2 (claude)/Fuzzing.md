@@ -145,18 +145,39 @@ ffuf -u http://target.com/login -X POST -d "username=admin&password=FUZZ" -H "Co
 
 ---
 
-## Virtual Host Fuzzing
+## Virtual Host vs Subdomain Fuzzing — know which you're doing
+
+These look identical but resolve completely differently, and picking the wrong one wastes a lot of time (especially on HTB). The deciding question: **is `FUZZ` in the `Host:` header, or in the hostname that has to be DNS-resolved?**
+
+| | **Virtual Host fuzzing** | **Subdomain fuzzing** |
+|---|---|---|
+| Command shape | `-u http://target -H "Host: FUZZ.target.htb"` | `-u http://FUZZ.target.htb` |
+| What resolves | The **base URL** resolves once (to the box IP, via `/etc/hosts` or DNS); only the `Host:` header changes per word | **Every word** must DNS-resolve `FUZZ.target.htb` independently |
+| Needs working DNS for the words? | **No** — connection always hits the same IP | **Yes** — needs a real resolver / wildcard record |
+| Finds | Name-based vhosts served by the same box (not in DNS) | Subdomains that actually have DNS records |
+| HTB reality | ✅ **Use this** — you've mapped the domain in `/etc/hosts` | ❌ Usually fails — `/etc/hosts` has **no wildcards**, so unless the box runs its own DNS, nearly every request errors out |
+
+> [!important] The `/etc/hosts` no-wildcard trap
+> You add `10.129.x.x imagery.htb` to `/etc/hosts` and then run `ffuf -u http://FUZZ.imagery.htb ...` — and it fails on almost every word. `/etc/hosts` maps exact names only; it can't resolve `admin.imagery.htb`, `dev.imagery.htb`, etc. Only the **vhost** form works here, because ffuf connects to `imagery.htb`'s known IP and just varies the `Host:` header the server matches on. Reach for subdomain fuzzing only when there's a real DNS server answering (public recon, or a box explicitly running DNS).
 
 ```bash
-ffuf -u http://TARGET_IP -H "Host: FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_response_size>
+# VHost fuzzing — the HTB default. Base URL is a name you've mapped in /etc/hosts (or an IP);
+# FUZZ lives in the Host header, so the connection always succeeds.
+ffuf -u http://imagery.htb -H "Host: FUZZ.imagery.htb" \
+  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-20000.txt -fs <default_size>
 
-# If target uses HTTPS
-ffuf -u https://TARGET_IP -H "Host: FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_response_size> -k   # ignore TLS cert errors
+# HTTPS target — add -k to ignore cert errors
+ffuf -u https://TARGET_IP -H "Host: FUZZ.target.com" \
+  -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_size> -k
 ```
+
+> [!tip] **Every vhost request returns the *default* site** (same size), so you can't filter by status code — filter by **response size/words** instead. Send one junk Host first (`-H "Host: doesnotexist.target.htb"`) to learn the default size, then `-fs <that_size>`; or let ffuf do it with **`-ac`** (auto-calibrate) / `-acc`. A hit is any word whose response *differs* from the default.
 
 ---
 
-## Subdomain Fuzzing
+## Subdomain Fuzzing (needs real DNS)
+
+Only works when `FUZZ.target.com` genuinely resolves — public-facing recon, or a target running a DNS server. On a typical `/etc/hosts`-mapped HTB box, use **vhost fuzzing above** instead.
 
 ```bash
 ffuf -u http://FUZZ.target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302,403
@@ -164,6 +185,8 @@ ffuf -u http://FUZZ.target.com -w /usr/share/seclists/Discovery/DNS/subdomains-t
 # With HTTPS
 ffuf -u https://FUZZ.target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302,403 -k
 ```
+
+For dedicated DNS-record enumeration (real resolver, `--show-ips`), `gobuster dns` / `puredns` are better suited — see the gobuster section below and [[Info Gathering]].
 
 ---
 
@@ -1502,5 +1525,5 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-30*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*

@@ -109,6 +109,10 @@ proxychains -q nmap -sT -Pn 172.16.5.10
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting, Tunneling & Port Forwarding]] (CPTS v2) — routing non-proxy-aware tools through SOCKS pivots, and multi-hop `strict_chain`/`dynamic_chain` chaining across two pivots.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

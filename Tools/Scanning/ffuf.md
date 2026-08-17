@@ -46,14 +46,18 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt:FUZZ \
 ## Subdomain & Vhost Fuzzing
 
 ```bash
-# Public subdomain (DNS)
+# Subdomain fuzzing — FUZZ is in the HOSTNAME, so each word must actually DNS-resolve
 ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
   -u https://FUZZ.inlanefreight.com/ -v
 
-# Virtual host (Host header — finds internal vhosts)
+# VHost fuzzing — FUZZ is in the Host HEADER; base URL hits a fixed IP/hosts-mapped name
 ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
   -u http://10.129.14.128/ -H "Host: FUZZ.inlanefreight.htb" -fs 612 -v
 ```
+
+> [!warning] **Which one on HTB?** Use the **vhost** form (`-H "Host: FUZZ..."`). The subdomain form (`-u http://FUZZ.target.htb`) makes ffuf DNS-resolve every candidate, and `/etc/hosts` has **no wildcards** — so unless the box runs a DNS server, it errors on nearly every word. Vhost fuzzing connects to the known IP and only varies the `Host:` header, so it always connects. Full contrast table: [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing#Virtual Host vs Subdomain Fuzzing — know which you're doing|Fuzzing → VHost vs Subdomain]].
+
+> [!tip] Vhost fuzzing returns the **default page** for every miss, so filtering by status code is useless — filter by size (`-fs`) or use **`-ac`** to auto-calibrate. Baseline the default size with one bogus Host first.
 
 ---
 
@@ -145,5 +149,5 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-08-14*
 *Model: claude-opus-5*
