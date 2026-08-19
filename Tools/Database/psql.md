@@ -101,12 +101,17 @@ SELECT usename, passwd FROM pg_shadow;
 ```
 
 ```bash
-# Crack PostgreSQL MD5 hashes — hashcat mode 28200
-# Format: postgres:md5<hash>
-hashcat -m 28200 pg_hashes.txt /usr/share/wordlists/rockyou.txt
+# Crack PostgreSQL MD5 hashes — hashcat mode 12
+# Format: <md5hex>:<username>   (strip the leading "md5"; username is the salt)
+hashcat -m 12 pg_hashes.txt /usr/share/wordlists/rockyou.txt
+#   e.g.  a6343a68d964ca596d9752250d54bb8a:postgres
 
-# Crack SCRAM-SHA-256 — hashcat mode 28400
-hashcat -m 28400 pg_hashes.txt /usr/share/wordlists/rockyou.txt
+# Crack SCRAM-SHA-256 — hashcat mode 28600
+# Format: SCRAM-SHA-256$<iter>:<salt>$<storedkey>:<serverkey>  (PBKDF2-HMAC-SHA256, slow)
+hashcat -m 28600 pg_hashes.txt /usr/share/wordlists/rockyou.txt
+
+# From a captured wire auth (not the stored hash) — PostgreSQL CRAM (MD5)
+hashcat -m 11100 pg_cram.txt /usr/share/wordlists/rockyou.txt
 ```
 
 ---
@@ -250,6 +255,10 @@ netexec ssh 192.168.1.10 -u postgres -P /usr/share/wordlists/rockyou.txt
 
 ---
 
+> [!note] **See also** — [[Services/Database Services/PostgreSQL|PostgreSQL]] service note: the enumeration→attack decision tree (which primitive your account can actually reach), correct hashcat modes, and a worked non-superuser example.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*
