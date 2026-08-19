@@ -20,10 +20,10 @@ Windows C# tool (GhostPack) for enumerating and abusing Active Directory Certifi
 .\Certify.exe request /ca:<domain>\<CA_Name> /template:<Template> /altname:Administrator
 ```
 
-> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against.
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS enumeration and abuse from a Windows host.
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

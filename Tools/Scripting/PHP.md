@@ -168,9 +168,19 @@ O:4:"User":2:{s:4:"name";s:5:"admin";s:4:"role";s:4:"user";}
 # s = string, i = int, b = bool, N = null, a = array
 
 # Magic methods called during unserialize (gadget chain entry points)
-__wakeup()    # called on unserialize
-__destruct()  # called when object is destroyed
-__toString()  # called when object used as string
+__unserialize(array $data)  # PHP 7.4+ — TAKES PRECEDENCE over __wakeup()
+__wakeup()                  # only runs if __unserialize() is NOT defined
+__destruct()                # on garbage collection — most reliable entry point
+
+# Propagation gadgets — fire when the object is subsequently USED
+__toString()  # object used as a string (echo, concat, strlen)
+__invoke()    # object called as a function: $obj()
+__call($n,$a) # inaccessible instance method invoked
+__get($n)     # inaccessible property read
+__set($n,$v)  # inaccessible property written
+
+# NOTE: __construct() is NOT called by unserialize() — constructor validation
+# is skipped entirely. That is the whole basis of PHP object injection.
 
 # Basic payload craft (when you have source)
 <?php
@@ -292,8 +302,10 @@ foreach($funcs as $f) {
 ?>
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] (CPTS v2) for the full magic-method gadget reference and the `__unserialize()` / `__wakeup()` precedence rule. Chain generation: [[Tools/Payloads & Shells/phpggc|phpggc]].
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

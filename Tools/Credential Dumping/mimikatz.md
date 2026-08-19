@@ -20,7 +20,7 @@ mimikatz.exe "privilege::debug" "token::elevate" "sekurlsa::logonpasswords" "lsa
 
 > [!warning] **Requires admin/SYSTEM** — Most modules require local admin at minimum. `lsadump::dcsync` requires Domain Admin or replication rights. `token::elevate` escalates from admin to SYSTEM context (needed for SAM/LSA dumps).
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] PRT Abuse section (`sekurlsa::cloudap`) and Azure AD Connect Attacks section (on-prem DCSync); [[Services/Active Directory/Kerberos|Kerberos]], for ticket export/import, Golden/Silver Ticket forging, and the Skeleton Key persistence technique.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] PRT Abuse section (`sekurlsa::cloudap`) and Azure AD Connect Attacks section (on-prem DCSync); [[Services/Active Directory/Kerberos|Kerberos]], for ticket export/import, Golden/Silver Ticket forging, and the Skeleton Key persistence technique. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — LSASS/SAM/LSA dumping and token elevation post-privesc.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
@@ -460,5 +460,5 @@ meterpreter> golden_ticket_create   :: Golden Ticket
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-08-18*
 *Model: claude-opus-5*

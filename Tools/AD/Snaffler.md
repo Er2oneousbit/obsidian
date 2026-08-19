@@ -134,8 +134,10 @@ grep -c "\[Red\]" snaffler.log
 grep -c "\[Yellow\]" snaffler.log
 ```
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — finding creds and configs on reachable file shares.
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

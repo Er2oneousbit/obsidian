@@ -116,8 +116,10 @@ Before running XXEinjector, confirm the injection point manually:
 
 Check Kali HTTP server for a callback. If it hits, the endpoint is vulnerable and XXEinjector will work.
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2) — the manual XXE methodology this automates: file read, error-based, blind OOB, XInclude.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

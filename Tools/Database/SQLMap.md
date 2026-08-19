@@ -410,10 +410,10 @@ sqlmap -u "..." --answers="crack=N,dict=N"      # pre-answer specific prompts un
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — SQL injection in API endpoints.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — SQL injection in API endpoints.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-17*
+*Model: claude-opus-5*

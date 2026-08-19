@@ -156,8 +156,10 @@ rundll32 C:\windows\system32\comsvcs.dll, MiniDump (Get-Process lsass).Id C:\Tem
 - Adding users via `net user` generates **4720** (user created) and **4732** (member added to group)
 - Service-level execution is expected on service accounts — the privilege escalation itself may not trigger alerts, but post-exploitation actions will
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — SeImpersonatePrivilege abuse — pick the variant by target OS.
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

@@ -181,21 +181,18 @@ Assembler labels are `goto` targets, not functions. Execution **falls through** 
 
 ```mermaid
 flowchart TB
-    subgraph HI[" HIGH addresses "]
+    subgraph HI["HIGH addresses"]
         A["env / argv"]
-        B["saved EIP<br/><i>overwrite target for a stack smash</i>"]
+        B["saved EIP<br/>OVERWRITE TARGET"]
         C["saved EBP"]
     end
-    subgraph LO[" LOW addresses &nbsp;&nbsp;&larr; ESP "]
-        D["local buffers<br/><i>overflow starts here</i>"]
+    subgraph LO["LOW addresses - ESP points here"]
+        D["local buffers<br/>overflow starts here"]
     end
-    A --- B --- C --- D
-    D -. "overflow writes UPWARD<br/>toward higher addresses" .-> B
-
-    classDef tgt stroke:#e06c75,stroke-width:3px
-    classDef buf stroke:#61afef,stroke-width:2px
-    class B tgt
-    class D buf
+    A --- B
+    B --- C
+    C --- D
+    D -.->|"overflow writes upward"| B
 ```
 
 The stack **grows toward lower addresses** (`push` decrements `ESP`), but an overflow writes **upward** toward higher addresses — which is why a buffer at the bottom can reach the saved `EIP` above it.

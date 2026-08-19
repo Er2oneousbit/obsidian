@@ -277,8 +277,10 @@ SharpDPAPI.exe certificates /pvk:domain.pvk /machine
 - Accessing `C:\Users\<other_user>\` requires admin rights — access attempts generate Event ID 4663 (object access) if auditing is enabled
 - Browser credential decryption reads `Login Data` SQLite file — Chrome may lock it if running; target via VSS or copy when browser is closed
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — DPAPI blob decryption for browser/app creds.
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

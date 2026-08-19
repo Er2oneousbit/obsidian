@@ -145,6 +145,10 @@ hydra -l <user> -P <wordlist> <service>://<target>
 
 Make diagrams legible in both light *and* dark themes and give SVGs a `<title>`/`<desc>`.
 
+> [!warning] **Validate every diagram before calling it done.**
+> - **SVG is XML.** A `<` anywhere in the CSS — even inside a `/* comment */` — is parsed as markup and breaks the file; Obsidian then renders nothing, silently. Wrap style content in `<![CDATA[ ... ]]>` and parse it: `python3 -c "import xml.etree.ElementTree as ET; ET.parse('f.svg')"`.
+> - **mermaid has no renderer in this environment** (no node/`mmdc`). Run `python3 ~/.claude/scripts/lint-mermaid.py <file.md>` for structural checks, then keep to constructs already proven to render in this vault: `<br/>`, `rect`, `subgraph`, `direction`, `autonumber`, and standard arrows. **Avoid** `classDef`/`class` styling, `<i>`/`<b>` tags, and HTML entities (`&nbsp;`, `&larr;`) in labels — none are demonstrated working here. A lint pass is not a render test; say so rather than implying the diagram is verified.
+
 > [!warning] **`currentColor` does not work in an embedded SVG.** Obsidian renders `![[x.svg]]` as an `<img>`, which makes the SVG an isolated document — `currentColor` resolves to black regardless of theme, so the figure vanishes on a dark background. Set colours explicitly: define light-theme values on `svg { --fg: …; --muted: …; }` and override them in an `@media (prefers-color-scheme: dark)` block (that media query *does* reach an img-embedded SVG). Mid-tone accent colours like `#4a9eff` / `#ff6b7a` read on both themes without a swap.
 
 **A markdown table is not a diagram.** Tabular data stays in a table — this rule is about figures. Reserve diagrams for real structure (relay chains, trust paths, network topology); don't add decorative pictures.
@@ -181,3 +185,9 @@ When refactoring an existing `Services/*.md` note into this template:
 - [ ] Convert a bash-block `Quick Reference` into a `Goal | Command` table if needed
 - [ ] Add the `Created`/`Updated`/`Model` footer
 - [ ] Fix the two folder-name typos this affects if editing a note in them: `Local System Managment/` → should be `Local System Management/`, `Network management/` → should be `Network Management/` (rename the folder once, not per-file)
+
+---
+
+*Created: 2026-07-27*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

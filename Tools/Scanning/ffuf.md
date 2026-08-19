@@ -144,10 +144,10 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 | `-p <delay>` | Delay between requests |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — user/password/reset-token/OTP fuzzing — and [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — parameter/ID/endpoint brute force.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — user/password/reset-token/OTP fuzzing — and [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — parameter/ID/endpoint brute force.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-14*
+*Updated: 2026-08-18*
 *Model: claude-opus-5*

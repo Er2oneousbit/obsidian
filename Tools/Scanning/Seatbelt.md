@@ -121,8 +121,10 @@ $assembly.EntryPoint.Invoke($null, @([string[]]@("-group=all")))
 - Known Seatbelt output patterns may trigger EDR behavioral rules
 - Avoid running `-group=all` on highly monitored hosts — run targeted checks instead
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — host situational awareness during privesc triage.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

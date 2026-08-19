@@ -20,7 +20,7 @@ certipy -h
 
 > [!note] The companion tool **Certify** (C# — Windows) is also commonly used. Certipy is the Linux equivalent and handles most of the same attacks. For Windows targets, Certify can be run directly on the host.
 
-> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against.
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS ESC1-ESC13 paths from a low-priv domain user.
 
 ---
 
@@ -327,5 +327,5 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

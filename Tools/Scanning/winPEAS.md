@@ -112,8 +112,10 @@ winPEAS.bat
 - Run targeted checks (Seatbelt, PowerUp) instead of full winPEAS on monitored hosts
 - Clear evidence: delete binary and temp files after review
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — automated privesc enumeration on Windows hosts.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*

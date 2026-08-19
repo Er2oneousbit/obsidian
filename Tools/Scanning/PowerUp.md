@@ -119,8 +119,10 @@ SharpUp source: https://github.com/GhostPack/SharpUp
 - `Invoke-AllChecks` is a known string — obfuscate if needed
 - Alternatively use Seatbelt for a broader host recon sweep
 
+
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — service misconfig and weak-permission checks.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-18*
+*Model: claude-opus-5*
