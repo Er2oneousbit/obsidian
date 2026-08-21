@@ -57,6 +57,8 @@ SQL injection occurs when unsanitized user input is inserted directly into a SQL
 | Oracle | `--` |
 | SQLite | `--` &nbsp;&nbsp; `/**/` |
 
+> [!note] **SQLite dialect + RCE differ enough to warrant their own note.** No `#` comment, `||` for concat, `sqlite_master` instead of `information_schema`, no file-read primitive, and RCE via `ATTACH DATABASE` (webshell write) rather than `INTO OUTFILE`/`COPY … PROGRAM`. Full breakdown: [[Services/Database Services/SQLite|SQLite]].
+
 **Signs of injection:**
 - SQL syntax errors in response
 - Application behavior changes between `1=1` and `1=2`
@@ -862,5 +864,5 @@ What you're up against, and where each control still leaks — useful for the re
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-17*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

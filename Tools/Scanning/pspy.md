@@ -36,21 +36,47 @@ chmod +x /tmp/pspy64
 ## Usage
 
 ```bash
-# Basic — watch processes
+# Basic — watch new processes (procevents is on by default)
 ./pspy64
 
-# With file system events (inotify — shows file reads/writes)
+# See everything: new processes + filesystem events
+./pspy64 -pf
+
+# Filesystem events only (inotify — file reads/writes/creates)
 ./pspy64 -f
 
-# Filter by UID (0 = root processes only)
-./pspy64 -u 0
+# Watch extra dirs recursively (defaults already cover /usr,/tmp,/etc,/home,/var,/opt)
+./pspy64 -r /opt/app -r /srv
 
-# Slower scan interval (less CPU)
-./pspy64 -i 5000      # 5000ms interval
+# Record parent PIDs — trace what spawned each process
+./pspy64 --ppid
 
-# Quiet — no color
-./pspy64 -c
+# Slower scan interval — less CPU, but you WILL miss short-lived processes
+./pspy64 -i 1000      # milliseconds; default is 100
+
+# Disable color (it's ON by default) — do this before piping to grep
+./pspy64 -c=false
 ```
+
+> [!warning] **There is no UID filter.** pspy has no `-u`/`--uid` flag — `./pspy64 -u 0` errors with *"unknown shorthand flag: 'u'"* (v1.2.1). To home in on root activity, disable color and grep the stream instead:
+> ```bash
+> ./pspy64 -c=false | grep 'UID=0'
+> ```
+> Lowering `-i` catches more short-lived processes at the cost of CPU; the 100 ms default is usually fine.
+
+### Flags (verified against v1.2.1)
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `-p, --procevents` | on | Print new processes — the core feature |
+| `-f, --fsevents` | off | Print filesystem events (inotify) |
+| `-i, --interval <ms>` | 100 | Process-scan interval; lower = catch more, more CPU |
+| `-r, --recursive_dirs <dir>` | /usr,/tmp,/etc,/home,/var,/opt | Watch these dirs recursively (repeatable) |
+| `-d, --dirs <dir>` | — | Watch these dirs, non-recursive (repeatable) |
+| `--ppid` | off | Record parent PIDs |
+| `-c, --color` | on | Colorize output — pass `-c=false` to turn off |
+| `-t, --truncate <n>` | 2048 | Truncate cmdlines longer than n chars |
+| `--debug` | off | Print detailed error messages |
 
 ---
 
@@ -63,10 +89,12 @@ chmod +x /tmp/pspy64
 ```
 
 **What to look for:**
-- `UID=0` running scripts you can write to
+- `UID=0` running scripts you can write to — **or a root job whose *input* you control** (a file/dir you own that it re-parses; see [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]] → *Privileged process, attacker-controlled input*)
 - Credentials in command arguments (`--password`, `-p`, API keys)
 - Scripts in world-writable directories being called by root
 - Wildcard usage in commands (e.g., `tar * `, `chown *`)
+
+> [!warning] **The first burst is a startup inventory, not events.** On launch pspy enumerates every process *already running* and prints them all at once — those are not new events, and their timestamps cluster at your start time. The actual cron/scheduled hit you're hunting arrives **later**, on its own timestamp. Don't mistake the initial dump for the finding (or conclude "nothing fired" from it) — let it run past the inventory and watch for a fresh line.
 
 ---
 
@@ -111,5 +139,5 @@ crontab -l     # current user's cron
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

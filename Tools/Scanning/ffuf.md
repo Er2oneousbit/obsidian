@@ -21,7 +21,7 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt:FU
 
 ```bash
 # Basic directory brute force
-ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+ffuf -w /usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt:FUZZ \
   -u http://10.129.14.128/FUZZ -v
 
 # File extension fuzzing
@@ -29,11 +29,11 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ \
   -u http://10.129.14.128/indexFUZZ -v
 
 # Filename fuzzing (known extension)
-ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+ffuf -w /usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt:FUZZ \
   -u http://10.129.14.128/FUZZ.php -v
 
 # Recursive scan (-recursion-depth 1 = one level deep)
-ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+ffuf -w /usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt:FUZZ \
   -u http://10.129.14.128/FUZZ -recursion -recursion-depth 2 -e .php -v
 
 # Multiple extensions at once
@@ -117,8 +117,21 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 | `-fs <size>` | Filter by response size |
 | `-fw <words>` | Filter by word count |
 | `-fl <lines>` | Filter by line count |
-| `-mc <codes>` | Match only these status codes |
+| `-mc <codes>` | Match only these status codes (default is a fixed set — use `-mc all` to see everything) |
 | `-ms <size>` | Match response size |
+| `-mr <regex>` | **Match response body by regex** — the semantic-success matcher |
+| `-fr <regex>` | Filter response body by regex |
+
+> [!warning] **Match on meaning, not on a byte count.** `-fs <size>` / `-fc <code>` are brittle: the number is instance-specific, and if it's off by one, the filter hides the **correct** result too — which looks like a failed technique (bad seed, wrong payload) rather than a bad filter. Prefer matching the semantic success string:
+> ```bash
+> # Brittle — hides the hit if the "invalid" page isn't exactly 1256 bytes
+> ffuf -w codes.txt -u '.../activate.php?code=FUZZ' -k --fs 1256
+> # Robust — matches on what success actually says
+> ffuf -w codes.txt -u '.../activate.php?code=FUZZ' -k -mc all -mr 'Account activated'
+> ```
+> (Check the success string isn't a substring of a failure string — here `Account already activated.` does **not** contain `Account activated`.)
+
+> [!warning] **Use a positive control before you trust a "no hits" result.** A filter that matches the *baseline for every request* produces a **false all-clear, not a negative**. Classic trap: port 80 blanket-redirects everything to HTTPS, so every path — real or invented — returns an identical `301`; `-fc 301` then filters **100%** of responses and the scan reports zero hits while having tested nothing. Always confirm your config against a path you **know** exists (`-u .../index.php` should hit) before believing the empty result. A crashed/partial scan is likewise unreliable-but-feels-done — re-run it, don't trust it.
 
 ---
 
@@ -149,5 +162,5 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

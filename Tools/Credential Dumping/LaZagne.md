@@ -170,10 +170,10 @@ for category in data:
 - Running with SYSTEM/admin rights captures significantly more (LSA secrets, DPAPI, all user profiles)
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — stored-credential harvesting during credential hunting.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — stored-credential harvesting during credential hunting. Service: [[Services/Database Services/SQLite|SQLite]] — browser credential stores (Chrome/Firefox) are SQLite files.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

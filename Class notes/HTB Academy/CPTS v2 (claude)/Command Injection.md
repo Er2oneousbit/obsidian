@@ -33,6 +33,27 @@ The signal is **`shell=True` paired with `f"..."` / `.format()` / `%` / `+` on r
 
 > [!tip] Corollary for *reading* an app fast: when six modules import blueprints (`from api_edit import bp_edit`), don't read them top-to-bottom — **grep every source file for the sink signatures above** (and for `render_template_string`, `pickle.loads`, `yaml.load`) to jump straight to the exploitable handler. This is how you find `api_edit.py`'s `apply_visual_transform` without reading all six. See [[Non-PHP Web App Attacks]] and the Flask blueprint-map angle in [[Services/Web Services/Flask|Flask]].
 
+### Re-parsed shell string — the double-parse sink (esp. in scripts / cron)
+
+A second sink shape, common in **shell scripts and root cron jobs**: a variable *already holding attacker-controlled text* is spliced into a string, and that string is then handed to **`bash -c` / `sh -c` / `eval`**, which parses it **as code**. The data was never a metacharacter to the outer shell — it becomes one only at the *second* parse.
+
+```bash
+# 🚩 VULNERABLE — $commonName is parsed from an attacker-supplied cert; bash -c re-parses it
+commonName=$(openssl x509 -in "$1" -noout -subject | grep -oP 'CN ?= ?\K[^,/]+')
+/bin/bash -c "mv /tmp/temp.crt /home/bill/Certs/$commonName.crt"
+#   CN = $(cp /bin/bash /tmp/rootbash; chmod 4755 /tmp/rootbash)  ->  runs as whoever runs the script (root)
+
+# ✅ SAFE — quote it and DON'T re-shell. mv is a binary; it needs no shell at all.
+mv /tmp/temp.crt "/home/bill/Certs/$commonName.crt"
+#   the payload becomes a silly filename and executes nothing
+```
+
+**The `bash -c` is the whole vulnerability, and it's usually gratuitous** — the wrapped command (`mv`, `cp`, `chown`) is a binary, not a shell builtin, so the shell buys nothing. The tell when reading a script: **a shell invocation wrapping a command that didn't need one, with a variable inside the quotes.**
+
+> [!tip] **Order of operations — it fires even if the outer command fails.** Bash expands the entire line (command substitution included) in **phase 1**, then `execve`s the result in phase 2. So `$(...)` runs during expansion regardless of whether `mv` then succeeds — a `cp`/`chmod` payload yields empty stdout, the destination collapses to `.../.crt` (a dotfile `rm -r .../*` won't match), and a stray `.crt` is the fingerprint that the injection fired. Same root cause as the LFI decode-order gap ([[File Inclusion]] → *Decode-order / parser differential*): **data validated/built in one representation, then interpreted in another.**
+
+Delivery is often through a **structured format** whose own escaping is a *separate* quoting layer — e.g. an OpenSSL cert Common Name, where `/ + = ,` are DN-structural and need `\`-escaping *before* the payload survives to the shell. That specific delivery (near-expiry cert to trigger a renewal cron, DN-escaping, the SUID-shell gotchas) lives in [[Tools/Web/openssl|openssl]] → *Abusing a cert-renewal script*; the privesc framing is in [[Linux Priv Esc]] → *Privileged process, attacker-controlled input*.
+
 ---
 
 ## Tools
@@ -649,5 +670,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-08-14*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

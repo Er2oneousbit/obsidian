@@ -454,6 +454,30 @@ chmod +x shell.sh
 
 Works with: `tar`, `rsync`, `chown`, `chmod`
 
+### Privileged process, attacker-controlled input
+
+Subtler than a writable script: a root cron/script whose **input** — a file or a field inside it — lives somewhere the unprivileged user controls, and the script **re-parses** that input. You don't overwrite the script; you feed it a payload.
+
+```bash
+# pspy reveals a root job reading a dir the user owns:
+#   UID=0 | timeout 10 /bin/bash -c /opt/renew_cert.sh /home/bill/Certs/broscience.crt
+# /opt/renew_cert.sh is world-readable; its last line:
+#   /bin/bash -c "mv /tmp/temp.crt /home/bill/Certs/$commonName.crt"
+```
+
+`$commonName` is parsed out of *the certificate you supply* and then `bash -c`-re-parsed → command injection as root. The sink shape and the delivery are covered in [[Command Injection]] → *Re-parsed shell string* and [[Tools/Web/openssl|openssl]] → *Abusing a cert-renewal script*. Two things specific to reaching it here:
+
+- **Gate:** the script skips work on a healthy cert (`openssl x509 -checkend 86400` returns 0 → "no need to renew" → exit). Hand it a cert generated with `-days 1` so `checkend` returns non-zero and execution continues. An empty/unparseable file also passes — `openssl` errors, indistinguishable from "expiring" to a bare `$?`.
+- **Race:** the job often wipes its input dir each cycle (`rm -r /home/bill/Certs/*`), so drop the payload cert in *just before* the next run; watch the file disappear to learn the interval.
+
+> [!warning] **SUID-shell creation gotchas** — apply to *any* `cp /bin/bash …; chmod +s` payload (the wildcard-cron one above included). Each failure looks like success:
+> 1. **`rm -f /tmp/rootbash` first.** `cp` onto an *existing* file reuses that inode and preserves its owner — root's copy inherits **your** ownership, `chmod +s` sets setuid on a file *you* own, and you get a setuid-*yourself* shell that reads perfectly in `ls -la`.
+> 2. **`chmod u+s` / `+s` / `4755`, not `g+s`** — `g+s` sets egid 0 only, euid unchanged.
+> 3. **Run it `bash -p`.** Bash drops its effective uid on startup unless invoked with `-p`; without it you get a shell that "worked" and is still you.
+> 4. **`timeout N` around a cron invocation** makes a reverse shell a live N-second window you must catch. A dropped SUID binary or an SSH key persists — prefer those.
+>
+> Verify the **mechanism, not the symptom**: `ls -la` for `root root` ownership *and* the `s` bit, then `id` after `/tmp/rootbash -p`.
+
 ---
 
 ## Writable Files & Paths
@@ -879,6 +903,8 @@ sudo --version | head -1        # sudo
 ldd --version | head -1         # glibc
 ```
 
+> [!warning] **A headline version is not a patch level — distros backport.** `uname -r` of `5.10.0-20-amd64` reads as "kernel 5.10", but Debian/RHEL **pin major.minor for a release's lifetime and backport security fixes into the third component + `-N` build**. Dirty Pipe was fixed upstream in **5.10.102**; Debian's `5.10.158-2` is patched despite looking like "5.10", and a distro 5.10 can be *better* patched than a mainline 6.x. So: compare the **third number against the upstream fix** *and* the **package version against the distro tracker** (`apt-cache policy linux-image-*`, Debian DSA / RHSA), never the mainline CVE range alone. `searchsploit`-matching on "5.10" yields piles of long-patched CVEs — treat those as candidates to *disprove*, not findings. Same logic for sudo/glibc: a "no sudoers entry" account is still a candidate for Baron Samedit / PwnKit (reachable by any local user), so check the version regardless.
+
 ```bash
 # --- sudo chroot (CVE-2025-32463) — CISA KEV, works on DEFAULT builds ---
 # sudo -R honours config inside a user-controlled chroot, so it loads an
@@ -1161,5 +1187,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-14*
+*Updated: 2026-08-20*
 *Model: claude-opus-5*

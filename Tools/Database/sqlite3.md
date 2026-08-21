@@ -17,6 +17,60 @@ sqlite3 database.db "SELECT * FROM users;"
 
 ---
 
+## First contact — you just opened an unknown `.db`
+
+Run these in order; it answers "what's in here and where are the creds" in under a minute. Do the `.mode`/`.headers` line **first** — the default output is an unreadable pipe-mangled single line, which is most of why the prompt feels useless.
+
+```bash
+# Copy the file before opening if the app might have it open (SQLite locks it), and to work offline
+cp /var/www/app.db /tmp/loot.db
+sqlite3 /tmp/loot.db
+```
+```sql
+.mode box            -- readable, bordered output (3.33+); use .mode column on older builds
+.headers on          -- show column names
+.tables              -- 1. what tables exist?
+.schema              -- 2. every CREATE at once — read the column names, spot password/token/role/hash cols
+```
+
+Go straight for the tables that almost always hold the win:
+
+```sql
+-- 3. the usual suspects (try each name; apps vary)
+SELECT * FROM users;         -- or: user, accounts, members, admins, credentials, auth_user (Django)
+SELECT * FROM sessions;      -- live session tokens = instant auth, no cracking
+```
+
+Don't know which table holds the secrets? Let the schema point you at them:
+
+```sql
+-- 4. every column across ALL tables whose NAME looks like a secret
+SELECT m.name AS tbl, p.name AS col
+FROM   sqlite_master m
+JOIN   pragma_table_info(m.name) p
+WHERE  m.type = 'table'
+  AND (p.name LIKE '%pass%' OR p.name LIKE '%pwd%'  OR p.name LIKE '%token%'
+    OR p.name LIKE '%secret%' OR p.name LIKE '%hash%' OR p.name LIKE '%key%'
+    OR p.name LIKE '%user%' OR p.name LIKE '%email%');
+```
+
+```bash
+# 5. brute fallback — dump the first rows of every table at once (from the shell)
+sqlite3 loot.db ".tables" | tr ' ' '\n' | while read t; do
+  [ -n "$t" ] && { echo "=== $t ==="; sqlite3 -header -box loot.db "SELECT * FROM \"$t\" LIMIT 20;"; }
+done
+```
+
+> [!tip] **Ergonomics that trip people up on first contact:**
+> - **Unreadable output** → `.mode box` (or `.mode column`) + `.headers on`. For one very wide row, `.mode line` prints one field per line.
+> - **Stuck at the `sqlite>` prompt** → `.quit` (or Ctrl-D). `.help` lists every dot-command.
+> - **"database is locked"** → the app has it open; work on a `cp` of the file.
+> - **A column shows as gibberish/blob** → `SELECT hex(col) …` to read raw bytes (encrypted values, e.g. Chrome `password_value`, need decryption — see Browser Credential Extraction below).
+
+For the attack-surface view (SQLite injection, `ATTACH`-write RCE, exposed `.db` download, permission model) see [[Services/Database Services/SQLite|SQLite]].
+
+---
+
 ## Common SQLite Database Locations
 
 ```bash
@@ -241,5 +295,5 @@ sqlite3 new_database.db < database_dump.sql
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-20*
+*Model: claude-opus-5*

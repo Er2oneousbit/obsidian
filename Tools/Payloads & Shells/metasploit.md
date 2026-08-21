@@ -199,12 +199,12 @@ There may also be a `~/.msf4/modules/` folder (per-user) with the same structure
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules; [[Services/Email/SMTP|SMTP]] uses `auxiliary/scanner/smtp/smtp_enum`; [[Services/Remote Access/R-Services|R-Services]] uses the `auxiliary/scanner/rservices/{rexec,rlogin,rsh}_login` modules; [[Services/Database Services/PostgreSQL|PostgreSQL]] uses `auxiliary/scanner/postgres/{postgres_login,postgres_schemadump}` and `auxiliary/admin/postgres/postgres_sql`.
+> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] uses the `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules; [[Services/Email/SMTP|SMTP]] uses `auxiliary/scanner/smtp/smtp_enum`; [[Services/Remote Access/R-Services|R-Services]] uses the `auxiliary/scanner/rservices/{rexec,rlogin,rsh}_login` modules; [[Services/Database Services/PostgreSQL|PostgreSQL]] uses `auxiliary/scanner/postgres/{postgres_login,postgres_schemadump}` and `auxiliary/admin/postgres/postgres_sql`; [[Services/File Xfer/FTP|FTP]] uses `exploit/unix/ftp/vsftpd_234_backdoor` and `exploit/unix/ftp/proftpd_modcopy_exec`.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting, Tunneling & Port Forwarding]] (autoroute / socks_proxy / portfwd) (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]], [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

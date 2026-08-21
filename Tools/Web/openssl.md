@@ -141,6 +141,39 @@ cat shell.key shell.crt > shell.pem
 
 ---
 
+## Abusing a cert-renewal script (near-expiry cert)
+
+A privileged cron/script that auto-renews TLS certs is a privesc vector: it runs `openssl` **as root**, only acts when the current cert is close to expiry, and frequently **parses the cert's subject/email fields** to rebuild the new one. Two things to weaponise: (1) hand it a cert that's *already* about to expire so the renewal branch fires, and (2) put a payload in a subject field it parses — see [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]].
+
+```bash
+# Self-signed cert valid for exactly ONE day — reads as "expiring" immediately.
+# 2048 (not 4096) so it generates instantly; -nodes so there's no passphrase prompt.
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout /path/to/host.key -out /path/to/host.crt -days 1 \
+  -subj "/C=AT/ST=Vienna/L=Vienna/O=Org/OU=IT/CN=host.htb/emailAddress=a@host.htb"
+
+# Confirm it registers as expiring. checkend N = "will it expire within N seconds?"
+openssl x509 -in /path/to/host.crt -noout -checkend 86400; echo "exit=$?"
+#   exit 1 = yes, expires within a day  →  a `[ $? -eq 0 ]` guard in the script FAILS
+#                                          →  the renewal branch RUNS (this is what you want)
+```
+
+| Flag | Why it's there |
+|---|---|
+| `-x509` | Emit a self-signed **certificate**, not a CSR — `openssl x509` can't parse a signing request |
+| `-newkey rsa:2048` | Generate the key in the same invocation; 2048 keeps it instant |
+| `-nodes` | "no DES" — leave the key unencrypted, so no interactive passphrase prompt |
+| `-days 1` | The point: the cert is near-expiry the moment it exists |
+| `-subj "…"` | Set the whole DN non-interactively — **and** the field a renewal parser reads, i.e. where an injection payload goes |
+
+> [!warning] **Test field-parsing on the target, not on Kali — the subject format is OpenSSL-version-dependent.** OpenSSL **3.x** prints `subject=C=AT, ST=Vienna` (no spaces around `=`); OpenSSL **1.1.1** (Debian 11) prints `C = AT, ST = Vienna` (spaces). A script that greps `'C = .{2}'` works on the box but silently matches **nothing** on a modern openssl — so field extraction that looks broken on your Kali will behave differently on-target. Check `openssl version` on the target and reproduce there, or you'll chase a phantom.
+
+> [!note] **`-checkend <seconds>` exit codes** — returns **0** if the cert is *still valid* past that window, **1** if it *will expire* within it. A `-days 1` cert answers "expiring" to any `-checkend` ≥ ~86400. This is the branch a renewal script keys off.
+
+> [!note] **Timing** — if the script wipes the cert dir each cycle (e.g. `rm -r .../Certs/*`), your cert must be in place *before* the next run. Watch the file to learn the interval (see it disappear), then drop the cert in during the window. Related: [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]].
+
+---
+
 ## Encoding / Crypto Operations
 
 ```bash
@@ -179,10 +212,10 @@ openssl s_client -connect target.com:443 -status </dev/null 2>/dev/null | \
 ---
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — `s_client -starttls smtp` for STARTTLS on 25/587 and direct TLS on 465, to reach an authenticated session or inspect the mail server's certificate.
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — `s_client -starttls smtp` for STARTTLS on 25/587 and direct TLS on 465, to reach an authenticated session or inspect the mail server's certificate; [[Services/File Xfer/FTP|FTP]] — `s_client -starttls ftp` (explicit FTPS on 21) / `-connect host:990` (implicit), to negotiate and inspect the FTPS certificate.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-13*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

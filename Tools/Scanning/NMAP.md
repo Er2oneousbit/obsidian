@@ -14,7 +14,7 @@ nmap -sV --open -oA initial_scan 10.129.200.170
 > [!note]
 > Run as root for SYN scan (`-sS`) — faster and more reliable than connect scan (`-sT`). Always save output with `-oA` for all three formats (nmap, xml, gnmap). Use `-Pn` when ICMP is blocked.
 
-> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script); [[Services/Cloud & Data/Flink|Apache Flink]] (identifying Flink ports/version); [[Services/Email/SMTP|SMTP]] (`smtp-commands`, `smtp-enum-users`, `smtp-open-relay`, `smtp-ntlm-info`); [[Services/Remote Access/R-Services|R-Services]] (`rexec-brute`, `rlogin-brute`, `rusers` — note there is **no** `rsh-brute` script); [[Services/Database Services/PostgreSQL|PostgreSQL]] (`pgsql-brute`, version fingerprint).
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Enumeration section (`krb5-enum-users` NSE script); [[Services/Cloud & Data/Flink|Apache Flink]] (identifying Flink ports/version); [[Services/Email/SMTP|SMTP]] (`smtp-commands`, `smtp-enum-users`, `smtp-open-relay`, `smtp-ntlm-info`); [[Services/Remote Access/R-Services|R-Services]] (`rexec-brute`, `rlogin-brute`, `rusers` — note there is **no** `rsh-brute` script); [[Services/Database Services/PostgreSQL|PostgreSQL]] (`pgsql-brute`, version fingerprint); [[Services/File Xfer/FTP|FTP]] (`ftp-anon`/`ftp-bounce`/`ftp-brute`, version banner for vsftpd/ProFTPD CVEs).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]], [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]], [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
@@ -190,5 +190,5 @@ sudo nmap -sn 10.129.14.0/24 | grep "for" | cut -d" " -f5 > hosts.txt && nmap -i
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*
