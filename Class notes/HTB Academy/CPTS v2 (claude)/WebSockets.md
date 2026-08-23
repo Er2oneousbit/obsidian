@@ -150,7 +150,7 @@ curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" \
   -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
   -H "Origin: https://evil.com" http://target.com/ws
 
-# null origin (sandboxed iframe sends this)
+# null origin (sandboxed iframe sends this — PoC page in [[Null Origin Attacks]])
 curl -i -N ... -H "Origin: null" http://target.com/ws
 
 # Subdomain of target (find XSS on any subdomain to exploit)
