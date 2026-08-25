@@ -539,7 +539,7 @@ $.getJSON('/api?callback=' + userInput);
 
 ### postMessage Exploitation
 
-When a page has a `message` event listener without an `origin` check, send a payload from an attacker-controlled page.
+When a page has a `message` event listener without an `origin` check, send a payload from an attacker-controlled page. A handler that *does* check but accepts the string `"null"` is equally exploitable from a sandboxed frame — see [[Null Origin Attacks#Sink 4 — `postMessage` Handlers]].
 
 **Vulnerable code pattern:**
 

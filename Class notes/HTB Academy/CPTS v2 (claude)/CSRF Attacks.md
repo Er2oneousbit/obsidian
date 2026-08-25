@@ -450,7 +450,7 @@ The query-string variant is reachable from a real browser — host the PoC at `h
 
 ### `Origin: null`
 
-A sandboxed iframe, a `data:` URL, or a cross-site redirect all produce `Origin: null`. Allowlists that include `null` for legacy reasons fall over.
+A sandboxed iframe, a `data:` URL, or a cross-site redirect all produce `Origin: null`. Allowlists that include `null` for legacy reasons fall over. Full treatment — every null-origin source, the `sandbox` token reference, and why `null` lands in allowlists — in [[Null Origin Attacks]].
 
 ```html
 <iframe sandbox="allow-scripts allow-forms allow-top-navigation"
