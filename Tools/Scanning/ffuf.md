@@ -41,6 +41,10 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt:FUZZ \
   -u http://10.129.14.128/FUZZ -e .php,.html,.txt,.bak,.conf -v
 ```
 
+> [!warning] **`-e` extends the *wordlist*, not the URL — never combine it with an extension already in the template.** `-e .php,.html` turns each word `index` into `index`, `index.php`, `index.html`, then substitutes **all** of them into `FUZZ`. So `-u .../FUZZ` is what you want; `-u .../FUZZ.php -e .php,.html,.txt,.bak,.conf` sends `index.php`, `index.php.php`, `index.html.php`, `index.txt.php`, … — i.e. it tests **`.php` only**, at N× the request cost, and silently never tries `.html/.txt/.bak`.
+> **Catch it by math:** requests should equal `wordlist × (1 + extensions)`. A real run of `FUZZ.php -e .php,.html,.txt,.bak,.conf` over a 220,544-word list fired **1,323,264** requests (`220,544 × 6`) yet only covered `.php`. If the counter is a clean multiple of your extension count, you've hit this.
+> **Correct form:** bare template + `-e` — `ffuf -u http://host/FUZZ -e .php,.html,.txt,.bak,.conf -w list:FUZZ`.
+
 ---
 
 ## Subdomain & Vhost Fuzzing
@@ -162,5 +166,5 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-20*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

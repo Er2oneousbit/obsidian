@@ -281,5 +281,5 @@ File → Project file (Pro — saves everything)
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-23*
 *Model: claude-opus-5*

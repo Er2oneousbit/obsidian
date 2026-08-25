@@ -211,5 +211,5 @@ curl -b cookies.txt http://target.com/dashboard
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-08-23*
 *Model: claude-opus-5*

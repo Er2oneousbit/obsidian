@@ -9,10 +9,10 @@ Fast TCP/UDP tunneling tool over HTTP/HTTPS. Creates SOCKS5 proxy or port forwar
 
 ```bash
 # Kali (server)
-chisel server --reverse --port 8080
+chisel server --reverse --port 9002
 
 # Target (client)
-./chisel client 10.10.14.5:8080 R:socks
+./chisel client 10.10.14.5:9002 R:socks
 ```
 
 > [!note]

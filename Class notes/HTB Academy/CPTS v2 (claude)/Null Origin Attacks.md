@@ -348,3 +348,4 @@ if ($http_origin ~* "(target\.com|null)") { add_header Access-Control-Allow-Orig
 
 *Created: 2026-08-23*
 *Updated: 2026-08-23*
+*Model: claude-opus-5*

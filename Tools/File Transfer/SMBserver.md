@@ -134,10 +134,10 @@ sudo impacket-smbserver share /opt/tools    # omit -smb2support
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]] — staging payloads to Windows targets over SMB.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

@@ -165,11 +165,11 @@ msfconsole -q -x "use multi/handler; set PAYLOAD windows/x64/meterpreter/reverse
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] — stage a reverse-shell payload inside the malicious JAR uploaded for RCE.
+> [!note] **See also** — [[Services/Cloud & Data/Flink|Apache Flink]] — stage a reverse-shell payload inside the malicious JAR uploaded for RCE; [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]] (CPTS v2) — msfvenom payload generation (executables/DLLs/shellcode/web shells) and catching them.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*

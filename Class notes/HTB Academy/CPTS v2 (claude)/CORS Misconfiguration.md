@@ -298,5 +298,5 @@ curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "sessio
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-30*
+*Updated: 2026-08-23*
 *Model: claude-opus-5*

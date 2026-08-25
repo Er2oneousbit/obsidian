@@ -107,6 +107,10 @@ pwncat-cs ssh://user@10.129.14.128
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]] (CPTS v2): pwncat-cs is the recommended Linux listener — it auto-upgrades the TTY on connect (no manual `stty raw -echo; fg` dance) and adds file transfer + persistence.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-21*
+*Model: claude-opus-5*

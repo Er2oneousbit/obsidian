@@ -292,8 +292,10 @@ sqlite3 database.db ".dump users" > users_dump.sql
 sqlite3 new_database.db < database_dump.sql
 ```
 
+> [!note] **See also** — [[Exploits/find_sqlite|find_sqlite.sh]] (custom tool: find SQLite DBs on a target by magic bytes before you read them here), [[Services/Database Services/SQLite|SQLite]].
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-20*
+*Updated: 2026-08-21*
 *Model: claude-opus-5*
