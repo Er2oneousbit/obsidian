@@ -113,8 +113,8 @@ The model: *the AS issues a token after the user consents, and every party downs
 
 ## Attacked by
 
-- [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — `redirect_uri` abuse, `state` CSRF, token leakage, scope escalation, PKCE bypass, device-code phishing, FOCI.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]] — the `id_token` / JWT-access-token side: `alg:none`, algorithm confusion, `kid`/`jwks` injection.
+- [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — `redirect_uri` abuse, `state` CSRF, token leakage, scope escalation, PKCE bypass, device-code phishing, FOCI.
+- [[Techniques/JWT Attacks|JWT Attacks]] — the `id_token` / JWT-access-token side: `alg:none`, algorithm confusion, `kid`/`jwks` injection.
 - [[Services/Active Directory/Entra ID|Entra ID]] — device-code phishing, **FOCI** refresh-token pivoting, and PRT abuse in the M365/Entra environment.
 - [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] — OAuth/SSO as the login mechanism (account-linking / pre-account-takeover).
 

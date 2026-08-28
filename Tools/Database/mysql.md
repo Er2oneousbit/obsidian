@@ -118,9 +118,11 @@ SELECT LOAD_FILE('C:\\Windows\\System32\\drivers\\etc\\hosts');
 
 -- Read into table
 CREATE TABLE filecontent (data TEXT);
-LOAD DATA INFILE '/etc/passwd' INTO TABLE filecontent FIELDS TERMINATED BY '\n';
+LOAD DATA INFILE '/etc/passwd' INTO TABLE filecontent LINES TERMINATED BY '\n';
 SELECT * FROM filecontent;
 ```
+
+> [!tip] **Rogue-server `LOAD DATA LOCAL INFILE`** — when *you* control the MySQL server a target client connects to (e.g. a web app using `LOCAL INFILE`), a malicious server can respond to any query by requesting an arbitrary **client-side** file, reading it off the connecting host — no FILE privilege needed. Tools: `mysql-fake-server` / Bettercap's mysql module. Different primitive from server-side `LOAD_FILE` above (which reads files on the DB host).
 
 ---
 
@@ -203,6 +205,10 @@ hydra -l root -P /usr/share/wordlists/rockyou.txt mysql://192.168.1.10
 
 ---
 
+> [!note] **See also** — for web-based injection use [[Tools/Database/SQLMap|SQLMap]]; service reference [[Services/Database Services/MySQL|MySQL]]. Crack `mysql.user` hashes with [[Tools/Auth/hashcat|hashcat]] (`-m 300` 4.1+ / `-m 7401` caching_sha2).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

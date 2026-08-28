@@ -81,13 +81,13 @@ The model: *the server trusts the claims in a token whose signature verifies aga
 | The crypto library is sound | ECDSA verify accepts `r=s=0` | **Psychic Signatures (CVE-2022-21449)** — any `ES*` token forges on OpenJDK 15–18 |
 
 > [!note]
-> No payloads here — this is the "why." Six critical JWT-*library* CVEs landed in 2025 alone (several one-token account-takeovers), so verify the target's library/version; current exploit detail lives in [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]].
+> No payloads here — this is the "why." Six critical JWT-*library* CVEs landed in 2025 alone (several one-token account-takeovers), so verify the target's library/version; current exploit detail lives in [[Techniques/JWT Attacks|JWT Attacks]].
 
 ---
 
 ## Attacked by
 
-- [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]] — the full toolkit: `alg:none`, RS256→HS256 confusion, `kid`/`jku`/`jwk` injection, secret cracking, public-key recovery (`rsa_sign2n`), Psychic Signatures.
+- [[Techniques/JWT Attacks|JWT Attacks]] — the full toolkit: `alg:none`, RS256→HS256 confusion, `kid`/`jku`/`jwk` injection, secret cracking, public-key recovery (`rsa_sign2n`), Psychic Signatures.
 - [[OAuth-OIDC]] — OIDC **ID tokens** are JWTs and OAuth **access tokens** usually are; a JWT flaw there is an auth bypass for the whole SSO.
 - [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] — JWTs as stateless API sessions (role tampering, `alg:none`, cross-service reuse).
 - [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] — JWT-backed sessions in the login/session-handling view.

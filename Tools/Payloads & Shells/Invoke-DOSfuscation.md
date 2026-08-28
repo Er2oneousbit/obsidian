@@ -2,7 +2,7 @@
 
 **Tags:** #InvokeDOSfuscation #Obfuscation #Evasion #CommandInjection #CMD #Windows #PowerShell #Payloads
 
-`Invoke-DOSfuscation` is Daniel Bohannon's obfuscation framework for Windows **`cmd.exe`** command lines (the CMD counterpart to his `Invoke-Obfuscation` for PowerShell). It rewrites a command using CMD's own parsing quirks — caret escapes, environment-variable substring extraction, `FOR /F` token reassembly, and encoding layers — producing a string that survives keyword blacklists and command-line-based detections. Useful against filters on a Windows [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|command injection]] point, and for [[Class notes/HTB Academy/CPTS v2 (claude)/AV & EDR Evasion|AV & EDR Evasion]] work where the command line itself is what gets flagged.
+`Invoke-DOSfuscation` is Daniel Bohannon's obfuscation framework for Windows **`cmd.exe`** command lines (the CMD counterpart to his `Invoke-Obfuscation` for PowerShell). It rewrites a command using CMD's own parsing quirks — caret escapes, environment-variable substring extraction, `FOR /F` token reassembly, and encoding layers — producing a string that survives keyword blacklists and command-line-based detections. Useful against filters on a Windows [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|command injection]] point, and for [[Techniques/AV & EDR Evasion|AV & EDR Evasion]] work where the command line itself is what gets flagged.
 
 **Source:** https://github.com/danielbohannon/Invoke-DOSfuscation
 **Install:** `git clone https://github.com/danielbohannon/Invoke-DOSfuscation` — no dependencies beyond PowerShell

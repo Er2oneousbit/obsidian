@@ -61,7 +61,15 @@ ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
 
 > [!warning] **Which one on HTB?** Use the **vhost** form (`-H "Host: FUZZ..."`). The subdomain form (`-u http://FUZZ.target.htb`) makes ffuf DNS-resolve every candidate, and `/etc/hosts` has **no wildcards** — so unless the box runs a DNS server, it errors on nearly every word. Vhost fuzzing connects to the known IP and only varies the `Host:` header, so it always connects. Full contrast table: [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing#Virtual Host vs Subdomain Fuzzing — know which you're doing|Fuzzing → VHost vs Subdomain]].
 
-> [!tip] Vhost fuzzing returns the **default page** for every miss, so filtering by status code is useless — filter by size (`-fs`) or use **`-ac`** to auto-calibrate. Baseline the default size with one bogus Host first.
+> [!tip] **Filtering vhost noise — the miss is the default page, so status code alone is useless.** Baseline it first with one bogus Host and read the **Size / Words / Lines** columns:
+> ```bash
+> ffuf -w list.txt:FUZZ -u http://10.129.x.x/ -H "Host: FUZZ.target.htb" \
+>      -H "Host: definitelynotreal.target.htb" -mc all      # eyeball Size/Words/Lines of a known miss
+> ```
+> - **Catch-all is a fixed size** → `-fs <bytes>`.
+> - **Size varies per request** — the 301/redirect **echoes the requested hostname**, so bytes scale with the length of each FUZZ word (the classic vhost trap where `-fs` is useless). Filter on a metric that stays constant instead: **`-fw <words>`** or **`-fl <lines>`** — the response template is identical, only the echoed host changes bytes, not word/line count.
+> - **Don't want to eyeball it** → **`-ac`** auto-calibrates: ffuf fires dummy inputs, profiles the wildcard across size/words/lines, and filters it for you — the right tool when the baseline is *dynamic*. `-ach` calibrates per host; `-acc "<str>"` adds custom probe strings.
+> - **A real vhost usually breaks the pattern** — its own app answers **200 / 403 / 401** (not the 301 catch-all) or a different word count; if the status differs, `-fc 301` is the cleanest cut. Always confirm against a **known-good Host** before trusting a "no hits" result.
 
 ---
 
@@ -125,6 +133,15 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 | `-ms <size>` | Match response size |
 | `-mr <regex>` | **Match response body by regex** — the semantic-success matcher |
 | `-fr <regex>` | Filter response body by regex |
+| `-ac` | **Auto-calibrate** — probe the target, learn the wildcard/catch-all baseline (size + words + lines), filter it automatically |
+| `-acc <str>` / `-ach` | Custom auto-calibration probe strings / calibrate **per host** (for vhost fuzzing) |
+
+> [!tip] **Pick the filter metric by what's *constant* in a miss, not what's convenient.**
+> - **Single fixed catch-all size** → `-fs`.
+> - **Size drifts** — the miss echoes the requested host/path, or carries timestamps / CSRF tokens / per-request nonces → the byte count is useless; filter on **`-fw` / `-fl`** (word & line counts usually hold steady) or hand it to **`-ac`**.
+> - **Same page served at many sizes** → **`-fr`** to regex the body, or invert to **`-mr`** on the success string (match meaning instead of filtering noise).
+>
+> When in doubt, reach for **`-ac`** first — it baselines across all three metrics so you don't have to. Same trap and same fixes bite **soft-404 directory fuzzing** (a 200 "not found" page whose size varies), not just vhosts.
 
 > [!warning] **Match on meaning, not on a byte count.** `-fs <size>` / `-fc <code>` are brittle: the number is instance-specific, and if it's off by one, the filter hides the **correct** result too — which looks like a failed technique (bad seed, wrong payload) rather than a bad filter. Prefer matching the semantic success string:
 > ```bash
@@ -166,5 +183,5 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-21*
+*Updated: 2026-08-26*
 *Model: claude-opus-5*

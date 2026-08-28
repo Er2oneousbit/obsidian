@@ -117,7 +117,7 @@ If user input reaches `render_template_string()` (or a template rendered with `{
 {{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}
 ```
 
-Full payloads/polyglots and sandbox-escape chains: [[Class notes/HTB Academy/CPTS v2 (claude)/Server-Side Attacks|Server-Side Attacks]] / [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]].
+Full payloads/polyglots and sandbox-escape chains: [[Class notes/HTB Academy/CWES Claude/Server-Side Attacks|Server-Side Attacks]] / [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]].
 
 ### 5. Command injection in glue code
 

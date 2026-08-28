@@ -321,7 +321,7 @@ foreach($funcs as $f) {
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] (CPTS v2) for the full magic-method gadget reference and the `__unserialize()` / `__wakeup()` precedence rule. Chain generation: [[Tools/Payloads & Shells/phpggc|phpggc]].
+> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] (CPTS v2) for the full magic-method gadget reference and the `__unserialize()` / `__wakeup()` precedence rule. Chain generation: [[Tools/Payloads & Shells/phpggc|phpggc]].
 ---
 
 *Created: 2026-03-13*

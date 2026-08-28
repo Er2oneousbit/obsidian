@@ -548,3 +548,13 @@ kubectl run escape --image=ubuntu --restart=Never --privileged \
 # kubeletctl scan
 kubeletctl scan rce -s <target>
 ```
+
+---
+
+> [!note] **See also** — if you've already landed *inside* a pod and want the generic container-breakout triage (capabilities, mounted `docker.sock`, `release_agent`, host mounts), see [[Techniques/Container Escape|Container Escape]] → its *Kubernetes pod→node* section points back here for the full API/kubelet/etcd depth. Single-host daemon: [[Services/Web Services/Docker API|Docker API]]. Defensive view: [[Frameworks and Compliance/Container-Security|Container Security]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

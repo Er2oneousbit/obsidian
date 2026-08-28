@@ -80,7 +80,7 @@ braa public@10.129.14.128:.1.3.6.*
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 
 ---
 

@@ -231,7 +231,7 @@ done
 
 Inspect and manipulate JWT tokens to escalate privileges or reuse tokens across services.
 
-> [!note] Full JWT attack methodology (algorithm confusion, `kid`/`jwks` injection, key cracking) in [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]] with [[Tools/Web/jwt_tool|jwt_tool]]; the token model behind it in [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth-OIDC-SAML]].
+> [!note] Full JWT attack methodology (algorithm confusion, `kid`/`jwks` injection, key cracking) in [[Techniques/JWT Attacks|JWT Attacks]] with [[Tools/Web/jwt_tool|jwt_tool]]; the token model behind it in [[Techniques/OAuth-OIDC-SAML|OAuth-OIDC-SAML]].
 
 ```bash
 # Decode a JWT — it's base64URL (uses -_ instead of +/, no = padding),

@@ -35,7 +35,7 @@ python3 -c "import json;d=json.load(open('schema.json'));print(json.dumps(d,inde
 
 > [!tip] Feed the recovered `schema.json` into [[Tools/Web/Burpsuite|Burp Suite]]'s InQL extension to browse it and generate queries, rather than reading the raw JSON. Fingerprint the engine with [[Tools/Web/graphw00f|graphw00f]] first — engines that suppress suggestions won't yield to this at all.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL schema recovery; [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] — exploiting what the schema reveals.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL schema recovery; [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL]] — exploiting what the schema reveals.
 
 ---
 

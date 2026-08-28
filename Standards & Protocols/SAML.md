@@ -72,7 +72,7 @@ The design reduces to one sentence: *the SP grants a session to whoever presents
 
 ## Attacked by
 
-- [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the web-SSO attack surface: signature stripping, XSW, comment injection, XXE-via-SAML, plus the Golden/Silver SAML overview and tooling.
+- [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the web-SSO attack surface: signature stripping, XSW, comment injection, XXE-via-SAML, plus the Golden/Silver SAML overview and tooling.
 - [[Services/Active Directory/ADFS|ADFS]] — on-prem **Golden SAML**: extracting the token-signing certificate + DKM key to forge assertions for any federated user, offline.
 - [[Services/Active Directory/Entra ID|Entra ID]] — cloud side: consuming Golden SAML on **Federated** tenants, and **Silver SAML** via an imported enterprise-app signing cert.
 - [[Sr Tester Role/Topics/XXE|XXE]] — a SAML assertion is XML the SP parses; it's a first-class XXE and signature-wrapping sink.

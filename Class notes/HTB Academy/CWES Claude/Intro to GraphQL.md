@@ -4,7 +4,7 @@
 
 ## What is this?
 
-GraphQL is a query language for APIs — a **single endpoint** (usually `/graphql`) where the client asks for exactly the fields it wants across related objects, instead of REST's many fixed endpoints. That flexibility *is* the security story: one endpoint exposes the whole data graph, **introspection** hands an attacker the entire schema, and every REST bug class (IDOR, SQLi, XSS, broken authz) still applies — plus GraphQL-native ones: **nested-query DoS**, **batching** brute-force amplification, and **mutation**-driven privilege escalation. This note is the foundational tour + the core attacks; for the deep toolkit (NoSQL/SSRF, introspection-disabled schema recovery, directive abuse, subscription DoS, and the current DoS CVEs) see [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]]. Pairs with [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]], [[SQL Injection]], [[Web Attacks]]. Protocol context — GraphQL is the third API style alongside [[Standards & Protocols/REST|REST]] and [[Standards & Protocols/SOAP|SOAP]] (one endpoint + a typed schema instead of many REST routes).
+GraphQL is a query language for APIs — a **single endpoint** (usually `/graphql`) where the client asks for exactly the fields it wants across related objects, instead of REST's many fixed endpoints. That flexibility *is* the security story: one endpoint exposes the whole data graph, **introspection** hands an attacker the entire schema, and every REST bug class (IDOR, SQLi, XSS, broken authz) still applies — plus GraphQL-native ones: **nested-query DoS**, **batching** brute-force amplification, and **mutation**-driven privilege escalation. This note is the foundational tour + the core attacks; for the deep toolkit (NoSQL/SSRF, introspection-disabled schema recovery, directive abuse, subscription DoS, and the current DoS CVEs) see [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]]. Pairs with [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]], [[SQL Injection]], [[Web Attacks]]. Protocol context — GraphQL is the third API style alongside [[Standards & Protocols/REST|REST]] and [[Standards & Protocols/SOAP|SOAP]] (one endpoint + a typed schema instead of many REST routes).
 
 ---
 
@@ -73,7 +73,7 @@ The full `IntrospectionQuery` (the big recursive one every client sends) dumps *
 > [!warning] In a real engagement, **self-host** GraphQL Voyager (it's open-source) instead of pasting the target's introspection JSON into the public demo — the schema exposes internal structure and shouldn't leave your machine.
 
 > [!note]
-> Introspection is often **disabled in production**. That's not a dead end — recover the schema from **field-suggestion** error messages (`"Did you mean user?"`) or brute-force it with **clairvoyance**. Full bypass workflow in [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]].
+> Introspection is often **disabled in production**. That's not a dead end — recover the schema from **field-suggestion** error messages (`"Did you mean user?"`) or brute-force it with **clairvoyance**. Full bypass workflow in [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]].
 
 ---
 
@@ -120,7 +120,7 @@ Because each queried **field maps to a returned column**, a UNION payload needs 
 # username is the 3rd field → table names come back in the username value
 ```
 
-From there it's ordinary SQLi — see [[SQL Injection]]. (NoSQL / SSRF variants: [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]].)
+From there it's ordinary SQLi — see [[SQL Injection]]. (NoSQL / SSRF variants: [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]].)
 
 ### XSS
 
@@ -159,7 +159,7 @@ Content-Type: application/json
 ```
 
 > [!warning]
-> Deep-nesting and 1000-query batches are genuinely destructive — confirm the *guard is missing* (a big jump vs a baseline query) rather than actually crashing a production endpoint. Advanced DoS (directive overload **CVE-2024-47614**, circular fragments, subscription exhaustion) is in [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]].
+> Deep-nesting and 1000-query batches are genuinely destructive — confirm the *guard is missing* (a big jump vs a baseline query) rather than actually crashing a production endpoint. Advanced DoS (directive overload **CVE-2024-47614**, circular fragments, subscription exhaustion) is in [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]].
 
 ---
 
@@ -215,7 +215,7 @@ Reference: OWASP GraphQL Cheat Sheet.
 | IDOR test | `{ user(username:"<other>") { username password } }` |
 | SQLi probe | `{ user(username:"x'") { username } }` → SQL error = vulnerable |
 | Privesc | `mutation { registerUser(input:{...role:"admin"}) { user { role } } }` |
-| Introspection disabled | recover via field suggestions / clairvoyance → [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL Attacks]] |
+| Introspection disabled | recover via field suggestions / clairvoyance → [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]] |
 
 ---
 

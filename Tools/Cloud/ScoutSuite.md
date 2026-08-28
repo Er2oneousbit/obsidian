@@ -51,11 +51,11 @@ scout aws --no-browser
 # Interactive login
 scout azure --cli
 
-# Service principal
+# Service principal (flag is --tenant, not --tenant-id)
 scout azure --service-principal \
   --client-id <app-id> \
   --client-secret <secret> \
-  --tenant-id <tenant-id>
+  --tenant <tenant-id>
 
 # Specific subscription
 scout azure --cli --subscription-id <sub-id>
@@ -95,11 +95,12 @@ scout aws
 # Open in browser:
 firefox scoutsuite-report/scoutsuite_report.html
 
-# Custom output directory
-scout aws -o /tmp/client-audit
+# Custom output directory (flag is --report-dir; there is no -o)
+scout aws --report-dir /tmp/client-audit
 
-# Generate report from existing data (re-run without re-collecting)
-scout aws --no-services    # skips collection, uses existing data
+# Regenerate/refresh the report from an existing run
+scout aws --update              # update an existing report dir in place
+scout aws --local <results.js>  # build a report from a saved results file, no collection
 
 # Export findings as JSON (for automation/parsing)
 # JSON is stored in scoutsuite-report/scoutsuite-results/
@@ -151,10 +152,10 @@ EOF
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — once you pivot from a cluster into the underlying cloud account, ScoutSuite audits its overall config posture.
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — once you pivot from a cluster into the underlying cloud account, ScoutSuite audits its overall config posture. ScoutSuite maps the misconfigs; **exploit** them with [[Tools/Cloud/Pacu|Pacu]] (AWS), [[Tools/Cloud/MicroBurst|MicroBurst]]/[[Tools/Cloud/PowerZure|PowerZure]] (Azure), [[Tools/Cloud/GCP-IAM-PrivEsc|GCP IAM Privilege Escalation]] (GCP).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

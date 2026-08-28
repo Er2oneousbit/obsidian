@@ -143,5 +143,5 @@ INSERT INTO users (username, password, role) VALUES ('x', '<hash>', 'admin');
 ---
 
 *Created: 2026-08-20*
-*Updated: 2026-08-21*
+*Updated: 2026-08-25*
 *Model: claude-opus-5*

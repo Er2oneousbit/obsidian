@@ -38,6 +38,8 @@ patator <module> <module_options> 0=<wordlist> -x ignore:<filter>
 | `-x ignore:size=1234` | Ignore responses of this byte size |
 | `-x ignore:egrep='(failed\|error\|invalid)'` | Regex match |
 
+> [!tip] **Calibrate before you filter.** Run patator once with **no `-x`** and read the results table — every attempt prints its `code` and `size`. The failures all share one code/size; that's what you feed to `-x ignore:`. The hit is the row that breaks the pattern. Getting the filter right is the whole skill with patator — don't guess it, observe it. Combine conditions: `-x ignore:code=200 -x ignore:fgrep='CSRF'` (ignore a row if *any* rule matches). Flip to `-x free=code=302` to **stop** the moment a match appears.
+
 ---
 
 ## SSH
@@ -84,12 +86,18 @@ patator http_fuzz url=http://10.10.10.10/login.php method=POST \
   0=users.txt 1=passwords.txt \
   -x ignore:code=200
 
-# With session cookie / CSRF token (grab token first, pass via header)
+# Per-request CSRF token — a STATIC token will not work (it rotates each load).
+# Let patator fetch the form first (before_urls), scrape the token (before_egrep),
+# substitute it into a marker, and carry the session cookie (accept_cookie=1):
 patator http_fuzz url=http://10.10.10.10/login method=POST \
-  header='Cookie: session=abc123' \
-  body='username=FILE0&password=FILE1&_token=xyz' \
+  body='username=FILE0&password=FILE1&csrf_token=_CSRF_' \
+  before_urls=http://10.10.10.10/login \
+  before_egrep='_CSRF_:name="csrf_token" value="([^"]+)"' \
+  accept_cookie=1 \
   0=users.txt 1=passwords.txt \
   -x ignore:fgrep='Wrong password'
+# before_egrep syntax = MARKER:regex — group(1) of the regex replaces MARKER in
+# the body/header/query. Chain multiple with '|'. follow=1 chases redirects.
 ```
 
 ---
@@ -159,6 +167,10 @@ patator ssh_login ... --tries=2
 
 ---
 
+> [!note] **See also** — faster to set up but cruder on filtering: [[Tools/Auth/Hydra|Hydra]] and [[Tools/Auth/Medusa|Medusa]]; for SMB/WinRM/MSSQL spraying at scale prefer [[Tools/Lateral Movement/NetExec|NetExec]]. Reach for patator when those mishandle a target's responses. Technique context: [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

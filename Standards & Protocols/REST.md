@@ -6,7 +6,7 @@
 
 **REST** (REpresentational State Transfer) is an **architectural style** for APIs, not a wire protocol: resources are named by **URLs**, acted on with **HTTP verbs**, carry state in **[[JSON]]** (usually), and every request is **stateless** (it must carry its own auth). It's the dominant modern API style — the thing behind virtually every mobile app, SPA, and microservice — and the lightweight counterpart to [[SOAP]] (rigid XML + WSDL + WS-Security). REST has no built-in contract, no built-in message security, and no built-in authorization: those are the developer's job on **every endpoint**, which is exactly why the same handful of authz bugs recur. This note is *why the design is attackable*; the payloads are under [[#Attacked by]] — it is deliberately **not** a REST tutorial.
 
-> [!note] **CRUD** (Create / Read / Update / Delete) is the operation vocabulary REST maps onto HTTP verbs (see the table below). **AJAX** (Asynchronous JavaScript And XML) is just *how a browser calls a REST API* — background `XMLHttpRequest`/`fetch` from JavaScript instead of a full page load; despite the name it's almost always [[JSON]] now, not XML. AJAX is a technique, not a standard: its security surface is the **same-origin policy / CORS** and **CSRF**, covered in [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]] and [[Class notes/HTB Academy/CPTS v2 (claude)/CSRF Attacks|CSRF]].
+> [!note] **CRUD** (Create / Read / Update / Delete) is the operation vocabulary REST maps onto HTTP verbs (see the table below). **AJAX** (Asynchronous JavaScript And XML) is just *how a browser calls a REST API* — background `XMLHttpRequest`/`fetch` from JavaScript instead of a full page load; despite the name it's almost always [[JSON]] now, not XML. AJAX is a technique, not a standard: its security surface is the **same-origin policy / CORS** and **CSRF**, covered in [[Techniques/CORS Misconfiguration|CORS Misconfiguration]] and [[Techniques/CSRF Attacks|CSRF]].
 
 ---
 
@@ -62,7 +62,7 @@ REST pushes **contract, authorization, and message security entirely onto the im
 | **Every** endpoint is authenticated | New/undocumented route ships without a guard | Unauth data access → surface found by fuzzing/Swagger |
 | A **token** = the right user, now | No expiry/revocation/binding | **Token replay / theft**; no server-side logout |
 | Auth is enforced on **all verbs** | Filter covers `GET` but not `PUT`/`DELETE` | **Verb tampering** / method-override bypass |
-| The browser enforces **same-origin** | Over-permissive `Access-Control-Allow-Origin` | **CORS** cross-origin theft → [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration]] |
+| The browser enforces **same-origin** | Over-permissive `Access-Control-Allow-Origin` | **CORS** cross-origin theft → [[Techniques/CORS Misconfiguration]] |
 | Clients send **sane** volume/shape | No rate/size limits | Resource-consumption **DoS** → [[Sr Tester Role/Topics/API Unrestricted Resource Consumption]] |
 
 > [!note] No payloads here — this is the "why." REST's insecurity is an **absence**, not a flaw: the style provides no authorization, so every endpoint re-implements it and any one that forgets is a finding. That's why **BOLA is the #1 API risk** and why the first move against a REST API is always *enumerate the endpoints, then swap the IDs*.
@@ -73,7 +73,7 @@ REST pushes **contract, authorization, and message security entirely onto the im
 
 - [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] — the core note: BOLA, BFLA, mass assignment, broken auth, excessive data exposure — the OWASP API Top 10 in practice.
 - [[Sr Tester Role/Topics/API Broken Object Level Authorization|BOLA (API #1)]] · [[Sr Tester Role/Topics/API Broken Function Level Authorization|BFLA]] — the per-vuln-class notes these map to.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]] — the browser-client (AJAX) cross-origin surface.
+- [[Techniques/CORS Misconfiguration|CORS Misconfiguration]] — the browser-client (AJAX) cross-origin surface.
 - [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — discovering the undocumented endpoints/params REST hides.
 - [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|GraphQL]] — the query-language alternative that replaces many REST endpoints with one (and its own IDOR/DoS surface).
 

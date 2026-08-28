@@ -20,7 +20,7 @@ curl -s https://<TARGET>/main.js | grep -oiE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_
 
 > [!note] Tokens belong in `HttpOnly` cookies precisely so JS can't read them — finding an access/refresh token in `localStorage` is itself a reportable finding regardless of whether you can currently trigger it.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — locating exposed OAuth/OIDC tokens for theft and replay.
+> [!note] **See also** — [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — locating exposed OAuth/OIDC tokens for theft and replay.
 
 ---
 

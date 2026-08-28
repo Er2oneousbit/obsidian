@@ -127,19 +127,23 @@ EOF
 ## Post-Decryption
 
 ```bash
-# Test decrypted credential against domain
-crackmapexec smb <dc-ip> -u Administrator -p '<decrypted-password>' --local-auth
-crackmapexec smb 192.168.1.0/24 -u Administrator -p '<decrypted-password>' --local-auth
+# Test decrypted credential (netexec — CrackMapExec is superseded; nxc is the drop-in)
+nxc smb <dc-ip> -u Administrator -p '<decrypted-password>' --local-auth
+nxc smb 192.168.1.0/24 -u Administrator -p '<decrypted-password>' --local-auth
 
-# Test against domain (not local)
-crackmapexec smb <dc-ip> -u Administrator -p '<decrypted-password>' -d DOMAIN
+# Test against the domain (not local)
+nxc smb <dc-ip> -u Administrator -p '<decrypted-password>' -d DOMAIN
 
 # If it's a service account — check what it has access to
-crackmapexec smb <subnet>/24 -u <service-acct> -p '<password>' -d DOMAIN
+nxc smb <subnet>/24 -u <service-acct> -p '<password>' -d DOMAIN
 ```
 
 ---
 
+> [!note] **See also** — the one-shot alternative is the [[Tools/Lateral Movement/NetExec|NetExec]] `gpp_password`/`gpp_autologin` modules (auto-find + decrypt); browse SYSVOL with [[Tools/Lateral Movement/smbclient|smbclient]]; reuse of found creds is a [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] path.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

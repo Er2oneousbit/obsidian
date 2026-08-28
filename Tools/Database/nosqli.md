@@ -36,7 +36,7 @@ nosqli scan -t "http://<TARGET>/search?q=test" -a "session=<token>"
 
 > [!tip] Run it through Burp with `-p http://127.0.0.1:8080` so you capture the exact injectable request it finds and can iterate on the payload manually — the scanner confirms the injection point; hand-crafting gets you the data.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection|NoSQL Injection]] — automated web-layer NoSQLi discovery; pairs with [[Tools/Database/mongosh|mongosh]] for direct DB testing once an instance is reachable.
+> [!note] **See also** — [[Techniques/NoSQL Injection|NoSQL Injection]] — automated web-layer NoSQLi discovery; pairs with [[Tools/Database/mongosh|mongosh]] for direct DB testing once an instance is reachable.
 
 ---
 

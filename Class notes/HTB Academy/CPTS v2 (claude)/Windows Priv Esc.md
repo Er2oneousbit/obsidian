@@ -8,6 +8,8 @@ Elevating from a low-privilege shell to SYSTEM/Administrator via misconfiguratio
 
 Common writable staging dir: `C:\Windows\Temp`
 
+> [!note] **In a Windows container?** Rare, and thin vs. Linux — process-isolated containers share the host kernel, so it's a host-kernel/`docker_engine`-pipe problem. The (short) Windows appendix and the full container-escape workflow are in [[Techniques/Container Escape|Container Escape]].
+
 ---
 
 ## Tools
@@ -975,5 +977,5 @@ OTHER VECTORS
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-18*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

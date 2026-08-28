@@ -21,24 +21,38 @@ adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip>
 ## Usage
 
 ```bash
-# Basic authenticated dump
+# Basic authenticated dump (writes ./records.csv by default)
 adidnsdump -u 'INLANEFREIGHT\htb-student' -p 'Academy_student_AD!' 172.16.5.5
 
-# With LDAPS (port 636)
-adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --ssl
+# Auth with an NTLM hash instead of a password (format LM:NTLM)
+adidnsdump -u 'DOMAIN\user' -p ':8846f7eaee8fb117ad06bdd830b7586c' <dc-ip>
 
-# Dump all zones (not just the default domain zone)
+# -r / --resolve — the whole point of the tool (see note below): resolve the
+# "hidden" records (node visible in LDAP, record data not readable) via live DNS
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> -r
+
+# List zones first (no dump), then target one that isn't the current domain
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --print-zones
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --zone internal.corp.local
+
+# Other storage locations: forest-wide zones and the legacy System partition
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --forest
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --legacy
+
+# Include tombstoned (soft-deleted) records
 adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --include-tombstoned
 
-# Specify output file
-adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> -r records.csv
-
-# Resolve unknown records (follow CNAME chains, resolve wildcards)
-adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --resolve
+# LDAPS, custom output path, DNS-over-TCP (helps --resolve through restrictive nets)
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> --ssl --outfile /tmp/dns.csv
+adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip> -r --dns-tcp
 
 # Through a pivot
 proxychains adidnsdump -u 'DOMAIN\user' -p 'Password' <dc-ip>
 ```
+
+> [!warning] **Flag reality check** — `-r`/`--resolve` is a **boolean**, not an output filename; the output file is **`--outfile`** (default `records.csv`). Dumping *other* zones is `--forest` / `--legacy` / `--zone`, **not** `--include-tombstoned` (which only adds deleted records).
+
+> [!tip] **What "hidden records" means** — any authenticated user can *list* the DNS node objects (the names) under `DomainDnsZones`, but the ACL often blocks *reading the record data itself*. Those rows show up blank/`?`. Passing **`-r`** makes adidnsdump take each unreadable name and do a normal DNS A/AAAA/CNAME lookup against the DC, recovering the IP anyway — this is the core trick, not a CNAME-follower.
 
 ---
 
@@ -106,6 +120,10 @@ ldapsearch -x -H ldap://<dc-ip> \
 
 ---
 
+> [!note] **See also** — verify/enumerate the underlying LDAP objects with [[Tools/AD/ldapsearch|ldapsearch]] ([[Services/Network management/LDAP|LDAP]] service). The **write** side of ADIDNS — *creating* a record any authenticated user can add (WPAD/spoofing) — is `dnstool.py` from the krbrelayx toolkit, not this tool. Feed recovered A-record IPs straight into a [[Tools/AD/BloodHound|BloodHound]] collection or an nmap sweep.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

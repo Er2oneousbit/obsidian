@@ -45,6 +45,8 @@ Secure Shell — encrypted protocol for remote command execution, file transfer 
 | `PermitTunnel yes` | VPN-style tunneling possible |
 | `AuthorizedKeysFile ~/.ssh/authorized_keys` | Predictable key location |
 
+> [!warning] **A failed `ssh root@host` password login is an *ambiguous* result, not a "wrong password."** Ubuntu's default is `PermitRootLogin prohibit-password` — sshd **rejects password auth for root before ever checking the password**, but still shows a normal prompt, so the client sees the exact same "Permission denied" as a bad credential. If you have a candidate root password (e.g. recovered from a config/session store), **test it against PAM directly** where you already have a shell: `su -` (or `sudo -k; sudo -l`). On HTB *Instant*, `ssh root@` failed while `su -` succeeded with the **same** password. Rule: verify credentials against the **least-gated path** available, and retry a "rejected" password in every new context.
+
 ---
 
 ## Enumeration

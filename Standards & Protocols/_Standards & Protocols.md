@@ -68,7 +68,7 @@ Scoped per the [[template]] bar (protocol/format/standard · design-must-be-unde
 ## How they relate
 
 - **Federation trio**: [[SAML]] (XML assertions) and [[OAuth-OIDC]] (tokens) are the two enterprise SSO standards; [[OAuth-OIDC]] carries identity as a [[JWT]].
-- **Where they're broken**: the attacks live in [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], and — for the AD/cloud identity side — [[Services/Active Directory/ADFS|ADFS]] (Golden SAML) and [[Services/Active Directory/Entra ID|Entra ID]] (Silver SAML, token theft).
+- **Where they're broken**: the attacks live in [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]], [[Techniques/JWT Attacks|JWT Attacks]], and — for the AD/cloud identity side — [[Services/Active Directory/ADFS|ADFS]] (Golden SAML) and [[Services/Active Directory/Entra ID|Entra ID]] (Silver SAML, token theft).
 - **Windows auth**: [[NTLM]] underpins relay/PtH; [[Services/Active Directory/Kerberos|Kerberos]] (in `Services/`) is its ticket-based successor.
 - **XML substrate**: [[XML]] is the format under [[SAML]]'s signed assertions and every XXE — learn the entity/DTD model once, apply it to both.
 - **Web markup**: [[HTML]]'s lenient parsing + code/content mixing is the substrate under XSS / HTML-injection / clickjacking — the [[XML]] of the browser, with SVG/XHTML bridging the two.

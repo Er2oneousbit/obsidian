@@ -265,6 +265,29 @@ pty.spawn('/bin/bash')
 
 ---
 
+## Cracking Werkzeug Password Hashes
+
+Flask apps hash user passwords with `werkzeug.security.generate_password_hash()`. When you recover the app's user store — a **SQLite DB** (`instant.db`, `app.db`), a leaked backup, or an **SQLi dump** — the hashes look like:
+
+```
+pbkdf2:sha256:600000$YnRgjnim$c9541a8c...      # method : algo : iterations $ salt $ hexdigest
+scrypt:32768:8:1$...                            # newer Werkzeug default (>=2.3) is scrypt
+```
+
+Two ways to crack them:
+
+```bash
+# 1. Werkzeug-Cracker — feed the string AS-IS (CPU, any method incl. scrypt)
+python3 werkzeug_cracker.py -p hash.txt -w /usr/share/wordlists/rockyou.txt
+
+# 2. hashcat -m 10900 (GPU, pbkdf2:sha256 only) — reformat first, see the hashcat note
+hashcat -a 0 -m 10900 werkzeug.hash /usr/share/wordlists/rockyou.txt
+```
+
+> [!tip] **Recover the DB via the app's own bugs** — an LFI/arbitrary-read (`?file=../../app/instance/app.db`) or SQLi hands you the hashes; a cracked app password then often unlocks other stores (a saved-session file, a `sudo`/`su` prompt — always retry it). Full workflow + the GPU/format details: [[Tools/Auth/Werkzeug-Cracker|Werkzeug-Cracker]], [[Tools/Auth/hashcat|hashcat]] (`-m 10900`).
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -294,5 +317,5 @@ pty.spawn('/bin/bash')
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-14*
+*Updated: 2026-08-26*
 *Model: claude-opus-5*

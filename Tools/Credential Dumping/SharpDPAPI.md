@@ -140,9 +140,14 @@ SharpChrome.exe cookies /browser:edge
 # Target remote user profile
 SharpChrome.exe logins /target:C:\Users\jsmith\ /password:UserPassword
 
-# Filter cookies by domain
-SharpChrome.exe cookies /filter:microsoft.com
+# Filter cookies by name (regex) — flag is /cookie:, not /filter:
+SharpChrome.exe cookies /cookie:"microsoft.com"
+
+# Output format: 'csv' (default) or 'table'
+SharpChrome.exe cookies /format:table
 ```
+
+> [!tip] **Other SharpDPAPI commands worth knowing** (verified in-repo): `SharpDPAPI.exe rdg` (RDCMan `.rdg` saved RDP creds), `SharpDPAPI.exe keepass` (KeePass `ProtectedUserKey.bin` → master key), `SharpDPAPI.exe search` (hunt DPAPI blobs across a file/registry/base64 input), and `SharpDPAPI.exe blob /target:<file>` (decrypt an arbitrary DPAPI blob).
 
 > [!tip] Chrome/Edge cookies can be used to hijack authenticated web sessions — especially useful for M365, Azure Portal, internal apps, and VPNs with web auth.
 
@@ -278,9 +283,10 @@ SharpDPAPI.exe certificates /pvk:domain.pvk /machine
 - Browser credential decryption reads `Login Data` SQLite file — Chrome may lock it if running; target via VSS or copy when browser is closed
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — DPAPI blob decryption for browser/app creds.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — DPAPI blob decryption for browser/app creds. The **remote/Linux counterpart** (same loot, no binary on target) is [[Tools/Credential Dumping/DonPAPI|DonPAPI]]; decrypted client-auth certs feed [[Tools/AD/Certipy|Certipy]].
+
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-08-27*
 *Model: claude-opus-5*

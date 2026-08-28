@@ -12,7 +12,7 @@ terminator                       # launch
 terminator -l pentest            # launch a saved layout named "pentest"
 ```
 
-> [!warning] "Terminator" is an overloaded name in security. **This note is the terminal emulator.** There is also an unrelated red-team/malware tool called *Terminator* (Spyboy) — a **BYOVD AV/EDR killer** that loads the vulnerable Zemana driver (`zam64.sys` / `zamguard64.sys`) to terminate security processes from kernel mode. That belongs in [[Class notes/HTB Academy/CPTS v2 (claude)/AV & EDR Evasion|AV & EDR Evasion]], not here — see the note at the bottom.
+> [!warning] "Terminator" is an overloaded name in security. **This note is the terminal emulator.** There is also an unrelated red-team/malware tool called *Terminator* (Spyboy) — a **BYOVD AV/EDR killer** that loads the vulnerable Zemana driver (`zam64.sys` / `zamguard64.sys`) to terminate security processes from kernel mode. That belongs in [[Techniques/AV & EDR Evasion|AV & EDR Evasion]], not here — see the note at the bottom.
 
 ---
 
@@ -132,7 +132,7 @@ CVE landscape: HD Moore's *Terminal Emulator Security Issues* (2003) is the orig
 
 > [!note] **See also**
 > Sibling terminal tool with server-side persistence: [[Tools/Command Shell/tmux|tmux]] — run one inside each Terminator pane. The escape-injection risk above applies equally to any emulator, tmux panes included.
-> Where the *other* "Terminator" (Spyboy BYOVD AV/EDR killer) belongs: [[Class notes/HTB Academy/CPTS v2 (claude)/AV & EDR Evasion|AV & EDR Evasion]].
+> Where the *other* "Terminator" (Spyboy BYOVD AV/EDR killer) belongs: [[Techniques/AV & EDR Evasion|AV & EDR Evasion]].
 > Weaponizing escape injection via log poisoning: [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]].
 
 ---

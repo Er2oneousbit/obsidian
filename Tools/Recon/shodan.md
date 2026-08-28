@@ -42,7 +42,7 @@ shodan search "http.favicon.hash:<murmur3_hash>"
 > [!warning] Shodan data is a **snapshot from its last scan**, which can be weeks old. Everything it reports needs confirming against the live target before you act on it, and an absent service doesn't mean a closed port.
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] — passive attack-surface mapping. Censys (search.censys.io) covers the same ground with better certificate search.
-> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> Also used in [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 
 ---
 

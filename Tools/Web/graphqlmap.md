@@ -37,7 +37,7 @@ GraphQLmap > postgresql_blind                # blind SQLi automation
 
 > [!tip] Fingerprint with [[Tools/Web/graphw00f|graphw00f]] and run [[Tools/Web/graphql-cop|graphql-cop]] first — they take seconds and tell you whether introspection, batching, and suggestions are available, which decides whether graphqlmap's dump commands will work at all.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] — automated schema dumping and injection; [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL fuzzing workflow.
+> [!note] **See also** — [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL]] — automated schema dumping and injection; [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL fuzzing workflow.
 
 ---
 

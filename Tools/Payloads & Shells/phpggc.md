@@ -41,7 +41,7 @@ curl -s "http://<TARGET>/vulnerable" -d "data=$PAYLOAD"
 
 > [!note] Chain names encode the primitive: `RCE*` = code execution, `FW*` = file write, `FR*` = file read, `SQLI*` = SQL injection, `INFO*` = info leak. A file-write chain is often more reliable than RCE when the app disables `system()`.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] — PHP gadget chain generation. Java equivalent is [[Tools/Payloads & Shells/ysoserial|ysoserial]]; .NET is [[Tools/Payloads & Shells/ysoserial.net|ysoserial.net]].
+> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — PHP gadget chain generation. Java equivalent is [[Tools/Payloads & Shells/ysoserial|ysoserial]]; .NET is [[Tools/Payloads & Shells/ysoserial.net|ysoserial.net]].
 
 ---
 

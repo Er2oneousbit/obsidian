@@ -301,7 +301,7 @@ ffuf -w codes.txt -u 'https://<TARGET>/activate.php?code=FUZZ' -k -mr 'Account a
 **Correct construction, for the report:** `random_bytes()` / `bin2hex(random_bytes(16))` in PHP, `secrets` in Python, `crypto.randomBytes` in Node — a CSPRNG, never `rand`/`mt_rand`/`uniqid`.
 
 > [!note]
-> A predictable token is often the **gate** in front of a bigger bug rather than the finding itself. On HTB BroScience the activation-code prediction exists only to obtain a session, because the real vulnerability — a PHP object-injection sink — is behind `isset($_SESSION['id'])`. See [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]].
+> A predictable token is often the **gate** in front of a bigger bug rather than the finding itself. On HTB BroScience the activation-code prediction exists only to obtain a session, because the real vulnerability — a PHP object-injection sink — is behind `isset($_SESSION['id'])`. See [[Techniques/Deserialization|Deserialization]].
 
 ### Host-header reset poisoning
 

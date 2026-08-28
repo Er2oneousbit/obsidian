@@ -205,8 +205,8 @@ curl -b cookies.txt http://target.com/dashboard
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] (PAT/OAuth token exchange, enumeration, data exfil) and [[Services/Cloud & Data/Flink|Apache Flink]] (REST API enumeration, JAR upload, SQL Gateway) both drive their entire attack surface through cURL. Also [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]] (CWES) — manual GraphQL query/mutation testing. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Server-Side Attacks|Server-Side Attacks]] and [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2) — SSRF probing, redirect tracing, verb tampering, XXE delivery. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Null Origin Attacks|Null Origin Attacks]] (CPTS v2) — origin-header probing for CORS, CSRF, and WebSocket handshake checks.
-> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]], [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]], [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] (CPTS v2).
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] (PAT/OAuth token exchange, enumeration, data exfil) and [[Services/Cloud & Data/Flink|Apache Flink]] (REST API enumeration, JAR upload, SQL Gateway) both drive their entire attack surface through cURL. Also [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]] (CWES) — manual GraphQL query/mutation testing. Also [[Class notes/HTB Academy/CWES Claude/Server-Side Attacks|Server-Side Attacks]] and [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2) — SSRF probing, redirect tracing, verb tampering, XXE delivery. Also [[Techniques/Null Origin Attacks|Null Origin Attacks]] (CPTS v2) — origin-header probing for CORS, CSRF, and WebSocket handshake checks.
+> Also used in [[Techniques/CORS Misconfiguration|CORS Misconfiguration]], [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]], [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL]] (CPTS v2).
 
 ---
 

@@ -262,7 +262,7 @@ cupp → targeted personal info wordlists
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]] (CPTS v2).
+> [!note] **See also** — [[Techniques/LDAP Injection|LDAP Injection]] (CPTS v2).
 
 ---
 

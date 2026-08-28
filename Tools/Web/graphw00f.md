@@ -35,7 +35,7 @@ python3 main.py -l
 
 > [!note] Fingerprinting relies on error-message *shapes*. A target with generic/blanket error handling will come back unidentified — that's not an indication the endpoint is safe, just that it's quiet.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL fuzzing workflow; [[Class notes/HTB Academy/CPTS v2 (claude)/GraphQL|GraphQL]] — the full attack surface; [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]] (CWES) — fingerprinting in the intro workflow.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — GraphQL fuzzing workflow; [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL]] — the full attack surface; [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]] (CWES) — fingerprinting in the intro workflow.
 
 ---
 

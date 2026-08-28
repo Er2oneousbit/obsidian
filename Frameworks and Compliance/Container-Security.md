@@ -404,6 +404,8 @@ trivy image --severity CRITICAL gcr.io/myproject/myapp:1.0
 
 [[Cloud-Security]], [[Supply-Chain-Security]], [[Secure-SDLC]]  ·  Index: [[_Frameworks and Compliance]]
 
+Offensive counterpart: [[Techniques/Container Escape|Container Escape]] (how the misconfigs in the *Container Escape* section above are actually abused).
+
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

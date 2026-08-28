@@ -52,7 +52,7 @@ ldapsearch -x -H ldap://<DC_IP> -D "<user>@<domain>" -w '<pass>' -b "dc=corp,dc=
 
 > [!tip] Query the RootDSE first with `-s base namingcontexts` — it works anonymously on many directories and hands you the exact base DN to use, so you don't have to guess at `dc=` components.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/LDAP Injection|LDAP Injection]] — manual filter construction and enumeration; [[Services/Network management/LDAP|LDAP]] for the service itself. Bulk AD enumeration is faster with [[Tools/AD/windapsearch|windapsearch]], [[Tools/AD/ldapdomaindump|ldapdomaindump]], or [[Tools/AD/BloodHound|BloodHound]].
+> [!note] **See also** — [[Techniques/LDAP Injection|LDAP Injection]] — manual filter construction and enumeration; [[Services/Network management/LDAP|LDAP]] for the service itself. Bulk AD enumeration is faster with [[Tools/AD/windapsearch|windapsearch]], [[Tools/AD/ldapdomaindump|ldapdomaindump]], or [[Tools/AD/BloodHound|BloodHound]].
 
 ---
 

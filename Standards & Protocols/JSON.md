@@ -42,12 +42,12 @@ The format assumes the *application* validates shape, types, and which fields ar
 | Assumption the design rests on | When it fails… | Attack (payloads in the linked note) |
 |---|---|---|
 | Only intended **fields** are honored | Body deserialized straight onto a model | **Mass assignment / over-posting** (`"isAdmin":true`) → [[Class notes/HTB Academy/CWES Claude/API Attacks]] |
-| Keys are **plain data** | JS merge/`JSON.parse`+assign trusts keys | **Prototype pollution** via `__proto__`/`constructor` → [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks]] |
+| Keys are **plain data** | JS merge/`JSON.parse`+assign trusts keys | **Prototype pollution** via `__proto__`/`constructor` → [[Techniques/Non-PHP Web App Attacks]] |
 | Two services **parse identically** | Duplicate/oddly-encoded keys | **JSON interoperability / smuggling** — auth service sees one value, backend another |
-| Values are **well-typed** | `"1"` vs `1`, arrays where scalars expected | **Type juggling** → NoSQL/auth bypass → [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection]] |
-| Responses are **not script** | JSON returned via `<script>`/**JSONP** callback | Cross-site data theft; callback-name XSS → [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration]] |
+| Values are **well-typed** | `"1"` vs `1`, arrays where scalars expected | **Type juggling** → NoSQL/auth bypass → [[Techniques/NoSQL Injection]] |
+| Responses are **not script** | JSON returned via `<script>`/**JSONP** callback | Cross-site data theft; callback-name XSS → [[Techniques/CORS Misconfiguration]] |
 | Input is **bounded** | Deeply nested / huge arrays | Parser **DoS** (stack blow-up, memory) → [[Sr Tester Role/Topics/API Unrestricted Resource Consumption]] |
-| Deserialization is **inert** | Type-binding deserializers (Jackson/`pickle` bridges) | **Deserialization RCE** → [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization]] |
+| Deserialization is **inert** | Type-binding deserializers (Jackson/`pickle` bridges) | **Deserialization RCE** → [[Techniques/Deserialization]] |
 
 > [!note] No payloads here — this is the "why." JSON's danger isn't a parser bug so much as **misplaced trust in schemaless text**: the same object that carries `{"user":"me"}` can carry `{"user":"me","role":"admin","__proto__":{...}}`, and only application-side validation stops it. Contrast [[XML]], whose danger is the parser reaching *outside* the document (XXE); JSON's danger is the object *inside* it not being what the app assumed.
 
@@ -56,10 +56,10 @@ The format assumes the *application* validates shape, types, and which fields ar
 ## Attacked by
 
 - [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] — mass assignment / over-posting and excessive-data-exposure, the everyday JSON-body bugs.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] — **prototype pollution** (the JS-specific JSON bug) and JSON-fed deserialization.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/NoSQL Injection|NoSQL Injection]] — JSON operator/type-confusion payloads (`{"$ne":null}`) into Mongo-style backends.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] — type-binding JSON deserializers → RCE.
-- [[Class notes/HTB Academy/CPTS v2 (claude)/CORS Misconfiguration|CORS Misconfiguration]] — JSONP and cross-origin JSON reads.
+- [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] — **prototype pollution** (the JS-specific JSON bug) and JSON-fed deserialization.
+- [[Techniques/NoSQL Injection|NoSQL Injection]] — JSON operator/type-confusion payloads (`{"$ne":null}`) into Mongo-style backends.
+- [[Techniques/Deserialization|Deserialization]] — type-binding JSON deserializers → RCE.
+- [[Techniques/CORS Misconfiguration|CORS Misconfiguration]] — JSONP and cross-origin JSON reads.
 
 **Tooling:** [[Tools/Web/Burpsuite|Burp Suite]] (Repeater, the JSON web-token/Content-Type tampering), [[Tools/File Transfer/cURL|curl]], `jq` for parsing/reshaping, PP-finder/DOM Invader for prototype pollution.
 

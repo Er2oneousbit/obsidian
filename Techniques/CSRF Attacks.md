@@ -8,7 +8,7 @@ Cross-Site Request Forgery forces an authenticated victim's browser to issue a *
 
 CSRF is **write-only by default**. Same-origin policy stops the attacker's page from reading the response, so you fire the request blind and confirm impact out-of-band (the email actually changed, the role actually escalated). Chaining with [[CORS Misconfiguration]] or [[Cross-Site Scripting (XSS)]] is what turns it into a read primitive.
 
-Pairs with [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]], [[WebSockets]], [[OAuth-OIDC-SAML]], [[GraphQL]].
+Pairs with [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]], [[WebSockets]], [[OAuth-OIDC-SAML]], [[GraphQL Attacks|GraphQL]].
 
 ---
 
@@ -132,7 +132,7 @@ curl -s -X POST "https://target.com/api/account" \
 # 200 / accepted → CSRF-able. 415 Unsupported Media Type → properly locked down.
 ```
 
-> [!tip] Same trick applies to GraphQL — see [[#Chained Vectors]] and [[GraphQL]].
+> [!tip] Same trick applies to GraphQL — see [[#Chained Vectors]] and [[GraphQL Attacks|GraphQL]].
 
 ### Multipart / File Upload
 
@@ -572,7 +572,7 @@ An open redirect on the target turns a cross-site request into a same-site one, 
 - [[Cross-Site Scripting (XSS)]] - XSS defeats every CSRF control; also the cookie-injection route for double-submit
 - [[CORS Misconfiguration]] - Makes the token page readable cross-origin, enabling prefetch
 - [[WebSockets]] - CSWSH is CSRF against the WS handshake
-- [[GraphQL]] - Content-type tolerance makes GraphQL mutations CSRF-able
+- [[GraphQL Attacks|GraphQL]] - Content-type tolerance makes GraphQL mutations CSRF-able
 - [[OAuth-OIDC-SAML]] - `state` parameter is CSRF protection for the OAuth callback
 - [[Web Attacks]] - HTTP verb tampering and method override, reused here
 - [[Server-Side Attacks]] - Open redirect chaining

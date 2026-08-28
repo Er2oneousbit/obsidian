@@ -45,7 +45,7 @@ rsf > show options
 
 > [!note] The bundled module set lags current CVEs — it's strong on older consumer-router bugs, thin on the latest enterprise-firewall RCEs. For those (FortiOS, PAN-OS, IOS XE) reach for the dedicated PoCs or [[Tools/Payloads & Shells/metasploit|Metasploit]] modules instead.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] — embedded/router exploitation and default-credential testing.
+> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] — embedded/router exploitation and default-credential testing.
 
 ---
 

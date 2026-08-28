@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Automated input injection to discover hidden endpoints, parameters, files, vhosts, and vulnerabilities. Core web recon technique — brute-force dirs/files/params/APIs, fuzz inputs for injection flaws, and map the attack surface before exploitation. Pairs with [[API Attacks]], [[GraphQL]], [[JWT Attacks]], [[WebSockets]].
+Automated input injection to discover hidden endpoints, parameters, files, vhosts, and vulnerabilities. Core web recon technique — brute-force dirs/files/params/APIs, fuzz inputs for injection flaws, and map the attack surface before exploitation. Pairs with [[API Attacks]], [[GraphQL Attacks|GraphQL]], [[JWT Attacks]], [[WebSockets]].
 
 ---
 

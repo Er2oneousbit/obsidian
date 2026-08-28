@@ -35,8 +35,8 @@ java -cp target/marshalsec-0.0.3-SNAPSHOT-all.jar \
 
 > [!note] The `Exploit.java` class you serve needs its payload in a **static initializer block**, not `main()` — the JVM runs the static block on class load, which is the only code that executes during the referral.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Deserialization|Deserialization]] — Java unmarshalling gadgets and JNDI referral servers. Native-serialization chains are [[Tools/Payloads & Shells/ysoserial|ysoserial]].
-> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
+> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — Java unmarshalling gadgets and JNDI referral servers. Native-serialization chains are [[Tools/Payloads & Shells/ysoserial|ysoserial]].
+> Also used in [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
 
 ---
 

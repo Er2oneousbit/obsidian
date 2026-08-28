@@ -281,3 +281,13 @@ docker -H tcp://<target>:2375 cp <container_id>:/app/config.py /tmp/
 | docker.sock escape | `docker run -it -v /:/mnt alpine chroot /mnt` |
 | Inspect env vars | `docker -H tcp://host:2375 inspect <id> --format '{{json .Config.Env}}'` |
 | Container logs | `docker -H tcp://host:2375 logs <id>` |
+
+---
+
+> [!note] **See also** — the counterpart to this *network-exposed daemon* note is [[Techniques/Container Escape|Container Escape]] (breaking out from *inside* a container, incl. a locally-mounted `docker.sock`). Orchestration: [[Services/Cloud & Data/Kubernetes|Kubernetes]]. Defensive view: [[Frameworks and Compliance/Container-Security|Container Security]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

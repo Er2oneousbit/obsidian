@@ -8,7 +8,7 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 **Most common target: MongoDB** — widely used, operator injection is well-understood.
 
-**Key difference from SQLi:** Instead of breaking out of string quotes, you inject JSON operators like `$ne`, `$gt`, `$regex` to change query logic. Pairs with [[SQL Injection]], [[GraphQL]], [[Server-Side Attacks]].
+**Key difference from SQLi:** Instead of breaking out of string quotes, you inject JSON operators like `$ne`, `$gt`, `$regex` to change query logic. Pairs with [[SQL Injection]], [[GraphQL Attacks|GraphQL]], [[Server-Side Attacks]].
 
 ---
 

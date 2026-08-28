@@ -158,7 +158,7 @@ Key sections:
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
+> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
 
 ---
 

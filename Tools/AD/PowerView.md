@@ -27,6 +27,8 @@ Get-DomainUser -Credential $cred
 
 > [!note] **PowerView vs BloodHound** — BloodHound covers most of this automatically and shows attack paths visually. Use PowerView for targeted queries, verifying specific access, and ACL manipulation (BloodHound is read-only). Both complement each other on an engagement.
 
+> [!warning] **Maintenance & OPSEC.** PowerSploit is **archived/unmaintained** — the community canon is the **`dev` branch** of `PowerView.ps1` (more functions, `Get-Domain*` naming used here). It is **heavily AMSI/Defender-signatured**: a straight `Import-Module .\PowerView.ps1` on a hardened host trips it. Load an obfuscated/renamed copy, AMSI-patch first, or run the individual functions from memory. On a Linux-only foothold there's no PowerShell — reach for **`powerview.py`** (dirkjanm/aniqfakhrul), which reimplements most of these over LDAP with the same verbs.
+
 ---
 
 ## Domain Enumeration
@@ -311,6 +313,10 @@ Get-DomainGroup -Properties * | Export-Csv groups.csv -NoTypeInformation
 
 ---
 
+> [!note] **See also** — the automated/visual counterpart is [[Tools/AD/BloodHound|BloodHound]] (use PowerView to *verify* and *weaponise* the edges it draws). Share-pillaging is faster with [[Tools/AD/Snaffler|Snaffler]] than `Find-InterestingDomainShareFile`. The ACL-abuse primitives here feed [[Services/Active Directory/ACL Abuse|ACL Abuse]] and the Kerberoast/AS-REP prep feeds [[Services/Active Directory/Kerberos|Kerberos]]; used throughout [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

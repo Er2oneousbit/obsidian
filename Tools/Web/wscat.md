@@ -43,9 +43,9 @@ wscat -l 8080
 
 > [!tip] The highest-yield test is whether authorization is re-checked **per message** or only at the handshake. Connect as a low-privilege user, then send a privileged action — a lot of implementations authenticate once on upgrade and trust every frame afterwards.
 
-> [!note] If the handshake succeeds with an arbitrary `Origin`, the endpoint is likely vulnerable to Cross-Site WebSocket Hijacking — see [[Class notes/HTB Academy/CPTS v2 (claude)/WebSockets|WebSockets]].
+> [!note] If the handshake succeeds with an arbitrary `Origin`, the endpoint is likely vulnerable to Cross-Site WebSocket Hijacking — see [[Techniques/WebSockets|WebSockets]].
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — WebSocket fuzzing; [[Class notes/HTB Academy/CPTS v2 (claude)/WebSockets|WebSockets]] — full attack surface. [[Tools/Web/Burpsuite|Burp Suite]] handles interception and replay when you need the proxy view.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — WebSocket fuzzing; [[Techniques/WebSockets|WebSockets]] — full attack surface. [[Tools/Web/Burpsuite|Burp Suite]] handles interception and replay when you need the proxy view.
 
 ---
 

@@ -191,6 +191,32 @@ sqlmap -r register.txt --second-req profile_request.txt
 
 > [!note] Classic case: a **registration / update** form stores your injected value, and it only reaches SQL when an **admin or profile** page later renders it. `--second-*` makes sqlmap re-check that page after every payload.
 
+> [!warning] **Second-order error-based on a redirect:** if the DBMS error (`1064`/XPATH) renders only on the **302 target**, not the immediate reply, sqlmap's error-based probes never see their marker and report *"not injectable"* — even though a manual `extractvalue` works by eye. Fix: `--technique=E --parse-errors --second-url="<the page that shows the error>"`. Time-based often auto-detects here anyway because it needs *nothing* in the body.
+
+### MariaDB error-based comes back empty → `--no-cast` (not `--hex`)
+
+Error-based dumps returning **NULL/empty** on MariaDB are usually sqlmap's default `CAST(... AS NCHAR)` wrapper resolving to NULL. Fix with **`--no-cast`**:
+
+```bash
+sqlmap -r req.txt --dbms=mysql --technique=E --parse-errors \
+       --second-url="http://target/forgot_password.php" --no-cast --current-db
+```
+
+> [!warning] **Do NOT reach for `--hex` here.** `--hex` doubles the byte length of every value, and `extractvalue`/`updatexml` error-based is **capped at ~31–32 chars per read** (XPATH truncation). Hex halves your usable output and makes long values (hashes) worse. `--no-cast` is the fix for the CAST→NULL problem; hex is for odd-charset garbling on *other* channels.
+
+### Lossy channel: a low `--tables`/`--dump` count is not a fact
+
+On a flaky channel (second-order flash, heavy truncation, retries), **negative results are worthless.** `--tables` does a COUNT read + one read *per row* — a single dropped read silently caps the loop and drops tables **with no error**. On MonitorsThree `--tables` reported 3 and **missed the `users` cred table entirely**; `--search -C username,password` found it in one clean read.
+
+```bash
+# Reliability ∝ 1/(reads required). Prefer the op that needs the FEWEST reads:
+sqlmap -r req.txt --no-cast --retries=10 --search -C username,password,email,secret   # ~1 read, finds the table
+sqlmap -r req.txt --no-cast --retries=10 --dump -T users -D appdb                     # then dump it directly
+sqlmap -r req.txt --no-cast --dump -T users --where "username='admin'"                # per-row if hashes come back short/garbled
+```
+
+**Rule:** once you know a table/column name, skip discovery and go straight to `--dump -T <name>` (or per-row `--where`). "3 tables" means "3 survived this run," not "3 exist."
+
 ---
 
 ## Enumeration
@@ -410,10 +436,10 @@ sqlmap -u "..." --answers="crack=N,dict=N"      # pre-answer specific prompts un
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — SQL injection in API endpoints. Service: [[Services/Database Services/SQLite|SQLite]] — automated SQLite injection with `--dbms=sqlite`.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]], [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — SQL injection in API endpoints. Service: [[Services/Database Services/SQLite|SQLite]] — automated SQLite injection with `--dbms=sqlite`.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-20*
+*Updated: 2026-08-25*
 *Model: claude-opus-5*

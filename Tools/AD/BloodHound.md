@@ -4,15 +4,37 @@
 
 Graph-based Active Directory attack path visualizer. Ingests data collected by SharpHound (or AzureHound for Azure AD) and maps relationships between users, groups, computers, GPOs, and ACLs into attack paths. Instantly answers "how do I get from this low-priv user to Domain Admin?" — essential on every internal engagement.
 
-**Source:** https://github.com/SpecterOps/BloodHound
-**Legacy CE:** https://github.com/BloodHoundAD/BloodHound (BloodHound Community Edition — still widely used)
-**SharpHound:** https://github.com/BloodHoundAD/SharpHound
+**Source (CE):** https://github.com/SpecterOps/BloodHound
+**Legacy (archived):** https://github.com/BloodHoundAD/BloodHound
+**SharpHound (CE):** https://github.com/SpecterOps/SharpHound — Legacy SharpHound: https://github.com/BloodHoundAD/SharpHound
 
-> [!note] There are two versions in active use: **BloodHound CE** (new, web UI, Docker-based, SpecterOps) and **BloodHound Legacy** (older Electron app + Neo4j). Most teams still use Legacy. This note covers both where they differ.
+> [!warning] **CE is now the standard — Legacy is deprecated.** SpecterOps sunset **BloodHound Legacy** (the Electron app + your own Neo4j); the `BloodHoundAD` repos are archived and receive no new edges/queries. **New work should use BloodHound CE** (web UI, bundled Postgres+Neo4j, `bloodhound-cli`). You'll still meet Legacy on older engagements and in shared DB dumps, so both are covered below — but match your **collector version to your BloodHound version** (CE SharpHound / `bloodhound-ce-python` for CE; legacy SharpHound / `bloodhound-python` for Legacy). Mixing versions produces "0 objects imported."
+
+> [!note] **See also** — collectors & companions: [[Tools/Cloud/AzureHound|AzureHound]] (Entra/Azure graph), [[Tools/AD/PowerView|PowerView]] and [[Tools/AD/ldapsearch|ldapsearch]] (manual enum when you want to confirm an edge BloodHound drew). Abuse the paths it finds: [[Services/Active Directory/ACL Abuse|ACL Abuse]] (GenericAll/WriteDacl/WriteOwner), [[Services/Active Directory/Kerberos|Kerberos]] (Kerberoast/AS-REP/delegation edges), [[Tools/AD/Certipy|Certipy]] (the `Enroll`/AD CS edges → ESC paths). The `ReadLAPSPassword` edge → [[Tools/AD/LAPSToolkit|LAPSToolkit]].
 
 ---
 
-## Setup — BloodHound Legacy (Most Common)
+## Setup — BloodHound CE (Current)
+
+```bash
+# Easiest — bloodhound-cli (SpecterOps' installer, pulls the compose stack for you)
+curl -L https://ghst.ly/getbhce -o docker-compose.yml   # or use bloodhound-cli
+docker compose -f docker-compose.yml up -d
+
+# Or clone the repo and bring the stack up directly
+git clone https://github.com/SpecterOps/BloodHound.git
+cd BloodHound
+docker compose up -d
+
+# Access the web UI at http://localhost:8080
+# The randomly-generated admin password is printed ONCE in the logs on first run:
+docker compose logs bloodhound | grep -i "Initial Password"
+# Login: admin / <that password>  → you're forced to change it immediately
+```
+
+> [!note] CE bundles its own Postgres + Neo4j in the compose stack — you do **not** install Neo4j yourself. Data lives in Docker volumes, so `docker compose down` (without `-v`) preserves imported graphs.
+
+## Setup — BloodHound Legacy (deprecated, still seen)
 
 ```bash
 # Install Neo4j (graph database backend)
@@ -22,7 +44,7 @@ neo4j start
 # Default Neo4j credentials: neo4j:neo4j
 # First login at http://localhost:7474 — change password
 
-# Download BloodHound binary
+# Download BloodHound binary (archived releases)
 wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip
 unzip BloodHound-linux-x64.zip
 cd BloodHound-linux-x64
@@ -32,19 +54,6 @@ cd BloodHound-linux-x64
 # DB URL: bolt://localhost:7687
 # Username: neo4j
 # Password: <your new password>
-```
-
-## Setup — BloodHound CE (New)
-
-```bash
-# Requires Docker
-git clone https://github.com/SpecterOps/BloodHound.git
-cd BloodHound
-docker compose up -d
-
-# Access at http://localhost:8080
-# Default creds printed in docker logs on first run
-docker compose logs | grep -i "initial password"
 ```
 
 ---
@@ -83,26 +92,28 @@ SharpHound collects AD data from a domain-joined Windows host or from a Linux at
 
 ### From Linux (BloodHound.py — No Domain Join Required)
 
-```bash
-# Install
-pip3 install bloodhound
-# or
-git clone https://github.com/fox-it/BloodHound.py && pip3 install .
+> [!warning] **Pick the collector that matches your BloodHound version.** `bloodhound-python` (pip `bloodhound`) emits **Legacy**-format JSON; **CE needs the CE collector** — `pip install bloodhound-ce` → `bloodhound-ce-python` (same flags). Feeding Legacy JSON to CE (or vice-versa) imports **0 objects**. dirkjanm ships them from one repo (the `bloodhound-ce` branch).
 
-# Full collection with credentials
-bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -dc dc01.corp.local -c All
+```bash
+# Legacy format
+pip3 install bloodhound            # → bloodhound-python
+# CE format
+pip3 install bloodhound-ce         # → bloodhound-ce-python  (identical CLI)
+
+# Full collection with credentials (swap the binary name for CE)
+bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -dc dc01.corp.local -c All --zip
 
 # With NTLM hash (pass-the-hash)
-bloodhound-python -u jsmith --hashes ':aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c' -d CORP.LOCAL -dc dc01.corp.local -c All
+bloodhound-python -u jsmith --hashes ':8846f7eaee8fb117ad06bdd830b7586c' -d CORP.LOCAL -dc dc01.corp.local -c All --zip
 
-# Specify nameserver (if DNS not configured)
-bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -ns 10.10.10.10 -c All
+# Specify nameserver (if DNS not configured — common on HTB)
+bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -ns 10.10.10.10 -c All --zip
 
-# Output to specific directory
-bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -dc dc01.corp.local -c All --zip -o /tmp/bh/
+# Kerberos auth (ccache) instead of password
+KRB5CCNAME=jsmith.ccache bloodhound-python -u jsmith -k -no-pass -d CORP.LOCAL -dc dc01.corp.local -c All --zip
 ```
 
-> [!note] BloodHound.py output is slightly less complete than SharpHound — local admin rights and some session data may be missing. Use SharpHound from a Windows host when possible.
+> [!note] The Python collector is slightly less complete than SharpHound — some local-group/session data needs on-host collection. Use SharpHound from a Windows host when you have one; the Python collector is the go-to when you only have creds and a network path.
 
 ---
 
@@ -118,9 +129,9 @@ bloodhound-python -u jsmith -p 'Password123!' -d CORP.LOCAL -dc dc01.corp.local 
 
 ---
 
-## Key Queries (Legacy — Pre-Built)
+## Key Queries (Pre-Built)
 
-Access via the **Analysis** tab in BloodHound Legacy.
+Legacy: the **Analysis** tab. CE: the **Cypher** tab → *Pre-built Searches* (folder icon). Same intent, different menu; most Legacy pre-builts have a CE equivalent.
 
 ```
 # Highest value targets
@@ -150,6 +161,8 @@ Find Computers with Constrained Delegation
 ## Custom Cypher Queries
 
 Run directly in the BloodHound search bar (Legacy) or Cypher tab (CE).
+
+> [!warning] **CE dropped the `highvalue` property.** Legacy tagged sensitive nodes with `highvalue:true`; **CE replaced this with "Tier Zero"**, tracked in `system_tags` (e.g. `admin_tier_0`), and auto-populates it. The `WHERE t.highvalue=true` queries below are **Legacy-only** — on CE, target Tier Zero instead (mark/inspect nodes via the node's **Tier Zero** tag, or filter on `n.system_tags CONTAINS 'admin_tier_0'`). Node labels (`User`,`Computer`,`Group`) and edge names (`AdminTo`,`GenericAll`,…) are unchanged across both.
 
 ```cypher
 // Find all users with paths to Domain Admins
@@ -264,5 +277,5 @@ MATCH (c:Computer {name:"WS01.CORP.LOCAL"}) SET c.owned=true
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

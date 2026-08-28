@@ -19,7 +19,7 @@ hashcat --force    # add to any command to force CPU mode
 > [!note] **Hashcat vs JTR** — Use hashcat for GPU-accelerated bulk cracking of large hash dumps. Use JTR for the 2john file extraction workflow (SSH keys, KeePass, Office docs) and quick single-mode runs. They complement each other.
 
 > [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] AS-REP Roasting (mode 18200) and Kerberoasting (mode 13100/19700) sections.
-> Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> Also used in [[Techniques/JWT Attacks|JWT Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
@@ -79,6 +79,7 @@ hashcat --help | grep -i bcrypt
 | `7400` | SHA-256 crypt (`$5$` — Linux shadow) |
 | `1500` | DES crypt (legacy Linux) |
 | `400` | phpBB / WordPress / Joomla MD5 |
+| `10900` | **PBKDF2-HMAC-SHA256** (Werkzeug/Flask, Django `pbkdf2_sha256`) |
 | `3000` | LM hash |
 | `5200` | KeePass |
 | `9600` | MS Office 2013 |
@@ -268,6 +269,24 @@ hashcat -a 0 -m 16500 jwt.txt /usr/share/wordlists/rockyou.txt
 hashcat -a 0 -m 22000 handshake.hccapx /usr/share/wordlists/rockyou.txt
 ```
 
+### Web-App Framework Hashes (Werkzeug / Flask, Django)
+
+Password hashes pulled from a Flask/Django app DB (SQLite, a leaked backup, or an SQLi dump) — mode **10900** (`PBKDF2-HMAC-SHA256`). Werkzeug stores them as `pbkdf2:sha256:<iter>$<salt>$<hexdigest>`, but hashcat wants a **different layout**, so reformat first:
+
+```bash
+# Werkzeug:   pbkdf2:sha256:600000$YnRgjnim$c9541a8c...   (raw-ASCII salt, hex digest)
+# hashcat 10900 wants:  sha256:<iter>:base64(salt):base64(raw_digest)
+python3 -c 'import base64,sys;m,a,it_s=sys.argv[1].split(":");it,s,h=it_s.split("$"); \
+print(f"sha256:{it}:{base64.b64encode(s.encode()).decode()}:{base64.b64encode(bytes.fromhex(h)).decode()}")' \
+  'pbkdf2:sha256:600000$YnRgjnim$c9541a8c...'
+
+hashcat -a 0 -m 10900 werkzeug.hash /usr/share/wordlists/rockyou.txt
+```
+
+> [!tip] **No conversion, or no GPU?** [[Tools/Auth/Werkzeug-Cracker|Werkzeug-Cracker]] eats the `pbkdf2:sha256:…` string **as-is** (calls `check_password_hash`) and handles scrypt too — CPU-only but zero reformatting. Django's own `pbkdf2_sha256$<iter>$<salt>$<b64>` is the same mode 10900 with its own layout.
+
+> [!warning] **PBKDF2 is GPU-*slow*** — the iteration chain is serial, so only *candidates* parallelise (a 600k-iter hash ≈ 4 kH/s even on a good GPU). Don't let the headline iteration count talk you out of it: rockyou is frequency-ordered, so run it — a common password surfaces in the first minute. See the [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] "run the wordlist before optimising it" note.
+
 ---
 
 ## Session Management
@@ -326,5 +345,5 @@ hashcat -a 0 -m 1000 hashes.txt rockyou.txt --force
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-08-26*
 *Model: claude-opus-5*

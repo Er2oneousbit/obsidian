@@ -450,7 +450,7 @@ Set-AADIntPTABypass -Enable   # makes the agent accept any password for any user
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the protocol-level view of device code phishing, FOCI refresh-token pivoting, PRT escalation, and Silver SAML that this note applies to the M365/Entra environment.
+> [!note] **See also** — [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the protocol-level view of device code phishing, FOCI refresh-token pivoting, PRT escalation, and Silver SAML that this note applies to the M365/Entra environment.
 > Protocol reference — how SAML works and the signing-cert trust model Golden/Silver SAML forge against: [[Standards & Protocols/SAML|SAML]].
 > Protocol reference — OAuth 2.0 / OIDC, the token model behind device-code phishing, FOCI, and PRT abuse: [[Standards & Protocols/OAuth-OIDC|OAuth 2.0 & OIDC]].
 
