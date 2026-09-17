@@ -1,6 +1,6 @@
 # Fuzzing
 
-#Fuzzing #ffuf #wfuzz #WebSecurity #recon #gobuster #feroxbuster #nuclei #dirsearch #kiterunner #katana #Arjun #nikto #GraphQL #JWT #WebSockets #WAFEvasion
+#Fuzzing #ffuf #wfuzz #WebSecurity #recon #gobuster #feroxbuster #nuclei #dirsearch #kiterunner #katana #Arjun #nikto #GraphQL #JWT #WebSockets #WAFEvasion #RawRequest
 
 ## What is this?
 
@@ -82,6 +82,21 @@ ffuf -u https://target.com/FUZZ -w /path/to/wordlist.txt
 | `-fr` | Filter regex |
 
 > **Tip:** Run once without filters first, note the 404/error response size, then add `-fs <size>` to remove noise.
+
+### Raw Request Mode (`-request`) — fuzz a captured Burp request
+
+Hand-building `-X`/`-H`/`-d`/`-b` for a complex **authenticated** request (many headers, a long cookie, a JSON body, a CSRF token) is slow and error-prone. Instead, **save the working request from Burp** (Proxy/Repeater → right-click → *Copy to file*, or *Save item*), drop `FUZZ` anywhere in it, and hand the file to ffuf:
+
+```bash
+# reqfile.txt = a raw HTTP request with FUZZ placed in the path, a header, or the body
+ffuf -request reqfile.txt -request-proto https -w wordlist.txt -mc 200
+# everything — method, path, EVERY header (Cookie/Authorization/Content-Type), body — comes from the file
+# -request-proto http  for plaintext (default is https)
+```
+
+So an authenticated JSON-API fuzz becomes: paste the request that already works, replace the one value with `FUZZ`, run — no rebuilding auth by hand. This is also the cleanest way to fuzz a value **deep inside** a body or a signed/cookied request.
+
+> [!tip] Generating candidates instead of reading a file? `--input-cmd` streams an external generator's stdout as the wordlist: `ffuf -u http://t/FUZZ --input-cmd 'seq 1 5000'` (numeric IDs / IDOR sweeps), or pipe `crunch`/a script — no wordlist on disk. Pairs with `-request` to fuzz a generated value inside a captured request.
 
 ---
 
@@ -1499,6 +1514,7 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 | Goal | Command |
 |---|---|
 | Dir fuzz (auto-calibrate) | `ffuf -u http://target.com/FUZZ -w raft-medium-directories.txt -ac` |
+| Fuzz a captured Burp request | `ffuf -request req.txt -request-proto https -w wordlist.txt -mc 200` (FUZZ inside the saved request) |
 | Recursive dir fuzz | `ffuf -u http://target.com/FUZZ -w raft-medium-directories.txt -recursion -recursion-depth 3 -mc 200,301,302,403` |
 | File/extension fuzz | `ffuf -u http://target.com/FUZZ -w raft-medium-words-lowercase.txt -e .php,.html,.txt,.bak -mc 200` |
 | Param name fuzz | `ffuf -u "http://target.com/search?FUZZ=test" -w burp-parameter-names.txt -fs <default>` |
@@ -1525,5 +1541,6 @@ cat results.json | jq '.results[] | {url: .url, status: .status, length: .length
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-08-14*
+*Updated: 2026-09-01*
+*Model: claude-opus-5*
 *Model: claude-opus-5*

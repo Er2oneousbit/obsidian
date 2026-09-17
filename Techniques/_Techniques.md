@@ -26,6 +26,7 @@ Notes here follow the [[Class notes/HTB Academy/Notes|CWES/CPTS note skeleton]] 
 ### Web / application
 - [[Techniques/CORS Misconfiguration|CORS Misconfiguration]] — attacker-origin reads of authenticated responses; browser-enforced only.
 - [[Techniques/CSRF Attacks|CSRF Attacks]] — forcing authenticated state-changing requests; token / SameSite bypasses.
+- [[Techniques/CSV Injection|CSV Injection]] — formula injection into CSV/XLSX exports; exfil via `HYPERLINK`/`WEBSERVICE`/`IMPORT*`, DDE, server-side renderers.
 - [[Techniques/Null Origin Attacks|Null Origin Attacks]] — abusing `Origin: null` trust (sandboxed iframes, redirects, local files).
 - [[Techniques/JWT Attacks|JWT Attacks]] — `alg:none`, RS256→HS256 confusion, `kid`/`jku`/`jwk` injection, secret cracking.
 - [[Techniques/OAuth-OIDC-SAML|OAuth-OIDC-SAML]] — SSO/token attacks: `redirect_uri` abuse, XSW, signature stripping, device-code phishing.
@@ -45,5 +46,5 @@ Notes here follow the [[Class notes/HTB Academy/Notes|CWES/CPTS note skeleton]] 
 ---
 
 *Created: 2026-08-28*
-*Updated: 2026-08-28*
+*Updated: 2026-09-17*
 *Model: claude-opus-5*

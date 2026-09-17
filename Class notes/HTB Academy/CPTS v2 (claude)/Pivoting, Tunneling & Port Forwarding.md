@@ -128,7 +128,7 @@ nmap -v -sV -p1234 localhost
 netstat -antp | grep 1234
 ```
 
-### Dynamic port forwarding (-D) — SOCKS proxy
+> [!warning] **Forwarding a loopback-only web UI? Firefox will bypass your proxy for `localhost`.** When you pull an internal service to `127.0.0.1:<port>` with `-L` and try to view it through Burp, Firefox sends localhost traffic **direct**, so Burp sees nothing and the requests never get logged/intercepted. Fix: `about:config` → set **`network.proxy.allow_hijacking_localhost = true`** (or forward to a `/etc/hosts` alias instead of `127.0.0.1`). Same trap bites any "proxy the tunneled loopback app" workflow.
 
 Creates a SOCKS proxy on your local machine — route all proxychains traffic through it.
 
@@ -865,5 +865,5 @@ WINDOWS PIVOT
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-25*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

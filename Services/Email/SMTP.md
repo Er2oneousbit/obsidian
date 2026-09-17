@@ -286,6 +286,14 @@ git clone https://github.com/duy-31/CVE-2023-51764 && cd CVE-2023-51764
 
 ---
 
+### Known-Vulnerable MTA — Haraka (Node.js)
+
+Always read the banner (`nc -nv <target> 25`). If it says **`ESMTP Haraka <version>`** and the version is **< 2.8.9**, you likely have unauthenticated RCE via the attachment plugin (CVE-2016-1000282, "Harakiri") — sending a mail with a poisoned archive attachment runs a command as the Haraka user. Full mechanics + Metasploit/PoC: [[Services/Email/Haraka|Haraka]].
+
+> [!tip] The banner-version → known-CVE reflex applies to any MTA, not just Haraka. A verbose Exim/Sendmail/Postfix version string is the fastest route from *port 25 open* to *specific public exploit* — match the exact version before hand-rolling anything.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -319,5 +327,5 @@ git clone https://github.com/duy-31/CVE-2023-51764 && cd CVE-2023-51764
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-13*
-*Model: claude-opus-5*
+*Updated: 2026-09-04*
+*Model: claude-opus-4-8*

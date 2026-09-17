@@ -70,8 +70,14 @@ nslookup -query=SRV _ldap._tcp.dc._msdcs.inlanefreight.local 172.16.5.5
 nslookup -query=SRV _kerberos._tcp.dc._msdcs.inlanefreight.local 172.16.5.5
 ```
 
+> [!note] **Zone transfer** — Only the **Windows** `nslookup` has the interactive `ls -d <domain>` AXFR command; the Linux/`bind9-dnsutils` build dropped `ls`. On Linux use `dig axfr @<ns> <domain>` instead (see [[Tools/Network/dig|dig]]).
+
+---
+
+> [!note] **See also** — [[Tools/Network/dig|dig]] is the preferred Linux DNS tool (zone transfers, scriptable `+short` output). Bulk subdomain/zone enumeration: [[Tools/Network/dnsenum|dnsenum]], [[Tools/Network/dnsrecon|dnsrecon]]. Registration data: [[Tools/Network/WHOIS|WHOIS]]. Service context: [[Services/Network management/DNS|DNS]].
+
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

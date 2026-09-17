@@ -37,10 +37,10 @@ Get-ChildItem -Path "C:\loot\" -File | ForEach-Object {
 
 > [!note] The upload path is `/upload` — POSTing to `/` returns the directory listing instead and your file goes nowhere. Field name must be `files`.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — receiving exfil from a target; download-direction counterpart is `python3 -m http.server`, or [[Tools/File Transfer/updog|updog]] for both directions with a UI.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — receiving exfil from a target; download-direction counterpart is [[Tools/File Transfer/python-http-server|python-http-server]], or [[Tools/File Transfer/updog|updog]] for both directions with a UI.
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

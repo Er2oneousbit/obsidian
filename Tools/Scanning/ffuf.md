@@ -156,6 +156,30 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 
 ---
 
+## Trusting a Negative — Rate Limiting
+
+Beyond a bad filter (above), the **transport** can silently eat true positives: some targets **drop requests over a throughput threshold**, and a dropped response is indistinguishable from a 404 — ffuf reports nothing for paths that really exist.
+
+- **`-t` (threads) is NOT the throttle — `-rate` is.** Threads cap concurrency, not requests/sec; a low `-t` can still burst well over a rate limit. On a box that dropped above ~40 req/s, even `-t 10` unthrottled lost results — only `-rate 30` was stable (default `-t 40` unthrottled lost ~two-thirds of true positives).
+- **Calibrate with canaries before a big run.** Seed the wordlist with a few paths you've *already confirmed* exist (via curl), sweep the rate, and count how many come back:
+
+```bash
+# mix 3 known-good paths into a sample of the real wordlist
+{ head -3000 wordlist.txt; printf 'login\ndashboard\nregistration\n'; } | awk '!seen[$0]++' > canary.txt
+for R in 200 60 40 30 20; do
+  echo "== rate $R =="
+  ffuf -u http://target/FUZZ -w canary.txt -rate $R -mc 200 2>/dev/null | grep -E 'login|dashboard|registration'
+done
+# use the HIGHEST rate that returns ALL canaries on every run, then launch the full scan there
+```
+
+> [!warning] **Strip `logout` (and friends) from an *authenticated* wordlist.** `raft-medium-directories` contains `logout`/`logoff`/`signout` (+ capitalised variants). Hitting one mid-scan destroys the session server-side, and **every result after it is a silent false negative** — a *second*, unrelated failure mode stacking on the rate problem, near-impossible to untangle after the fact.
+> ```bash
+> grep -vixE 'logout|log-out|log_out|signout|sign-out|logoff' wordlist.txt > wl_nologout.txt
+> ```
+
+> [!tip] **A clean fuzz ≠ the surface is mapped — the crawl outranks the content-brute.** Custom route names (`forget-password`, `post-login`) are *unguessable by construction* — no wordlist, however large, contains them. Reading page source / JS / forms (or a Burp crawl) finds the real routes a brute never will. Fuzz for what you **can't** see linked; never let an empty run convince you the app is fully enumerated.
+
 ## Key Flags
 
 | Flag | Description |
@@ -183,5 +207,5 @@ ffuf -w wordlist.txt:FUZZ -u http://10.129.14.128/FUZZ \
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-26*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

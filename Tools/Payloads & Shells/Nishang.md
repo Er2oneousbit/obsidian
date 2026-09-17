@@ -39,7 +39,7 @@ ls /usr/share/nishang/
 | Script | Description |
 |--------|-------------|
 | `Execution/Execute-Command-MSSQL.ps1` | Execute commands via MSSQL |
-| `Execution/Invoke-Decode.ps1` | Decode/deobfuscate scripts |
+| `Utility/Invoke-Decode.ps1` | Decode/deobfuscate scripts (in `Utility/`, not `Execution/`) |
 
 ### Escalation / Post-Exploit
 
@@ -117,10 +117,13 @@ echo -n "$cmd" | iconv -t UTF-16LE | base64 -w 0
 - PowerShell v5+ logs ScriptBlock content — use AMSI bypass before loading
 - HTTPS variant (`Invoke-PoshRatHttps`) encrypts C2 traffic
 - Nishang signatures are well-known — obfuscate or modify variable/function names for AV evasion
-- See [[Antak]] for the web shell component
+
+---
+
+> [!note] **See also** — [[Tools/Payloads & Shells/Antak|Antak]] is Nishang's ASPX web-shell component. Deliver/stage the scripts via [[Tools/File Transfer/PowerShell Transfers|PowerShell Transfers]] + [[Tools/File Transfer/python-http-server|python-http-server]]; full workflow in [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] and [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]]. Cross-platform payload generation: [[Tools/Payloads & Shells/msfvenom|msfvenom]].
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

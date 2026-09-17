@@ -21,9 +21,12 @@ braa public@10.129.14.128:.1.3.6.*
 ```bash
 braa [community]@[target]:[OID]
 
-# Multiple targets
+# Multiple targets (space-separated queries, or a host1-host2 dash range)
 braa public@10.129.14.1:.1.3.6.* public@10.129.14.2:.1.3.6.*
+braa public@10.129.14.1-10.129.14.20:.1.3.6.*
 ```
+
+Full spec: `[community@]host1[-host2][:port]:query1[/id][,query2...]` — the OID trailing `*` triggers a walk. CIDR is **not** accepted; ranges are `start-end` only.
 
 ---
 
@@ -53,8 +56,9 @@ braa public@10.129.14.128:.1.3.6.*
 # 3. Target specific OID (Windows users)
 braa public@10.129.14.128:.1.3.6.1.4.1.77.1.2.25.*
 
-# 4. Multi-host sweep (subnet)
-braa public@10.129.14.0/24:.1.3.6.1.2.1.1.5.0
+# 4. Multi-host sweep — braa uses a DASH RANGE, not CIDR.
+#    (`public@10.129.14.0/24:...` silently fails — /24 is not valid braa syntax.)
+braa public@10.129.14.1-10.129.14.254:.1.3.6.1.2.1.1.5.0
 ```
 
 ---
@@ -67,6 +71,10 @@ braa public@10.129.14.0/24:.1.3.6.1.2.1.1.5.0
 
 ---
 
+> [!note] **See also** — Find community strings first with [[Tools/Network/onesixtyone|onesixtyone]]; [[Tools/Network/snmpwalk|snmpwalk]] gives cleaner parsed output for a single host once braa flags a live one. Service-level context and the attack surface: [[Services/Network management/SNMP|SNMP]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

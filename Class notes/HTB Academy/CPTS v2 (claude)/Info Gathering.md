@@ -1,6 +1,6 @@
 # Information Gathering & Reconnaissance
 
-#enumeration #informationgathering #OSINT #recon #DNS #subdomain #SubdomainTakeover #PassiveRecon #shodan #amass #subfinder #bbot #nmap #GoogleDorking
+#enumeration #informationgathering #OSINT #recon #DNS #subdomain #SubdomainTakeover #PassiveRecon #shodan #amass #subfinder #bbot #nmap #GoogleDorking #CDNbypass #originIP #ASN
 
 ## What is this?
 
@@ -87,6 +87,14 @@ whois -h whois.radb.net -- '-i origin AS12345'
 
 # Resolve ASN to CIDR ranges
 whois -h whois.radb.net -- '-i origin AS12345' | grep -E "^route"
+
+# Faster, scriptable — projectdiscovery asnmap (org / domain / ASN / IP → CIDRs)
+asnmap -org "Example Corp" -silent          # all prefixes for an org
+asnmap -d example.com -silent               # ASN + prefixes from a domain
+asnmap -a AS12345 -silent | tee ranges.txt  # CIDRs for an ASN
+
+# Reverse-DNS sweep the owned ranges — PTR names map the estate fast (single dig -x doesn't scale)
+dnsx -ptr -l ranges.txt -resp -silent       # or: mapcidr -cl ranges.txt | dnsx -ptr -resp -silent
 ```
 
 ### Certificate Transparency (crt.sh)
@@ -468,6 +476,55 @@ Web: [https://sitereport.netcraft.com](https://sitereport.netcraft.com) — host
 
 ---
 
+## Finding the Origin IP Behind a CDN / WAF
+
+A WAF/CDN (Cloudflare, CloudFront, Akamai, Fastly) only protects traffic that goes **through the edge**. Find the origin server's real IP, and if it doesn't restrict inbound traffic to just the CDN's ranges, you can hit it directly with a spoofed `Host:` header — bypassing the WAF, rate limits, and geo/IP rules for the **entire** engagement. One of the highest-leverage recon wins against a CDN-fronted target.
+
+```bash
+# 0. Confirm it's actually behind a CDN (else skip this)
+dig +short example.com                 # Cloudflare = 104.16-31.x / 172.64-71.x; CloudFront = *.cloudfront ranges
+curl -skI https://example.com | grep -iE 'server:|cf-ray|x-amz-cf|x-akamai|fastly'
+```
+
+**1. Historical DNS — the IP from before they moved behind the CDN.** Most reliable single method: the origin was usually directly exposed pre-CDN, and the old A record is archived.
+```text
+SecurityTrails (historical A records) — https://securitytrails.com/domain/example.com/history/a
+viewdns.info IP history               — https://viewdns.info/iphistory/?domain=example.com
+crt.sh old certs may name the origin host outright
+```
+
+**2. Certificate pivot on internet-wide scan data.** The origin usually still serves the site's TLS cert — search Censys/Shodan for that cert on non-CDN IPs:
+```bash
+# Shodan/Censys web:  ssl.cert.subject.cn:"example.com"   → any IP NOT in a CDN range = candidate origin
+# Automated (Censys API) — CloudFlair; --cloudfront switches it to CloudFront
+git clone https://github.com/christophetd/CloudFlair
+python3 cloudflair.py --censys-api-id <id> --censys-api-secret <secret> example.com
+```
+
+**3. Favicon / live-SAN pivots.** Reuse the favicon hash (see *Favicon Hash Identification* above) to find the same app on a bare IP; or harvest cert SANs straight off live infrastructure (catches origin/internal names never in CT logs):
+```bash
+echo 203.0.113.0/24 | tlsx -san -cn -silent        # projectdiscovery tlsx — SAN/CN from live certs
+```
+
+**4. Records that commonly skip the CDN.** Ops often front only `www`/apex and leave the rest pointing at origin:
+```bash
+dig +short mail.example.com ftp.example.com direct.example.com origin.example.com cpanel.example.com dev.example.com
+dig +short example.com MX          # MX/SPF frequently expose origin or same-subnet mail IPs (see DNS TXT above)
+```
+
+**5. Validate a candidate**, then pin it and route everything there:
+```bash
+curl -sk -H 'Host: example.com' https://<candidate-ip>/ | grep -i '<title>'
+# Title/body matches the real site → origin confirmed:
+echo '<candidate-ip>  example.com' | sudo tee -a /etc/hosts
+```
+
+> [!tip] Once you hold the origin IP, every later phase (fuzzing, exploitation, brute force) goes **straight to origin** — no WAF signature matching, no CDN rate limit, no "under attack" interstitial. Worth real time before concluding a target is well-defended.
+
+> [!warning] An origin that correctly firewalls inbound 80/443 to the CDN's published ranges can't be reached this way (connection refused/timeout = the firewall is doing its job). And a shared-hosting IP can serve the cert without being your target — always confirm with step 5 before trusting a candidate.
+
+---
+
 ## Virtual Host Enumeration
 
 ```bash
@@ -707,6 +764,8 @@ msfconsole -q -x "search type:exploit apache; exit"
 | Internet scanning | https://www.shodan.io |
 | Internet scanning | https://search.censys.io |
 | ASN / BGP lookup | https://bgp.he.net |
+| Historical DNS (origin hunt) | https://securitytrails.com |
+| IP history (origin hunt) | https://viewdns.info/iphistory |
 | Tech fingerprint | https://sitereport.netcraft.com |
 | Historical pages | https://web.archive.org |
 | Cloud storage | https://buckets.grayhatwarfare.com |
@@ -742,6 +801,7 @@ Active
 [ ] Port scan — full TCP then targeted version/script
 [ ] UDP scan (top 100)
 [ ] Tech fingerprint — whatweb, wafw00f, HTTP headers
+[ ] Behind a CDN/WAF? → hunt the origin IP (historical DNS, cert pivot/CloudFlair, favicon/tlsx, mail records) → validate with Host-header curl → pin in /etc/hosts
 [ ] Virtual host enumeration — ffuf Host header fuzz
 [ ] Directory brute force — ffuf/gobuster/feroxbuster
 [ ] robots.txt, sitemap.xml, .well-known, .git, .env
@@ -753,5 +813,5 @@ Active
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-30*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

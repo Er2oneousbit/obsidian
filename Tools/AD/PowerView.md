@@ -160,6 +160,14 @@ Find-DomainUserLocation -UserIdentity jsmith
 
 # Find where Domain Admins are currently logged in
 Find-DomainUserLocation -GroupName "Domain Admins" | Select-Object UserName, SessionFromName
+
+# Where does the CURRENT user have local admin? — usually the first lateral-movement
+# question you ask. Tests admin access against every computer in the domain:
+Find-LocalAdminAccess
+Find-LocalAdminAccess -ComputerName FS01,FS02        # scope it to specific hosts
+# Then confirm what you can reach and mine it:
+Find-DomainShare -CheckShareAccess                   # readable shares domain-wide
+Find-InterestingDomainShareFile -Include *.ps1,*.config,*pass*   # loot on those shares
 ```
 
 ---
@@ -318,5 +326,5 @@ Get-DomainGroup -Properties * | Export-Csv groups.csv -NoTypeInformation
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

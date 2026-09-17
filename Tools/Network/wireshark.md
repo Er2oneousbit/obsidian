@@ -67,10 +67,10 @@ sudo tshark -i eth0 -f "port 445"
 
 ```bash
 # Apply display filter
-sudo tshark -i eth0 -Y "http.request.method == POST"
+sudo tshark -i eth0 -Y 'http.request.method == "POST"'
 
 # Extract HTTP credentials from pcap
-tshark -r capture.pcap -Y "http.request.method == POST" -T fields \
+tshark -r capture.pcap -Y 'http.request.method == "POST"' -T fields \
   -e http.host -e http.request.uri -e http.file_data
 
 # Extract DNS queries
@@ -100,11 +100,17 @@ tshark -r session.pcap -Y "ntlmssp" -T fields \
   -e ip.src -e ntlmssp.auth.username -e ntlmssp.auth.domain
 
 # 3. Pull HTTP POST bodies (cleartext creds)
-tshark -r session.pcap -Y "http.request.method==POST" -T fields \
+tshark -r session.pcap -Y 'http.request.method == "POST"' -T fields \
   -e ip.src -e http.host -e http.file_data 2>/dev/null
 
-# 4. Check for FTP/Telnet/SMTP cleartext
-tshark -r session.pcap -Y "ftp || telnet" -T fields -e text
+# 4. Check for FTP/SMTP cleartext logins (there is no `text` field — use the
+#    protocol's own fields, or follow the stream for Telnet)
+tshark -r session.pcap -Y "ftp.request.command in {USER PASS}" \
+  -T fields -e ip.dst -e ftp.request.command -e ftp.request.arg
+# Mail (POP/IMAP/SMTP) cleartext logins — spot the sessions, then read the stream:
+tshark -r session.pcap -Y "pop || imap || smtp" -T fields -e ip.dst -e tcp.stream | sort -u
+# Telnet/mail have no single creds field — dump the login from the stream:
+tshark -r session.pcap -q -z follow,tcp,ascii,<stream_no>
 ```
 
 ---
@@ -121,6 +127,10 @@ sudo tshark -i eth0 -f "net 10.129.14.0/24"
 
 ---
 
+> [!note] **See also** — [[Tools/Network/tcpdump|tcpdump]] for lightweight headless capture (grab the pcap on a pivot, analyze in Wireshark later). Automated credential extraction from the wire: [[Tools/Network/PCredz|PCredz]] (NTLMv1/2, Kerberos, cleartext). Validate captures from [[Tools/Lateral Movement/responder|Responder]] / [[Tools/Lateral Movement/mitm6|mitm6]] with the `ntlmssp` / `dhcpv6` filters.
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

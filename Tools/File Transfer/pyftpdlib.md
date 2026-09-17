@@ -43,10 +43,10 @@ ftp -v -n -s:ftp.txt
 
 > [!note] Plain FTP is cleartext and uses a second data connection on a random port — it breaks through restrictive egress filtering far less often than HTTP. Reach for it when HTTP is blocked, not as a default.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — FTP-based staging and exfil when HTTP isn't available.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] — FTP-based staging and exfil when HTTP isn't available. HTTP-serving counterpart: [[Tools/File Transfer/python-http-server|python-http-server]].
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-08-28*
 *Model: claude-opus-5*

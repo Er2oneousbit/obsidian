@@ -126,6 +126,15 @@ $asm = [System.Reflection.Assembly]::Load($bytes)
 # Then invoke via reflection
 ```
 
+> [!note] **No Windows host? (Snaffler is .NET-only.)** Run the equivalent share-crawl + content triage from Linux/Kali:
+> ```bash
+> # NetExec spider_plus — enumerate + download interesting files across a subnet
+> nxc smb 192.168.1.0/24 -u user -p pass -M spider_plus -o READ_ONLY=false
+> # MANSPIDER — regex/keyword search inside share files (incl. pdf/docx/xlsx content)
+> manspider 192.168.1.0/24 -u user -p pass -c 'password|secret|BEGIN RSA'
+> ```
+> Neither applies Snaffler's severity-ranked .toml rules, but both cover the "find creds in shares" job when you have no Windows box.
+
 ---
 
 ## Reviewing Output
@@ -149,5 +158,5 @@ grep -c "{Yellow}" snaffler.log
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

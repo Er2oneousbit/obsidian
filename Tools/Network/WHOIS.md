@@ -28,6 +28,9 @@ whois 10.129.14.128
 # Specify WHOIS server
 whois -h whois.arin.net 10.129.14.128
 
+# Hide the registry legal disclaimer / boilerplate
+whois -H inlanefreight.com
+
 # Strip WHOIS server notice lines
 whois inlanefreight.com | grep -v "^%" | grep -v "^$"
 ```
@@ -89,10 +92,14 @@ whois.exe inlanefreight.com
 whois.exe 10.129.14.128
 ```
 
-Download: https://docs.microsoft.com/en-gb/sysinternals/downloads/whois
+Download: https://learn.microsoft.com/en-us/sysinternals/downloads/whois
+
+---
+
+> [!note] **See also** — DNS-recon counterparts once you have the domain/nameservers: [[Tools/Network/nslookup|nslookup]] / [[Tools/Network/dig|dig]] (records, AXFR), [[Tools/Network/dnsenum|dnsenum]] / [[Tools/Network/dnsrecon|dnsrecon]] (subdomain + zone enum). Service context: [[Services/Network management/DNS|DNS]].
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

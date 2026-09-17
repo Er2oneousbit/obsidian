@@ -31,11 +31,14 @@ samrdump.py -hashes :NTLMhash DOMAIN/Administrator@192.168.1.10
 # Kerberos
 KRB5CCNAME=ticket.ccache samrdump.py -k DOMAIN/user@192.168.1.10 -no-pass
 
-# Specify port (if non-standard)
-samrdump.py DOMAIN/user:Password@192.168.1.10 445
+# Force the transport port — it's the -port OPTION (default 445), not a bare
+# positional. `samrdump.py target 445` errors with "unrecognized arguments".
+samrdump.py -port 139 DOMAIN/user:Password@192.168.1.10
 
-# CSV output
-samrdump.py DOMAIN/user:Password@192.168.1.10 | tee samrdump_out.txt
+# CSV output — real flag is -csv (comma-separated). Piping to tee just saves the
+# normal table output, it does NOT produce CSV.
+samrdump.py -csv DOMAIN/user:Password@192.168.1.10
+samrdump.py -csv DOMAIN/user:Password@192.168.1.10 > users.csv
 ```
 
 ---
@@ -57,6 +60,10 @@ samrdump.py DOMAIN/user:Password@192.168.1.10 | tee samrdump_out.txt
 
 ---
 
+> [!note] **See also** — Same SAMR user/group enumeration from other angles: [[Tools/Lateral Movement/RPCclient|rpcclient]] (`enumdomusers`/`queryuser` interactively), [[Tools/Lateral Movement/NetExec|NetExec]] (`--users`/`--pass-pol`, sweeps a subnet), and the broader [[Tools/Lateral Movement/enum4linux|enum4linux]] (wraps samrdump + more). samrdump is the surgical, single-protocol option when you just want the user list and password policy.
+
+---
+
 *Created: 2026-03-06*
-*Updated: 2026-03-06*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

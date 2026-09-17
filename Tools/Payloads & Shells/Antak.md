@@ -12,7 +12,7 @@ cp /usr/share/nishang/Antak-WebShell/antak.aspx .
 ```
 
 > [!note]
-> Requires IIS with ASP.NET and PowerShell available on the target. Set credentials before uploading — line 14 sets the username/password for the web interface. Default is usually `Disclaimer`/`ForLabs`.
+> Requires IIS with ASP.NET and PowerShell available on the target. **Set credentials before uploading** — the shell hardcodes them near the top as `if (Username.Text == "Disclaimer" && Password.Text == "ForLegitUseOnly")`. Default is **`Disclaimer` / `ForLegitUseOnly`** (not `ForLabs` — a commonly-repeated error); change both to avoid the well-known signature.
 
 ---
 
@@ -22,12 +22,12 @@ cp /usr/share/nishang/Antak-WebShell/antak.aspx .
 # Copy to working directory
 cp /usr/share/nishang/Antak-WebShell/antak.aspx .
 
-# Edit credentials (line 14)
-# Look for: if(String.Compare(Request.Form["pass"],"ForLabs", ...
-# Change username and password to avoid default detection
+# Edit credentials — look for:
+#   if (Username.Text == "Disclaimer" && Password.Text == "ForLegitUseOnly")
+# Change both to avoid default detection
 
 # Quick sed edit
-sed -i 's/Disclaimer/myuser/; s/ForLabs/mypassword/' antak.aspx
+sed -i 's/Disclaimer/myuser/; s/ForLegitUseOnly/mypassword/' antak.aspx
 ```
 
 Upload via file upload vulnerability, web app file manager, or CMS plugin upload.
@@ -96,6 +96,10 @@ nc -lvnp 443
 
 ---
 
+> [!note] **See also** — Ships inside [[Tools/Payloads & Shells/Nishang|Nishang]] (this is its `Antak-WebShell/` component); pair with [[Tools/Payloads & Shells/Nishang|Invoke-PowerShellTcp]] for a full shell. Deployment/staging workflow: [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]]. Non-PowerShell webshell alternatives: [[Tools/Payloads & Shells/Laudanum|Laudanum]] (ASPX/PHP/JSP), [[Tools/Payloads & Shells/WhiteWinterWolf PHP Webshell|WhiteWinterWolf PHP Webshell]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
-*Model: claude-sonnet-4-6*
+*Updated: 2026-08-31*
+*Model: claude-opus-5*

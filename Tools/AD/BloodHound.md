@@ -266,16 +266,21 @@ MATCH (c:Computer {name:"WS01.CORP.LOCAL"}) SET c.owned=true
 > [!tip] **First thing to do after import** — Run "Find Shortest Paths to Domain Admins" and "Find AS-REP Roastable Users" immediately. These two queries often reveal a path or low-hanging fruit within seconds.
 
 > [!tip] **Session data** — SharpHound session collection (`-c Session`) captures where users are currently logged in. Prioritise machines where DA sessions are active — lateral movement there gives immediate credential access.
+>
+> A single `-c Session` run is one snapshot — it misses anyone who logs in later. **Loop it** to build a picture over hours (admins log in and out): `.\SharpHound.exe -c Session --Loop --Loopduration 04:00:00 --Loopinterval 00:15:00` (collect sessions every 15 min for 4 h). This is often what turns "no path" into a path — a DA logs into a box you already control.
 
 > [!warning] **Detection** — SharpHound generates significant LDAP traffic. Run with `--stealth` in sensitive environments. BloodHound.py is slightly noisier. Consider running collection during business hours when LDAP traffic blends in.
 
 ```bash
-# If LDAP collection is blocked, try RPC collection method
-.\SharpHound.exe -c All --CollectionMethods DcOnly    # DC-only, less noisy
+# Stealthiest collection — DCOnly queries ONLY the DC over LDAP and touches NO member
+# hosts (no session/local-admin data, but far quieter and can't be caught host-side):
+.\SharpHound.exe -c DCOnly
+bloodhound-python -c DCOnly -u user -p pass -d corp.local -ns <dc-ip>   # Linux equivalent
+# LDAP over TLS if plain 389 is blocked/inspected: bloodhound-python --use-ldaps ...
 ```
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-01*
 *Model: claude-opus-5*

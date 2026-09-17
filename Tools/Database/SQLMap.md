@@ -148,6 +148,10 @@ sqlmap -u "http://target.com/page?id=1" --threads=5
 | ≥3 | **User-Agent / Referer** | | 3 | **OR-based** payloads — can modify rows (risky) |
 | 4–5 | more payloads; Host (5) | | | |
 
+> [!warning] **Level/risk gate which payload FAMILIES *exist* — they are not a speed knob.** If a param is confirmed injectable at, say, `--risk=3 --level=5` and you then re-run a "faster" exploitation pass at defaults, sqlmap reports **`does not seem to be injectable`** on the *same* parameter — the payload that landed no longer exists in the set. Real case: the only working vector was `OR boolean-based blind`, and **every OR-based payload is risk 3** (sqlmap gates them — `OR` matches more rows, riskier against live data); at `--risk=1` the whole family is gone. The fallback UNION variant needed `--level>=2`.
+>
+> **Rule: once a technique is confirmed, never lower the level/risk it was found at.** Get speed from `--technique` (drop the ones that never fired), `--union-cols=<n>`, and `--delay` — flags that cut *work*, not *capability*. (After boolean hits, sqlmap also auto-*widens* the UNION column search — "extending ranges…" — despite already knowing the count; pin `--union-cols` to stop it burning minutes.)
+
 **Injection techniques (`--technique`, default `BEUSTQ`):**
 
 | Letter | Technique | When / what it needs |
@@ -299,7 +303,7 @@ sqlmap -u "http://target.com/page?id=1" --os-pwn
 sqlmap -u "http://target.com/page?id=1" --sql-query "SELECT @@version"
 ```
 
-`--os-shell` needs **stacked queries** (the `S` technique) *or* a DBMS-specific privileged primitive. What it actually does per engine:
+`--os-shell` needs **stacked queries** (the `S` technique) *or* a DBMS-specific privileged primitive. **When you're DBA it performs the entire enable-and-execute chain for you** — flipping the `sp_configure` toggles, uploading the UDF, or wiring up `COPY … FROM PROGRAM` — so you don't run any of it by hand. What it actually does per engine:
 
 | DBMS | How `--os-shell` gets code exec | Needs |
 |---|---|---|
@@ -309,6 +313,8 @@ sqlmap -u "http://target.com/page?id=1" --sql-query "SELECT @@version"
 | **Oracle** | Java stored proc / `DBMS_SCHEDULER` — fiddly, often manual | elevated privs |
 
 > [!warning] `--os-shell` / `--os-pwn` write files and register functions on the target (UDF `.so`/`.dll`, dropped webshells) — noisy and they leave artifacts. Confirm RCE is in scope and clean up after.
+
+> [!note] **sqlmap does NOT escalate you — it only automates the primitive your current role already unlocks.** If `--is-dba` is false, `--os-shell` will fail; you have to *become* DBA/sysadmin first, by hand, then re-run. Those manual steps — MSSQL `sp_OACreate` OLE fallback when `xp_cmdshell` is locked, regaining sysadmin via impersonation / `db_owner`+TRUSTWORTHY / linked-server `rpcout`, the MySQL UDF upload, the PG grantable roles — are in [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection#RCE via SQLi|SQL Injection → RCE via SQLi]]. (On MSSQL, sqlmap *does* re-create `xp_cmdshell` if it was dropped — but it still needs sysadmin to run `sp_configure`.)
 
 ---
 
@@ -354,12 +360,19 @@ sqlmap -u "http://target.com/page?id=1" --tamper=space2comment,between,randomcas
 ## CSRF Token Handling
 
 ```bash
-# Tell SQLMap about the CSRF token parameter
-sqlmap -u "http://target.com/form" --data "id=1&csrf=TOKENVALUE" --csrf-token="csrf"
+# Tell SQLMap about the CSRF token parameter — and WHERE to fetch a fresh one each request
+sqlmap -r req.txt -p email \
+       --csrf-token="_token" \
+       --csrf-url="http://target.com/forget-password" \
+       --csrf-retries=3
+# --csrf-token = the field name; --csrf-url = the GET page that issues a fresh token+cookie;
+# sqlmap GETs it, scrapes the token, then POSTs the payload — per request.
 
 # Randomized hash parameter (SQLMap evaluates Python to generate it)
 sqlmap -u "http://target.com/page?id=1" --eval="import hashlib; h=hashlib.md5(id.encode()).hexdigest()"
 ```
+
+> [!warning] **A stale token/session looks *exactly* like "not injectable."** Frameworks bind the CSRF token to the session and expire it (Laravel `laravel_session` is `Max-Age=7200` = **2h**; a replayed old `.req` returns **419 Page Expired**, a constant response for every payload → sqlmap says clean). **Never debug a payload against a stale token.** Use `--csrf-token`/`--csrf-url` so every request carries a fresh one, or for hand-driven work script the *GET-form → scrape token+cookie → POST* loop rather than copy-pasting a captured token. The two failures (bad payload vs dead token) are otherwise indistinguishable.
 
 ---
 
@@ -441,5 +454,5 @@ sqlmap -u "..." --answers="crack=N,dict=N"      # pre-answer specific prompts un
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-25*
+*Updated: 2026-09-02*
 *Model: claude-opus-5*

