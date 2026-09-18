@@ -1,3 +1,12 @@
+# HTB - Active — smbmap
+
+#HTB #Active #SMB #smbmap #Enumeration
+
+Share permissions anonymous vs. authenticated as `svc_tgs`, plus the `Users` share tree showing `SVC_TGS/Desktop/user.txt`. Box note: [[CTF Notes/HTB/Boxes/Active/notes|notes]].
+
+---
+
+```
 smbmap -H 10.129.98.114
 
     ________  ___      ___  _______   ___      ___       __         _______
@@ -151,6 +160,4 @@ SMBMap - Samba Share Enumerator v1.10.7 | Shawn Evans - ShawnDEvans@gmail.com
 	dr--r--r--                0 Sat Jul 21 10:14:42 2018	.
 	dr--r--r--                0 Sat Jul 21 10:14:42 2018	..
 	fw--w--w--               34 Fri Aug  8 08:31:57 2025	user.txt
-
-
-
+```

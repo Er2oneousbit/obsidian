@@ -1,3 +1,12 @@
+# HTB - Editor — robots.txt
+
+#HTB #Editor #XWiki #robots #Enumeration
+
+Full `robots.txt` from the XWiki instance on 8080 — 50 disallowed entries. It maps the entire XWiki action surface (`edit`, `upload`, `import`, `admin`, `webjars`…), which is a free endpoint list. Box note: [[CTF Notes/HTB/Boxes/editor/notes|notes]].
+
+---
+
+```
 User-agent: *
 # Prevent bots from executing all actions except "view" and
 # "download" since:
@@ -56,3 +65,4 @@ Disallow: /xwiki/bin/distribution/
 Disallow: /xwiki/bin/jcaptcha/
 Disallow: /xwiki/bin/unknown/
 Disallow: /xwiki/bin/webjars/
+```

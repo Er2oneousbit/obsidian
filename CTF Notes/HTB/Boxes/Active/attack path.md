@@ -1,3 +1,11 @@
+# HTB - Active — Attack Path
+
+#HTB #Active #ActiveDirectory #KillChain
+
+The original terse step list for the box. Full write-up: [[CTF Notes/HTB/Boxes/Active/notes|notes]].
+
+---
+
 nmap to find ports
 enumerate SMB shares
 find user read shares of Replication

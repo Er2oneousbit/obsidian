@@ -1,5 +1,12 @@
+# HTB - Active — nmap
 
+#HTB #Active #nmap #Recon
 
+Full TCP sweep then a refined `-sC -sV` pass over the open set. Target `10.129.36.137`. Box note: [[CTF Notes/HTB/Boxes/Active/notes|notes]].
+
+---
+
+```
 nmap -p- 10.129.36.137
 
 nmap -p53,88,135,139,389,445,464,593,636,3268,3269,5722,9389,47001,49152,49153,49154,49155,49157,49158,49162,49166,49168 -sC -sV -oA refined_scan 10.129.36.137
@@ -48,3 +55,4 @@ Host script results:
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 67.89 seconds
+```

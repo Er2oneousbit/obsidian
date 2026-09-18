@@ -1,3 +1,12 @@
+# HTB - Editor — nmap
+
+#HTB #Editor #nmap #Recon #XWiki
+
+Full sweep then refined `-sC -sV` over 10.129.216.221. Box note: [[CTF Notes/HTB/Boxes/editor/notes|notes]].
+
+---
+
+```
 nmap -p- -oA scan 10.129.216.221
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-08-08 12:31 CDT
 Nmap scan report for 10.129.216.221
@@ -51,3 +60,4 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 8.77 seconds
+```

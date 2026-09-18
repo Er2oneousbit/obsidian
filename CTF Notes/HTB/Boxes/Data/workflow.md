@@ -1,3 +1,10 @@
+# HTB - Data — Workflow
+
+#HTB #Data #KillChain
+
+The original step list for the box. Full write-up: [[CTF Notes/HTB/Boxes/Data/notes|notes]].
+
+---
 
 - nmap scan
 - visit grafana login

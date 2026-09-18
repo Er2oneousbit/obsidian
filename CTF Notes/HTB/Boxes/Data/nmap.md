@@ -1,3 +1,12 @@
+# HTB - Data — nmap
+
+#HTB #Data #nmap #Recon #Grafana
+
+Service scan of 10.129.48.82. Box note: [[CTF Notes/HTB/Boxes/Data/notes|notes]].
+
+---
+
+```
 ──(errbit㉿HTB-Kali-VM)-[~/Desktop/HTB/Boxes/data]
 └─$ nmap -p22,3000 -sC -sV -oA data 10.129.48.82
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-08-01 13:30 CDT
@@ -20,3 +29,4 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 13.12 seconds
+```

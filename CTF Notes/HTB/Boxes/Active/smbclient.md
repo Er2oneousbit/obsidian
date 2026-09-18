@@ -1,3 +1,12 @@
+# HTB - Active — smbclient
+
+#HTB #Active #SMB #smbclient #Enumeration
+
+Anonymous share listing, then the recursive pull of `Replication` that yields the GPP `Groups.xml`. Box note: [[CTF Notes/HTB/Boxes/Active/notes|notes]].
+
+---
+
+```
 smbclient -L \\\\10.129.98.114
 Password for [WORKGROUP\errbit]:
 Anonymous login successful
@@ -34,4 +43,4 @@ getting file \active.htb\Policies\{6AC1786C-016F-11D2-945F-00C04fB984F9}\MACHINE
 
 
 smbclient \\\\10.129.98.114\\Users --user svc_tgs
-
+```
