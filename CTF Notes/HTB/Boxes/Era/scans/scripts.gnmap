@@ -1,0 +1,5 @@
+# Nmap 7.99 scan initiated Thu Aug 20 09:01:13 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA scripts -vv era.htb
+# Ports scanned: TCP(65535;1-65535) UDP(0;) SCTP(0;) PROTOCOLS(0;)
+Host: 10.129.237.233 (era.htb)	Status: Up
+Host: 10.129.237.233 (era.htb)	Ports: 21/open/tcp//ftp//vsftpd 3.0.5/, 80/open/tcp//http//nginx 1.18.0 (Ubuntu)/	Ignored State: closed (65533)
+# Nmap done at Thu Aug 20 09:01:54 2026 -- 1 IP address (1 host up) scanned in 40.99 seconds

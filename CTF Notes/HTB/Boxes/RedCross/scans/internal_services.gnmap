@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Fri Sep  4 14:40:41 2026 as: /usr/lib/nmap/nmap --privileged -sCV -p21,1025,5432 -oA scans/internal_services 10.129.57.143
+Host: 10.129.57.143 (redcross.htb)	Status: Up
+Host: 10.129.57.143 (redcross.htb)	Ports: 21/open/tcp//ftp//vsftpd 2.0.8 or later/, 1025/open/tcp//NFS-or-IIS?///, 5432/open/tcp//postgresql//PostgreSQL DB 9.6.7 - 9.6.12/
+# Nmap done at Fri Sep  4 14:43:38 2026 -- 1 IP address (1 host up) scanned in 177.73 seconds

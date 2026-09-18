@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Thu Sep  3 10:12:07 2026 as: /usr/lib/nmap/nmap --privileged -sCV -p22,80,443 -oA scans/services 10.129.56.225
+Host: 10.129.56.225 (redcross.htb)	Status: Up
+Host: 10.129.56.225 (redcross.htb)	Ports: 22/open/tcp//ssh//OpenSSH 7.9p1 Debian 10+deb10u3 (protocol 2.0)/, 80/open/tcp//http//Apache httpd 2.4.38/, 443/open/tcp//ssl|http//Apache httpd 2.4.38/
+# Nmap done at Thu Sep  3 10:12:27 2026 -- 1 IP address (1 host up) scanned in 19.26 seconds

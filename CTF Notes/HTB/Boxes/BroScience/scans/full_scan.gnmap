@@ -1,0 +1,5 @@
+# Nmap 7.99 scan initiated Tue Aug 18 11:32:53 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA full_scan -vv 10.129.228.129
+# Ports scanned: TCP(65535;1-65535) UDP(0;) SCTP(0;) PROTOCOLS(0;)
+Host: 10.129.228.129 ()	Status: Up
+Host: 10.129.228.129 ()	Ports: 22/open/tcp//ssh//OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)/, 80/open/tcp//http//Apache httpd 2.4.54/, 443/open/tcp//ssl|http//Apache httpd 2.4.54 ((Debian))/	Ignored State: closed (65532)
+# Nmap done at Tue Aug 18 11:33:30 2026 -- 1 IP address (1 host up) scanned in 36.39 seconds

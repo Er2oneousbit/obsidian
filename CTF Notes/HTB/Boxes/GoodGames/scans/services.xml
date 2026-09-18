@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Thu Aug 27 12:40:50 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sCV -p80 -oA scans/services 10.129.96.71 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sCV -p80 -oA scans/services 10.129.96.71" start="1787852450" startstr="Thu Aug 27 12:40:50 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="80"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.96.71" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1787852451" endtime="1787852459"><status state="up" reason="reset" reason_ttl="63"/>
+<address addr="10.129.96.71" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Werkzeug httpd" version="2.0.2" extrainfo="Python 3.9.2" method="probed" conf="10"><cpe>cpe:/a:python:python:3.9.2</cpe></service><script id="http-title" output="GoodGames | Community and Store"><elem key="title">GoodGames | Community and Store</elem>
+</script><script id="http-server-header" output="Werkzeug/2.0.2 Python/3.9.2"><elem>Werkzeug/2.0.2 Python/3.9.2</elem>
+</script></port>
+</ports>
+<times srtt="47359" rttvar="38119" to="199835"/>
+</host>
+<runstats><finished time="1787852459" timestr="Thu Aug 27 12:40:59 2026" summary="Nmap done at Thu Aug 27 12:40:59 2026; 1 IP address (1 host up) scanned in 8.44 seconds" elapsed="8.44" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

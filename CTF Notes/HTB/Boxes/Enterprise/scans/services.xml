@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Sep  1 15:00:11 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sCV -p22,80,443,8080,32812 -oA scans/services 10.129.56.14 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sCV -p22,80,443,8080,32812 -oA scans/services 10.129.56.14" start="1788292811" startstr="Tue Sep  1 15:00:11 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="5" services="22,80,443,8080,32812"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.56.14" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1788292812" endtime="1788292829"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.56.14" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="7.4p1 Ubuntu 10" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:7.4p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  2048 c4:e9:8c:c5:b5:52:23:f4:b8:ce:d1:96:4a:c0:fa:ac (RSA)&#xa;  256 f3:9a:85:58:aa:d9:81:38:2d:ea:15:18:f7:8e:dd:42 (ECDSA)&#xa;  256 de:bf:11:6d:c0:27:e3:fc:1b:34:c0:4f:4f:6c:76:8b (ED25519)"><table>
+<elem key="fingerprint">c4e98cc5b55223f4b8ced1964ac0faac</elem>
+<elem key="bits">2048</elem>
+<elem key="key">AAAAB3NzaC1yc2EAAAADAQABAAABAQCu2/t9seUy0ond4RQg5wTTh7hd75wtx9Vn3QiZzFbYqbjCl2vYRrvCT+YdSGuloj428RFb8cYkIsEP9NpnVlX5euU0Op2z1LXaklR7C/tglf2CLMhuwtz7w1GJF1150rYCbN8OkIEaSz2SUfoVv3/5jgyiahF9Xvge8ZKe5Ai+2U4fD4q4W1a5dtMnHwT/1ypdo+1EivLX6WH9vXI4hyOO5cWYqEZ1W79rRR8dk2C1X6WCqL1Glt1a2QDc0dxylm+OWNgGO9fpx/Y95vevi/dk9wdA6RGJx8v5HBPewMJvux7b6dS5aTv6wSvO0uDU9ehsa7CKYUtzIMhpVrt92b8V</elem>
+<elem key="type">ssh-rsa</elem>
+</table>
+<table>
+<elem key="fingerprint">f39a8558aad981382dea1518f78edd42</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAk0fP0Hv9M+6wbmll4/DTvBMGVuA8jRd3ff365qkwQR8dqwtLqFUR8J7DBbCh23H6HlGhg4G6GmQb1AGDpjQ/M=</elem>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+</table>
+<table>
+<elem key="fingerprint">debf116dc027e3fc1b34c04f4f6c768b</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAICPpbG/mqrCTcxD4DnUIhOEktHDfpjEDbvm5/ia/jtjV</elem>
+<elem key="type">ssh-ed25519</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="http" product="Apache httpd" version="2.4.10" extrainfo="(Debian)" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.10</cpe></service><script id="http-generator" output="WordPress 4.8.1"/><script id="http-title" output="USS Enterprise &amp;#8211; Ships Log"><elem key="title">USS Enterprise &amp;#8211; Ships Log</elem>
+</script><script id="http-server-header" output="Apache/2.4.10 (Debian)"><elem>Apache/2.4.10 (Debian)</elem>
+</script></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.25" extrainfo="(Ubuntu)" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.25</cpe></service><script id="tls-alpn" output="&#xa;  http/1.1"><elem>http/1.1</elem>
+</script><script id="ssl-date" output="TLS randomness does not represent time"></script><script id="http-title" output="Apache2 Ubuntu Default Page: It works"><elem key="title">Apache2 Ubuntu Default Page: It works</elem>
+</script><script id="ssl-cert" output="Subject: commonName=enterprise.local/organizationName=USS Enterprise/stateOrProvinceName=United Federation of Planets/countryName=UK&#xa;Not valid before: 2017-08-25T10:35:14&#xa;Not valid after:  2017-09-24T10:35:14"><table key="subject">
+<elem key="commonName">enterprise.local</elem>
+<elem key="countryName">UK</elem>
+<elem key="emailAddress">jeanlucpicard@enterprise.local</elem>
+<elem key="localityName">Earth</elem>
+<elem key="organizationName">USS Enterprise</elem>
+<elem key="organizationalUnitName">Bridge</elem>
+<elem key="stateOrProvinceName">United Federation of Planets</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">enterprise.local</elem>
+<elem key="countryName">UK</elem>
+<elem key="emailAddress">jeanlucpicard@enterprise.local</elem>
+<elem key="localityName">Earth</elem>
+<elem key="organizationName">USS Enterprise</elem>
+<elem key="organizationalUnitName">Bridge</elem>
+<elem key="stateOrProvinceName">United Federation of Planets</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">B9D361345E9884ECD7F9995B09DE42A5BEB3DC20BD1521831183EC2C2A626860C034B637B32570D64962DA22E3AC774C9E76A9EE1695E18C471C550C3BEF7AA1986F61ECDB7D038B5DE085E08B73D91734421F55ADCFB60476294B61E36AEAE153D097B3B4BC28A97722ADD0D9141F15147143A845A92E7909855A1E7B8179BBBC0C2ABEECE6DDBCA1628AB8CAF7AB2A62F720284928FC4BBABE57455938B176E1477A4448B62CFAD28C4F1D30CC532D10F02AC8B63F7F879F7A6802C023537B4B37F82D023A22204E03199F6AF1D93A2A3AB34DC0556454A428491ACC438FFB3F93217B2BBE74BFCC5A773F4B13D28227BE9A2AB7A2A7857995A37B99502B05</elem>
+<elem key="exponent">65537</elem>
+</table>
+<table key="extensions">
+<table>
+<elem key="name">X509v3 Subject Key Identifier</elem>
+<elem key="value">A5:3C:9F:72:AA:8E:B5:0B:52:C0:8E:C9:6E:C2:7B:00:34:4D:57:AF</elem>
+</table>
+<table>
+<elem key="name">X509v3 Authority Key Identifier</elem>
+<elem key="value">A5:3C:9F:72:AA:8E:B5:0B:52:C0:8E:C9:6E:C2:7B:00:34:4D:57:AF</elem>
+</table>
+<table>
+<elem key="name">X509v3 Basic Constraints</elem>
+<elem key="value">CA:TRUE</elem>
+</table>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2017-08-25T10:35:14</elem>
+<elem key="notAfter">2017-09-24T10:35:14</elem>
+</table>
+<elem key="md5">65f7f9839ad3f32e3c7db1b521762ff8</elem>
+<elem key="sha1">6b0822b518381aea0a6fb4bfa62220a99381e04a</elem>
+<elem key="sha256">37b6d50e913ea70fb358bcc161af16b7ffa7d002ace10ce6d861c4cfe930e1a6</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIERTCCAy2gAwIBAgIJALffXrYDvptrMA0GCSqGSIb3DQEBCwUAMIG4MQswCQYD&#xa;VQQGEwJVSzElMCMGA1UECAwcVW5pdGVkIEZlZGVyYXRpb24gb2YgUGxhbmV0czEO&#xa;MAwGA1UEBwwFRWFydGgxFzAVBgNVBAoMDlVTUyBFbnRlcnByaXNlMQ8wDQYDVQQL&#xa;DAZCcmlkZ2UxGTAXBgNVBAMMEGVudGVycHJpc2UubG9jYWwxLTArBgkqhkiG9w0B&#xa;CQEWHmplYW5sdWNwaWNhcmRAZW50ZXJwcmlzZS5sb2NhbDAeFw0xNzA4MjUxMDM1&#xa;MTRaFw0xNzA5MjQxMDM1MTRaMIG4MQswCQYDVQQGEwJVSzElMCMGA1UECAwcVW5p&#xa;dGVkIEZlZGVyYXRpb24gb2YgUGxhbmV0czEOMAwGA1UEBwwFRWFydGgxFzAVBgNV&#xa;BAoMDlVTUyBFbnRlcnByaXNlMQ8wDQYDVQQLDAZCcmlkZ2UxGTAXBgNVBAMMEGVu&#xa;dGVycHJpc2UubG9jYWwxLTArBgkqhkiG9w0BCQEWHmplYW5sdWNwaWNhcmRAZW50&#xa;ZXJwcmlzZS5sb2NhbDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALnT&#xa;YTRemITs1/mZWwneQqW+s9wgvRUhgxGD7CwqYmhgwDS2N7MlcNZJYtoi46x3TJ52&#xa;qe4WleGMRxxVDDvveqGYb2Hs230Di13gheCLc9kXNEIfVa3PtgR2KUth42rq4VPQ&#xa;l7O0vCipdyKt0NkUHxUUcUOoRakueQmFWh57gXm7vAwqvuzm3byhYoq4yverKmL3&#xa;IChJKPxLur5XRVk4sXbhR3pESLYs+tKMTx0wzFMtEPAqyLY/f4efemgCwCNTe0s3&#xa;+C0COiIgTgMZn2rx2ToqOrNNwFVkVKQoSRrMQ4/7P5Mheyu+dL/MWnc/SxPSgie+&#xa;miq3oqeFeZWje5lQKwUCAwEAAaNQME4wHQYDVR0OBBYEFKU8n3KqjrULUsCOyW7C&#xa;ewA0TVevMB8GA1UdIwQYMBaAFKU8n3KqjrULUsCOyW7CewA0TVevMAwGA1UdEwQF&#xa;MAMBAf8wDQYJKoZIhvcNAQELBQADggEBAC3/EPr9EdW6lQ6RuFJ1/5kPtJU7XvaY&#xa;DV8fyd6uXkWigzd/HpnlVAjF0rQdDRhfE4HRbNez6zCGcV3F5Pxl3OgzmdX5TtfH&#xa;OlU2R5eY3TBIuARtywOM/aJZTN8NuYxUZ5Z/Su6GwtDO3ot6hZmRbcaUA41Wg6qZ&#xa;O+BSgoJctQqR1eKV5NjZ5IqgUqQWmqs2x9JqH7or++aMf1GeHd08c0gSKHRgA4PB&#xa;NAbDye/ORY7yVr+In3zKSpBU2xosNngxbvgn3ZGGfGVBhzHw3k9KykofNykbu5tD&#xa;Dp1D4W+G+LvAcPCAEM5W96Y6dWyVplvyZOgySi31MPIw5rGBm5tTcHU=&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="http-server-header" output="Apache/2.4.25 (Ubuntu)"><elem>Apache/2.4.25 (Ubuntu)</elem>
+</script></port>
+<port protocol="tcp" portid="8080"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="http" product="Apache httpd" version="2.4.10" extrainfo="(Debian)" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.10</cpe></service><script id="http-open-proxy" output="Proxy might be redirecting requests"/><script id="http-generator" output="Joomla! - Open Source Content Management"/><script id="http-title" output="Home"><elem key="title">Home</elem>
+</script><script id="http-robots.txt" output="15 disallowed entries &#xa;/joomla/administrator/ /administrator/ /bin/ /cache/ &#xa;/cli/ /components/ /includes/ /installation/ /language/ &#xa;/layouts/ /libraries/ /logs/ /modules/ /plugins/ /tmp/"/><script id="http-server-header" output="Apache/2.4.10 (Debian)"><elem>Apache/2.4.10 (Debian)</elem>
+</script></port>
+<port protocol="tcp" portid="32812"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="unknown" servicefp="SF-Port32812-TCP:V=7.99%I=7%D=9/1%Time=6A972ED2%P=x86_64-pc-linux-gnu%r(NULL,ED,&quot;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20System\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n&quot;)%r(GenericLines,110,&quot;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20System\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTerminating\x20Console\n\n&quot;)%r(GetRequest,110,&quot;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20System\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTerminating\x20Console\n\n&quot;)%r(HTTPOptions,110,&quot;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20_______\x20_______\x20\x20______\x20_______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\|\x20\x20\x20\x20\x20\x20\x20\|_____\|\x20\|_____/\x20\|______\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\|_____\x20\|_____\x20\x20\|\x20\x20\x20\x20\x20\|\x20\|\x20\x20\x20\x20\\_\x20______\|\n\nWelcome\x20to\x20the\x20Library\x20Computer\x20Access\x20and\x20Retrieval\x20System\n\nEnter\x20Bridge\x20Access\x20Code:\x20\n\nInvalid\x20Code\nTerminating\x20Console\n\n&quot;);" method="table" conf="3"/><script id="fingerprint-strings" output="&#xa;  GenericLines, GetRequest, HTTPOptions: &#xa;    _______ _______ ______ _______&#xa;    |_____| |_____/ |______&#xa;    |_____ |_____ | | | _ ______|&#xa;    Welcome to the Library Computer Access and Retrieval System&#xa;    Enter Bridge Access Code: &#xa;    Invalid Code&#xa;    Terminating Console&#xa;  NULL: &#xa;    _______ _______ ______ _______&#xa;    |_____| |_____/ |______&#xa;    |_____ |_____ | | | _ ______|&#xa;    Welcome to the Library Computer Access and Retrieval System&#xa;    Enter Bridge Access Code:"><elem key="GenericLines, GetRequest, HTTPOptions">&#xa;    _______ _______ ______ _______&#xa;    |_____| |_____/ |______&#xa;    |_____ |_____ | | | _ ______|&#xa;    Welcome to the Library Computer Access and Retrieval System&#xa;    Enter Bridge Access Code: &#xa;    Invalid Code&#xa;    Terminating Console</elem>
+<elem key="NULL">&#xa;    _______ _______ ______ _______&#xa;    |_____| |_____/ |______&#xa;    |_____ |_____ | | | _ ______|&#xa;    Welcome to the Library Computer Access and Retrieval System&#xa;    Enter Bridge Access Code:</elem>
+</script></port>
+</ports>
+<times srtt="34247" rttvar="10299" to="100000"/>
+</host>
+<runstats><finished time="1788292829" timestr="Tue Sep  1 15:00:29 2026" summary="Nmap done at Tue Sep  1 15:00:29 2026; 1 IP address (1 host up) scanned in 18.29 seconds" elapsed="18.29" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

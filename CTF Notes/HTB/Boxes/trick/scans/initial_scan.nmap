@@ -1,0 +1,15 @@
+# Nmap 7.99 scan initiated Mon Aug 10 14:20:05 2026 as: /usr/lib/nmap/nmap --privileged -sV --open -oA initial_scan -vv 10.129.44.2
+Nmap scan report for trick.htb (10.129.44.2)
+Host is up, received echo-reply ttl 63 (0.038s latency).
+Scanned at 2026-08-10 14:20:05 CDT for 167s
+Not shown: 996 closed tcp ports (reset)
+PORT   STATE SERVICE REASON         VERSION
+22/tcp open  ssh     syn-ack ttl 63 OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+25/tcp open  smtp?   syn-ack ttl 63
+53/tcp open  domain  syn-ack ttl 63 ISC BIND 9.11.5-P4-5.1+deb10u7 (Debian Linux)
+80/tcp open  http    syn-ack ttl 63 nginx 1.14.2
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Read data files from: /usr/share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Mon Aug 10 14:22:52 2026 -- 1 IP address (1 host up) scanned in 166.92 seconds

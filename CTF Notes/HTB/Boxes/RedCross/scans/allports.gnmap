@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Thu Sep  3 10:10:53 2026 as: /usr/lib/nmap/nmap --privileged -p- --min-rate 5000 -oA scans/allports 10.129.56.225
+Host: 10.129.56.225 ()	Status: Up
+Host: 10.129.56.225 ()	Ports: 22/open/tcp//ssh///, 80/open/tcp//http///, 443/open/tcp//https///	Ignored State: filtered (65532)
+# Nmap done at Thu Sep  3 10:11:20 2026 -- 1 IP address (1 host up) scanned in 27.05 seconds

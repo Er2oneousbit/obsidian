@@ -12,3 +12,22 @@ TODO.md
 /Class notes/HTB Academy/CPTS Path/
 /Class notes/HTB Academy/AI Red Teaming/
 /Class notes/HTB Academy/Boxes/
+
+# --- Burp Suite project files — multi-hundred-MB binaries, not vault content ---
+# Keep the notes/scripts that reference them (burp_parse.py, *.md), not the dumps.
+*.burp
+*.burp.backup
+*.burp.bak
+*.burpstate
+burp_history.txt
+
+# --- Python bytecode caches from exploit scripts ---
+__pycache__/
+*.pyc
+
+# --- Tool session/scratch state (regenerated on every run) ---
+*.restore
+
+# --- Box loot: local-only. The exploit scripts and .md writeups are the record;
+# the raw haul (dumps, keys, backups, DB files) stays off the remote.
+loot/

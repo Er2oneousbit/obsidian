@@ -1,0 +1,2665 @@
+<?xml version="1.1"?>
+<!-- NOTE: Any NULL bytes in requests and responses are preserved within this output, even though this strictly breaks the XML syntax. If your XML parser rejects the NULL bytes then you will need to remove or replace these bytes before parsing. Alternatively, you can use the option to base64-encode requests and responses. -->
+<!DOCTYPE items [
+<!ELEMENT items (item*)>
+<!ATTLIST items burpVersion CDATA "">
+<!ATTLIST items exportTime CDATA "">
+<!ELEMENT item (time, url, host, port, protocol, method, path, extension, request, status, responselength, mimetype, response, comment)>
+<!ELEMENT time (#PCDATA)>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT host (#PCDATA)>
+<!ATTLIST host ip CDATA "">
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT protocol (#PCDATA)>
+<!ELEMENT method (#PCDATA)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT extension (#PCDATA)>
+<!ELEMENT request (#PCDATA)>
+<!ATTLIST request base64 (true|false) "false">
+<!ELEMENT status (#PCDATA)>
+<!ELEMENT responselength (#PCDATA)>
+<!ELEMENT mimetype (#PCDATA)>
+<!ELEMENT response (#PCDATA)>
+<!ATTLIST response base64 (true|false) "false">
+<!ELEMENT comment (#PCDATA)>
+]>
+<items burpVersion="2026.4.3" exportTime="Tue Aug 18 12:27:28 CDT 2026">
+  <item>
+    <time>Tue Aug 18 12:26:40 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/.htaccess]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/.htaccess]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET /.htaccess HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>403</status>
+    <responselength>497</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 403 Forbidden
+Date: Tue, 18 Aug 2026 17:26:40 GMT
+Server: Apache/2.4.54 (Debian)
+Content-Length: 280
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>Forbidden</h1>
+<p>You don't have permission to access this resource.</p>
+<hr>
+<address>Apache/2.4.54 (Debian) Server at broscience.htb Port 443</address>
+</body></html>
+]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:26:24 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/includes/header.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/includes/header.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /includes/header.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>597</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:26:24 GMT
+Server: Apache/2.4.54 (Debian)
+Vary: Accept-Encoding
+Content-Length: 369
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:26:14 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/includes/utils.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/includes/utils.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /includes/utils.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>203</responselength>
+    <mimetype></mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:26:15 GMT
+Server: Apache/2.4.54 (Debian)
+Content-Length: 0
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:26:05 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/includes/navbar.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/includes/navbar.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /includes/navbar.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>500</status>
+    <responselength>251</responselength>
+    <mimetype>text</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.0 500 Internal Server Error
+Date: Tue, 18 Aug 2026 17:26:05 GMT
+Server: Apache/2.4.54 (Debian)
+Content-Length: 65
+Connection: close
+Content-Type: text/html; charset=UTF-8
+
+
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent ]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:24:17 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 60
+Origin: https://broscience.htb
+Referer: https://broscience.htb/login.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=administrator%40broscience.htb&password=password123]]></request>
+    <status>200</status>
+    <responselength>2515</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:24:17 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2176
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div uk-alert class="uk-alert-danger">
+                            <a class="uk-alert-close" uk-close></a>
+                            Username or password is incorrect.                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:24:08 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 57
+Origin: https://broscience.htb
+Referer: https://broscience.htb/login.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=administrator%40broscience.htb&password=password]]></request>
+    <status>200</status>
+    <responselength>2515</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:24:09 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2176
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div uk-alert class="uk-alert-danger">
+                            <a class="uk-alert-close" uk-close></a>
+                            Username or password is incorrect.                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:24:02 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/user.php?id=1
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2275</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:24:03 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 1936
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:22:00 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/user.php?id=1]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/user.php?id=1]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /user.php?id=1 HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2331</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:22:00 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 1992
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : administrator</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+                            <h1 class="uk-heading-small">administrator</h1>
+                <!-- TODO: Avatars -->
+                <dl class="uk-description-list">
+                    <dt>Member since</dt>
+                    <dd>8 years ago</dd>
+                    <dt>Email Address</dt>
+                    <dd>administrator@broscience.htb</dd>
+                    <dt>Total exercises posted</dt>
+                    <dd>
+                        3                    </dd>
+                    <dt>Total comments posted</dt>
+                    <dd>
+                        1                    </dd>
+                    <dt>Is activated</dt>
+                    <dd>
+                        Yes                    </dd>
+                    <dt>Is admin</dt>
+                    <dd>
+                        Yes                    </dd>
+                </dl>
+                    </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:11:08 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/includes/img.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/includes/img.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /includes/img.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>243</responselength>
+    <mimetype>text</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:11:08 GMT
+Server: Apache/2.4.54 (Debian)
+Content-Length: 39
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+<b>Error:</b> Missing 'path' parameter.]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:10:04 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/user.php?id=1]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/user.php?id=1]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /user.php?id=1 HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2331</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:10:05 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 1992
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : administrator</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+                            <h1 class="uk-heading-small">administrator</h1>
+                <!-- TODO: Avatars -->
+                <dl class="uk-description-list">
+                    <dt>Member since</dt>
+                    <dd>8 years ago</dd>
+                    <dt>Email Address</dt>
+                    <dd>administrator@broscience.htb</dd>
+                    <dt>Total exercises posted</dt>
+                    <dd>
+                        3                    </dd>
+                    <dt>Total comments posted</dt>
+                    <dd>
+                        1                    </dd>
+                    <dt>Is activated</dt>
+                    <dd>
+                        Yes                    </dd>
+                    <dt>Is admin</dt>
+                    <dd>
+                        Yes                    </dd>
+                </dl>
+                    </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:09:42 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/manual/en/index.html]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/manual/en/index.html]]></path>
+    <extension>html</extension>
+    <request base64="false"><![CDATA[GET /manual/en/index.html HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>9981</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:09:42 GMT
+Server: Apache/2.4.54 (Debian)
+Last-Modified: Thu, 09 Jun 2022 04:26:43 GMT
+ETag: "25c2-5e0fc3a9866c0-gzip"
+Accept-Ranges: bytes
+Vary: Accept-Encoding
+Content-Length: 9666
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+<!--
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+              This file is generated from xml source: DO NOT EDIT
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      -->
+<title>Apache HTTP Server Version 2.4
+Documentation - Apache HTTP Server Version 2.4</title>
+<link href="../style/css/manual.css" rel="stylesheet" media="all" type="text/css" title="Main stylesheet" />
+<link href="../style/css/manual-loose-100pc.css" rel="alternate stylesheet" media="all" type="text/css" title="No Sidebar - Default font size" />
+<link href="../style/css/manual-print.css" rel="stylesheet" media="print" type="text/css" /><link rel="stylesheet" type="text/css" href="../style/css/prettify.css" />
+<script src="../style/scripts/prettify.min.js" type="text/javascript">
+</script>
+
+<link href="../images/favicon.ico" rel="shortcut icon" /></head>
+<body id="index-page">
+<div id="page-header">
+<p class="menu"><a href="./mod/index.html">Modules</a> | <a href="./mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p>
+<p class="apache">Apache HTTP Server Version 2.4</p>
+<img alt="" src="../images/feather.png" /></div>
+<div class="up"><a href="http://httpd.apache.org/docs-project/"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
+<div id="path">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://httpd.apache.org/">HTTP Server</a> &gt; <a href="http://httpd.apache.org/docs/">Documentation</a></div>
+<div id="page-content"><h1>Apache HTTP Server Version 2.4
+Documentation</h1>
+<div class="toplang">
+<p><span>Available Languages: </span><a href="../da/index.html" hreflang="da" rel="alternate" title="Dansk">&nbsp;da&nbsp;</a> |
+<a href="../de/index.html" hreflang="de" rel="alternate" title="Deutsch">&nbsp;de&nbsp;</a> |
+<a href="../en/index.html" title="English">&nbsp;en&nbsp;</a> |
+<a href="../es/index.html" hreflang="es" rel="alternate" title="Espa..ol">&nbsp;es&nbsp;</a> |
+<a href="../fr/index.html" hreflang="fr" rel="alternate" title="Fran..ais">&nbsp;fr&nbsp;</a> |
+<a href="../ja/index.html" hreflang="ja" rel="alternate" title="Japanese">&nbsp;ja&nbsp;</a> |
+<a href="../ko/index.html" hreflang="ko" rel="alternate" title="Korean">&nbsp;ko&nbsp;</a> |
+<a href="../pt-br/index.html" hreflang="pt-br" rel="alternate" title="Portugu..s (Brasil)">&nbsp;pt-br&nbsp;</a> |
+<a href="../ru/index.html" hreflang="ru" rel="alternate" title="Russian">&nbsp;ru&nbsp;</a> |
+<a href="../tr/index.html" hreflang="tr" rel="alternate" title="T..rk..e">&nbsp;tr&nbsp;</a> |
+<a href="../zh-cn/index.html" hreflang="zh-cn" rel="alternate" title="Simplified Chinese">&nbsp;zh-cn&nbsp;</a></p>
+</div>
+<form method="get" action="https://www.google.com/search"><p><input name="as_q" value="" type="text" /> <input value="Google Search" type="submit" /><input value="10" name="num" type="hidden" /><input value="en" name="hl" type="hidden" /><input value="UTF-8" name="ie" type="hidden" /><input value="Google Search" name="btnG" type="hidden" /><input name="as_epq" value="Version 2.4" type="hidden" /><input name="as_oq" value="" type="hidden" /><input name="as_eq" value="&quot;List-Post&quot;" type="hidden" /><input value="" name="lr" type="hidden" /><input value="i" name="as_ft" type="hidden" /><input value="" name="as_filetype" type="hidden" /><input value="all" name="as_qdr" type="hidden" /><input value="any" name="as_occt" type="hidden" /><input value="i" name="as_dt" type="hidden" /><input value="httpd.apache.org" name="as_sitesearch" type="hidden" /><input value="off" name="safe" type="hidden" /></p></form>
+<table id="indextable"><tr><td class="col1"><div class="category"><h2><a name="release" id="release">Release Notes</a></h2>
+<ul><li><a href="new_features_2_4.html">New features with Apache 2.3/2.4</a></li>
+<li><a href="new_features_2_2.html">New features with Apache 2.1/2.2</a></li>
+<li><a href="new_features_2_0.html">New features with Apache 2.0</a></li>
+<li><a href="upgrading.html">Upgrading to 2.4 from 2.2</a></li>
+<li><a href="license.html">Apache License</a></li>
+</ul>
+</div><div class="category"><h2><a name="manual" id="manual">Reference Manual</a></h2>
+<ul><li><a href="install.html">Compiling and Installing</a></li>
+<li><a href="invoking.html">Starting</a></li>
+<li><a href="stopping.html">Stopping or Restarting</a></li>
+<li><a href="mod/quickreference.html">Run-time Configuration Directives</a></li>
+<li><a href="mod/index.html">Modules</a></li>
+<li><a href="mpm.html">Multi-Processing Modules (MPMs)</a></li>
+<li><a href="filter.html">Filters</a></li>
+<li><a href="handler.html">Handlers</a></li>
+<li><a href="expr.html">Expression parser</a></li>
+<li><a href="mod/overrides.html">Override Class Index for .htaccess</a></li>
+<li><a href="programs/index.html">Server and Supporting Programs</a></li>
+<li><a href="glossary.html">Glossary</a></li>
+</ul>
+</div></td><td><div class="category"><h2><a name="usersguide" id="usersguide">Users' Guide</a></h2>
+<ul><li><a href="getting-started.html">Getting Started</a></li>
+<li><a href="bind.html">Binding to Addresses and Ports</a></li>
+<li><a href="configuring.html">Configuration Files</a></li>
+<li><a href="sections.html">Configuration Sections</a></li>
+<li><a href="caching.html">Content Caching</a></li>
+<li><a href="content-negotiation.html">Content Negotiation</a></li>
+<li><a href="dso.html">Dynamic Shared Objects (DSO)</a></li>
+<li><a href="env.html">Environment Variables</a></li>
+<li><a href="logs.html">Log Files</a></li>
+<li><a href="urlmapping.html">Mapping URLs to the Filesystem</a></li>
+<li><a href="misc/perf-tuning.html">Performance Tuning</a></li>
+<li><a href="misc/security_tips.html">Security Tips</a></li>
+<li><a href="server-wide.html">Server-Wide Configuration</a></li>
+<li><a href="ssl/index.html">SSL/TLS Encryption</a></li>
+<li><a href="suexec.html">Suexec Execution for CGI</a></li>
+<li><a href="rewrite/index.html">URL Rewriting with mod_rewrite</a></li>
+<li><a href="vhosts/index.html">Virtual Hosts</a></li>
+</ul>
+</div></td><td class="col3"><div class="category"><h2><a name="howto" id="howto">How-To / Tutorials</a></h2>
+<ul><li><a href="howto/auth.html">Authentication and Authorization</a></li>
+<li><a href="howto/access.html">Access Control</a></li>
+<li><a href="howto/cgi.html">CGI: Dynamic Content</a></li>
+<li><a href="howto/htaccess.html">.htaccess files</a></li>
+<li><a href="howto/ssi.html">Server Side Includes (SSI)</a></li>
+<li><a href="howto/public_html.html">Per-user Web Directories (public_html)</a></li>
+<li><a href="howto/reverse_proxy.html">Reverse proxy setup guide</a></li>
+<li><a href="howto/http2.html">HTTP/2 guide</a></li>
+</ul>
+</div><div class="category"><h2><a name="platform" id="platform">Platform Specific Notes</a></h2>
+<ul><li><a href="platform/windows.html">Microsoft Windows</a></li>
+<li><a href="platform/rpm.html">RPM-based Systems (Redhat / CentOS / Fedora)</a></li>
+<li><a href="platform/netware.html">Novell NetWare</a></li>
+<li><a href="platform/ebcdic.html">EBCDIC Port</a></li>
+</ul>
+</div><div class="category"><h2><a name="other" id="other">Other Topics</a></h2>
+<ul><li><a href="http://wiki.apache.org/httpd/FAQ">Frequently Asked Questions</a></li>
+<li><a href="sitemap.html">Sitemap</a></li>
+<li><a href="developer/index.html">Documentation for Developers</a></li>
+<li><a href="http://httpd.apache.org/docs-project/">Helping with the documentation</a></li>
+<li><a href="misc/index.html">Other Notes</a></li>
+<li><a href="http://wiki.apache.org/httpd/">Wiki</a></li>
+</ul>
+</div></td></tr></table></div>
+<div class="bottomlang">
+<p><span>Available Languages: </span><a href="../da/index.html" hreflang="da" rel="alternate" title="Dansk">&nbsp;da&nbsp;</a> |
+<a href="../de/index.html" hreflang="de" rel="alternate" title="Deutsch">&nbsp;de&nbsp;</a> |
+<a href="../en/index.html" title="English">&nbsp;en&nbsp;</a> |
+<a href="../es/index.html" hreflang="es" rel="alternate" title="Espa..ol">&nbsp;es&nbsp;</a> |
+<a href="../fr/index.html" hreflang="fr" rel="alternate" title="Fran..ais">&nbsp;fr&nbsp;</a> |
+<a href="../ja/index.html" hreflang="ja" rel="alternate" title="Japanese">&nbsp;ja&nbsp;</a> |
+<a href="../ko/index.html" hreflang="ko" rel="alternate" title="Korean">&nbsp;ko&nbsp;</a> |
+<a href="../pt-br/index.html" hreflang="pt-br" rel="alternate" title="Portugu..s (Brasil)">&nbsp;pt-br&nbsp;</a> |
+<a href="../ru/index.html" hreflang="ru" rel="alternate" title="Russian">&nbsp;ru&nbsp;</a> |
+<a href="../tr/index.html" hreflang="tr" rel="alternate" title="T..rk..e">&nbsp;tr&nbsp;</a> |
+<a href="../zh-cn/index.html" hreflang="zh-cn" rel="alternate" title="Simplified Chinese">&nbsp;zh-cn&nbsp;</a></p>
+</div><div id="footer">
+<p class="apache">Copyright 2022 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="./mod/index.html">Modules</a> | <a href="./mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+if (typeof(prettyPrint) !== 'undefined') {
+    prettyPrint();
+}
+//--><!]]]><![CDATA[]></script>
+</body></html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:09:15 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/includes/db_connect.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/includes/db_connect.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /includes/db_connect.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>203</responselength>
+    <mimetype></mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:09:15 GMT
+Server: Apache/2.4.54 (Debian)
+Content-Length: 0
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:07:24 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/login.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>9639</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:07:24 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 9301
+Keep-Alive: timeout=5, max=99
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Home</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin">
+            <!-- TODO: Search bar -->
+            <div class="uk-child-width-1-2@s uk-child-width-1-3@m" uk-grid>                    <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=bench.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=1" class="uk-card-title">Bench Press</a>
+                                <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest ... <a href="exercise.php?id=1">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=barbell_squats.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=2" class="uk-card-title">Barbell Squats</a>
+                                <p>The barbell back squat is a very popular compound movement which emphasizes building the leg muscle ... <a href="exercise.php?id=2">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 5 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=seated_rows.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=3" class="uk-card-title">Seated Rows</a>
+                                <p>If you want to target your lats, seated rows are a great exercise to do so. There are machines where... <a href="exercise.php?id=3">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=deadlift.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=4" class="uk-card-title">Deadlift</a>
+                                <p>Deadlifts are another great exercise for targeting a lot of muscle groups at the same time, with the... <a href="exercise.php?id=4">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=tricep_extensions.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=5" class="uk-card-title">Tricep Extensions</a>
+                                <p>Tricep extensions are a great exercise to target your triceps. Requiring only a dumbell, you can do ... <a href="exercise.php?id=5">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=dumbell_curls.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=6" class="uk-card-title">Dumbell Curls</a>
+                                <p>Curls for the girls. Arguably the favorite exercise of many gym-goers, this is a very good exercise ... <a href="exercise.php?id=6">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=4">john</a> 6 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=reverse_butterfly.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=7" class="uk-card-title">Reverse Butterfly</a>
+                                <p>Reverse butterfly may be done with free weights or with a machine, although I personally prefer the ... <a href="exercise.php?id=7">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=shoulder_press.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=8" class="uk-card-title">Shoulder Press</a>
+                                <p>Shoulder press, also known as the military press or overhead press, is a great way to build your sho... <a href="exercise.php?id=8">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:07:19 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 32
+Origin: https://broscience.htb
+Referer: https://broscience.htb/login.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=admin&password=password]]></request>
+    <status>200</status>
+    <responselength>2509</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:07:19 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2170
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div uk-alert class="uk-alert-danger">
+                            <a class="uk-alert-close" uk-close></a>
+                            Account is not activated yet                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:07:10 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/exercise.php?id=1
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2274</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:07:11 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 1936
+Keep-Alive: timeout=5, max=97
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:07:10 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/comment.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/comment.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /comment.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 26
+Origin: https://broscience.htb
+Referer: https://broscience.htb/exercise.php?id=1
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+content=Test&exercise_id=1]]></request>
+    <status>302</status>
+    <responselength>351</responselength>
+    <mimetype>text</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 302 Found
+Date: Tue, 18 Aug 2026 17:07:11 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Location: /login.php
+Content-Length: 13
+Keep-Alive: timeout=5, max=98
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+Not logged in]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:07:05 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/exercise.php?id=1]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/exercise.php?id=1]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /exercise.php?id=1 HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>4791</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:07:05 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 4452
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+<html>
+    <head>
+        <title>BroScience : Bench Press</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin uk-container-xsmall">
+                            <article class="uk-article">
+                    <h1 class="uk-article-title">Bench Press</h1>
+                    <p class="uk-article-meta">Written 4 years ago by <a class="uk-link-text" href="user.php?id=1">administrator</a></p>
+                    <div class="uk-background-contain uk-background-muted uk-height-medium uk-panel uk-flex uk-flex-center uk-flex-middle" style="background-image: url(includes/img.php?path=bench.png);"></div>
+                    <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest and arms. It is a compound movement which targets the pecs, triceps and shoulders.</p>
+                </article>
+                <hr>
+                <form action="/comment.php" method="POST">
+                    <fieldset class="uk-fieldset">
+                        <legend class="uk-legend">Add a comment</legend>
+                        <div class="uk-margin">
+                            <textarea name="content" class="uk-textarea" rows="5" placeholder="Write something nice..." required></textarea>
+                        </div>
+                        <div class="uk-margin">
+                            <button class="uk-button uk-button-default" type="submit">Post comment</button>
+                        </div>
+                        <input type="hidden" name="exercise_id" value="1"/>
+                    </fieldset>
+                </form>
+                                        <article class="uk-comment">
+                            <header class="uk-comment-header">
+                                <div class="uk-grid-medium uk-flex-middle" uk-grid>
+                                    <div class="uk-width-expand">
+                                        <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-text" href="user.php?id=2">bill</a></h4>
+                                        <p class="uk-comment-meta uk-margin-remove-top">4 years ago</p>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="uk-comment-body">
+                                <p>Both exercises have their place in a complete workout routine @michael</p>
+                            </div>
+                        </article>
+                        <br>
+                                                <article class="uk-comment">
+                            <header class="uk-comment-header">
+                                <div class="uk-grid-medium uk-flex-middle" uk-grid>
+                                    <div class="uk-width-expand">
+                                        <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-text" href="user.php?id=3">michael</a></h4>
+                                        <p class="uk-comment-meta uk-margin-remove-top">4 years ago</p>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="uk-comment-body">
+                                <p>Personally I think the incline dumbell press is better, but you do you kid.</p>
+                            </div>
+                        </article>
+                        <br>
+                                </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:06:58 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/register.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>9640</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:06:58 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 9301
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Home</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin">
+            <!-- TODO: Search bar -->
+            <div class="uk-child-width-1-2@s uk-child-width-1-3@m" uk-grid>                    <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=bench.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=1" class="uk-card-title">Bench Press</a>
+                                <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest ... <a href="exercise.php?id=1">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=barbell_squats.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=2" class="uk-card-title">Barbell Squats</a>
+                                <p>The barbell back squat is a very popular compound movement which emphasizes building the leg muscle ... <a href="exercise.php?id=2">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 5 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=seated_rows.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=3" class="uk-card-title">Seated Rows</a>
+                                <p>If you want to target your lats, seated rows are a great exercise to do so. There are machines where... <a href="exercise.php?id=3">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=deadlift.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=4" class="uk-card-title">Deadlift</a>
+                                <p>Deadlifts are another great exercise for targeting a lot of muscle groups at the same time, with the... <a href="exercise.php?id=4">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=tricep_extensions.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=5" class="uk-card-title">Tricep Extensions</a>
+                                <p>Tricep extensions are a great exercise to target your triceps. Requiring only a dumbell, you can do ... <a href="exercise.php?id=5">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=dumbell_curls.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=6" class="uk-card-title">Dumbell Curls</a>
+                                <p>Curls for the girls. Arguably the favorite exercise of many gym-goers, this is a very good exercise ... <a href="exercise.php?id=6">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=4">john</a> 6 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=reverse_butterfly.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=7" class="uk-card-title">Reverse Butterfly</a>
+                                <p>Reverse butterfly may be done with free weights or with a machine, although I personally prefer the ... <a href="exercise.php?id=7">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=shoulder_press.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=8" class="uk-card-title">Shoulder Press</a>
+                                <p>Shoulder press, also known as the military press or overhead press, is a great way to build your sho... <a href="exercise.php?id=8">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:06:22 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/exercise.php?id=1]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/exercise.php?id=1]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /exercise.php?id=1 HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>4790</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:06:22 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 4452
+Keep-Alive: timeout=5, max=97
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+<html>
+    <head>
+        <title>BroScience : Bench Press</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin uk-container-xsmall">
+                            <article class="uk-article">
+                    <h1 class="uk-article-title">Bench Press</h1>
+                    <p class="uk-article-meta">Written 4 years ago by <a class="uk-link-text" href="user.php?id=1">administrator</a></p>
+                    <div class="uk-background-contain uk-background-muted uk-height-medium uk-panel uk-flex uk-flex-center uk-flex-middle" style="background-image: url(includes/img.php?path=bench.png);"></div>
+                    <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest and arms. It is a compound movement which targets the pecs, triceps and shoulders.</p>
+                </article>
+                <hr>
+                <form action="/comment.php" method="POST">
+                    <fieldset class="uk-fieldset">
+                        <legend class="uk-legend">Add a comment</legend>
+                        <div class="uk-margin">
+                            <textarea name="content" class="uk-textarea" rows="5" placeholder="Write something nice..." required></textarea>
+                        </div>
+                        <div class="uk-margin">
+                            <button class="uk-button uk-button-default" type="submit">Post comment</button>
+                        </div>
+                        <input type="hidden" name="exercise_id" value="1"/>
+                    </fieldset>
+                </form>
+                                        <article class="uk-comment">
+                            <header class="uk-comment-header">
+                                <div class="uk-grid-medium uk-flex-middle" uk-grid>
+                                    <div class="uk-width-expand">
+                                        <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-text" href="user.php?id=2">bill</a></h4>
+                                        <p class="uk-comment-meta uk-margin-remove-top">4 years ago</p>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="uk-comment-body">
+                                <p>Both exercises have their place in a complete workout routine @michael</p>
+                            </div>
+                        </article>
+                        <br>
+                                                <article class="uk-comment">
+                            <header class="uk-comment-header">
+                                <div class="uk-grid-medium uk-flex-middle" uk-grid>
+                                    <div class="uk-width-expand">
+                                        <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-text" href="user.php?id=3">michael</a></h4>
+                                        <p class="uk-comment-meta uk-margin-remove-top">4 years ago</p>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="uk-comment-body">
+                                <p>Personally I think the incline dumbell press is better, but you do you kid.</p>
+                            </div>
+                        </article>
+                        <br>
+                                </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:06:19 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/register.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>9639</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:06:19 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 9301
+Keep-Alive: timeout=5, max=99
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Home</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin">
+            <!-- TODO: Search bar -->
+            <div class="uk-child-width-1-2@s uk-child-width-1-3@m" uk-grid>                    <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=bench.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=1" class="uk-card-title">Bench Press</a>
+                                <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest ... <a href="exercise.php?id=1">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=barbell_squats.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=2" class="uk-card-title">Barbell Squats</a>
+                                <p>The barbell back squat is a very popular compound movement which emphasizes building the leg muscle ... <a href="exercise.php?id=2">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 5 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=seated_rows.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=3" class="uk-card-title">Seated Rows</a>
+                                <p>If you want to target your lats, seated rows are a great exercise to do so. There are machines where... <a href="exercise.php?id=3">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=deadlift.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=4" class="uk-card-title">Deadlift</a>
+                                <p>Deadlifts are another great exercise for targeting a lot of muscle groups at the same time, with the... <a href="exercise.php?id=4">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=tricep_extensions.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=5" class="uk-card-title">Tricep Extensions</a>
+                                <p>Tricep extensions are a great exercise to target your triceps. Requiring only a dumbell, you can do ... <a href="exercise.php?id=5">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=dumbell_curls.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=6" class="uk-card-title">Dumbell Curls</a>
+                                <p>Curls for the girls. Arguably the favorite exercise of many gym-goers, this is a very good exercise ... <a href="exercise.php?id=6">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=4">john</a> 6 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=reverse_butterfly.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=7" class="uk-card-title">Reverse Butterfly</a>
+                                <p>Reverse butterfly may be done with free weights or with a machine, although I personally prefer the ... <a href="exercise.php?id=7">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=shoulder_press.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=8" class="uk-card-title">Shoulder Press</a>
+                                <p>Shoulder press, also known as the military press or overhead press, is a great way to build your sho... <a href="exercise.php?id=8">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:06:15 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/register.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/register.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /register.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 80
+Origin: https://broscience.htb
+Referer: https://broscience.htb/register.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=test&email=test%40test.test&password=password&password-confirm=password]]></request>
+    <status>200</status>
+    <responselength>2772</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:06:15 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2433
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Register</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="register.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Register</legend>
+                                        <div uk-alert class="uk-alert-success">
+                            <a class="uk-alert-close" uk-close></a>
+                            Account created. Please check your email for the activation link.                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="email" class="uk-input" type="email" placeholder="Email">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password-confirm" class="uk-input" type="password" placeholder="Repeat password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Register</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:05:57 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/register.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/register.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /register.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 82
+Origin: https://broscience.htb
+Referer: https://broscience.htb/register.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=admin&email=admin%40admin.com&password=password&password-confirm=password]]></request>
+    <status>200</status>
+    <responselength>2772</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:05:58 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2433
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Register</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="register.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Register</legend>
+                                        <div uk-alert class="uk-alert-success">
+                            <a class="uk-alert-close" uk-close></a>
+                            Account created. Please check your email for the activation link.                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="email" class="uk-input" type="email" placeholder="Email">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password-confirm" class="uk-input" type="password" placeholder="Repeat password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Register</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:05:45 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/register.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/register.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /register.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/login.php
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2499</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:05:45 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2161
+Keep-Alive: timeout=5, max=99
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Register</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="register.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Register</legend>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="email" class="uk-input" type="email" placeholder="Email">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password-confirm" class="uk-input" type="password" placeholder="Repeat password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Register</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:05:42 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[POST]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[POST /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/login.php
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+Origin: https://broscience.htb
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=admin&password=admin]]></request>
+    <status>200</status>
+    <responselength>2515</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:05:42 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 2176
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div uk-alert class="uk-alert-danger">
+                            <a class="uk-alert-close" uk-close></a>
+                            Username or password is incorrect.                        </div>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 12:05:31 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/login.php]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/login.php]]></path>
+    <extension>php</extension>
+    <request base64="false"><![CDATA[GET /login.php HTTP/1.1
+Host: broscience.htb
+Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://broscience.htb/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>2275</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 17:05:32 GMT
+Server: Apache/2.4.54 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 1936
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Log In</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>    </head>
+    <body>
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-container-xsmall">
+            <form class="uk-form-stacked" method="POST" action="login.php">
+                <fieldset class="uk-fieldset">
+                    <legend class="uk-legend">Log In</legend>
+                                        <div class="uk-margin">
+                        <input name="username" class="uk-input" placeholder="Username">
+                    </div>
+                    <div class="uk-margin">
+                        <input name="password" class="uk-input" type="password" placeholder="Password">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default" type="submit">Log in</button>
+                    </div>
+                    <div class="uk-margin">
+                        <a href="register.php">Create an account</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 11:55:27 CDT 2026</time>
+    <url><![CDATA[https://broscience.htb/]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>443</port>
+    <protocol>https</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: broscience.htb
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+]]></request>
+    <status>200</status>
+    <responselength>9698</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 16:55:27 GMT
+Server: Apache/2.4.54 (Debian)
+Set-Cookie: PHPSESSID=ev7oul5j1dibr979772mj521ga; path=/
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Vary: Accept-Encoding
+Content-Length: 9301
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+
+<html>
+    <head>
+        <title>BroScience : Home</title>
+        <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/css/uikit.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.0/dist/js/uikit-icons.min.js"></script>        <link rel="stylesheet" href="styles/light.css">
+    </head>
+    <body class="uk-dark">
+        
+<nav class="uk-navbar-container uk-margin uk-navbar-transparent uk-dark">
+    <div class="uk-container uk-container-expand">
+        <div class="uk-navbar" uk-navbar>
+            <div class="uk-navbar-left">
+                <a href="/" class="uk-navbar-item uk-logo">BroScience</a>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav"><li><a href="login.php">Log In</a></li></ul>            </div>
+        </div>
+    </div>
+</nav>        <div class="uk-container uk-margin">
+            <!-- TODO: Search bar -->
+            <div class="uk-child-width-1-2@s uk-child-width-1-3@m" uk-grid>                    <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=bench.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=1" class="uk-card-title">Bench Press</a>
+                                <p>The bench press is widely regarded as the king of all exercises, specifically in building the chest ... <a href="exercise.php?id=1">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=barbell_squats.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=2" class="uk-card-title">Barbell Squats</a>
+                                <p>The barbell back squat is a very popular compound movement which emphasizes building the leg muscle ... <a href="exercise.php?id=2">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 5 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=seated_rows.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=3" class="uk-card-title">Seated Rows</a>
+                                <p>If you want to target your lats, seated rows are a great exercise to do so. There are machines where... <a href="exercise.php?id=3">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=2">bill</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=deadlift.png" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=4" class="uk-card-title">Deadlift</a>
+                                <p>Deadlifts are another great exercise for targeting a lot of muscle groups at the same time, with the... <a href="exercise.php?id=4">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=tricep_extensions.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=5" class="uk-card-title">Tricep Extensions</a>
+                                <p>Tricep extensions are a great exercise to target your triceps. Requiring only a dumbell, you can do ... <a href="exercise.php?id=5">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=dumbell_curls.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=6" class="uk-card-title">Dumbell Curls</a>
+                                <p>Curls for the girls. Arguably the favorite exercise of many gym-goers, this is a very good exercise ... <a href="exercise.php?id=6">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=4">john</a> 6 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=reverse_butterfly.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=7" class="uk-card-title">Reverse Butterfly</a>
+                                <p>Reverse butterfly may be done with free weights or with a machine, although I personally prefer the ... <a href="exercise.php?id=7">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=1">administrator</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                        <div>
+                        <div class="uk-card uk-card-default ">
+                            <div class="uk-card-media-top">
+                                <img src="includes/img.php?path=shoulder_press.jpeg" width="600" height="600" alt="">
+                            </div>
+                            <div class="uk-card-body">
+                                <a href="exercise.php?id=8" class="uk-card-title">Shoulder Press</a>
+                                <p>Shoulder press, also known as the military press or overhead press, is a great way to build your sho... <a href="exercise.php?id=8">keep reading</a></p>
+                            </div>
+                            <div class="uk-card-footer">
+                                <p class="uk-text-meta">Written by <a class="uk-link-text" href="user.php?id=3">michael</a> 4 years ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>        </div>
+    </body>
+</html>]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 11:54:36 CDT 2026</time>
+    <url><![CDATA[http://broscience.htb/]]></url>
+    <host ip="10.129.228.129">broscience.htb</host>
+    <port>80</port>
+    <protocol>http</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: broscience.htb
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+
+]]></request>
+    <status>301</status>
+    <responselength>571</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 301 Moved Permanently
+Date: Tue, 18 Aug 2026 16:54:37 GMT
+Server: Apache/2.4.54 (Debian)
+Location: https://broscience.htb/
+Content-Length: 311
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>301 Moved Permanently</title>
+</head><body>
+<h1>Moved Permanently</h1>
+<p>The document has moved <a href="https://broscience.htb/">here</a>.</p>
+<hr>
+<address>Apache/2.4.54 (Debian) Server at broscience.htb Port 80</address>
+</body></html>
+]]></response>
+    <comment></comment>
+  </item>
+  <item>
+    <time>Tue Aug 18 11:53:56 CDT 2026</time>
+    <url><![CDATA[http://10.129.228.129/]]></url>
+    <host ip="10.129.228.129">10.129.228.129</host>
+    <port>80</port>
+    <protocol>http</protocol>
+    <method><![CDATA[GET]]></method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="false"><![CDATA[GET / HTTP/1.1
+Host: 10.129.228.129
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+
+]]></request>
+    <status>301</status>
+    <responselength>571</responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="false"><![CDATA[HTTP/1.1 301 Moved Permanently
+Date: Tue, 18 Aug 2026 16:53:56 GMT
+Server: Apache/2.4.54 (Debian)
+Location: https://broscience.htb/
+Content-Length: 311
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>301 Moved Permanently</title>
+</head><body>
+<h1>Moved Permanently</h1>
+<p>The document has moved <a href="https://broscience.htb/">here</a>.</p>
+<hr>
+<address>Apache/2.4.54 (Debian) Server at 10.129.228.129 Port 80</address>
+</body></html>
+]]></response>
+    <comment></comment>
+  </item>
+</items>

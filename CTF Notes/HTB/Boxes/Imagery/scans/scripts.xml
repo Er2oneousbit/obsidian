@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Fri Aug 14 09:51:36 2026 as: /usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv 10.129.46.23 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv 10.129.46.23" start="1786719096" startstr="Fri Aug 14 09:51:36 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="2"/>
+<debugging level="0"/>
+<taskbegin task="NSE" time="1786719096"/>
+<taskend task="NSE" time="1786719096"/>
+<taskbegin task="NSE" time="1786719096"/>
+<taskend task="NSE" time="1786719096"/>
+<taskbegin task="NSE" time="1786719096"/>
+<taskend task="NSE" time="1786719096"/>
+<taskbegin task="Ping Scan" time="1786719096"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.46.23" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<taskend task="Ping Scan" time="1786719096" extrainfo="1 total hosts"/>
+<taskbegin task="SYN Stealth Scan" time="1786719096"/>
+<taskend task="SYN Stealth Scan" time="1786719122" extrainfo="65535 total ports"/>
+<taskbegin task="Service scan" time="1786719122"/>
+<taskend task="Service scan" time="1786719129" extrainfo="2 services on 1 host"/>
+<taskbegin task="NSE" time="1786719129"/>
+<taskend task="NSE" time="1786719130"/>
+<taskbegin task="NSE" time="1786719130"/>
+<taskend task="NSE" time="1786719130"/>
+<taskbegin task="NSE" time="1786719130"/>
+<taskend task="NSE" time="1786719130"/>
+<host starttime="1786719096" endtime="1786719130"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.46.23" addrtype="ipv4"/>
+<hostnames>
+<hostname name="imagery.htb" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="65533">
+<extrareasons reason="reset" count="65533" proto="tcp" ports="1-21,23-7999,8001-65535"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="9.7p1 Ubuntu 7ubuntu4.3" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:9.7p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  256 35:94:fb:70:36:1a:26:3c:a8:3c:5a:5a:e4:fb:8c:18 (ECDSA)&#xa;ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKyy0U7qSOOyGqKW/mnTdFIj9zkAcvMCMWnEhOoQFWUYio6eiBlaFBjhhHuM8hEM0tbeqFbnkQ+6SFDQw6VjP+E=&#xa;  256 c2:52:7c:42:61:ce:97:9d:12:d5:01:1c:ba:68:0f:fa (ED25519)&#xa;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBleYkGyL8P6lEEXf1+1feCllblPfSRHnQ9znOKhcnNM"><table>
+<elem key="fingerprint">3594fb70361a263ca83c5a5ae4fb8c18</elem>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKyy0U7qSOOyGqKW/mnTdFIj9zkAcvMCMWnEhOoQFWUYio6eiBlaFBjhhHuM8hEM0tbeqFbnkQ+6SFDQw6VjP+E=</elem>
+<elem key="bits">256</elem>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+</table>
+<table>
+<elem key="fingerprint">c2527c4261ce979d12d5011cba680ffa</elem>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAIBleYkGyL8P6lEEXf1+1feCllblPfSRHnQ9znOKhcnNM</elem>
+<elem key="bits">256</elem>
+<elem key="type">ssh-ed25519</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="8000"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Werkzeug httpd" version="3.1.3" extrainfo="Python 3.12.7" method="probed" conf="10"><cpe>cpe:/a:python:python:3.12.7</cpe></service><script id="http-methods" output="&#xa;  Supported Methods: OPTIONS GET HEAD"><table key="Supported Methods">
+<elem>OPTIONS</elem>
+<elem>GET</elem>
+<elem>HEAD</elem>
+</table>
+</script><script id="http-server-header" output="Werkzeug/3.1.3 Python/3.12.7"><elem>Werkzeug/3.1.3 Python/3.12.7</elem>
+</script><script id="http-title" output="Image Gallery"><elem key="title">Image Gallery</elem>
+</script></port>
+</ports>
+<times srtt="35713" rttvar="2285" to="100000"/>
+</host>
+<taskbegin task="NSE" time="1786719130"/>
+<taskend task="NSE" time="1786719130"/>
+<taskbegin task="NSE" time="1786719130"/>
+<taskend task="NSE" time="1786719130"/>
+<taskbegin task="NSE" time="1786719130"/>
+<taskend task="NSE" time="1786719130"/>
+<runstats><finished time="1786719130" timestr="Fri Aug 14 09:52:10 2026" summary="Nmap done at Fri Aug 14 09:52:10 2026; 1 IP address (1 host up) scanned in 34.43 seconds" elapsed="34.43" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

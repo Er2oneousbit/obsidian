@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Thu Aug 27 12:40:50 2026 as: /usr/lib/nmap/nmap --privileged -sCV -p80 -oA scans/services 10.129.96.71
+Host: 10.129.96.71 ()	Status: Up
+Host: 10.129.96.71 ()	Ports: 80/open/tcp//http//Werkzeug httpd 2.0.2 (Python 3.9.2)/
+# Nmap done at Thu Aug 27 12:40:59 2026 -- 1 IP address (1 host up) scanned in 8.44 seconds

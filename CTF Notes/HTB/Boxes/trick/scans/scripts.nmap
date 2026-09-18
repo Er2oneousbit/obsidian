@@ -1,0 +1,30 @@
+# Nmap 7.99 scan initiated Mon Aug 10 14:40:44 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA scripts -vv 10.129.44.2
+Nmap scan report for trick.htb (10.129.44.2)
+Host is up, received echo-reply ttl 63 (0.070s latency).
+Scanned at 2026-08-10 14:40:44 CDT for 295s
+Not shown: 65531 closed tcp ports (reset)
+PORT   STATE SERVICE REASON         VERSION
+22/tcp open  ssh     syn-ack ttl 63 OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+| ssh-hostkey: 
+|   2048 61:ff:29:3b:36:bd:9d:ac:fb:de:1f:56:88:4c:ae:2d (RSA)
+| ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5Rh57OmAndXFukHce0Tr4BL8CWC8yACwWdu8VZcBPGuMUH8VkvzqseeC8MYxt5SPL1aJmAsZSgOUreAJNlYNBBKjMoFwyDdArWhqDThlgBf6aqwqMRo3XWIcbQOBkrisgqcPnRKlwh+vqArsj5OAZaUq8zs7Q3elE6HrDnj779JHCc5eba+DR+Cqk1u4JxfC6mGsaNMAXoaRKsAYlwf4Yjhonl6A6MkWszz7t9q5r2bImuYAC0cvgiHJdgLcr0WJh+lV8YIkPyya1vJFp1gN4Pg7I6CmMaiWSMgSem5aVlKmrLMX10MWhewnyuH2ekMFXUKJ8wv4DgifiAIvd6AGR
+|   256 9e:cd:f2:40:61:96:ea:21:a6:ce:26:02:af:75:9a:78 (ECDSA)
+| ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAoXvyMKuWhQvWx52EFXK9ytX/pGmjZptG8Kb+DOgKcGeBgGPKX3ZpryuGR44av0WnKP0gnRLWk7UCbqY3mxXU0=
+|   256 72:93:f9:11:58:de:34:ad:12:b5:4b:4a:73:64:b9:70 (ED25519)
+|_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGY1WZWn9xuvXhfxFFm82J9eRGNYJ9NnfzECUm0faUXm
+25/tcp open  smtp?   syn-ack ttl 63
+|_smtp-commands: Couldn't establish connection on port 25
+53/tcp open  domain  syn-ack ttl 63 ISC BIND 9.11.5-P4-5.1+deb10u7 (Debian Linux)
+| dns-nsid: 
+|_  bind.version: 9.11.5-P4-5.1+deb10u7-Debian
+80/tcp open  http    syn-ack ttl 63 nginx 1.14.2
+|_http-title: Coming Soon - Start Bootstrap Theme
+| http-methods: 
+|_  Supported Methods: GET HEAD
+|_http-favicon: Unknown favicon MD5: 556F31ACD686989B1AFCF382C05846AA
+|_http-server-header: nginx/1.14.2
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Read data files from: /usr/share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Mon Aug 10 14:45:39 2026 -- 1 IP address (1 host up) scanned in 295.12 seconds

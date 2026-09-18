@@ -1,0 +1,80 @@
+# Nmap 7.99 scan initiated Tue Aug 18 11:32:53 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA full_scan -vv 10.129.228.129
+Nmap scan report for 10.129.228.129
+Host is up, received syn-ack ttl 63 (0.043s latency).
+Scanned at 2026-08-18 11:32:54 CDT for 36s
+Not shown: 65532 closed tcp ports (reset)
+PORT    STATE SERVICE  REASON         VERSION
+22/tcp  open  ssh      syn-ack ttl 63 OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)
+| ssh-hostkey: 
+|   3072 df:17:c6:ba:b1:82:22:d9:1d:b5:eb:ff:5d:3d:2c:b7 (RSA)
+| ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDB5dEat1MGh3CDDnkl4tdWQcTpdWZYHZj5/Orv3PDjSiQ4dg1i35kknwiZrXLiMsUu/4TigP9Kc3h4M1CS7E3/GprpWxuGmipEucoQuNEtaM0sUa8xobtFxOVF46kS0++ozTd4+zbSLsu73SlLcSuSFalhGnHteHj6/ksSeX642103SMqkkmEu/cbgofkoqQOCYk3Qa42bZq5bjS/auGAlPoAxTjjVtpHnXOKOU7M6gkewD91FB3GAMUdwqR/PJcA5xqGFZm2St9ecSbewCur6pLN5YKnNhvdID4ijWI22gu5pLxHL9XjORMbSUkJbB79VoYJZaNkdOgt+HXR67s9DWI47D6/+pO0dTfQgMFgOCxYheWMDQ2FuyHyGX1CZpMVLAo3sjOvxAqk7eUGutsyBAlYCD4lhSFs6RhSBynahHQah7+Lv5LKRriZe/fQIgrJrQj+tR4Uhz89eWGrXK9bjN22wy7tVkMG/w5dOwo7S3Wi0aTZfd/17D0z7wSdiAiE=
+|   256 3f:8a:56:f8:95:8f:ae:af:e3:ae:7e:b8:80:f6:79:d2 (ECDSA)
+| ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCgM9UKdxFmXRJESXdlb+BSl+K1F0YCkOjSa8l+tgD6Y3mslSfrawZkdfq8NKLZlmOe8uf1ykgXjLWVDQ9NrJBk=
+|   256 3c:65:75:27:4a:e2:ef:93:91:37:4c:fd:d9:d4:63:41 (ED25519)
+|_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMwR+IfRojCwiMuM3tZvdD5JCD2MRVum9frUha60bkN
+80/tcp  open  http     syn-ack ttl 63 Apache httpd 2.4.54
+|_http-title: Did not follow redirect to https://broscience.htb/
+|_http-server-header: Apache/2.4.54 (Debian)
+| http-methods: 
+|_  Supported Methods: GET HEAD POST OPTIONS
+443/tcp open  ssl/http syn-ack ttl 63 Apache httpd 2.4.54 ((Debian))
+| http-methods: 
+|_  Supported Methods: GET HEAD POST OPTIONS
+| http-cookie-flags: 
+|   /: 
+|     PHPSESSID: 
+|_      httponly flag not set
+|_ssl-date: TLS randomness does not represent time
+|_http-server-header: Apache/2.4.54 (Debian)
+|_http-title: BroScience : Home
+| tls-alpn: 
+|_  http/1.1
+| ssl-cert: Subject: commonName=broscience.htb/organizationName=BroScience/countryName=AT/emailAddress=administrator@broscience.htb/localityName=Vienna
+| Issuer: commonName=broscience.htb/organizationName=BroScience/countryName=AT/emailAddress=administrator@broscience.htb/localityName=Vienna
+| Public Key type: rsa
+| Public Key bits: 4096
+| Signature Algorithm: sha256WithRSAEncryption
+| Not valid before: 2022-07-14T19:48:36
+| Not valid after:  2023-07-14T19:48:36
+| MD5:     5328 ddd6 2f34 29d1 1d26 ae8a 68d8 6e0c
+| SHA-1:   2056 8d0d 9e41 09cd e5a2 2021 fe3f 349c 40d8 d75b
+| SHA-256: 06a0 9f14 d1c8 3859 5d46 50c5 7300 95bd 7983 58f2 b66e e43c c9d1 20be dc6e bd5f
+| -----BEGIN CERTIFICATE-----
+| MIIF0zCCA7ugAwIBAgIUD+qpK08oB9Kng1mp3mIxnO21+s4wDQYJKoZIhvcNAQEL
+| BQAweTELMAkGA1UEBhMCQVQxDzANBgNVBAcMBlZpZW5uYTETMBEGA1UECgwKQnJv
+| U2NpZW5jZTEXMBUGA1UEAwwOYnJvc2NpZW5jZS5odGIxKzApBgkqhkiG9w0BCQEW
+| HGFkbWluaXN0cmF0b3JAYnJvc2NpZW5jZS5odGIwHhcNMjIwNzE0MTk0ODM2WhcN
+| MjMwNzE0MTk0ODM2WjB5MQswCQYDVQQGEwJBVDEPMA0GA1UEBwwGVmllbm5hMRMw
+| EQYDVQQKDApCcm9TY2llbmNlMRcwFQYDVQQDDA5icm9zY2llbmNlLmh0YjErMCkG
+| CSqGSIb3DQEJARYcYWRtaW5pc3RyYXRvckBicm9zY2llbmNlLmh0YjCCAiIwDQYJ
+| KoZIhvcNAQEBBQADggIPADCCAgoCggIBAKcyX2E/e8BqyRU6FoKOWoWFJo6nLHhK
+| B0wNgmPrcUZ5ycizPc+6ereoFgzZmj5qI0lBW4ZZNn5m5nBcAlVxCC6qzT+vUY1N
+| j8VyC0seh90AJYGXHylWOJoEl+a8UOrbirbkuvJNhwG6Eryo2enWgmSkyHHIjH2d
+| mS29vmydxAJafTR04IQkbmyfhbuYMEl5aZZQCS+ZuA+5MRCWbpZg8E02O5zAWSa6
+| Kc3W1DnjEFJNECY9fwiga842sR7QxQYaJN30bBQAG0DJgay6Af+7cB82czIt8aRa
+| gcrkrCeBtWc6t0VXyCOAqeVSghqzYhZuAbGQaQJN/lgcVL2Zky8Jte70EGW9Lsq1
+| m6o92goMCfEFKxKieD0niVtOW1v/mkuwMG7R6VRY9D6ySn9jTK0WmmBYX0V145oY
+| BU8WUbhAqZAPb/vsayGmVsKaX6ruNUO0t07ZhMjO8GO1mBh507+3YRtYztwueCOL
+| 7e3N5jdOWXIauGXQafo9jhuhletktmeFs5ytM5gTf0X7R+Ink2coum5TI/KVK2WQ
+| Lb+oSOkgqbrVpIyr3YrpqW1NnyekPweUbC/n4/uSZv1+9QHjGJ3aQtWmf73JFCkG
+| BBeirNufb4/imdX8GZpkJs35kcL32gRyfpLHF9gyEIbW9NEnX1kpg8VfCrUJOjR5
+| PFedjVtw4G/bAgMBAAGjUzBRMB0GA1UdDgQWBBR8vMUiyG5QWyER5cOhk24raL+A
+| WjAfBgNVHSMEGDAWgBR8vMUiyG5QWyER5cOhk24raL+AWjAPBgNVHRMBAf8EBTAD
+| AQH/MA0GCSqGSIb3DQEBCwUAA4ICAQCjEIzE+EpLeuGgCY18AREB4t2xSwqiYgqC
+| H+gRoSbQ64xpNrbjOLBeyB4b1FotYdquKiaiFs7P1taY7hQiyHGFk4HOJlhyBnRK
+| atjKt6ZE24yWgsGikGx0D57SYTeJwhqafYRnNuqNPCvnvhO1zQjMTl03T30PvSeb
+| TDfcgd3rzG72w4S/zL59Vr4kr9Js01LpjDgt2Kyd5zW4RZKHA+RdIE+ePJXZaTwj
+| +Ko8QzNKwt3qDlOXAV5MiqUfKPHyg6Rzq8i5bKNMpwU1UxYGpE64T0t+IfhiOX/O
+| r/dW59nLXoHTGhqwAStFCzCqu+6Jfod2wFb+9Ty5rctVIpHw2XMEKfC8DSewvCc6
+| QjMMMCRc2vpkc/YHberK+VYb8eVf4GcKzq6ns341jZ0FAwNEpB6tY6eeGovOLeeO
+| P5ONg9XAO8EipKj/tJhmIZ2G6GHKh1Enj7zg1DoGCMttLeaC5lMzaxAWdwUplaBm
+| w/+0dzFuuJL+XlxQIrVpGpmJOmBvPq/WvzU6ZFi4UwbHkow5EVvUPvW2GmTVecpx
+| Or1X3z3W5aGvj1tH2OcqY5WTcgDNoBtFc3tob8xNd7KB88DQfNbSHuFShKymwAVK
+| bcb0jeUT6YRF6NEmoLu80xyrro+Ejt1fLd3WE6q4+BXvhdj62OPtt5ue2rEhycgc
+| dfC1SCd82A==
+|_-----END CERTIFICATE-----
+Service Info: Host: broscience.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Read data files from: /usr/share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue Aug 18 11:33:30 2026 -- 1 IP address (1 host up) scanned in 36.39 seconds

@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Aug 25 09:26:31 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA scripts monitorsthree.htb
+Host: 10.129.52.125 (monitorsthree.htb)	Status: Up
+Host: 10.129.52.125 (monitorsthree.htb)	Ports: 22/open/tcp//ssh//OpenSSH 8.9p1 Ubuntu 3ubuntu0.10 (Ubuntu Linux; protocol 2.0)/, 80/open/tcp//http//nginx 1.18.0 (Ubuntu)/, 8084/filtered/tcp//websnp///	Ignored State: closed (65532)
+# Nmap done at Tue Aug 25 09:27:08 2026 -- 1 IP address (1 host up) scanned in 36.45 seconds

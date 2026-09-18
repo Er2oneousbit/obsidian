@@ -1,0 +1,5 @@
+# Nmap 7.99 scan initiated Mon Aug 10 14:40:44 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA scripts -vv 10.129.44.2
+# Ports scanned: TCP(65535;1-65535) UDP(0;) SCTP(0;) PROTOCOLS(0;)
+Host: 10.129.44.2 (trick.htb)	Status: Up
+Host: 10.129.44.2 (trick.htb)	Ports: 22/open/tcp//ssh//OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)/, 25/open/tcp//smtp?///, 53/open/tcp//domain//ISC BIND 9.11.5-P4-5.1+deb10u7 (Debian Linux)/, 80/open/tcp//http//nginx 1.14.2/	Ignored State: closed (65531)
+# Nmap done at Mon Aug 10 14:45:39 2026 -- 1 IP address (1 host up) scanned in 295.12 seconds

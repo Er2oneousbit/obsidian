@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Thu Aug 13 08:48:41 2026 as: /usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv 10.129.45.126 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv 10.129.45.126" start="1786628921" startstr="Thu Aug 13 08:48:41 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="2"/>
+<debugging level="0"/>
+<taskbegin task="NSE" time="1786628921"/>
+<taskend task="NSE" time="1786628921"/>
+<taskbegin task="NSE" time="1786628921"/>
+<taskend task="NSE" time="1786628921"/>
+<taskbegin task="NSE" time="1786628921"/>
+<taskend task="NSE" time="1786628921"/>
+<taskbegin task="Ping Scan" time="1786628921"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.45.126" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<taskend task="Ping Scan" time="1786628922" extrainfo="1 total hosts"/>
+<taskbegin task="Parallel DNS resolution of 1 host." time="1786628922"/>
+<taskend task="Parallel DNS resolution of 1 host." time="1786628922"/>
+<taskbegin task="SYN Stealth Scan" time="1786628922"/>
+<taskend task="SYN Stealth Scan" time="1786629033" extrainfo="65535 total ports"/>
+<taskbegin task="Service scan" time="1786629033"/>
+<taskend task="Service scan" time="1786629071" extrainfo="5 services on 1 host"/>
+<taskbegin task="NSE" time="1786629071"/>
+<taskend task="NSE" time="1786629074"/>
+<taskbegin task="NSE" time="1786629074"/>
+<taskend task="NSE" time="1786629074"/>
+<taskbegin task="NSE" time="1786629074"/>
+<taskend task="NSE" time="1786629074"/>
+<host starttime="1786628922" endtime="1786629074"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.45.126" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="closed" count="65530">
+<extrareasons reason="reset" count="65530" proto="tcp" ports="1-21,23-79,81-511,515-65535"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="8.9p1 Ubuntu 3ubuntu0.13" extrainfo="Ubuntu Linux; protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:8.9p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  256 6a:16:1f:c8:fe:fd:e3:98:a6:85:cf:fe:7b:0e:60:aa (ECDSA)&#xa;ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIyAf6GPee+rQqSK2Xs/sDBPHvOh109nei1YDinqEqeQRyHAu7cYctKMIK5CFZojCtyJqLBB5Tmw7v6si1cjyBY=&#xa;  256 e4:08:cc:5f:8e:56:25:8f:38:c3:ec:df:b8:86:0c:69 (ED25519)&#xa;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILiu1L4RnPAcunzYAHckqjzFY2I4PHhzCheH+7SMZKnS"><table>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIyAf6GPee+rQqSK2Xs/sDBPHvOh109nei1YDinqEqeQRyHAu7cYctKMIK5CFZojCtyJqLBB5Tmw7v6si1cjyBY=</elem>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+<elem key="fingerprint">6a161fc8fefde398a685cffe7b0e60aa</elem>
+<elem key="bits">256</elem>
+</table>
+<table>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAILiu1L4RnPAcunzYAHckqjzFY2I4PHhzCheH+7SMZKnS</elem>
+<elem key="type">ssh-ed25519</elem>
+<elem key="fingerprint">e408cc5f8e56258f38c3ecdfb8860c69</elem>
+<elem key="bits">256</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.52" extrainfo="(Ubuntu)" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.52</cpe></service><script id="http-title" output="Admin Login"><elem key="title">Admin Login</elem>
+</script><script id="http-cookie-flags" output="&#xa;  /: &#xa;    PHPSESSID: &#xa;      httponly flag not set"><table key="/">
+<table key="PHPSESSID">
+<elem>httponly flag not set</elem>
+</table>
+</table>
+</script><script id="http-methods" output="&#xa;  Supported Methods: GET HEAD POST OPTIONS"><table key="Supported Methods">
+<elem>GET</elem>
+<elem>HEAD</elem>
+<elem>POST</elem>
+<elem>OPTIONS</elem>
+</table>
+</script><script id="http-server-header" output="Apache/2.4.52 (Ubuntu)"><elem>Apache/2.4.52 (Ubuntu)</elem>
+</script></port>
+<port protocol="tcp" portid="512"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="exec" product="netkit-rsh rexecd" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:netkit:netkit</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
+<port protocol="tcp" portid="513"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="login" method="table" conf="3"/></port>
+<port protocol="tcp" portid="514"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="shell" product="Netkit rshd" method="probed" conf="10"><cpe>cpe:/a:netkit:netkit_rsh</cpe></service></port>
+</ports>
+<times srtt="38361" rttvar="5098" to="100000"/>
+</host>
+<taskbegin task="NSE" time="1786629074"/>
+<taskend task="NSE" time="1786629074"/>
+<taskbegin task="NSE" time="1786629074"/>
+<taskend task="NSE" time="1786629074"/>
+<taskbegin task="NSE" time="1786629074"/>
+<taskend task="NSE" time="1786629074"/>
+<runstats><finished time="1786629074" timestr="Thu Aug 13 08:51:14 2026" summary="Nmap done at Thu Aug 13 08:51:14 2026; 1 IP address (1 host up) scanned in 152.73 seconds" elapsed="152.73" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

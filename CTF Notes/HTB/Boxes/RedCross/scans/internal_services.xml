@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Fri Sep  4 14:40:41 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sCV -p21,1025,5432 -oA scans/internal_services 10.129.57.143 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sCV -p21,1025,5432 -oA scans/internal_services 10.129.57.143" start="1788550841" startstr="Fri Sep  4 14:40:41 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="3" services="21,1025,5432"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.57.143" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1788550841" endtime="1788551018"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.57.143" addrtype="ipv4"/>
+<hostnames>
+<hostname name="redcross.htb" type="PTR"/>
+</hostnames>
+<ports><port protocol="tcp" portid="21"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ftp" product="vsftpd" version="2.0.8 or later" hostname="RedCross" method="probed" conf="10"><cpe>cpe:/a:vsftpd:vsftpd</cpe></service></port>
+<port protocol="tcp" portid="1025"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="NFS-or-IIS" method="table" conf="3"/></port>
+<port protocol="tcp" portid="5432"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="postgresql" product="PostgreSQL DB" version="9.6.7 - 9.6.12" method="probed" conf="10"><cpe>cpe:/a:postgresql:postgresql:9.6</cpe></service><script id="ssl-cert" output="Subject: commonName=redcross.redcross.htb&#xa;Subject Alternative Name: DNS:redcross.redcross.htb&#xa;Not valid before: 2018-06-03T19:13:20&#xa;Not valid after:  2028-05-31T19:13:20"><table key="subject">
+<elem key="commonName">redcross.redcross.htb</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">redcross.redcross.htb</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">B070C2BEB9971BDDA1058F2BDCE7FD34E2C27DD859D9D364074F4EC22B755FCCF39F24F6255263E1787E1A36BFA6DE8EA47B0370069500FF2EA67693D617652FE17C5FFA7EAA2FC4108DC642C87D767F50880081E5BEE25EA008FB7FA51EFD9B21B61FBF4A768E069C04CEC30278E08572D45EBDFC5D7B574D4642FDBD92EC2D32681EE8523E97A468DA7EA3D0CB41C93561FB25D049B70C6F92DF4D4F77B6DB74175C84AE883D221ADF348F8ADA78ED288E0BB25065586A3E1EEC48AC6589C00E1B0FFAB7F745D81F85F01E54028965874907EED715050CD8B4033CC307F59E439E9DBC963B8C7560106CDC9194B53C9DCFAE684A3B501DD23C4B210B13B961</elem>
+<elem key="exponent">65537</elem>
+</table>
+<table key="extensions">
+<table>
+<elem key="name">X509v3 Basic Constraints</elem>
+<elem key="value">CA:FALSE</elem>
+</table>
+<table>
+<elem key="name">X509v3 Subject Alternative Name</elem>
+<elem key="value">DNS:redcross.redcross.htb</elem>
+</table>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2018-06-03T19:13:20</elem>
+<elem key="notAfter">2028-05-31T19:13:20</elem>
+</table>
+<elem key="md5">677429d26eca29e1fdd947e5f3655eeb</elem>
+<elem key="sha1">7e9c03e4def628626dc9b8577f0f43a5ba117f2b</elem>
+<elem key="sha256">1c9c097af2ea13f429d6016733aced1c658066750ad48cf128a8c65f9ffcd8d6</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIC8jCCAdqgAwIBAgIJAJ9W3OqD9RjVMA0GCSqGSIb3DQEBCwUAMCAxHjAcBgNV&#xa;BAMMFXJlZGNyb3NzLnJlZGNyb3NzLmh0YjAeFw0xODA2MDMxOTEzMjBaFw0yODA1&#xa;MzExOTEzMjBaMCAxHjAcBgNVBAMMFXJlZGNyb3NzLnJlZGNyb3NzLmh0YjCCASIw&#xa;DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALBwwr65lxvdoQWPK9zn/TTiwn3Y&#xa;WdnTZAdPTsIrdV/M858k9iVSY+F4fho2v6bejqR7A3AGlQD/LqZ2k9YXZS/hfF/6&#xa;fqovxBCNxkLIfXZ/UIgAgeW+4l6gCPt/pR79myG2H79Kdo4GnATOwwJ44IVy1F69&#xa;/F17V01GQv29kuwtMmge6FI+l6Ro2n6j0MtByTVh+yXQSbcMb5LfTU93ttt0F1yE&#xa;rog9IhrfNI+K2njtKI4LslBlWGo+HuxIrGWJwA4bD/q390XYH4XwHlQCiWWHSQfu&#xa;1xUFDNi0AzzDB/WeQ56dvJY7jHVgEGzckZS1PJ3PrmhKO1Ad0jxLIQsTuWECAwEA&#xa;AaMvMC0wCQYDVR0TBAIwADAgBgNVHREEGTAXghVyZWRjcm9zcy5yZWRjcm9zcy5o&#xa;dGIwDQYJKoZIhvcNAQELBQADggEBADR26Z+axy4HRMPy0vgk51+hG6qJdL3vu9WR&#xa;mP3zeq0R1INIjgU/3YWR/9IWzEUncteRggGQiWiMDthNKX9mPemKon9W4yyxWOzz&#xa;3jUCDTAiittw5BM0Xxea23I9lcMsgItjgMhKaI7zdIg5QzXjryBkKciSwbVNtNJg&#xa;5JfILg0AHS9rC1bHTlvOpOKk303Z+2f6ajZo8MTMH+MUGckOGc7An8j3WTdIY+Ot&#xa;RknTcbORCN7Ntgwf9Wd9ijXDEY8Cv0XxYni7Osz4jfhQqiL3SC1kXeFEI8rCaA+B&#xa;NYJybx4k2un7+YVGWN+D32F3N5qY3Sd84jFjQwt90csafWMMp9w=&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="ssl-date" output="TLS randomness does not represent time"></script></port>
+</ports>
+<times srtt="36320" rttvar="18718" to="111192"/>
+</host>
+<runstats><finished time="1788551018" timestr="Fri Sep  4 14:43:38 2026" summary="Nmap done at Fri Sep  4 14:43:38 2026; 1 IP address (1 host up) scanned in 177.73 seconds" elapsed="177.73" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

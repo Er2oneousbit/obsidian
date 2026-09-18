@@ -1,0 +1,11 @@
+# Nmap 7.99 scan initiated Thu Aug 27 12:40:50 2026 as: /usr/lib/nmap/nmap --privileged -sCV -p80 -oA scans/services 10.129.96.71
+Nmap scan report for 10.129.96.71
+Host is up (0.047s latency).
+
+PORT   STATE SERVICE VERSION
+80/tcp open  http    Werkzeug httpd 2.0.2 (Python 3.9.2)
+|_http-title: GoodGames | Community and Store
+|_http-server-header: Werkzeug/2.0.2 Python/3.9.2
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Thu Aug 27 12:40:59 2026 -- 1 IP address (1 host up) scanned in 8.44 seconds

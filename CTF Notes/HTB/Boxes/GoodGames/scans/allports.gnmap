@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Thu Aug 27 12:16:08 2026 as: /usr/lib/nmap/nmap --privileged -p- --min-rate 5000 -oA scans/allports 10.129.96.71
+Host: 10.129.96.71 ()	Status: Up
+Host: 10.129.96.71 ()	Ports: 80/open/tcp//http///	Ignored State: closed (65534)
+# Nmap done at Thu Aug 27 12:16:20 2026 -- 1 IP address (1 host up) scanned in 12.41 seconds

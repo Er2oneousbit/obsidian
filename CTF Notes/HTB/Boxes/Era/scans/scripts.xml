@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Thu Aug 20 09:01:13 2026 as: /usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv era.htb -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -p- -sV -sC -oA scripts -vv era.htb" start="1787234473" startstr="Thu Aug 20 09:01:13 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="2"/>
+<debugging level="0"/>
+<taskbegin task="NSE" time="1787234474"/>
+<taskend task="NSE" time="1787234474"/>
+<taskbegin task="NSE" time="1787234474"/>
+<taskend task="NSE" time="1787234474"/>
+<taskbegin task="NSE" time="1787234474"/>
+<taskend task="NSE" time="1787234474"/>
+<taskbegin task="Ping Scan" time="1787234474"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.237.233" addrtype="ipv4"/>
+<hostnames>
+<hostname name="era.htb" type="user"/>
+</hostnames>
+</hosthint>
+<taskend task="Ping Scan" time="1787234474" extrainfo="1 total hosts"/>
+<taskbegin task="SYN Stealth Scan" time="1787234474"/>
+<taskend task="SYN Stealth Scan" time="1787234504" extrainfo="65535 total ports"/>
+<taskbegin task="Service scan" time="1787234504"/>
+<taskend task="Service scan" time="1787234510" extrainfo="2 services on 1 host"/>
+<taskbegin task="NSE" time="1787234510"/>
+<taskend task="NSE" time="1787234514"/>
+<taskbegin task="NSE" time="1787234514"/>
+<taskend task="NSE" time="1787234514"/>
+<taskbegin task="NSE" time="1787234514"/>
+<taskend task="NSE" time="1787234514"/>
+<host starttime="1787234474" endtime="1787234514"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.237.233" addrtype="ipv4"/>
+<hostnames>
+<hostname name="era.htb" type="user"/>
+<hostname name="era.htb" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="65533">
+<extrareasons reason="reset" count="65533" proto="tcp" ports="1-20,22-79,81-65535"/>
+</extraports>
+<port protocol="tcp" portid="21"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ftp" product="vsftpd" version="3.0.5" ostype="Unix" method="probed" conf="10"><cpe>cpe:/a:vsftpd:vsftpd:3.0.5</cpe></service></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="nginx" version="1.18.0" extrainfo="Ubuntu" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:igor_sysoev:nginx:1.18.0</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="http-methods" output="&#xa;  Supported Methods: GET HEAD"><table key="Supported Methods">
+<elem>GET</elem>
+<elem>HEAD</elem>
+</table>
+</script><script id="http-favicon" output="Unknown favicon MD5: 0309B7B14DF62A797B431119ADB37B14"/><script id="http-server-header" output="nginx/1.18.0 (Ubuntu)"><elem>nginx/1.18.0 (Ubuntu)</elem>
+</script><script id="http-title" output="Era Designs"><elem key="title">Era Designs</elem>
+</script></port>
+</ports>
+<times srtt="35679" rttvar="894" to="100000"/>
+</host>
+<taskbegin task="NSE" time="1787234514"/>
+<taskend task="NSE" time="1787234514"/>
+<taskbegin task="NSE" time="1787234514"/>
+<taskend task="NSE" time="1787234514"/>
+<taskbegin task="NSE" time="1787234514"/>
+<taskend task="NSE" time="1787234514"/>
+<runstats><finished time="1787234514" timestr="Thu Aug 20 09:01:54 2026" summary="Nmap done at Thu Aug 20 09:01:54 2026; 1 IP address (1 host up) scanned in 40.99 seconds" elapsed="40.99" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

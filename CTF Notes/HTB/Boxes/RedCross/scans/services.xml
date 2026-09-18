@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Thu Sep  3 10:12:07 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sCV -p22,80,443 -oA scans/services 10.129.56.225 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sCV -p22,80,443 -oA scans/services 10.129.56.225" start="1788448327" startstr="Thu Sep  3 10:12:07 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="3" services="22,80,443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.56.225" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1788448328" endtime="1788448347"><status state="up" reason="echo-reply" reason_ttl="63"/>
+<address addr="10.129.56.225" addrtype="ipv4"/>
+<hostnames>
+<hostname name="redcross.htb" type="PTR"/>
+</hostnames>
+<ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="ssh" product="OpenSSH" version="7.9p1 Debian 10+deb10u3" extrainfo="protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:7.9p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service><script id="ssh-hostkey" output="&#xa;  2048 67:d3:85:f8:ee:b8:06:23:59:d7:75:8e:a2:37:d0:a6 (RSA)&#xa;  256 89:b4:65:27:1f:93:72:1a:bc:e3:22:70:90:db:35:96 (ECDSA)&#xa;  256 66:bd:a1:1c:32:74:32:e2:e6:64:e8:a5:25:1b:4d:67 (ED25519)"><table>
+<elem key="type">ssh-rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="key">AAAAB3NzaC1yc2EAAAADAQABAAABAQCvHxBEHZStDr7Frfk25i6xP+UPJUeVxLxxjZ9M52P3RH3o9II26fOQkuVq0V9y+jAMzpOEPVOHm0KrD9T3R8rPUebJM8qPQfMjs4d7vefyHhCv0wJ1UlRcMv7wi3+8hJ3ATWXkeTnRHtloNrvN9IkII1zRApDM5qAKVZf7kLH8vppgAkK6XX0RfvEbiiIF4/4t9Swk0pqKazlBoxNmuBQ0ZBC09vlkbx4hJGR/7xQ18PJP/RoUNQgLFMeaGVq1c+/44w8G6G125w671x0NO9dvysiF1XAtRWvYuc6B0Y9RXdZ+Fl4UyPcBfnfjDS0uT6MF5LP4HYZwAq8UVkN6zaXD</elem>
+<elem key="fingerprint">67d385f8eeb8062359d7758ea237d0a6</elem>
+</table>
+<table>
+<elem key="type">ecdsa-sha2-nistp256</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD0fZY6OjH5EARn0aeiHLZb2aOe8knzx1q3pZSdXd9jHvpmRfuLhu7Pw+BLaQW0WJJ5ZNfIdSgx8epBblM6PBgk=</elem>
+<elem key="fingerprint">89b465271f93721abce3227090db3596</elem>
+</table>
+<table>
+<elem key="type">ssh-ed25519</elem>
+<elem key="bits">256</elem>
+<elem key="key">AAAAC3NzaC1lZDI1NTE5AAAAIOMWzieju6+BudzSxF+Zl5/b1kQZ+vJVlxmSfVeirE0K</elem>
+<elem key="fingerprint">66bda11c327432e2e664e8a5251b4d67</elem>
+</table>
+</script></port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.38" hostname="redcross.htb" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.38</cpe></service><script id="http-title" output="Did not follow redirect to https://intra.redcross.htb/"><elem key="redirect_url">https://intra.redcross.htb/</elem>
+</script><script id="http-server-header" output="Apache/2.4.38 (Debian)"><elem>Apache/2.4.38 (Debian)</elem>
+</script></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="63"/><service name="http" product="Apache httpd" version="2.4.38" hostname="redcross.htb" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:apache:http_server:2.4.38</cpe></service><script id="tls-alpn" output="&#xa;  http/1.1"><elem>http/1.1</elem>
+</script><script id="ssl-date" output="TLS randomness does not represent time"></script><script id="ssl-cert" output="Subject: commonName=intra.redcross.htb/organizationName=Red Cross International/stateOrProvinceName=NY/countryName=US&#xa;Not valid before: 2018-06-03T19:46:58&#xa;Not valid after:  2021-02-27T19:46:58"><table key="subject">
+<elem key="commonName">intra.redcross.htb</elem>
+<elem key="countryName">US</elem>
+<elem key="emailAddress">penelope@redcross.htb</elem>
+<elem key="localityName">New York</elem>
+<elem key="organizationName">Red Cross International</elem>
+<elem key="organizationalUnitName">IT</elem>
+<elem key="stateOrProvinceName">NY</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">intra.redcross.htb</elem>
+<elem key="countryName">US</elem>
+<elem key="emailAddress">penelope@redcross.htb</elem>
+<elem key="localityName">New York</elem>
+<elem key="organizationName">Red Cross International</elem>
+<elem key="organizationalUnitName">IT</elem>
+<elem key="stateOrProvinceName">NY</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">F638FFB9701EBBE9ACC004C0EDF61840B356718916ED10AE731F72C57DDA80723990FF7A8A205E59E08286A2B16769C09A372CE63CA0F546F357F3DBC3B1E50D48B22B8BEC875E1055EB162F1612C057206DAF4A9FB671958F61FE8B6717A09D879C6D1222BE46BD2844F55BB3FBEFF76D99BEF94BA03A9DCFE23AAC4216CE9C6B2E544934D921B5B7FB23F13A5B88776FA7A20B3E4ED1E7FC123DC78C88052A4E22659E1E936BF3358E573FF1C4843AEBDCEACBDCAB335CE1F81DCDCEC266CE41757925DBFC92E4DDCBD7F046B53EF26EECAA0001BA588A179BB9737A5CE7C9F85B03AE26B02283C598DCEEF0383DB7F61FB3E005973ECA44402D99415A5E9F</elem>
+<elem key="exponent">65537</elem>
+</table>
+<table key="extensions">
+<table>
+<elem key="name">X509v3 Subject Key Identifier</elem>
+<elem key="value">D3:2F:E4:FD:65:53:A6:7D:FB:AC:A5:51:41:EC:A8:EB:1A:22:99:26</elem>
+</table>
+<table>
+<elem key="name">X509v3 Authority Key Identifier</elem>
+<elem key="value">D3:2F:E4:FD:65:53:A6:7D:FB:AC:A5:51:41:EC:A8:EB:1A:22:99:26</elem>
+</table>
+<table>
+<elem key="name">X509v3 Basic Constraints</elem>
+<elem key="value">CA:TRUE</elem>
+<elem key="critical">true</elem>
+</table>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2018-06-03T19:46:58</elem>
+<elem key="notAfter">2021-02-27T19:46:58</elem>
+</table>
+<elem key="md5">f95b6897247dca2f3da76756104616f1</elem>
+<elem key="sha1">e86ee8276dddb4837f86c59b2995002c77ccfcea</elem>
+<elem key="sha256">04911c77657a9d69625d7f55df44395da5e4dfe8735700f747349681d429880c</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIEFjCCAv6gAwIBAgIJAOvkz8L8YpWbMA0GCSqGSIb3DQEBCwUAMIGfMQswCQYD&#xa;VQQGEwJVUzELMAkGA1UECAwCTlkxETAPBgNVBAcMCE5ldyBZb3JrMSAwHgYDVQQK&#xa;DBdSZWQgQ3Jvc3MgSW50ZXJuYXRpb25hbDELMAkGA1UECwwCSVQxGzAZBgNVBAMM&#xa;EmludHJhLnJlZGNyb3NzLmh0YjEkMCIGCSqGSIb3DQEJARYVcGVuZWxvcGVAcmVk&#xa;Y3Jvc3MuaHRiMB4XDTE4MDYwMzE5NDY1OFoXDTIxMDIyNzE5NDY1OFowgZ8xCzAJ&#xa;BgNVBAYTAlVTMQswCQYDVQQIDAJOWTERMA8GA1UEBwwITmV3IFlvcmsxIDAeBgNV&#xa;BAoMF1JlZCBDcm9zcyBJbnRlcm5hdGlvbmFsMQswCQYDVQQLDAJJVDEbMBkGA1UE&#xa;AwwSaW50cmEucmVkY3Jvc3MuaHRiMSQwIgYJKoZIhvcNAQkBFhVwZW5lbG9wZUBy&#xa;ZWRjcm9zcy5odGIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQD2OP+5&#xa;cB676azABMDt9hhAs1ZxiRbtEK5zH3LFfdqAcjmQ/3qKIF5Z4IKGorFnacCaNyzm&#xa;PKD1RvNX89vDseUNSLIri+yHXhBV6xYvFhLAVyBtr0qftnGVj2H+i2cXoJ2HnG0S&#xa;Ir5GvShE9Vuz++/3bZm++UugOp3P4jqsQhbOnGsuVEk02SG1t/sj8TpbiHdvp6IL&#xa;Pk7R5/wSPceMiAUqTiJlnh6Ta/M1jlc/8cSEOuvc6svcqzNc4fgdzc7CZs5BdXkl&#xa;2/yS5N3L1/BGtT7ybuyqAAG6WIoXm7lzelznyfhbA64msCKDxZjc7vA4Pbf2H7Pg&#xa;BZc+ykRALZlBWl6fAgMBAAGjUzBRMB0GA1UdDgQWBBTTL+T9ZVOmffuspVFB7Kjr&#xa;GiKZJjAfBgNVHSMEGDAWgBTTL+T9ZVOmffuspVFB7KjrGiKZJjAPBgNVHRMBAf8E&#xa;BTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBCXgR48Nj5D0C+aVEh4QMQHQ8h8CUs&#xa;zKwaEfZLBDhAfxPNv33OQ9HY8j/hfW4rmmIRUtXg3yUdUjVHUzU69UTTTZ19klgu&#xa;YkAZ3IbGd1hvDc6efP25BwsIVByVM+/9suItUP0L7dp1PIzhObV6lHiXlU2nWu+1&#xa;fnQY2MRwhmc/O0cEQ3tZ5UHy8Ix8jEH+jJceLY671uWB0CELFKcXWI2p4G7MYRyj&#xa;9/FNo7Kd84A7/ifogbSwJBobzgtQn9+4clbe+D1KJ7+OmvJHWJK47zHO1CZISXg6&#xa;hKbexhCs7Ab0ipy5wlmzB9PkK7X12ze72Jalhc7hyTDTAY71WB1ZAYw2&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="http-title" output="Did not follow redirect to https://intra.redcross.htb/"><elem key="redirect_url">https://intra.redcross.htb/</elem>
+</script><script id="http-server-header" output="Apache/2.4.38 (Debian)"><elem>Apache/2.4.38 (Debian)</elem>
+</script></port>
+</ports>
+<times srtt="32888" rttvar="14056" to="100000"/>
+</host>
+<runstats><finished time="1788448347" timestr="Thu Sep  3 10:12:27 2026" summary="Nmap done at Thu Sep  3 10:12:27 2026; 1 IP address (1 host up) scanned in 19.26 seconds" elapsed="19.26" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

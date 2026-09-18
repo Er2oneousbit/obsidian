@@ -1,0 +1,29 @@
+# Nmap 7.99 scan initiated Thu Aug 13 08:48:41 2026 as: /usr/lib/nmap/nmap --privileged -p- -sV -sC -oA scripts -vv 10.129.45.126
+Nmap scan report for 10.129.45.126
+Host is up, received echo-reply ttl 63 (0.038s latency).
+Scanned at 2026-08-13 08:48:42 CDT for 152s
+Not shown: 65530 closed tcp ports (reset)
+PORT    STATE SERVICE REASON         VERSION
+22/tcp  open  ssh     syn-ack ttl 63 OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   256 6a:16:1f:c8:fe:fd:e3:98:a6:85:cf:fe:7b:0e:60:aa (ECDSA)
+| ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIyAf6GPee+rQqSK2Xs/sDBPHvOh109nei1YDinqEqeQRyHAu7cYctKMIK5CFZojCtyJqLBB5Tmw7v6si1cjyBY=
+|   256 e4:08:cc:5f:8e:56:25:8f:38:c3:ec:df:b8:86:0c:69 (ED25519)
+|_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILiu1L4RnPAcunzYAHckqjzFY2I4PHhzCheH+7SMZKnS
+80/tcp  open  http    syn-ack ttl 63 Apache httpd 2.4.52 ((Ubuntu))
+|_http-title: Admin Login
+| http-cookie-flags: 
+|   /: 
+|     PHPSESSID: 
+|_      httponly flag not set
+| http-methods: 
+|_  Supported Methods: GET HEAD POST OPTIONS
+|_http-server-header: Apache/2.4.52 (Ubuntu)
+512/tcp open  exec    syn-ack ttl 63 netkit-rsh rexecd
+513/tcp open  login?  syn-ack ttl 63
+514/tcp open  shell   syn-ack ttl 63 Netkit rshd
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Read data files from: /usr/share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Thu Aug 13 08:51:14 2026 -- 1 IP address (1 host up) scanned in 152.73 seconds
