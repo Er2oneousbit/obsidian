@@ -1,6 +1,6 @@
 # Broken Authentication
 
-#BrokenAuthentication #Authentication #UserEnumeration #BruteForce #PasswordReset #SessionFixation #MFABypass #2FA #ffuf #Hydra #BurpSuite #WebAppAttacks #Auth
+#BrokenAuthentication #Authentication #UserEnumeration #BruteForce #PasswordReset #SessionFixation #MFABypass #2FA #AccountTakeover #UnicodeNormalization #ffuf #Hydra #BurpSuite #WebAppAttacks #Auth
 
 ## What is this?
 
@@ -219,6 +219,68 @@ Details in [[LDAP Injection]].
 - **PHP loose comparison (`==`)** — "magic hash" strings that hash to `0e[0-9]+` are read as `0 == 0` → true. If the app does `md5($input) == $stored` loosely, a magic-hash password can match. Strict `===` defeats it.
 - **Array injection** — sending `password[]=x` (array where a string is expected) can make `strcmp()`/hashing return `null`/`false`, which a sloppy check treats as a pass.
 - **Missing negative branch** — the app returns a session cookie / redirect even on failure; drop the failure response in Repeater and replay the success path.
+
+---
+
+## Account Takeover via Identifier Collision
+
+Everything above attacks the *credential*. This attacks the **identifier** — and it needs no password at all.
+
+An app compares a username or email at several layers: the **uniqueness check** at registration, the **lookup** at login, and the **lookup** during password reset. Those layers rarely normalize identically — app code might compare raw bytes while the database compares case-insensitively. Find a value that is **different at check time but identical at lookup time** and you can register an account that collides with an existing one. The payoff is usually the reset flow: request a reset for "your" account and the token is issued against the victim's row.
+
+### Unicode case folding
+
+Case conversion is not symmetric, and which direction the app folds decides which payload collides (verified with Python 3):
+
+| Codepoint | `.upper()` | `.lower()` | Collides when the app… |
+|---|---|---|---|
+| `K` U+212A KELVIN SIGN | `ADMINK` | **`admink`** | **lowercases** — `"adminK".lower() == "admink"` |
+| `ı` U+0131 DOTLESS I | **`ADMIN`** | `admın` | **uppercases** — `"admın".upper() == "ADMIN"` |
+| `ﬀ` U+FB00 LIGATURE FF | `FF` | `ﬀ` | **casefolds or NFKC-normalizes** (both give `ff`) |
+| `İ` U+0130 DOTTED I | `İ` | `i̇` (2 chars) | lowercases — and note the **length changes**, which breaks length checks |
+
+```bash
+# Confirm the direction before you spend a registration attempt
+python3 -c "print('adminK'.lower())"      # -> admink   (Kelvin sign folds down)
+python3 -c "print('admın'.upper())"       # -> ADMIN    (dotless i folds up)
+python3 -c "print('\uFB00'.casefold())"   # -> ff
+```
+
+> [!warning] A lowercase-normalizing app is **not** vulnerable to the dotless-`ı` payload, and an uppercase-normalizing one is not vulnerable to the Kelvin sign. Probe which way it folds first — register a throwaway `TestUser` and see how it's echoed back — then pick the matching codepoint. Firing all of them blindly just burns registration attempts and lands you in the logs.
+
+### Case sensitivity, whitespace, and truncation
+
+```text
+Register "Admin"      → app's uniqueness check is case-SENSITIVE  (passes)
+                      → login/reset lookup is case-INSENSITIVE    (resolves to admin)
+
+Register "admin "     → trailing space makes it "unique" to the app
+                      → many SQL collations compare with PAD SPACE, ignoring trailing
+                        spaces, so the lookup matches admin
+```
+
+- **Collation does the folding for you.** A column on a `_ci` collation (`utf8mb4_general_ci`, `utf8mb4_0900_ai_ci`) compares **case-insensitively**, and `_ai_` ones are **accent-insensitive** too — so `admin`, `ADMIN` and `admín` are one value to the database even when the application's own `==` said they were three. Check the column's collation if you can read the schema.
+- **Truncation (legacy).** Where a column is `VARCHAR(20)` and the server runs in **non-strict** SQL mode, an over-long value is silently cut — `"admin" + 15 spaces + "x"` stores as `admin`. Strict mode has been the default since MySQL 5.7, so treat this as a legacy-stack check, not a first move.
+
+### Email identifier tricks
+
+```text
+victim+anything@gmail.com   → Gmail ignores everything after '+' — mail lands in victim's inbox
+vic.tim@gmail.com           → Gmail ignores dots — same inbox, different string to the app
+VICTIM@example.com          → domain is case-insensitive per RFC; the local part technically isn't,
+                              but nearly every provider treats it that way
+```
+
+If the app treats these as *new* accounts but the mail provider delivers them to the **victim**, you can complete a verification or reset flow for an identifier the victim controls — or, in the reverse direction, register the alias first so that the victim's later reset mail routes to an account you own.
+
+### Testing it methodically
+
+1. Register `TestUser` and observe what comes back — is it echoed as `testuser`? That tells you the fold direction.
+2. Register a collision candidate against an account you **own** (a second test account), never a real user's.
+3. Trigger a password reset for the colliding identifier and check **which account** the token applies to.
+4. Log in with the original account and see whether your change took effect on it.
+
+> [!warning] Demonstrate the collision against **two accounts you control**. Proving that a reset token issued for your lookalike resolves to your *other* test account is the finding — actually taking over a live user's account is out of scope on almost every engagement and is not needed for the report.
 
 ---
 
@@ -456,6 +518,12 @@ echo 'YWRtaW46MjFiNzJjMGI3YWRjNTBjZmQ0N2E=' | base64 -d
 | Goal | Command / action |
 |---|---|
 | Enumerate users (diff error) | `ffuf -w users.txt:FUZZ -u .../login -X POST -d "username=FUZZ&password=x" -fr "Unknown user"` |
+| Find the app's fold direction | Register `TestUser`, see if it echoes back as `testuser` |
+| Collide on a lowercasing app | Register `adminK` (`K` = U+212A Kelvin) → `.lower()` = `admink` |
+| Collide on an uppercasing app | Register `admın` (`ı` = U+0131 dotless i) → `.upper()` = `ADMIN` |
+| Collide via whitespace | Register `"admin "` — PAD SPACE collations ignore the trailing space on lookup |
+| Collide via email alias | `victim+x@gmail.com` / `vic.tim@gmail.com` deliver to `victim@gmail.com` |
+| Prove a collision safely | Issue a reset for the lookalike, confirm it resolves to your **other test account** |
 | Enumerate via timing | `curl -o /dev/null -s -w "%{time_total}\n" ...` per candidate; slower = valid |
 | Filter wordlist to policy | `awk 'length($0)>=10 && /[a-z]/ && /[A-Z]/ && /[0-9]/' rockyou.txt > wl.txt` |
 | Brute-force password (ffuf) | `ffuf -w wl.txt:FUZZ -u .../login -X POST -d "username=admin&password=FUZZ" -fr "Invalid"` |
@@ -474,5 +542,5 @@ echo 'YWRtaW46MjFiNzJjMGI3YWRjNTBjZmQ0N2E=' | base64 -d
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-08-18*
+*Updated: 2026-09-22*
 *Model: claude-opus-5*

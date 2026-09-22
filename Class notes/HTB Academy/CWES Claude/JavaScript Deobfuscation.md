@@ -1,6 +1,6 @@
 # JavaScript Deobfuscation
 
-#JavaScript #Deobfuscation #Encoding #Recon #WebAppAttacks
+#CWES #JavaScript #Deobfuscation #Encoding #Recon #WebAppAttacks #obfuscatorio #StringArray #AntiDebugging #WASM #SourceMaps
 
 ## What is this?
 
@@ -24,8 +24,11 @@ Techniques for locating, deobfuscating, and analyzing obfuscated JavaScript — 
 | [LinkFinder](https://github.com/GerbenJavado/LinkFinder) | Extract hidden endpoints and params from JS files — `git clone …/LinkFinder && cd LinkFinder && pip3 install -r requirements.txt` |
 | [SecretFinder](https://github.com/m4ll0k/SecretFinder) | Scan JS for API keys, tokens, hardcoded creds — `git clone https://github.com/m4ll0k/SecretFinder` |
 | [subjs](https://github.com/lc/subjs) | Enumerate all JS file URLs from a target — `go install github.com/lc/subjs@latest` |
-| [getJS](https://github.com/003random/getJS) | Collect JS URLs via crawling — `go install github.com/003random/getJS@latest` |
-| `node` | Run deobfuscated JS locally to verify behavior without hitting target |
+| [getJS](https://github.com/003random/getJS) | Collect JS URLs via crawling — `go install github.com/003random/getJS/v2@latest` (**`/v2`** — the unversioned path installs the old release) |
+| `node` / `npm` | Run deobfuscated JS locally to verify behavior without hitting target — **not installed on Kali by default**: `sudo apt install nodejs npm` |
+| [webcrack](https://github.com/j4k0xb/webcrack) | Deobfuscate obfuscator.io, unminify, and unpack webpack/browserify bundles — `npm install -g webcrack@latest` |
+| [synchrony](https://github.com/relative/synchrony) | obfuscator.io-specific cleaner — `npm install --global deobfuscator` (**package is `deobfuscator`, command is `synchrony`**) |
+| [box-js](https://github.com/CapacitorSet/box-js) | Sandbox for *malicious* JS — analyse a dropper without running it for real — `npm install box-js --global` |
 | `base64` | CLI encode/decode |
 | `xxd` | Hex encode/decode |
 | `tr` | ROT13 encode/decode |
@@ -65,7 +68,7 @@ Enumerate all JS files on a target before diving into analysis.
 ```bash
 # Collect JS file URLs via crawling
 echo "http://<target>" | subjs
-echo "http://<target>" | getJS --complete
+getJS -url http://<target> --complete        # v2 takes -url; --complete resolves relative paths
 
 # Fuzz for JS files with ffuf
 ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -u http://<target>/FUZZ -e .js -mc 200 -o js_files.txt
@@ -109,12 +112,32 @@ Deobfuscate with [UnPacker](https://matthewfl.com/unPacker.html). Alternatively,
 
 ### Advanced (obfuscator.io / hex variable names)
 
-Uses `_0x1234` variable names, base64 string arrays, and shuffling functions. Harder to auto-deobfuscate.
+The `_0x1234` identifiers and a big array at the top of the file are the fingerprint of **javascript-obfuscator** (the engine behind obfuscator.io) — by far the most common real-world obfuscator.
 
 ```javascript
 var _0x1ec6=['Bg9N','sfrciePH...'];
 (function(_0x13249d,_0x1ec6e5){...})(_0x1ec6,0xb4);
 ```
+
+It is not one transform but a stack of them, and knowing which are in play tells you what you're up against (option names below are verbatim from javascript-obfuscator's own docs):
+
+| Transform | What you see | Undoing it |
+|---|---|---|
+| `stringArray` | Every literal replaced by `_0x1ec6[0x1a]` lookups | Evaluate the array + accessor, then substitute back |
+| `stringArrayEncoding` | Array entries are base64/RC4, not plaintext | Decoder function sits right above the array — run *it*, not the whole file |
+| `stringArrayRotate` / `stringArrayShuffle` | An IIFE reorders the array at load time before any lookup resolves | The rotation must be *executed* to get the right offsets — this is why pure regex/string search fails |
+| `stringArrayWrappersCount` | Lookups go through several wrapper functions, not the array directly | Inline the wrappers first |
+| `identifierNamesGenerator: hexadecimal` | `_0x13249d` names everywhere | Cosmetic — rename for readability, semantics unchanged |
+| `controlFlowFlattening` | Logic rebuilt as a `while(true)` + `switch` state machine with a shuffled dispatch order | The main reason output stays unreadable after beautifying; needs AST-level work |
+| `deadCodeInjection` | Plausible-looking branches that never execute | Dead branches are gated on constants — constant-fold and they vanish |
+| `numbersToExpressions` | `0x1a` becomes `0x5 * 0x2 + ...` | Constant-fold |
+| `splitStrings` | `"admin"` becomes `'ad' + 'mi' + 'n'` | Constant-fold (defeats naive grep for strings) |
+| `selfDefending` | Code detects reformatting and breaks itself | **Do not beautify first** — see below |
+| `debugProtection` | `debugger` statement loops that freeze DevTools | Strip statically, or "Never pause here" |
+
+> [!warning] **Do not pretty-print `selfDefending` code.** It fingerprints its own formatting (via `Function.prototype.toString`), so beautifying it makes it silently misbehave or bail — the opposite of Step 1. When you see `selfDefending`, go straight to a static deobfuscator, which removes the guard instead of tripping it.
+
+> [!note] `stringArrayRotate` is why "just grep the array for the flag" usually fails: the array's order at rest is not its order at runtime. Any reliable approach has to *run* the rotation IIFE (or let a tool that emulates it do the work).
 
 ### JSFuck / JJEncode / AAEncode
 
@@ -128,6 +151,31 @@ Run in JSConsole to see output, or use online decoders:
 - [JSFuck Decoder](https://enkhee-osiris.github.io/Decoder-JSFuck/)
 - [JJEncode Decoder](https://utf-8.jp/public/jjencode.html)
 - [AAEncode Decoder](https://cat-in-136.github.io/2010/12/aadecode-decode-encoded-as-aaencode.html)
+
+> [!warning] **"Run it and see" means executing code you haven't read.** Fine for a CTF's own obfuscated snippet; not fine for a script pulled off a live target or out of a phishing page — that's the payload running with your browser/session or your shell. These encodings all end in an `eval`-equivalent, so the safe move is to make it **print instead of execute**:
+> ```javascript
+> // JSFuck/JJEncode/AAEncode all resolve to a function call — get the source, don't invoke it
+> console.log([]["filter"]["constructor"]("…")+"")   // .toString() the built function
+> // or, for the common eval(...) tail: swap eval → console.log and run only that expression
+> ```
+
+### Analysing Hostile JS Safely
+
+For a sample you believe is malicious (dropper, skimmer, phishing kit), use an instrumented sandbox instead of your own browser or a bare `node`:
+
+```bash
+npm install box-js --global
+box-js sample.js --output-dir ./analysis/
+
+# box-js emulates Windows Script Host, so browser globals are missing by default.
+# Prepend its stubs (document, window, …) when the sample expects a browser:
+box-js sample.js --prepended-code=default
+box-js sample.js --prepended-code=show-default   # print the path to the boilerplate to customise
+```
+
+box-js reports the URLs fetched, files dropped, and commands attempted without letting any of it happen for real. Run it in a disposable VM with no network you care about — a sandbox is a containment measure, not a guarantee.
+
+> [!note] box-js targets WSH-style `.js` malware. For browser-resident code (skimmers, injected page scripts), the **static** tools above are the safer analysis path, since they never execute the sample at all.
 
 ---
 
@@ -151,6 +199,73 @@ If code uses `eval(function(p,a,c,k,e,d)...)` packing:
 ### Step 3 — Decode Encoded Strings
 
 See the [[#Encoding / Decoding]] section below.
+
+### Step 4 — Undo String Arrays & Control Flow
+
+Beautifying gets you readable *formatting*; it does nothing about string arrays or a flattened control flow. These tools work on the AST, so they resolve the array, inline the wrappers, constant-fold, and strip the guards — the step that turns `_0x1ec6[0x1a]` back into `"admin"`.
+
+```bash
+sudo apt install nodejs npm          # neither is on Kali by default
+
+# webcrack — the general-purpose one: obfuscator.io + unminify + bundle unpacking
+npm install -g webcrack@latest
+webcrack obfuscated.js > clean.js
+webcrack bundle.js -o out-dir/       # splits a webpack/browserify bundle into its modules
+
+# synchrony — narrower, but often cleaner output on javascript-obfuscator specifically
+npm install --global deobfuscator    # NB: package name is 'deobfuscator'…
+synchrony deobfuscate ./obfuscated.js   # …but the command is 'synchrony'
+```
+
+| Tool | Best at | Watch out for |
+|---|---|---|
+| `webcrack` | obfuscator.io, minified code, **and unpacking webpack/browserify bundles** into per-module files | Depends on `isolated-vm`, which upstream advises against on **odd-numbered Node releases** (they break V8 ABI) — use an LTS (even) Node |
+| `synchrony` | javascript-obfuscator output specifically | Its README warns that artifacts from *old* javascript-obfuscator versions may not deobfuscate correctly — try an older synchrony or another tool rather than filing a bug |
+| [de4js](https://github.com/lelinhtinh/de4js) | One-stop browser UI for Packer / JSFuck / JJEncode / obfuscator.io | **Archived since 2021** — the hosted page still works, but expect gaps on modern output |
+
+```bash
+# Sanity-check that the tool didn't change behaviour: both should produce the same output
+node original.js > a.txt 2>&1 ; node clean.js > b.txt 2>&1 ; diff a.txt b.txt
+```
+
+> [!tip] Order that actually works on obfuscator.io output: **(1)** run the static deobfuscator *first* (never beautify first — `selfDefending`), **(2)** beautify the result, **(3)** rename the remaining `_0x…` identifiers by hand as you work out what they do. Steps 1 and 2 are the reverse of the order the note's earlier steps imply, and it matters.
+
+> [!note] If the tools fail (custom or layered obfuscation), fall back to letting the script build its own strings and reading them out — put a breakpoint after the rotation IIFE, then dump the resolved array from the console: `copy(JSON.stringify(_0x1ec6))`.
+
+### Anti-Debugging — When DevTools Freezes
+
+`debugProtection` (and `debugProtectionInterval`) plant `debugger` statements inside loops or on a timer, so opening DevTools traps you in an endless pause. Options, cheapest first:
+
+```text
+1. Right-click the line number holding the `debugger` → "Never pause here"
+2. Deactivate all breakpoints  (Ctrl+F8 / ⌘+F8) — the debugger statements still fire but don't hold
+3. DevTools → Sources → uncheck "Pause on exceptions"
+```
+
+```javascript
+// 4. Neuter the mechanism before the script runs (paste first, or in a pre-load override):
+//    debugProtection commonly re-arms itself through Function constructors and timers.
+const _F = Function;
+Function = function (...a) { return a.join('').includes('debugger') ? function () {} : _F(...a); };
+setInterval = function () {};     // kills debugProtectionInterval's re-arm
+```
+
+> [!tip] The robust answer is to remove it statically rather than fight it at runtime — `webcrack`/`synchrony` drop the `debugger` payloads along with the rest of the guards, after which DevTools behaves normally.
+
+### Bundles & DevTools Local Overrides
+
+Most real apps ship a webpack/vite bundle, not one hand-written file. `webcrack bundle.js -o out-dir/` splits it back into modules, which makes the app's own source tree (and its module names) readable.
+
+To *change* client-side behaviour and keep the change across reloads — bypass a client-side check, unhide a UI path, log a value — use **Local Overrides** rather than re-pasting console patches:
+
+```text
+DevTools → Sources → Overrides → "Select folder for overrides" → allow access
+→ Network (or Sources) → right-click the JS file → "Save for overrides"
+→ edit the local copy (it's now editable) → reload
+The overridden file is served from disk on every load, including hard reloads.
+```
+
+> [!warning] Overrides change **only your browser**. A client-side check you delete this way proves nothing about server-side authorization — it's for understanding the app and reaching hidden functionality, after which the finding has to be demonstrated against the server (replay the request with `curl`, see [[#HTTP Requests]]).
 
 ### Source Maps
 
@@ -438,6 +553,39 @@ function generateSerial() {
 
 This tells us: there's a POST endpoint at `/serial.php` that the UI doesn't visibly use — worth probing manually.
 
+### LinkFinder — Automated Endpoint Extraction
+
+Reading every bundle by hand doesn't scale. LinkFinder regexes endpoints and paths out of JS so you have a target list before you start analysing:
+
+```bash
+git clone https://github.com/GerbenJavado/LinkFinder && cd LinkFinder && pip3 install -r requirements.txt
+
+# Single file, output to terminal
+python3 linkfinder.py -i http://<target>/app.js -o cli
+
+# Every JS file on the page/domain at once (-d crawls the domain for scripts)
+python3 linkfinder.py -i http://<target>/ -d -o results.html
+
+# A folder of files you already downloaded (wildcards allowed)
+python3 linkfinder.py -i '/tmp/js/*.js' -o cli
+
+# Only endpoints matching a pattern — cuts CDN/library noise hard
+python3 linkfinder.py -i '/tmp/js/*.js' -r '^/api/' -o cli
+
+# Parse a saved Burp export instead of fetching
+python3 linkfinder.py -i burpfile -b -o cli
+```
+
+| Flag | Use |
+|---|---|
+| `-i` | Input: URL, file, or folder (`'/*.js'` wildcard) |
+| `-o` | `cli` for terminal, or an `.html` report |
+| `-d` | Crawl the domain for JS rather than taking one file |
+| `-r` | Regex filter on the results (e.g. `^/api/`) |
+| `-b` | Treat the input as a Burp export |
+
+> [!tip] Pair the two passes: **LinkFinder** for routes and **SecretFinder** for credentials, both across `/tmp/js/*.js`, then deobfuscate only the files whose hits look interesting. Deobfuscating a 2 MB vendor bundle that turns out to be jQuery is the classic time sink.
+
 ---
 
 ## Secrets Hunting
@@ -465,7 +613,27 @@ curl -s "http://<target>/app.js" | grep -oP 'Bearer\s+\K[A-Za-z0-9._-]+'
 
 # Scan all downloaded JS files at once
 find /tmp/js -name "*.js" -exec python3 SecretFinder.py -i {} -o cli \;
+
+# -e walks every JS file linked from a page — one command instead of the loop above
+python3 SecretFinder.py -i http://<target>/ -e -o cli
+
+# Cut third-party noise (jQuery/bootstrap/CDN) so the hits are the app's own code
+python3 SecretFinder.py -i http://<target>/ -e -o cli -g 'jquery;bootstrap;api.google.com'
+
+# Authenticated scan, through Burp, with an extra pattern of your own
+python3 SecretFinder.py -i http://<target>/ -e -o cli \
+  -c 'PHPSESSID=<token>' -H 'Authorization: Bearer <jwt>' -p 127.0.0.1:8080 -r 'internal_key=[A-Za-z0-9]+'
 ```
+
+| Flag | Use |
+|---|---|
+| `-e` | Scan every JS file linked from the given page |
+| `-g` | Ignore-list of substrings (drop library/CDN files) |
+| `-n` | Exclude specific hosts |
+| `-r` | Additional custom regex |
+| `-c` / `-H` | Cookie / headers — required for JS only served to authenticated users |
+| `-p` | Proxy (route through Burp for evidence) |
+| `-b` | Parse a Burp export |
 
 > [!tip]
 > Run secrets hunting before deobfuscation — keys are often in cleartext even in obfuscated files because they need to be readable at runtime.
@@ -514,7 +682,17 @@ curl -s "http://<target>/serial.php" -X POST -b "session=<token>"
 | Decode hex | `echo "<hex>" \| xxd -p -r` |
 | Decode/encode ROT13 | `echo "<text>" \| tr 'A-Za-z' 'N-ZA-Mn-za-m'` |
 | Decode URL encoding | `python3 -c "from urllib.parse import unquote; print(unquote('...'))"` |
-| Decode JS unicode escapes | `node -e 'console.log("HTB")'` |
+| Decode JS unicode escapes | `node -e 'console.log("\u0048\u0054\u0042")'` |
+| Deobfuscate obfuscator.io output | `webcrack obfuscated.js > clean.js` |
+| Unpack a webpack/browserify bundle | `webcrack bundle.js -o out-dir/` |
+| obfuscator.io-specific cleaner | `synchrony deobfuscate ./obfuscated.js` (pkg `deobfuscator`) |
+| Escape a `debugger` trap | Right-click the line → "Never pause here", or Ctrl+F8 to deactivate breakpoints |
+| Persist a patched JS file | DevTools → Sources → Overrides → right-click file → "Save for overrides" |
+| Dump the resolved string array | Breakpoint after the rotation IIFE, then `copy(JSON.stringify(_0x1ec6))` |
+| Extract endpoints from all JS | `python3 linkfinder.py -i http://<target>/ -d -o results.html` |
+| Endpoints matching a pattern only | `python3 linkfinder.py -i '/tmp/js/*.js' -r '^/api/' -o cli` |
+| Scan a whole site's JS for secrets | `python3 SecretFinder.py -i http://<target>/ -e -o cli` |
+| Sandbox a malicious JS sample | `box-js sample.js --output-dir ./analysis/` |
 | Fingerprint unknown encoding | [Cipher Identifier](https://www.dcode.fr/cipher-identifier) |
 | Find/download WASM | `curl -s "http://<target>/" \| grep -oP '[^"]+\.wasm'` |
 | Disassemble WASM | `wasm2wat app.wasm -o app.wat` |
@@ -527,5 +705,5 @@ curl -s "http://<target>/serial.php" -X POST -b "session=<token>"
 ---
 
 *Created: 2026-05-13*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-21*
+*Model: claude-opus-5*

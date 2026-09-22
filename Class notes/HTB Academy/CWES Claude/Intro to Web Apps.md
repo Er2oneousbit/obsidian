@@ -1,6 +1,6 @@
 # Intro to Web Apps
 
-#CWES #WebApps #Frontend #Backend #XSS #CSRF #HTMLInjection #SQLi #CommandInjection #FileUpload #Enumeration
+#CWES #WebApps #Frontend #Backend #XSS #CSRF #HTMLInjection #SQLi #CommandInjection #FileUpload #Enumeration #HTTPHeaders #SessionManagement #Clickjacking
 
 ## What is this?
 
@@ -433,6 +433,87 @@ wappalyzer                          # Browser extension
 
 ---
 
+## HTTP Messages, Headers & Sessions
+
+Before touching methods and status codes, know the shape of what you're tampering. Every request is a **request line + headers + optional body**; every response is a **status line + headers + body**. Burp's Repeater is where you live — the headers are as much an input surface as the parameters.
+
+```http
+POST /login HTTP/1.1                     ← request line: METHOD path VERSION
+Host: target.com                         ← headers (one per line)
+Cookie: session=abc123                    ← auth state rides here
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+                                          ← blank line separates headers from body
+user=admin&pass=Password123               ← body
+```
+
+### Request Headers Worth Attacking
+
+The browser sets these, but *you* control them in Burp — several are trusted by back-ends that assume they're tamper-proof.
+
+| Header | Why it matters | Test |
+|---|---|---|
+| `Host` | Routing + often reflected into links/emails | **Host header injection** — poison password-reset links (`Host: attacker.com` → reset URL points at you), cache poisoning, vhost routing bypass |
+| `X-Forwarded-For` / `X-Real-IP` | Apps behind proxies trust these as "the client IP" | Spoof `127.0.0.1` to reach IP-restricted admin panels; forge the logged source IP |
+| `Referer` / `Origin` | Sometimes the *only* CSRF defense | Drop or forge to defeat referer-based CSRF checks; `Origin: null` for sandbox-iframe bypass |
+| `User-Agent` | Reflected into logs/pages; feature-flags | Stored XSS/SQLi via UA that lands in an admin log viewer |
+| `Authorization` | Bearer/Basic creds | Strip to test unauth access; decode Basic (`base64 -d`) |
+| `Content-Type` | Selects the parser | Flip `x-www-form-urlencoded`↔`application/json` to reach a different code path or bypass a filter |
+
+```bash
+# Host header injection PoC (password-reset poisoning)
+curl -s https://target.com/reset -d 'email=victim@corp.com' -H 'Host: attacker.com'
+# → the reset email's link now points at attacker.com; victim clicks, token leaks to you
+
+# IP allow-list bypass
+curl -s https://target.com/admin -H 'X-Forwarded-For: 127.0.0.1'
+```
+
+### Response Security Headers — Audit These Every Time
+
+Their **absence** is a finding on its own and tells you which attacks the app left open. Check them with `curl -I` before you fire a single payload.
+
+| Header | Present = defends against | Missing/weak = |
+|---|---|---|
+| `Content-Security-Policy` | XSS (restricts script sources) | XSS lands freely; `unsafe-inline`/`unsafe-eval`/wildcard = weak CSP, still exploitable |
+| `Strict-Transport-Security` (HSTS) | SSL-strip / downgrade MITM | Session cookie sniffable on first HTTP hop |
+| `X-Frame-Options` / CSP `frame-ancestors` | **Clickjacking** (framing the page) | Page can be iframed → UI-redress attack |
+| `X-Content-Type-Options: nosniff` | MIME-sniffing → stored XSS from uploads | Browser may execute a "text" file as script |
+| `Access-Control-Allow-Origin` + `-Credentials` | Cross-origin data theft | Reflected `Origin` **+** `Allow-Credentials: true` = attacker page reads authed responses (see [[Techniques/CORS Misconfiguration|CORS Misconfiguration]]) |
+| `Set-Cookie` flags | Session theft | see cookie table below |
+
+```bash
+curl -sI https://target.com/ | grep -iE 'content-security|strict-transport|x-frame|x-content-type|access-control|set-cookie'
+```
+
+> [!warning] The CORS wildcard is a **trap, not a win.** `Access-Control-Allow-Origin: *` cannot be combined with credentials — browsers block credentialed reads against a wildcard (confirmed, MDN CORS). The exploitable bug is a server that **reflects the request's `Origin`** back into `Allow-Origin` *and* sets `Allow-Credentials: true` — then an attacker origin gets echoed and can read the victim's authenticated responses.
+
+### Cookies & Session Management
+
+This is the mechanism under the [XSS cookie-theft](#cross-site-scripting-xss) and [CSRF](#cross-site-request-forgery-csrf) sections above — most web apps hold auth state in a session cookie (opaque ID → server-side session) or a self-contained token ([[JWT Attacks]]).
+
+| `Set-Cookie` attribute | Effect | Attack when absent |
+|---|---|---|
+| `HttpOnly` | JS can't read the cookie | XSS → `document.cookie` steals the session |
+| `Secure` | Only sent over HTTPS | Cookie leaks over a plaintext hop |
+| `SameSite=Strict/Lax/None` | Restricts cross-site sending | `None` (or unset on legacy stacks) → CSRF viable; modern browsers default to `Lax` |
+| `Domain` / `Path` | Scope of the cookie | Over-broad `Domain` shares the session with sibling subdomains (one XSS'd subdomain = all) |
+
+**Session lifecycle bugs** (foundational, expanded in [[Broken Auth]]):
+
+- **Session fixation** — app keeps the *same* session ID after login. Attacker plants a known ID in the victim's browser (via a link or XSS), victim authenticates, attacker now shares the authenticated session. **Fix/tell:** a secure app rotates the session ID on privilege change.
+- **No invalidation on logout** — captured token still works after the user "logs out." Test: grab a token, log out, replay it.
+- **Predictable / short tokens** — sequential or low-entropy IDs are brute-forceable. Collect several and check for structure.
+
+```bash
+# Does logout actually kill the session? Replay a captured cookie after logging out.
+curl -s https://target.com/account -H 'Cookie: session=<captured>'   # still 200 = broken invalidation
+```
+
+> [!tip] Order of operations on a fresh target: (1) `curl -I` the root and read the security headers, (2) log in through Burp and inspect the `Set-Cookie` flags + how auth state is carried, (3) *then* start on the parameters. The headers tell you which of the vuln classes below are even reachable.
+
+---
+
 ## Web Servers
 
 ### HTTP Methods
@@ -842,5 +923,5 @@ use <module>
 ---
 
 *Created: 2026-04-24*
-*Updated: 2026-07-31*
+*Updated: 2026-09-18*
 *Model: claude-opus-4-8*

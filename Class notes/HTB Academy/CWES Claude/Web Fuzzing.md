@@ -1,6 +1,6 @@
 # Web Fuzzing
 
-#CWES #WebFuzzing #ffuf #gobuster #feroxbuster #wenum #DirectoryEnum #ParameterFuzzing #VHostFuzzing #APIFuzzing
+#CWES #WebFuzzing #ffuf #gobuster #feroxbuster #wenum #DirectoryEnum #ParameterFuzzing #VHostFuzzing #APIFuzzing #GitExposure #BackupFiles #SoftFourOhFour #BFLA
 
 ## What is this?
 
@@ -36,9 +36,18 @@ Automated technique for discovering hidden directories, files, parameters, vhost
 | `Param Miner` | BApp Store → Param Miner | Burp extension — passive hidden parameter discovery while browsing |
 | `Turbo Intruder` | BApp Store → Turbo Intruder | Burp extension — high-speed fuzzing with session/macro context |
 | `CeWL` | pre-installed on Kali | Spider target and extract words for a domain-specific wordlist |
+| `git-dumper` | `pipx install git-dumper` | Reconstruct a full git repo from an exposed `/.git/` — the highest-value fuzzing hit |
 
-> [!note]
-> `wenum` is a drop-in replacement for `wfuzz` — same syntax, actively maintained. wfuzz has install issues on modern systems; prefer wenum.
+> [!warning] **`wenum` is a fork, not a drop-in — the filter flags diverge.** Kali ships `wfuzz`, *not* wenum, so know which one you're actually driving (verified against both, 2026-09-21):
+>
+> | Purpose | wenum | wfuzz |
+> |---|---|---|
+> | Filter by size/chars | `--hs` / `--ss` | `--hh` / `--sh` |
+> | Filter by regex | `--hr` / `--sr` | `--hs` / `--ss` |
+> | Value list syntax | space-separated (`--hc 302 404`) | comma-separated (`--hc 302,404`) |
+> | Iterator mode | `-i product\|zip\|chain` | `-m product\|zip\|chain` |
+>
+> The overlap is the trap: `--hs 4242` **hides by size** in wenum but **hides by regex `4242`** in wfuzz — no error, just silently different results. wenum also *removes* some wfuzz features by design (its README says so), so it is not a superset either. wfuzz is still fine for one-off value fuzzing; just use its own flag names.
 
 ---
 
@@ -98,6 +107,15 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt 
 | `-ac` | Auto-calibrate — send test requests to learn baseline response, auto-filter noise |
 | `-ic` | Ignore comment lines in wordlist (lines starting with `#`) |
 | `-x` | Proxy URL — route traffic through Burp: `-x http://127.0.0.1:8080` |
+| `-mr` / `-fr` | Match/filter by **regex against the body** — the only way to catch a soft 404 that returns HTTP 200 with "not found" in the page |
+| `-mmode` / `-fmode` | Combine multiple matchers/filters with `and` instead of `or` (default `or`) |
+| `-acc` / `-acs` / `-ach` | Auto-calibration tuning: custom probe string / custom strategy / per-host baseline (each implies `-ac`) |
+| `-rate` | Global requests-per-second cap (`-p` is a per-request delay; `-rate` caps throughput) |
+| `-maxtime` / `-maxtime-job` | Wall-clock cap for the whole run / per recursion job — stops a runaway scan |
+| `-sf` | Auto-stop once >95% of responses are 403 (you've been blocked; stop burning requests) |
+| `-ignore-body` | Don't download response bodies — faster, and safe against huge files |
+| `-json` / `-s` | Newline-delimited JSON records / silent output — for piping into other tools |
+| `-od` | Write the matched response **bodies** to a directory (evidence capture) |
 
 ```bash
 # Filter common noise manually
@@ -122,6 +140,27 @@ jq '.results[] | {url, status, length}' results.json
 
 > [!tip]
 > Start with `-ac` on every run. It eliminates most false positives automatically and is faster than figuring out `-fs`/`-fw` filters from scratch.
+
+### Soft 404s — When Every Path Returns 200
+
+`-ac` calibrates on size/words/lines, so it fails against an app that answers every bad path with a **200 and a friendly "page not found" body** whose length varies (a rendered template with the path echoed into it). Filter on the body text instead of its shape:
+
+```bash
+# Drop anything whose body says it wasn't found, whatever the status code or size
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://<TARGET_IP>:<PORT>/FUZZ -mc all -fr "(?i)not found|doesn't exist|no such"
+
+# Require the response to REFLECT your payload — proves it reached a real handler
+ffuf -w params.txt:PARAM -w values.txt:VAL -u "http://<TARGET_IP>:<PORT>/?PARAM=VAL" -mr "VAL"
+
+# Or tighten calibration: probe with strings shaped like your wordlist, per host
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_IP>:<PORT>/FUZZ -acc admin -acc .htaccess -ach
+
+# AND-combine filters — drop only responses that are BOTH 200 and exactly 4242 bytes
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://<TARGET_IP>:<PORT>/FUZZ -fc 200 -fs 4242 -fmode and
+```
+
+> [!note]
+> A regex filter costs you the body download, so `-fr`/`-mr` and `-ignore-body` are mutually exclusive in practice. Use the regex pass to *find* the soft-404 signature once, then switch to the cheap `-fs`/`-fw` filter it implies.
 
 ---
 
@@ -151,7 +190,8 @@ feroxbuster -u http://<TARGET_IP>:<PORT> -w /usr/share/seclists/Discovery/Web-Co
 | Flag (ffuf) | Description |
 |---|---|
 | `-recursion` | Auto-fuzz newly discovered directories |
-| `-recursion-depth` | Max depth — always set this, default is unlimited |
+| `-recursion-depth` | Max depth — **always set this**; the default of `0` means unlimited |
+| `-recursion-strategy` | `default` recurses on redirect-based directory hints; `greedy` recurses on **every** match (finds more, costs far more) |
 | `-rate` | Requests per second — throttle to avoid overwhelming target |
 
 | Flag (feroxbuster) | Description |
@@ -164,6 +204,40 @@ feroxbuster -u http://<TARGET_IP>:<PORT> -w /usr/share/seclists/Discovery/Web-Co
 
 > [!warning]
 > Uncapped recursive fuzzing on a deep app generates millions of requests. Always set `-recursion-depth` / `--depth`. Check RoE for rate limits before running.
+
+---
+
+## feroxbuster — Auto-Discovery Features
+
+Used as above, feroxbuster is just "recursive ffuf" and most of the tool goes to waste. Its actual edge is **acting on what it finds mid-scan** rather than only reporting it — it rewrites its own wordlist and extension list as the scan runs (verified against feroxbuster 2.13.1).
+
+```bash
+# --smart = --auto-tune + --collect-words + --collect-backups
+feroxbuster -u http://<TARGET_IP>:<PORT> -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt --smart --depth 2
+
+# --thorough = --smart + --collect-extensions + --scan-dir-listings — the "just find everything" button
+feroxbuster -u http://<TARGET_IP>:<PORT> --thorough --depth 3 -o ferox.txt
+
+# One flag for Burp (sets --proxy and --insecure together)
+feroxbuster -u https://<TARGET_IP>:<PORT> --burp --depth 2
+```
+
+| Flag | What it does |
+|---|---|
+| `-B`, `--collect-backups` | For every hit, auto-requests backup variants (default `~`, `.bak`, `.bak2`, `.old`, `.1`) — finds `config.php.bak` you never put in a wordlist |
+| `-E`, `--collect-extensions` | Learns the extensions actually in use on the target and adds them to `-x` mid-scan |
+| `-g`, `--collect-words` | Harvests words out of response bodies into the live wordlist — a [[#CeWL — Custom Wordlists from Target|CeWL]] pass running inline |
+| `--scan-dir-listings` | Actually walks open directory-listing pages instead of just flagging them |
+| `--auto-tune` | Lowers the rate automatically when errors spike — better than guessing a fixed `--rate-limit` |
+| `--auto-bail` | Aborts the scan outright on excessive errors (use when you must not hammer a fragile target) |
+| `--filter-similar-to` | Fuzzy-hash filter against a known-bad page (`--filter-similar-to http://target/soft404`) — kills soft 404s that differ by a few bytes each time |
+| `-D`, `--dont-filter` | Turns OFF automatic wildcard filtering — use when you suspect it swallowed a real hit |
+| `-L`, `--scan-limit` | Caps how many directory scans run concurrently |
+| `--burp` / `--burp-replay` | Proxy everything / only matches to `127.0.0.1:8080` |
+
+> [!warning] **`--rate-limit` is per directory, not global.** With recursion running several directory scans at once, real throughput is roughly `--rate-limit × concurrent scans`. When RoE fixes a request rate, cap the scans with `-L` as well — or use `--auto-tune` and let it find the ceiling.
+
+> [!note] `--depth 0` means **infinite** recursion in feroxbuster, the same trap as ffuf's `-recursion-depth 0`. Always pass an explicit depth.
 
 ---
 
@@ -212,9 +286,34 @@ ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -u "h
 # Probe manually first to understand baseline response
 curl "http://<TARGET_IP>:<PORT>/page.php?x=test"
 
-# Show only short responses (likely the valid hit)
-wenum -w /usr/share/seclists/Discovery/Web-Content/common.txt --sc 200 --sw 1-5 -u "http://<TARGET_IP>:<PORT>/page.php?x=FUZZ"
+# Show only short responses (likely the valid hit).
+# Values are a SPACE-separated list of exact counts — NOT a range.
+wenum -w /usr/share/seclists/Discovery/Web-Content/common.txt --sc 200 --sw 1 2 3 4 5 -u "http://<TARGET_IP>:<PORT>/page.php?x=FUZZ"
 ```
+
+> [!warning] **These filters take a list of exact values, not a range.** `--sw 1-5` is rejected — wfuzz fails outright with *"Filter must be specified in the form of [int, ... , int, BBB, XXX]"* (verified). Pass the counts individually (`--sw 1 2 3 4 5` in wenum, `--sw 1,2,3,4,5` in wfuzz), or use the expression filter (`--filter` in wenum, `--filter`/`BBB` baseline in wfuzz) when you genuinely need a range or comparison.
+
+### wenum's Plugin Pipeline
+
+Filters aside, wenum's real advantage over plain path fuzzing is that it **parses what it finds** instead of only reporting a status code:
+
+```bash
+wenum -u "http://<TARGET_IP>:<PORT>/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt \
+  --plugins default,sourcemap,backups,robots,listing,linkparser,headers,errors,title \
+  --auto-filter --hard-filter --hc 404 -R 2 -f json -o out.json
+```
+
+| Flag | Why it matters |
+|---|---|
+| `--plugins` | Response-parsing plugins — `sourcemap` (recovers original source from `.map` files), `backups` (probes backup variants of every hit), `robots`, `listing`, `linkparser`, `errors`, `title` |
+| `--auto-filter` | Filters out a response shape that recurs too often — wenum's answer to ffuf `-ac`, and its soft-404 defence |
+| `--hard-filter` | Filtered responses skip plugin post-processing too, not just the output |
+| `-R` / `-r` | Recursion depth / plugin-driven recursion |
+| `--limit-requests` | Hard cap on total requests — RoE safety |
+| `--ip` | Send to a specific IP while keeping the `Host` header — vhost-scoped fuzzing |
+| `-i` | Iterator: `product` (cartesian), `zip` (lockstep), `chain` (concatenate) — wenum's `-mode` equivalent |
+
+> [!tip] The `sourcemap` and `backups` plugins overlap with feroxbuster's `--collect-backups`; between them, "fuzz, then automatically probe every hit for a leftover copy" is a two-flag habit worth having on every engagement. What they find lands in [[#High-Value Leftovers]].
 
 ### arjun — Smart Parameter Discovery
 
@@ -259,17 +358,76 @@ ffuf -u http://<TARGET_IP>:<PORT>/post.php -X POST -H "Content-Type: application
 curl -d "" http://<TARGET_IP>:<PORT>/post.php
 ```
 
-### Multi-Position Fuzzing
+### Multi-Position Fuzzing & `-mode`
 
-Use `W1`/`W2` keywords with multiple `-w` flags to fuzz two positions simultaneously.
+Keywords are arbitrary — `-w list.txt:W1` just declares `W1` as an insertion point. With two or more wordlists, **`-mode` decides how they combine**, and the default is not what you want for paired data.
+
+| Mode | Behaviour | Use for |
+|---|---|---|
+| `clusterbomb` *(default)* | Every combination — cartesian product, `|A| × |B|` requests | **Password spraying**: every password against every user |
+| `pitchfork` | Lockstep — 1st of A with 1st of B, 2nd with 2nd… (stops at the shorter list) | **Credential stuffing**: replaying known `user:pass` pairs from a dump |
+| `sniper` | One position at a time from a single wordlist, the others held at their template value | Probing many positions of one request without a combinatorial blowup |
 
 ```bash
-# Fuzz username + password (credential stuffing)
-ffuf -w /usr/share/seclists/Usernames/top-usernames-shortlist.txt:W1 -w /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-1000.txt:W2 -u http://<TARGET_IP>:<PORT>/login -X POST -d "username=W1&password=W2" -fc 302 -ac
+# Password spray — every password × every user (clusterbomb, the default)
+ffuf -w /usr/share/seclists/Usernames/top-usernames-shortlist.txt:W1 -w /usr/share/seclists/Passwords/Common-Credentials/10-million-password-list-top-1000.txt:W2 \
+  -u http://<TARGET_IP>:<PORT>/login -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "username=W1&password=W2" -fc 302 -ac
 
-# Fuzz two path segments
+# Credential stuffing — PAIRED creds, line 1 with line 1. Needs pitchfork.
+ffuf -w users.txt:W1 -w passwords.txt:W2 -mode pitchfork \
+  -u http://<TARGET_IP>:<PORT>/login -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "username=W1&password=W2" -fc 302 -ac
+
+# Fuzz two path segments — here the cartesian product IS what you want
 ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt:W1 -w /usr/share/seclists/Discovery/Web-Content/common.txt:W2 -u http://<TARGET_IP>:<PORT>/api/W1/W2 -mc 200,201
 ```
+
+> [!warning] **Credential stuffing in the default mode is a cross-product, not a stuffing run.** `clusterbomb` turns 1,000 leaked `user:pass` pairs into 1,000,000 requests — slower, far noisier, and it tries passwords against accounts they never belonged to, which is exactly how you trip account lockout and burn the engagement. Paired lists need `-mode pitchfork`. Sanity-check the planned request count in ffuf's startup banner before you let it run.
+
+---
+
+## Fuzzing a Captured Request (`-request`)
+
+Rebuilding a complex authenticated request out of `-X`/`-H`/`-d` flags is where fuzzing usually falls apart — multipart bodies, a CSRF token, a dozen cookies, nested JSON. Don't. Save the raw request out of Burp (right-click → *Copy to file*) and put `FUZZ` anywhere inside it — path, any header, or the body.
+
+```http
+POST /api/v2/account/update HTTP/1.1
+Host: target.com
+Cookie: session=eyJ0eXAi...
+Content-Type: application/json
+X-CSRF-Token: 9f2c...
+
+{"display_name":"bob","FUZZ":"test"}
+```
+
+```bash
+# Hunt hidden JSON parameters inside a fully authenticated request
+ffuf -request req.txt -request-proto http -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -ac
+```
+
+| Flag | Description |
+|---|---|
+| `-request` | File containing the raw HTTP request; `FUZZ` is honoured in any part of it |
+| `-request-proto` | `http` or `https` — **defaults to `https`** |
+| `-enc` | Per-keyword encoding, e.g. `-enc FUZZ:urlencode` or `FUZZ:b64encode` — reaches filters that decode before they validate |
+| `-input-cmd` | Generate payloads from a command instead of a wordlist (requires `-input-num`) |
+| `-D` | DirSearch-style wordlist compatibility, used with `-e` |
+
+```bash
+# Encode on the way out (WAF, or a parameter the app base64-decodes)
+ffuf -request req.txt -request-proto http -w payloads.txt -enc FUZZ:urlencode
+
+# No wordlist on disk — pipe a generator. Numeric ID sweep for BOLA/IDOR:
+ffuf -u http://<TARGET_IP>:<PORT>/api/v1/orders/FUZZ -input-cmd 'seq 1 5000' -input-num 5000 -mc 200 -ac
+
+# Method fuzzing — the command the BOLA/BFLA table below is missing
+printf 'GET\nPOST\nPUT\nPATCH\nDELETE\nOPTIONS\n' > methods.txt
+ffuf -w methods.txt:FUZZ -u http://<TARGET_IP>:<PORT>/api/v1/users/1 -X FUZZ -mc all -v
+```
+
+> [!warning] `-request-proto` defaults to **https**. Point it at a plain-HTTP lab target without setting `-request-proto http` and every request dies in the TLS handshake — which looks exactly like a dead host or a wrong port.
+
+> [!note]
+> A raw request captured after login carries the session, so this is also the cleanest way to do [[#Authenticated Fuzzing|authenticated fuzzing]] — no re-typing cookies per command. Re-export the file when the session expires.
 
 ---
 
@@ -306,17 +464,24 @@ gobuster vhost -u http://inlanefreight.htb:80 -w /usr/share/seclists/Discovery/W
 | Flag | Description |
 |---|---|
 | `-u` | Base URL — the server receiving requests |
-| `--append-domain` | Appends base domain to each word (e.g., `admin.inlanefreight.htb`) |
-| `-s` | Include only these status codes |
-| `-b` | Exclude these status codes |
-| `--exclude-length` | Exclude by response size (supports ranges) |
+| `--append-domain`, `--ad` | Appends base domain to each word (e.g., `admin.inlanefreight.htb`) |
+| `--domain`, `--do` | Domain to append when `-u` is a bare IP |
+| `--exclude-status`, `--xs` | Exclude status codes — ranges OK (`200,300-400,404`) |
+| `--exclude-length`, `--xl` | Exclude by content length — ranges OK (`203-206`) |
+| `--exclude-hostname-length`, `--xh` | Auto-adjusts the length filter for the hostname echoed back in the body |
+| `-d`, `--delay` | Per-thread delay between requests (**`-d` is not the domain flag**) |
+| `--force` | Run even when gobuster warns the result isn't guaranteed |
 
 Focus on `Status: 200` results. `400` responses are usually malformed wordlist entries, not valid vhosts.
 
 ```bash
-# Exclude noise
-gobuster vhost -u http://inlanefreight.htb:80 -w /usr/share/seclists/Discovery/Web-Content/common.txt --append-domain -b 400,404
+# Exclude noise — NOT -b/-s, which gobuster vhost does not define
+gobuster vhost -u http://inlanefreight.htb:80 -w /usr/share/seclists/Discovery/Web-Content/common.txt --append-domain --xs 400,404
 ```
+
+> [!warning] **`-s` and `-b` do not exist in `vhost` mode** (verified, gobuster 3.8.2 — `flag provided but not defined: -b`). They are `dir`-mode flags. In `vhost` mode the equivalents are `--exclude-status`/`--xs` and `--exclude-length`/`--xl`, and they are exclude-only — there is no include-status flag.
+
+> [!tip] **The classic vhost false positive:** every invalid vhost returns the same page, but its *length* differs by a few bytes because the server echoes the hostname into it — so a fixed `--xl` misses them all. `--exclude-hostname-length`/`--xh` adjusts the length filter per hostname and collapses that whole class of noise.
 
 ---
 
@@ -328,11 +493,87 @@ gobuster dns --domain inlanefreight.com -w /usr/share/seclists/Discovery/DNS/sub
 
 | Flag | Description |
 |---|---|
-| `--domain` | Target domain for subdomain enum |
+| `--domain`, `--do` | Target domain for subdomain enum |
 | `-t` | Threads (default 10) |
+| `--resolver` | Query a specific DNS server (`--resolver 10.10.10.1`) |
+| `--wildcard`, `--wc` | Keep going when a wildcard record is detected (gobuster aborts by default) |
+| `--check-cname`, `-c` | Also resolve CNAMEs |
+| `-p`, `--pattern` | File of mutation patterns applied to every word, using the `{GOBUSTER}` placeholder |
+| `--discover-pattern`, `--pd` | Same patterns, but applied only to words that already resolved |
+| `--wordlist-offset`, `--wo` | Resume from a wordlist position after an interruption |
+| `--no-fqdn`, `--nf` | Don't append the trailing dot — lets the resolver apply its search domain |
 
 > [!note]
 > Newer gobuster versions changed `-d` to set request delay. Use `--domain` to specify the target domain.
+
+> [!warning] **Wildcard DNS makes every word a hit.** If `*.target.com` resolves, subdomain brute force returns the entire wordlist as "found." Probe a guaranteed-junk label first, and if it resolves, only `--wildcard` plus filtering on the *resolved address* will tell you anything:
+> ```bash
+> dig +short definitelynotreal12345.target.com    # answers = wildcard in play
+> gobuster dns --domain target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --wildcard -o dns.txt
+> # then keep only names NOT pointing at the wildcard's IP
+> ```
+
+> [!tip] **Pattern mutation finds the hosts wordlists don't.** Once you know `api.target.com` exists, environment prefixes/suffixes are the usual next win — `--pd` applies them only to confirmed names, so it costs almost nothing:
+> ```bash
+> printf '{GOBUSTER}-dev\n{GOBUSTER}-staging\n{GOBUSTER}-uat\n{GOBUSTER}-test\ndev-{GOBUSTER}\n' > patterns.txt
+> gobuster dns --domain target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --pd patterns.txt
+> ```
+> Non-production instances of a known-good app are the highest-value subdomain findings: same code, weaker auth, debug modes on, and real data.
+
+---
+
+## High-Value Leftovers
+
+Fuzzing only pays off if you recognise which hits are jackpots. These convert straight into source code or credentials, and generic directory lists routinely miss them because they are *files* — often dotfiles — not directories.
+
+```bash
+# Probe the high-value set directly — cheaper and faster than any wordlist
+for p in .git/HEAD .git/config .env .env.bak .svn/entries .DS_Store .htpasswd \
+         config.php.bak index.php~ web.config.bak backup.zip db.sql id_rsa; do
+  printf '%-20s ' "$p"
+  curl -s -o /dev/null -w '%{http_code}  %{size_download} bytes\n' "http://<TARGET_IP>:<PORT>/$p"
+done
+
+# Or sweep with a file-oriented list plus backup extensions
+ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -u http://<TARGET_IP>:<PORT>/FUZZ \
+  -e .bak,.old,.swp,.zip,.tar.gz,.sql,~ -ac
+```
+
+| Leftover | Why it matters |
+|---|---|
+| `/.git/` | The whole repo — source, commit history, and secrets deleted in later commits |
+| `/.env` | Framework env file — DB creds, `APP_KEY`, API tokens, SMTP creds |
+| `file~`, `.bak`, `.old`, `.1` | Editor/deploy copies served as **plain text** |
+| `file.swp`, `.swo` | Vim crash artifacts — recover with `vim -r file.swp` |
+| `/.DS_Store` | macOS directory index — leaks filenames no wordlist would guess |
+| `/.svn/entries`, `/.hg/` | Same story as `.git` for older VCSes |
+| `/.htpasswd` | Basic-auth hashes — crack offline |
+
+> [!warning] **`config.php.bak` is the whole game.** The server maps `.php` to the interpreter, so `config.php` returns rendered output with the credentials hidden. Rename it `.bak`, `.old` or `file~` and the extension no longer matches the handler — so the server serves the **raw source as text/plain**, credentials and all. This is why [[#feroxbuster — Auto-Discovery Features|feroxbuster's --collect-backups]] and wenum's `backups` plugin are worth running on every hit.
+
+### Exposed `.git` → Full Source Recovery
+
+A `200` on `/.git/HEAD` means the repository was deployed along with the app. Reconstruct it locally and you have the source, the history, and anything that was committed then "removed":
+
+```bash
+git-dumper http://<TARGET_IP>:<PORT>/.git/ ./loot_repo      # usage: git-dumper URL DIR
+cd ./loot_repo && git log --oneline --all | head
+
+# The payoff is usually in the HISTORY, not the working tree —
+# credentials "removed" in a later commit are still in the objects
+git log -p --all -S 'password' | head -50
+git log --diff-filter=D --name-only --all | head          # files deleted along the way
+```
+
+| Flag | Use |
+|---|---|
+| `-j`, `--jobs` | Parallel requests — speeds up large repos |
+| `-r`, `--retry` | Retry attempts before giving up on an object |
+| `--proxy` | Route through Burp for logging/evidence |
+
+> [!tip] If `/.git/` has directory listing disabled, git-dumper still works — it walks the repo's own index and object references rather than the directory tree. Test `/.git/HEAD` (not `/.git/`) to decide whether it's exposed: `curl -s http://<TARGET>/.git/HEAD` returning `ref: refs/heads/main` is the tell.
+
+> [!warning] **Scope check before dumping.** Pulling a full repo retrieves far more than a PoC needs, and may include data outside engagement scope. Confirming `/.git/HEAD` responds is enough to *evidence* the finding — clear the full dump against RoE first (same principle as the header-only validation below).
 
 ---
 
@@ -454,10 +695,24 @@ See [[API Attacks]] for full exploitation methodology.
 | GET param name discovery | `ffuf -w burp-parameter-names.txt -u "http://<TARGET>/page.php?FUZZ=value" -ac` |
 | Smart param discovery | `arjun -u "http://<TARGET>/page.php" -m POST` |
 | POST body fuzz | `ffuf -u http://<TARGET>/post.php -X POST -d "y=FUZZ" -w common.txt -mc 200` |
-| Credential stuffing (2-position) | `ffuf -w users.txt:W1 -w passwords.txt:W2 -u http://<TARGET>/login -X POST -d "username=W1&password=W2" -fc 302` |
+| Password spray (every combo) | `ffuf -w users.txt:W1 -w passwords.txt:W2 -u http://<TARGET>/login -X POST -d "username=W1&password=W2" -fc 302` |
+| Credential stuffing (**paired**) | add `-mode pitchfork` — the default `clusterbomb` makes a cross-product |
+| Fuzz a captured Burp request | `ffuf -request req.txt -request-proto http -w burp-parameter-names.txt -ac` |
+| HTTP method fuzz (BFLA) | `ffuf -w methods.txt:FUZZ -u http://<TARGET>/api/v1/users/1 -X FUZZ -mc all` |
+| Payload sweep with no wordlist | `ffuf -u http://<TARGET>/api/v1/orders/FUZZ -input-cmd 'seq 1 5000' -input-num 5000` |
+| Encode payloads on the way out | `ffuf -request req.txt -w payloads.txt -enc FUZZ:urlencode` |
+| Soft-404 filter by body text | `ffuf -w list.txt -u http://<TARGET>/FUZZ -mc all -fr "(?i)not found"` |
+| feroxbuster "find everything" | `feroxbuster -u http://<TARGET> --thorough --depth 3` |
+| Auto-probe backups of every hit | `feroxbuster -u http://<TARGET> --smart --depth 2` (`-B`) |
+| wenum plugin sweep | `wenum -u http://<TARGET>/FUZZ -w list.txt --plugins default,sourcemap,backups --auto-filter` |
+| Check for exposed git repo | `curl -s http://<TARGET>/.git/HEAD` → `ref: refs/heads/main` |
+| Dump an exposed `.git` | `git-dumper http://<TARGET>/.git/ ./loot_repo` |
+| Mine dumped repo history for creds | `git log -p --all -S 'password' \| head -50` |
 | Authenticated fuzz (cookie) | `ffuf -w directory-list-2.3-medium.txt -u http://<TARGET>/FUZZ -H "Cookie: PHPSESSID=<token>" -fc 302` |
-| VHost fuzz | `gobuster vhost -u http://target.htb -w common.txt --append-domain -b 400,404` |
+| VHost fuzz | `gobuster vhost -u http://target.htb -w common.txt --append-domain --xs 400,404 --xh` |
 | Subdomain DNS fuzz | `gobuster dns --domain target.com -w subdomains-top1million-5000.txt` |
+| Subdomain fuzz, internal resolver | `gobuster dns --domain target.com -w list.txt --resolver 10.10.10.1 --wc` |
+| Subdomain pattern mutation | `gobuster dns --domain target.com -w list.txt --pd patterns.txt` (`{GOBUSTER}-dev`) |
 | Validate a hit without pulling body | `curl -I http://<TARGET>/backup/password.txt` |
 | GraphQL introspection | `curl -s -X POST http://<TARGET>/graphql -d '{"query":"{__schema{types{name}}}"}'` |
 | Crawler-based endpoint discovery | `katana -u http://<TARGET> -js-crawl -d 3` |
@@ -468,5 +723,5 @@ See [[API Attacks]] for full exploitation methodology.
 ---
 
 *Created: 2026-05-12*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-21*
+*Model: claude-opus-5*

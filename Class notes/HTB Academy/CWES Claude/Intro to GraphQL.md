@@ -1,6 +1,6 @@
 # Intro to GraphQL
 
-#GraphQL #API #Introspection #IDOR #SQLInjection #DoS #Batching #Mutations #WebAppAttacks #graphw00f #graphqlcop
+#GraphQL #API #Introspection #IDOR #SQLInjection #DoS #Batching #Aliases #Variables #Mutations #Subscriptions #WebAppAttacks #graphw00f #graphqlcop
 
 ## What is this?
 
@@ -38,6 +38,75 @@ One endpoint, everything is `POST`-ed as JSON `{"query": "..."}`. A query **sele
 
 > [!tip]
 > The client picks the fields — so *always* ask for sensitive fields (`password`, `role`, `email`) even if the UI never displays them. Half of GraphQL "findings" are just requesting a field the developer assumed no one would.
+
+---
+
+## Reading a Real Request
+
+The `{ users { id } }` shorthand above is what you *write*; this is what actually crosses the wire and what you'll be tampering in Burp:
+
+```http
+POST /graphql HTTP/1.1
+Content-Type: application/json
+
+{"operationName":"GetUser",
+ "query":"query GetUser($u: String!) { user(username: $u) { id username role } }",
+ "variables":{"u":"admin"}}
+```
+
+| Key | What it is | Why it matters to you |
+|---|---|---|
+| `query` | The operation text — a `query` (read), `mutation` (write), or `subscription` (a long-lived stream over WebSocket) | The whole document; `subscription` is a separate transport — see [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks\|GraphQL Attacks]] |
+| `variables` | JSON object supplying the `$name` values declared in the operation | **Try the injection here first** — a payload in `variables` skips any filter or WAF rule that pattern-matches the `query` string |
+| `operationName` | Picks which named operation runs when the document defines several | Required once there's more than one |
+
+> [!tip] Real clients almost always send **variables**, not inlined literals — so a captured request shows `user(username: $u)` and the actual value sits in a separate JSON object. Change it there and you keep the request shape the server expects.
+
+### Aliases — and why they beat batching defenses
+
+An **alias** renames a field in the response, which lets you ask for the *same* field many times in **one** operation:
+
+```graphql
+{
+  a: user(username: "admin")  { id role }
+  b: user(username: "root")   { id role }
+  c: user(username: "backup") { id role }
+}
+# → {"data":{"a":{...},"b":{...},"c":{...}}}
+```
+
+```graphql
+# The same trick turns one request into a password-guessing run
+mutation {
+  a: login(username:"admin", password:"Password1") { token }
+  b: login(username:"admin", password:"Password2") { token }
+  c: login(username:"admin", password:"Password3") { token }
+}
+```
+
+> [!warning] **This is not the array batching described below, and defences often only stop that one.** Disabling batching (or counting operations per request) doesn't help here: an aliased document is a *single* operation. Only **query-complexity/cost limits**, depth limits, or rate limiting applied **per resolved field** actually stop it. Same restraint applies as with batching — demonstrate that the guard is missing against a baseline, don't run thousands of real login attempts on a production target.
+
+### Fragments
+
+A **fragment** is a named, reusable field set — worth recognising because real captured queries are full of them, and because recursive fragments are a DoS primitive:
+
+```graphql
+fragment userFields on UserObject { id username role }
+{ users { ...userFields } }
+```
+
+### 200 OK Is Not Success
+
+GraphQL answers almost everything with **HTTP 200** and reports failure *inside* the body:
+
+```json
+{"data":{"user":null},
+ "errors":[{"message":"Cannot query field \"passwrd\" on type \"UserObject\". Did you mean \"password\"?"}]}
+```
+
+- **Status-code filtering is useless here** — `-mc 200` / "did it work?" checks by status see success for every malformed query. Read the `errors` array instead.
+- `data` and `errors` can both be populated: a query can **partially** succeed, returning some fields while an authorization check nulls others.
+- Those `Did you mean …` **field suggestions** are the schema leak that makes introspection-disabled targets enumerable — the workflow the Introspection note below points at.
 
 ---
 
@@ -216,9 +285,12 @@ Reference: OWASP GraphQL Cheat Sheet.
 | SQLi probe | `{ user(username:"x'") { username } }` → SQL error = vulnerable |
 | Privesc | `mutation { registerUser(input:{...role:"admin"}) { user { role } } }` |
 | Introspection disabled | recover via field suggestions / clairvoyance → [[Class notes/HTB Academy/CWES Claude/GraphQL Attacks|GraphQL Attacks]] |
+| Send a query with variables | `-d '{"query":"query($u:String!){user(username:$u){id role}}","variables":{"u":"admin"}}'` |
+| Alias brute force (1 request) | `mutation { a: login(password:"p1"){token} b: login(password:"p2"){token} }` |
+| Check for success | Read the `errors` array — GraphQL returns **200 even on failure** |
 
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
+*Updated: 2026-09-22*
 *Model: claude-opus-5*

