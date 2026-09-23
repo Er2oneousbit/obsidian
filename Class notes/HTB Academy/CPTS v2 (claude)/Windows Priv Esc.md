@@ -988,6 +988,10 @@ OTHER VECTORS
 
 ---
 
+> [!note] **See also** — remote-exec / lateral-movement service channels this feeds into: [[Services/Local System Management/WMI|WMI]], [[Services/Local System Management/WinRM|WinRM]], [[Services/File Xfer/SMB|SMB]] (psexec/smbexec), all over [[Services/Local System Management/RPC|RPC]].
+
+---
+
 *Created: 2026-02-27*
-*Updated: 2026-09-01*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

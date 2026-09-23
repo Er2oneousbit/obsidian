@@ -229,10 +229,10 @@ exit
 - Service account running SQL Server is often over-privileged (Local System, Network Service, or a domain account) — `xp_cmdshell` commands run as that account
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2). Service: [[Services/Database Services/MSSQL|MSSQL]] — the full attack methodology this client drives.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

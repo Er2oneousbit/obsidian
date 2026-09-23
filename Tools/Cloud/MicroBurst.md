@@ -97,10 +97,10 @@ Invoke-EnumerateAzureSubDomains -Base <company-name>    # *.blob/file/table/queu
 
 ---
 
-> [!note] **See also** — pair with [[Tools/Cloud/AADInternals|AADInternals]] (identity/Entra side) and [[Tools/Cloud/ScoutSuite|ScoutSuite]] (misconfig audit); the ARM-token abuse primitives overlap [[Tools/Cloud/BARK|BARK]]'s `*-AzureRM*` functions.
+> [!note] **See also** — pair with [[Tools/Cloud/AADInternals|AADInternals]] (identity/Entra side) and [[Tools/Cloud/ScoutSuite|ScoutSuite]] (misconfig audit); the ARM-token abuse primitives overlap [[Tools/Cloud/BARK|BARK]]'s `*-AzureRM*` functions. Used against [[Services/Active Directory/Entra ID|Entra ID]] for the resource-plane pivot (IMDS/managed-identity token theft, VM RunCommand, storage-key extraction); the CLI equivalent is [[Tools/Cloud/azure-cli|az]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

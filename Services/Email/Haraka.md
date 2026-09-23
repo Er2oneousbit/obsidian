@@ -82,6 +82,15 @@ You *can* hand-deliver a crafted archive with [[Tools/Email/swaks\|swaks]] `--at
 
 ---
 
+## Detection & Artefacts
+
+- **The RCE signature is the `node`/Haraka process spawning a shell child** (`sh -c`/`unzip`/`tar` with metacharacters) while handling an inbound attachment — visible to EDR/`auditd` (`execve` under the Haraka parent), not in the SMTP transaction log.
+- **The poisoned message sits in the mail queue / maillog** — a message whose attachment (inner) filename contains `"`, `;`, backticks or `$()` is the IOC; retain the `.eml` for evidence.
+- **An outbound connection from the mail host to an attacker HTTP/stager port** right after delivery is the second-stage tell (MSF hosts the stager over `SRVHOST`).
+- Post-foothold, confirm the surface: Haraka's loaded plugins are listed in `config/plugins`; `attachment` present + version `< 2.8.9` = exploitable. Upgrading to 2.8.9+ (2.8.20+ recommended) is the fix.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -105,10 +114,10 @@ You *can* hand-deliver a crafted archive with [[Tools/Email/swaks\|swaks]] `--at
 
 ---
 
-> [!note] **See also** — [[Services/Email/SMTP\|SMTP]] — general SMTP enumeration/attack surface this MTA sits on; [[Tools/Email/swaks\|swaks]] — the client for delivering the payload; [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services\|Attacking Common Services]] — where SMTP fits in the services workflow.
+> [!note] **See also** — [[Services/Email/SMTP\|SMTP]] — general SMTP enumeration/attack surface this MTA sits on; mail-retrieval siblings [[Services/Email/IMAP\|IMAP]] & [[Services/Email/POP3\|POP3]]; [[Tools/Email/swaks\|swaks]] — the client for delivering the payload; [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services\|Attacking Common Services]] — where SMTP fits in the services workflow.
 
 ---
 
 *Created: 2026-09-04*
-*Updated: 2026-09-04*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

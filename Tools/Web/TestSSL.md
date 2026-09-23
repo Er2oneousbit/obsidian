@@ -158,10 +158,10 @@ Key sections:
 
 ---
 
-> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
+> [!note] **See also** — [[Services/Network management/TLS|TLS]] (the service note: protocols/ciphers/vulns matrix, Heartbleed exploitation, Dangerous Settings); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-18*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

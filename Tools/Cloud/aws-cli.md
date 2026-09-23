@@ -19,10 +19,10 @@ aws s3 ls
 aws secretsmanager list-secrets
 ```
 
-> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]] (using cluster-IMDS-stolen IAM role creds). For deeper AWS enumeration/privesc tooling see [[Tools/Cloud/Pacu|Pacu]] and [[Tools/Cloud/ScoutSuite|ScoutSuite]].
+> [!note] **See also** — [[Services/Cloud & Data/Databricks|Databricks]], [[Services/Cloud & Data/Flink|Flink]], [[Services/Cloud & Data/Kafka|Kafka]] and [[Services/Cloud & Data/Kubernetes|Kubernetes]] (using cluster/pod-IMDS-stolen IAM role creds after code exec). For deeper AWS enumeration/privesc tooling see [[Tools/Cloud/Pacu|Pacu]] and [[Tools/Cloud/ScoutSuite|ScoutSuite]].
 
 ---
 
 *Created: 2026-07-28*
-*Updated: 2026-07-28*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

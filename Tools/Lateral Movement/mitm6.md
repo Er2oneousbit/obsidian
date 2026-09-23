@@ -136,10 +136,10 @@ secretsdump.py DOMAIN/lowpriv:Password@dc01.domain.local -just-dc
 
 ---
 
-> [!note] **See also** — Always paired with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (`-6`); the LDAP-relay outcomes (`--add-computer`, `--delegate-access`, `--shadow-credentials`) are documented there. Broadcast-poisoning counterpart on the same subnet: [[Tools/Lateral Movement/responder|Responder]] (run both for coverage). Force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]. Protocol background: [[Standards & Protocols/NTLM|NTLM]].
+> [!note] **See also** — Always paired with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (`-6`); the LDAP-relay outcomes (`--add-computer`, `--delegate-access`, `--shadow-credentials`) are documented there. Broadcast-poisoning counterpart on the same subnet: [[Tools/Lateral Movement/responder|Responder]] (run both for coverage). Force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]. Protocol background: [[Standards & Protocols/NTLM|NTLM]]. Service context: [[Services/Network management/NetBIOS|NetBIOS]] (the IPv6/WPAD takeover as the modern companion to broadcast NBNS/LLMNR poisoning).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-29*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

@@ -16,9 +16,10 @@ fierce --domain target.com --subdomain-file subdomains.txt --dns-servers 10.10.1
 ```
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] — DNS subdomain discovery; pairs with [[Tools/Recon/subfinder|subfinder]] and [[Tools/Network/dig|dig]].
+> Also [[Services/Network management/DNS|DNS]] — subdomain discovery + reverse sweep.
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-09-23*
 *Model: claude-opus-4-8*

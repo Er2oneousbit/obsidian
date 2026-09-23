@@ -140,10 +140,11 @@ nuclei -u http://10.129.14.128 -stats
 | `-proxy` | HTTP proxy |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2). Services: [[Services/Cloud & Data/Salesforce|Salesforce]] — org/community fingerprinting.
+> Also [[Services/Network management/DNS|DNS]] — subdomain-takeover templates.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

@@ -268,9 +268,12 @@ netexec smb 192.168.1.0/24 -u Administrator -p Password --log output.txt
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — GPP/LAPS modules and PTH at scale.
+> Also [[Services/Local System Management/RPC|RPC]] (--rid-brute, -M coerce_plus), [[Services/Local System Management/WMI|WMI]] (--exec-method wmiexec), [[Services/Local System Management/WinRM|WinRM]] (nxc winrm).
+> Also [[Services/File Xfer/SMB|SMB]] — the primary 445 service: share/user/pol enum, spray, PtH, RID-brute, relay-list.
+> Also [[Services/Network management/LDAP|LDAP]] — `nxc ldap`: users/groups, roasting, delegation, gMSA/LAPS, `-M ldap-checker`, BloodHound collection; [[Services/Network management/NetBIOS|NetBIOS]] — `nxc smb --rid-brute` user enumeration; [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — internal SMB sweep/spray/relay-list once on the VPN tunnel.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

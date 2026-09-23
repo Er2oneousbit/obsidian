@@ -231,6 +231,17 @@ run
 
 ---
 
+## Detection & Artefacts
+
+- **Brute/anon activity** is loud in the daemon log (`/var/log/vsftpd.log`, `xferlog`, ProFTPD's `/var/log/proftpd/`): a burst of failed `USER`/`PASS` from one source, or repeated `anonymous` logins.
+- **`SITE CPFR`/`SITE CPTO` with no preceding authentication** is the mod_copy signature — normal clients never issue those unauthenticated.
+- **The vsftpd-2.3.4 backdoor** leaves a `:)` username in the log and, more tellingly, a **listener on TCP 6200** — a port scan of the host after the trigger confirms it.
+- **FTP bounce** shows as `PORT` commands naming a *third-party* IP/port (the scan target), not the client's own address.
+- **Webshell upload** = a new executable/script file in the FTP root owned by the ftp/service user; if the FTP root is the web root, correlate with the web log hit that follows.
+- Defensive baseline: disable anonymous, enforce FTPS, keep the FTP root off the web root, patch vsftpd/ProFTPD, and drop `mod_copy` if unused.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -265,6 +276,10 @@ run
 
 ---
 
+> [!note] **See also** — file-transfer siblings [[Services/File Xfer/SFTP|SFTP]] (SSH-based, encrypted), [[Services/File Xfer/TFTP|TFTP]] (UDP, unauthenticated), [[Services/File Xfer/NFS|NFS]] and [[Services/File Xfer/Rsync|Rsync]].
+
+---
+
 *Created: 2026-07-13*
-*Updated: 2026-08-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

@@ -9,7 +9,8 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 
 > [!warning] **Account Lockout** — Always verify lockout policy before attacking. Password spraying (one password, many users) is far safer than per-account brute force on production systems. Use `-t 1` and add delays (`-W`) when stealth matters.
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365; [[Services/Remote Access/R-Services|R-Services]] — Hydra's `rlogin://`, `rexec://`, and `rsh://` modules are the only practical way to brute-force rsh (Nmap has no `rsh-brute` script); [[Services/Database Services/PostgreSQL|PostgreSQL]] — online guessing against 5432 via `postgres://`; [[Services/File Xfer/FTP|FTP]] — online guessing against 21 via `ftp://`.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365; [[Services/Remote Access/R-Services|R-Services]] — Hydra's `rlogin://`, `rexec://`, and `rsh://` modules are the only practical way to brute-force rsh (Nmap has no `rsh-brute` script); [[Services/Database Services/PostgreSQL|PostgreSQL]] — online guessing against 5432 via `postgres://`; [[Services/Database Services/Redis|Redis]] — online guessing against 6379 via `redis://`; [[Services/Email/IMAP|IMAP]] & [[Services/Email/POP3|POP3]] — mailbox spray via `imap://`/`pop3://` (`-S` for SSL); [[Services/Email/SMTP|SMTP]] — AUTH brute/spray on submission via `smtp://`/`smtps://`; [[Services/File Xfer/FTP|FTP]] — online guessing against 21 via `ftp://`.
+> Also [[Services/File Xfer/SMB|SMB]] — online brute via smb://; [[Services/Local System Management/WinRM|WinRM]] — online brute via winrm://; [[Services/Network management/SIP-VoIP|SIP-VoIP]] — SIP extension password brute via sip:// (alt to svcrack); [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — ASA SSL VPN portal / ASDM brute (`https-post-form`/`https-get`).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Techniques/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — HTTP login-form brute force / spraying.
@@ -273,5 +274,5 @@ hydra --list-modules  # list all modules (newer versions)
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-21*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

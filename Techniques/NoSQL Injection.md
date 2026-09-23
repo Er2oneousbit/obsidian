@@ -413,8 +413,10 @@ $gt → %24gt
    - CouchDB: direct HTTP API access, Mango query injection
 ```
 
+> [!note] **See also** — service note [[Services/Database Services/MongoDB|MongoDB]] (the DB-side view: connection, dump, `$where` sandbox). Tools: [[Tools/Database/NoSQLMap|NoSQLMap]], [[Tools/Database/mongosh|mongosh]], [[Tools/Web/Burpsuite|Burp Suite]].
+
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

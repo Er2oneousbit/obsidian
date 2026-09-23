@@ -19,10 +19,10 @@ sqsh -S 10.10.10.10 -U '.\julio' -P 'Password123' -h
 2> GO
 ```
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] — MSSQL/MySQL CLI access; pairs with [[Tools/Database/mssqlclient|impacket-mssqlclient]].
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] — MSSQL/MySQL CLI access; pairs with [[Tools/Database/mssqlclient|impacket-mssqlclient]]. Service: [[Services/Database Services/MSSQL|MSSQL]].
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

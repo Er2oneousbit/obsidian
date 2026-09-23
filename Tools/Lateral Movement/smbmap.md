@@ -130,9 +130,10 @@ smbmap -H 192.168.1.10 -u Administrator -p Password -x 'net user hacker Password
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> Also [[Services/File Xfer/SMB|SMB]] — share permission mapping and recursive listing/download.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

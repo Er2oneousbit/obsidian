@@ -16,10 +16,10 @@ lures get-url 0
 # Send the generated URL to the target; captured sessions appear under `sessions`
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section (Adversary-in-the-Middle Phishing).
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section (Adversary-in-the-Middle Phishing); [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — cloned SSL VPN portal phishlet capturing creds + session tokens.
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
+*Updated: 2026-09-23*
 *Model: claude-sonnet-5*

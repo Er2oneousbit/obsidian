@@ -10,7 +10,7 @@ Graph-based Active Directory attack path visualizer. Ingests data collected by S
 
 > [!warning] **CE is now the standard — Legacy is deprecated.** SpecterOps sunset **BloodHound Legacy** (the Electron app + your own Neo4j); the `BloodHoundAD` repos are archived and receive no new edges/queries. **New work should use BloodHound CE** (web UI, bundled Postgres+Neo4j, `bloodhound-cli`). You'll still meet Legacy on older engagements and in shared DB dumps, so both are covered below — but match your **collector version to your BloodHound version** (CE SharpHound / `bloodhound-ce-python` for CE; legacy SharpHound / `bloodhound-python` for Legacy). Mixing versions produces "0 objects imported."
 
-> [!note] **See also** — collectors & companions: [[Tools/Cloud/AzureHound|AzureHound]] (Entra/Azure graph), [[Tools/AD/PowerView|PowerView]] and [[Tools/AD/ldapsearch|ldapsearch]] (manual enum when you want to confirm an edge BloodHound drew). Abuse the paths it finds: [[Services/Active Directory/ACL Abuse|ACL Abuse]] (GenericAll/WriteDacl/WriteOwner), [[Services/Active Directory/Kerberos|Kerberos]] (Kerberoast/AS-REP/delegation edges), [[Tools/AD/Certipy|Certipy]] (the `Enroll`/AD CS edges → ESC paths). The `ReadLAPSPassword` edge → [[Tools/AD/LAPSToolkit|LAPSToolkit]].
+> [!note] **See also** — collectors & companions: [[Tools/Cloud/AzureHound|AzureHound]] (Entra/Azure graph), [[Tools/AD/PowerView|PowerView]] and [[Tools/AD/ldapsearch|ldapsearch]] (manual enum when you want to confirm an edge BloodHound drew). Abuse the paths it finds: [[Services/Active Directory/ACL Abuse|ACL Abuse]] (GenericAll/WriteDacl/WriteOwner), [[Services/Active Directory/Kerberos|Kerberos]] (Kerberoast/AS-REP/delegation edges), [[Tools/AD/Certipy|Certipy]] (the `Enroll`/AD CS edges → ESC paths). The `ReadLAPSPassword` edge → [[Tools/AD/LAPSToolkit|LAPSToolkit]]. Collection runs over [[Services/Network management/LDAP|LDAP]] (SharpHound / `bloodhound-python`) — including remotely across a [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] VPN tunnel.
 
 ---
 
@@ -282,5 +282,5 @@ bloodhound-python -c DCOnly -u user -p pass -d corp.local -ns <dc-ip>   # Linux 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

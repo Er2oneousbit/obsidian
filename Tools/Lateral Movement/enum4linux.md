@@ -106,9 +106,10 @@ enum4linux -r 192.168.1.10     # RID brute
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> Also [[Services/File Xfer/SMB|SMB]] — all-in-one SMB/RPC enumeration of the 445 service; [[Services/Network management/NetBIOS|NetBIOS]] — wraps rpcclient/nmblookup for null-session name/user enum.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

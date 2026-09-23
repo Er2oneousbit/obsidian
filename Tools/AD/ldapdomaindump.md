@@ -102,11 +102,11 @@ proxychains ldapdomaindump -u 'DOMAIN\user' -p 'Password' <dc-ip>
 ```
 
 
-> [!note] **See also** — [[Techniques/LDAP Injection|LDAP Injection]] (CPTS v2).
+> [!note] **See also** — [[Services/Network management/LDAP|LDAP]] service note (dumps the directory this enumerates); [[Techniques/LDAP Injection|LDAP Injection]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

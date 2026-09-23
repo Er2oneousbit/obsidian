@@ -1,17 +1,25 @@
+# IPMI
+
 #IPMI #IntelligentPlatformManagementInterface #networkmanagement
 
 ## What is IPMI?
-Intelligent Platform Management Interface — standardized hardware-based host management system. Operates independently of the OS, BIOS, CPU, and firmware. Allows remote management even when the host is powered off or unresponsive.
+Intelligent Platform Management Interface — hardware-based host management that runs on the **BMC** (Baseboard Management Controller), an embedded Linux computer independent of the host OS/BIOS/CPU. It provides physical-access-equivalent control over the network — power, BIOS, remote KVM, boot media — even when the host is off. On an engagement it's high-value and often soft: the **RAKP protocol flaw leaks a crackable password hash pre-auth**, default creds are rife, and BMC admin = OS root.
 
 - Port **UDP 623** — IPMI (RMCP/RMCP+)
-- Clients called **Baseboard Management Controllers (BMC)** — typically embedded ARM chips running Linux, built into motherboards or available as add-on cards
-- Provides physical-access-equivalent capability over the network
-- Common implementations: HP iLO, Dell iDRAC, Supermicro IPMI
+- Common implementations: **HP iLO, Dell iDRAC, Supermicro IPMI, IBM IMM, Cisco UCS**
+- BMC compromise = boot attacker ISO, remote console, dump/reset host creds
 
-### Typical Use Cases
-- Modify BIOS before OS boots
-- Manage fully powered-down hosts
-- Access host after system failure / crash
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|NMAP]] | `ipmi-version` NSE + UDP/623 discovery |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `ipmi_version`, `ipmi_dumphashes` (RAKP), `ipmi_login` |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack RAKP hashes (`-m 7300` IPMI2 RAKP HMAC-SHA1) |
+
+`ipmitool` (the native IPMI/RMCP client — chassis/power/user/SOL) is used inline below.
 
 ---
 
@@ -133,6 +141,16 @@ ipmitool -I lanplus -H <target> -U <user> -P <pass> sol activate
 
 ---
 
+## Detection & Artefacts
+
+- **IPMI attacks target the BMC, not the host OS** — so host-side EDR/logs see nothing; detection lives on the BMC's own event log (SEL) and network monitoring of UDP/623.
+- **RAKP hash disclosure is passive-looking** — a single authenticated-session-setup exchange; `ipmi_dumphashes` just completes the RAKP handshake, so there's little to log beyond the connection.
+- **Cipher 0 access** and **default-cred logins** show in the BMC audit log as successful admin sessions from an unexpected IP.
+- **BMC → host pivot** (mounted ISO, SOL console, power cycle) is visible as unexpected boot-media/console events in the BMC log.
+- Defensive baseline: change default creds, **isolate BMCs on a dedicated management VLAN** (never internet-facing), disable Cipher 0, restrict RAKP where possible, and keep BMC firmware patched.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -156,3 +174,13 @@ ipmitool -I lanplus -H <target> -U <user> -P <pass> sol activate
 | HP iLO mask | `hashcat -m 7300 hash.txt -a 3 ?1?1?1?1?1?1?1?1 -1 ?d?u` |
 | Cipher 0 bypass | `ipmitool -I lanplus -C 0 -H host -U admin -P "" user list` |
 | List users | `ipmitool -I lanplus -H host -U user -P pass user list` |
+
+---
+
+> [!note] **See also** — RAKP hashes crack with [[Tools/Auth/hashcat|hashcat]] (`-m 7300`); a compromised BMC is a host-independent foothold that pivots to OS root. Network-infra siblings under [[Services/Network management/SNMP|SNMP]] (other lights-out/management surfaces).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

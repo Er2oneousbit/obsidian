@@ -179,9 +179,11 @@ rpcclient -U '' -N 192.168.1.10 -c "enumdomusers"
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> Also [[Services/Local System Management/RPC|RPC]] — the MSRPC service this drives (SAMR/LSAT enum, RID lookups).
+> Also [[Services/File Xfer/SMB|SMB]] — null-session RPC enumeration of the SMB host.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

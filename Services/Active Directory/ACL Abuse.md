@@ -10,6 +10,10 @@ Every Active Directory object (users, groups, computers, GPOs, OUs) has a DACL g
 
 ---
 
+> [!note] **See also** — over-permissive ACEs are discovered via [[Services/Network management/LDAP|LDAP]] enumeration (`bloodyAD get writable`, BloodHound collection) and worked with [[Tools/AD/bloodyAD|bloodyAD]]/[[Tools/AD/PowerView|PowerView]].
+
+---
+
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
+*Updated: 2026-09-23*
 *Model: claude-sonnet-5*

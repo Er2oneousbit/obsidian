@@ -103,9 +103,10 @@ cat subdomains.txt | httpx -silent   # probe which are alive
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+> Also [[Services/Network management/DNS|DNS]] — passive/active subdomain enumeration.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

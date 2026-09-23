@@ -1,3 +1,5 @@
+# Salesforce
+
 #Salesforce #CRM #SaaS #SOQL #Aura #Lightning #enterprise
 
 ## What is Salesforce?
@@ -9,6 +11,17 @@ Cloud-based CRM platform. In enterprise pentests, primary attack surface is misc
 - **REST API**: `/services/data/v<version>/`
 - **SOAP API**: `/services/Soap/`
 - **Tooling API**: `/services/data/v<version>/tooling/`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/File Transfer/cURL\|cURL]] | Raw Aura/REST/Tooling API interaction — all unauthenticated guest-access testing |
+| [[Tools/Cloud/salesforce-cli\|sf (salesforce-cli)]] | Authenticated client — SOQL queries, object describe, anonymous Apex once you hold a token |
+| [[Tools/Scanning/nuclei\|nuclei]] | Fingerprint Salesforce orgs / communities and known misconfig templates |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept and mutate the Aura `message` parameter to enumerate objects/records manually |
 
 ---
 
@@ -71,6 +84,8 @@ curl -s https://<instance>.my.salesforce.com/services/data/v58.0/ \
 ### Aura Endpoint — Guest User Data Access
 
 The Aura endpoint (`/aura`) processes Lightning component actions. Misconfigured orgs allow guest (unauthenticated) users to invoke controllers that query any object their profile can access.
+
+> [!warning] **Modern orgs are more locked down — verify before assuming.** Salesforce enforced the **"Secure guest user record access"** policy (rolled out through 2021, enforced by the Spring '21 / Summer '21 updates): guest users can no longer be granted record access via ownership or most sharing rules, and the guest profile's object permissions are constrained by default. On a current, patched org the classic `getItems`/`getRecord` guest pull often returns empty or access-denied — success means the org has explicitly re-opened access. Don't conclude "not vulnerable" from a single object; enumerate several, and note the org's update version in the report.
 
 ```bash
 # Base Aura POST structure
@@ -183,33 +198,18 @@ curl -s "https://<instance>.my.salesforce.com/services/data/v58.0/query/?q=SELEC
 
 ---
 
-## Tools
+## Dangerous Settings
 
-```bash
-# Salesforce CLI (sfdx/sf) — authenticated access
-sf org login web --instance-url https://<instance>.my.salesforce.com
-sf data query --query "SELECT Id,Name,Email FROM User" --target-org <alias>
-
-# nuclei templates
-nuclei -u https://<org>.force.com -t salesforce/
-
-# manual Aura testing — Burp Suite
-# Intercept POST to /aura, modify message parameter to enumerate objects/records
-```
-
----
-
-## Common Findings
-
-| Finding | Description |
+| Misconfiguration | Risk |
 |---|---|
-| Guest user data access | Unauthenticated Aura queries return internal records |
-| SOQL injection | User input concatenated into SOQL queries |
+| Guest user profile with object read access | Unauthenticated Aura queries return internal records |
+| SOQL built by string concatenation of user input | SOQL injection → cross-object data disclosure |
 | Excessive guest permissions | Guest profile can read User, Contact, Lead objects |
-| Leaked OAuth tokens | Hardcoded in JS bundles, GitHub repos, Postman |
-| Insecure Named Credentials | Backend credentials exposed via Apex |
+| Leaked OAuth tokens | Hardcoded in JS bundles, GitHub repos, Postman collections |
+| Insecure Named Credentials | Backend system credentials reachable via Apex/`NamedCredential` |
 | Public file access | ContentDocument/ContentVersion readable without auth |
-| Sharing rules misconfiguration | Records shared publicly via OWD settings |
+| Org-wide defaults (OWD) set to Public | Records shared publicly via sharing settings |
+| `PermissionsModifyAllData` / `PermissionsAuthorApex` on a low-tier profile | Anonymous Apex execution → full data access |
 
 ---
 
@@ -223,3 +223,13 @@ nuclei -u https://<org>.force.com -t salesforce/
 | SOQL query | `/services/data/v58.0/query/?q=SELECT+Id,Name+FROM+User` |
 | List objects | `/services/data/v58.0/sobjects/` |
 | Anonymous Apex | `/services/data/v58.0/tooling/executeAnonymous/?anonymousBody=...` |
+
+---
+
+> [!note] **See also** — the guest-access techniques here are a SaaS-specific case of the OAuth/token abuse in [[Services/Active Directory/Entra ID|Entra ID]] (leaked tokens, connected-app abuse). Manual Aura work is done in [[Tools/Web/Burpsuite|Burp Suite]]; authenticated enumeration in [[Tools/Cloud/salesforce-cli|sf]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

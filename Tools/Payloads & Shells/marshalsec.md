@@ -37,9 +37,10 @@ java -cp target/marshalsec-0.0.3-SNAPSHOT-all.jar \
 
 > [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — Java unmarshalling gadgets and JNDI referral servers. Native-serialization chains are [[Tools/Payloads & Shells/ysoserial|ysoserial]].
 > Also used in [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
+> Services this tool is used against in this vault: [[Services/Cloud & Data/Kafka|Kafka]] — the LDAP referral server for the Kafka Connect JAAS/JNDI RCE (CVE-2023-25194 / CVE-2025-27818).
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

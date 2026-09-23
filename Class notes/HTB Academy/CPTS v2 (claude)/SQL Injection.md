@@ -966,8 +966,10 @@ What you're up against, and where each control still leaks — useful for the re
 
 > For NoSQL injection (MongoDB, Redis, CouchDB) see [[NoSQL Injection]]
 
+> [!note] **See also** — the service-side attack notes for the databases behind these injections: [[Services/Database Services/MySQL|MySQL]] (`INTO OUTFILE`, UDF RCE), [[Services/Database Services/MSSQL|MSSQL]] (`xp_cmdshell`, linked servers), [[Services/Database Services/PostgreSQL|PostgreSQL]] (`COPY … TO/FROM PROGRAM`, `lo_export` webshell) and [[Services/Database Services/SQLite|SQLite]] (dialect quirks, `ATTACH`/`writefile` webshell).
+
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-09-02*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

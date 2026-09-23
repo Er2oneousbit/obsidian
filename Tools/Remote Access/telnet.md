@@ -101,10 +101,10 @@ telnet 10.129.14.128 80
 ---
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — manual banner grab, `EHLO` capability listing, `VRFY`/`EXPN` user enumeration, open-relay testing, and triggering the NTLM challenge for `AUTH NTLM` info disclosure.
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — manual banner grab, `EHLO` capability listing, `VRFY`/`EXPN` user enumeration, open-relay testing, and triggering the NTLM challenge for `AUTH NTLM` info disclosure; [[Services/Email/IMAP|IMAP]] & [[Services/Email/POP3|POP3]] — raw plaintext sessions on 143/110 for tagged `LOGIN`/`FETCH` and `USER`/`PASS`/`RETR` interaction.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-13*
+*Updated: 2026-09-22*
 *Model: claude-opus-5*

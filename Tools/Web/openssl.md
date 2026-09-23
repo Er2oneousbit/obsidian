@@ -212,10 +212,10 @@ openssl s_client -connect target.com:443 -status </dev/null 2>/dev/null | \
 ---
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — `s_client -starttls smtp` for STARTTLS on 25/587 and direct TLS on 465, to reach an authenticated session or inspect the mail server's certificate; [[Services/File Xfer/FTP|FTP]] — `s_client -starttls ftp` (explicit FTPS on 21) / `-connect host:990` (implicit), to negotiate and inspect the FTPS certificate.
+> Services this tool is used against in this vault: [[Services/Email/SMTP|SMTP]] — `s_client -starttls smtp` for STARTTLS on 25/587 and direct TLS on 465, to reach an authenticated session or inspect the mail server's certificate; [[Services/File Xfer/FTP|FTP]] — `s_client -starttls ftp` (explicit FTPS on 21) / `-connect host:990` (implicit), to negotiate and inspect the FTPS certificate. [[Services/Email/IMAP|IMAP]] & [[Services/Email/POP3|POP3]] — `s_client -connect host:993`/`:995` or `-starttls imap`/`pop3` to reach an authenticated mail session over TLS. [[Services/Active Directory/ADCS|ADCS]] — `pkcs12` to convert Certify's PEM output into the PFX Rubeus needs, and to read a cert's issuer/serial when building an ESC14 `altSecurityIdentities` mapping. [[Services/Network management/TLS|TLS]] — `s_client` handshakes, forced protocol/cipher tests, and cert inspection are the manual core of TLS assessment.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

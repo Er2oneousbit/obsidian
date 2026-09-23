@@ -240,10 +240,10 @@ hashcat -m 24100 mongo_hashes.txt /usr/share/wordlists/rockyou.txt
 
 ---
 
-> [!note] **See also** — [[Techniques/NoSQL Injection|NoSQL Injection]] — testing operator/aggregation-pipeline payloads directly against a MongoDB instance.
+> [!note] **See also** — [[Techniques/NoSQL Injection|NoSQL Injection]] — testing operator/aggregation-pipeline payloads directly against a MongoDB instance. Service: [[Services/Database Services/MongoDB|MongoDB]] — full enumeration/attack methodology; bulk exfil with [[Tools/Database/mongodump|mongodump]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

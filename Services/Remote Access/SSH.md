@@ -269,3 +269,13 @@ cat ~/.ssh/id_rsa.pub | ssh user@<target> "mkdir -p ~/.ssh && cat >> ~/.ssh/auth
 | SSH audit | `ssh-audit host` |
 | SOCKS proxy setup | `ssh -D 9050 -fN user@pivot` then `proxychains <tool>` |
 | Nmap scan | `nmap -p 22 --script ssh-auth-methods,ssh2-enum-algos host` |
+
+---
+
+> [!note] **See also** — [[Services/File Xfer/SFTP|SFTP]] (SSH-based file transfer) and [[Services/File Xfer/Rsync|Rsync]] (bulk exfil/sync over SSH via `-e ssh`). Remote-access sibling [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (SSH is also the ASA/FTD management CLI — default creds, `show running-config`, FTD `expert`→`sudo su`).
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

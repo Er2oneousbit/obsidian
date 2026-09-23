@@ -35,9 +35,10 @@ subfinder -d example.com -silent | subjack -w /dev/stdin -ssl -o results.txt
 > [!tip] `-m` (manual mode) is useful for triage: dump every CNAME pointing off-domain, then eyeball which providers are in play. Dangling CNAMEs to decommissioned internal hosts matter too, even when no takeover is possible.
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] — every subdomain enumeration pass should end with a takeover check; pairs with [[Tools/Recon/subfinder|subfinder]] and [[Tools/Scanning/nuclei|nuclei]].
+> Also [[Services/Network management/DNS|DNS]] — subdomain-takeover detection.
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

