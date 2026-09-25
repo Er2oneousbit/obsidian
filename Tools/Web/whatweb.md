@@ -171,11 +171,11 @@ retire --url http://target.com
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2). Services: [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] and [[Services/Web Services/IIS|IIS]] — tech-stack/version fingerprinting.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

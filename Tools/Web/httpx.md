@@ -173,11 +173,11 @@ cat hosts.txt | httpx -silent -match-string "login\|signin\|password"
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2). Services: [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — mass probing (status/title/tech/TLS) and feeding live hosts into nuclei.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

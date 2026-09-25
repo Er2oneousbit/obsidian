@@ -110,10 +110,10 @@ cat results.txt | grep SUCCESS
 > [!note] **Crowbar vs Hydra for RDP** — Hydra's RDP module is unreliable against NLA-enforced endpoints. Crowbar handles NLA correctly, making it the preferred tool for RDP brute force on modern Windows targets.
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
+> [!note] **See also** — [[Services/Remote Access/RDP|RDP]] — crowbar handles NLA where hydra struggles (`-b rdp`). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

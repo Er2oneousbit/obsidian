@@ -1,3 +1,5 @@
+# Telnet
+
 #Telnet #remoteaccess #cleartext #legacy
 
 ## What is Telnet?
@@ -6,6 +8,20 @@ Legacy network protocol for bidirectional text communication. Predecessor to SSH
 - Port: **TCP 23** (default)
 - Alternate ports: 2323, 8023, etc. (sometimes on non-standard ports)
 - No encryption — vulnerable to sniffing
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|NMAP]] | `telnet-ntlm-info`, `banner`, `telnet-brute` NSE |
+| [[Tools/Remote Access/Netcat\|Netcat]] | Banner grab / raw session on 23 |
+| [[Tools/Auth/Hydra\|Hydra]] | Credential brute (`telnet://`) |
+| [[Tools/Auth/Medusa\|Medusa]] | Credential brute (`-M telnet`) |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `telnet_version` / `telnet_login` scanners |
+| [[Tools/Network/tcpdump\|tcpdump]] | Capture cleartext credentials on 23 |
+| [[Tools/Network/PCredz\|PCredz]] | Auto-extract telnet creds from a live capture / pcap |
 
 ---
 
@@ -104,6 +120,17 @@ Linksys:   admin/admin
 MikroTik:  admin/<blank>
 ```
 
+> Telnet on a router/switch/IoT device is a network-gear engagement — pair this with [[Techniques/Network Device Pentesting|Network Device Pentesting]] (config looting, Type-7/5 credential cracking) once you have the CLI.
+
+---
+
+## Detection & Artefacts
+
+- **Everything is plaintext on 23** — the login and the whole session are recoverable from a single on-path capture; `PCredz` pulls the credentials automatically. This is also the strongest detection signal: any TCP/23 traffic on a modern network is an IOC, and the auth is trivially sniffed.
+- **Brute force** = a burst of connection/disconnect cycles to 23 from one source; device-side syslog shows repeated failed logins (if the device logs at all — many embedded devices don't).
+- **`telnet-ntlm-info`** against a Windows Telnet Server leaks the hostname/domain/NetBIOS name pre-auth — an info-disclosure finding on its own.
+- **The finding is that it exists** — recommend disabling Telnet and moving to SSH; on network gear, `transport input ssh` (Cisco) removes the Telnet VTY.
+
 ---
 
 ## Dangerous Settings
@@ -127,3 +154,9 @@ MikroTik:  admin/<blank>
 | Brute force | `hydra -L users.txt -P pass.txt telnet://host` |
 | Sniff session | `tcpdump -i eth0 port 23 -A` |
 | Nmap | `nmap -p 23 --script banner,telnet-brute host` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

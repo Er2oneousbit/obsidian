@@ -167,10 +167,10 @@ nc -lvnp 9001 > received_file
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2); [[Services/File Xfer/FTP|FTP]] — recursive anonymous download via `wget -m ftp://…`.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2); [[Services/File Xfer/FTP|FTP]] — recursive anonymous download via `wget -m ftp://…`. Also [[Services/Web Services/Apache|Apache]] — recursive spider (`wget -r -np`) of an exposed `Options +Indexes` autoindex. Also [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — recursive mirroring of exposed web content.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-21*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

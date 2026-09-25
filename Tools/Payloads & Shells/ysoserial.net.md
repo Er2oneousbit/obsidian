@@ -40,11 +40,11 @@ mono ysoserial.exe -g ObjectDataProvider -f Json.Net -c "cmd /c whoami"
 
 > [!warning] `ActivitySurrogateSelector` is disabled by default on .NET Framework 4.8+ (`AllowActivitySurrogateSelectorTypes` switch). Prefer `TextFormattingRunProperties` or `TypeConfuseDelegate` against modern targets.
 
-> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — .NET gadget chains and ViewState forgery. Java equivalent is [[Tools/Payloads & Shells/ysoserial|ysoserial]]; PHP is [[Tools/Payloads & Shells/phpggc|phpggc]].
+> [!note] **See also** — [[Techniques/Deserialization|Deserialization]] — .NET gadget chains and ViewState forgery. Java equivalent is [[Tools/Payloads & Shells/ysoserial|ysoserial]]; PHP is [[Tools/Payloads & Shells/phpggc|phpggc]]. Services: [[Services/Web Services/IIS|IIS]] — forge a signed `__VIEWSTATE` (with keys from [[Tools/Web/Blacklist3r|Blacklist3r]]) or exploit a BinaryFormatter sink for RCE.
 > Also used in [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]] (CPTS v2).
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-31*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

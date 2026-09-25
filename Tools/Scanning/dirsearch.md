@@ -34,10 +34,10 @@ dirsearch -l hosts.txt --proxy http://127.0.0.1:8080
 
 > [!note] The default wordlist is small by design. On a real target follow up with a raft or directory-list wordlist via `-w` — a clean dirsearch run is not evidence there's nothing there.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — directory and file content discovery.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] — directory and file content discovery. Services: [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — extension-aware content discovery.
 
 ---
 
 *Created: 2026-07-30*
-*Updated: 2026-07-30*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

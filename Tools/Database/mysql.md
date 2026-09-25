@@ -205,10 +205,10 @@ hydra -l root -P /usr/share/wordlists/rockyou.txt mysql://192.168.1.10
 
 ---
 
-> [!note] **See also** — for web-based injection use [[Tools/Database/SQLMap|SQLMap]]; service reference [[Services/Database Services/MySQL|MySQL]]. Crack `mysql.user` hashes with [[Tools/Auth/hashcat|hashcat]] (`-m 300` 4.1+ / `-m 7401` caching_sha2).
+> [!note] **See also** — for web-based injection use [[Tools/Database/SQLMap|SQLMap]]; service reference [[Services/Database Services/MySQL|MySQL]]. Crack `mysql.user` hashes with [[Tools/Auth/hashcat|hashcat]] (`-m 300` 4.1+ / `-m 7401` caching_sha2). Also [[Services/Web Services/Confluence|Confluence]] — connect to the backend DB with config-file creds to read `cwd_user` (Atlassian PBKDF2) hashes. Also [[Services/Web Services/phpMyAdmin|phpMyAdmin]] — direct DB access with creds recovered from `config.inc.php`. Also [[Services/Web Services/WordPress|WordPress]] — connect with `wp-config.php` creds to dump/crack `wp_users` or insert an admin.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

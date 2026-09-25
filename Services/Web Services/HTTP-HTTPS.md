@@ -1,3 +1,5 @@
+# HTTP / HTTPS
+
 #HTTP #HTTPS #web #enumeration #webapp
 
 ## What is HTTP/HTTPS?
@@ -6,6 +8,26 @@ HyperText Transfer Protocol — application-layer protocol for web communication
 - Port: **TCP 80** — HTTP
 - Port: **TCP 443** — HTTPS
 - Common alternate: 8080, 8443, 8000, 8888, 8008
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Web/whatweb\|whatweb]] | Tech-stack / CMS / framework fingerprinting |
+| [[Tools/File Transfer/cURL\|cURL]] | Headers, methods, cookies/auth, source grep, ad-hoc requests |
+| [[Tools/Web/httpx\|httpx]] | Fast probing of many hosts/ports — status, title, tech, TLS |
+| [[Tools/Scanning/nuclei\|nuclei]] | Template-based vuln/exposure scanning (CVEs, misconfigs, panels) |
+| [[Tools/Web/Nikto\|Nikto]] | Web-server vuln/misconfig scanner |
+| [[Tools/Scanning/gobuster\|gobuster]] | Directory/file/vhost/dns brute force |
+| [[Tools/Scanning/ffuf\|ffuf]] | Directory, vhost, and parameter fuzzing |
+| [[Tools/Scanning/feroxbuster\|feroxbuster]] | Recursive content discovery |
+| [[Tools/Scanning/dirsearch\|dirsearch]] | Content discovery (extension-aware) |
+| [[Tools/Scanning/wfuzz\|wfuzz]] | Vhost / parameter fuzzing |
+| [[Tools/Web/git-dumper\|git-dumper]] | Reconstruct source from an exposed `.git/` directory |
+| [[Tools/File Transfer/wget\|wget]] | Recursive mirroring of exposed content |
+| [[Tools/Web/openssl\|openssl]] | Inspect TLS cert / negotiate manually |
 
 ---
 
@@ -83,6 +105,46 @@ ffuf -u "http://<target>/page?param=FUZZ" -w /usr/share/seclists/Fuzzing/LFI/LFI
 ffuf -u http://<target>/login -X POST -d "username=FUZZ&password=pass" -w users.txt -H "Content-Type: application/x-www-form-urlencoded"
 ```
 
+### Mass Probing & Templated Scanning
+
+```bash
+# httpx — probe a list of hosts/ports: live, status, title, tech, TLS SAN
+cat hosts.txt | httpx -sc -title -td -tls-grab -ip
+httpx -l hosts.txt -ports 80,443,8080,8443 -json -o httpx.json
+
+# nuclei — run the template library against a target (CVEs, exposures, panels)
+nuclei -u https://<target>
+nuclei -l alive.txt -tags cve,exposure,misconfiguration -severity medium,high,critical
+# Chain: httpx to find live hosts, pipe straight into nuclei
+httpx -l hosts.txt -silent | nuclei -tags exposure,panel
+```
+
+---
+
+## HTTP Methods & Verb Tampering
+
+```bash
+# Enumerate allowed methods
+curl -X OPTIONS http://<target>/ -i 2>&1 | grep -i "^Allow:"
+nmap -p 80,443 --script http-methods --script-args http-methods.test-all <target>
+
+# TRACE enabled → Cross-Site Tracing (XST), can echo headers/cookies
+curl -X TRACE http://<target>/ -i
+
+# PUT/DELETE enabled → direct file write (see WebDAV/IIS notes for shell upload)
+curl -X PUT http://<target>/test.txt --data "poc" -i
+
+# Verb tampering for auth bypass — a control that only blocks GET/POST may let
+# an arbitrary or HEAD method through to the protected handler
+curl -X HEAD  http://<target>/admin -i        # HEAD reaches GET handler, ACL only checks GET
+curl -X FOO   http://<target>/admin -i        # unknown verb → some stacks default-allow
+curl -X POST  http://<target>/admin -i        # method the deny rule forgot
+
+# Method-override headers (framework routers honour these even if the edge blocks the verb)
+curl http://<target>/admin -H "X-HTTP-Method-Override: PUT" -i
+curl http://<target>/admin -H "X-HTTP-Method: DELETE" -i
+```
+
 ---
 
 ## Connect / Access
@@ -151,11 +213,13 @@ openssl s_client -connect <target>:443 < /dev/null 2>/dev/null | openssl x509 -n
 
 ---
 
-## Dangerous Settings / Misconfigurations
+## Dangerous Settings
 
 | Issue | Risk |
 |---|---|
 | Directory listing enabled | File and source code exposure |
+| `TRACE`/`PUT`/`DELETE` methods enabled | XST / arbitrary file write |
+| Method-based ACL (blocks only GET/POST) | Verb-tampering auth bypass |
 | `.git` / `.svn` exposed | Full source code access |
 | Backup files (`.bak`, `.old`, `.zip`) | Source and credential exposure |
 | Default credentials | Immediate admin access |
@@ -177,4 +241,12 @@ openssl s_client -connect <target>:443 < /dev/null 2>/dev/null | openssl x509 -n
 | Vhost fuzz | `ffuf -u http://host/ -H "Host: FUZZ.domain" -w subdomains.txt -fs <size>` |
 | Nikto scan | `nikto -h http://host` |
 | Check .git | `curl http://host/.git/HEAD` |
+| Templated scan | `nuclei -u https://host -tags cve,exposure` |
+| Verb tamper bypass | `curl -X HEAD http://host/admin -i` |
 | SSL cert | `openssl s_client -connect host:443 < /dev/null` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-24*
+*Model: claude-opus-4-8*

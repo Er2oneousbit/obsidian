@@ -127,11 +127,11 @@ proxychains xfreerdp /v:172.16.5.10 /u:administrator /p:Password123
 | `/cert:ignore` | Skip cert validation |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
+> [!note] **See also** — [[Services/Remote Access/RDP|RDP]] (the service note — enumeration, PtH/restricted-admin, session hijack, BlueKeep; note FreeRDP 3.x `/cert:ignore`). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Exploit & File Transfers|Exploit & File Transfers]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

@@ -19,8 +19,8 @@ Flask is a lightweight **Python web framework** (WSGI, built on **Werkzeug** + *
 | [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept requests, tamper JSON bodies/session cookies, spot Jinja `{{ }}` reflection |
 | [[Tools/File Transfer/cURL\|curl]] | Pull source/config via the LFI; craft JSON POSTs to blueprint endpoints |
 | [[Tools/Scanning/ffuf\|ffuf]] | Fuzz routes/params (Flask has no forced route naming) |
-| [flask-unsign](https://github.com/Paradoxis/Flask-Unsign) | Decode / **forge** Flask session cookies once you have `SECRET_KEY`; also brute-forces weak keys |
-| [SSTImap](https://github.com/vladko312/SSTImap) | Detect + exploit Jinja2 SSTI (maintained `tplmap` successor) |
+| [[Tools/Web/flask-unsign\|flask-unsign]] | Decode / **forge** Flask session cookies once you have `SECRET_KEY`; also brute-forces weak keys |
+| [[Tools/Web/SSTImap\|SSTImap]] | Detect + exploit Jinja2 SSTI (maintained `tplmap` successor) |
 | [[Tools/Web/Arjun\|Arjun]] | Discover hidden JSON/body params on endpoints |
 
 ---
@@ -193,5 +193,5 @@ Cracking an `.aes` password: [[Tools/Auth/pyAesBrute|pyAesBrute]] (dictionary br
 ---
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

@@ -19,7 +19,7 @@ Import-Module AADInternals
 Get-Command -Module AADInternals | Measure-Object   # lists all available functions
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] for the broader Entra/Azure AD attack methodology, MFA bypass, Conditional Access bypass, token abuse chains, and Graph API enumeration. This note covers the AADInternals module commands specifically.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] for the broader Entra/Azure AD attack methodology, MFA bypass, Conditional Access bypass, token abuse chains, and Graph API enumeration. This note covers the AADInternals module commands specifically. Also [[Services/Active Directory/ADFS|ADFS]] — `Export-AADIntADFSConfiguration`/`Export-AADIntADFSEncryptionKey`/`Export-AADIntADFSCertificates` (local + remote DKM) and `New-AADIntSAMLToken` for Golden SAML.
 
 > [!warning] **AADInternals cmdlet names drift hard between versions — verify on the box.** Functions get renamed or **removed** release to release (spraying, PTASpy, and the PRT-nonce flow that older guides show are **gone** from the current public module). Before relying on a command here, confirm it exists: `Get-Command -Module AADInternals -Verb Get,Invoke,New,Set | Select Name`, or `Get-Command -Module AADInternals *PRT*`. Corrections below reflect the current `Gerenios/AADInternals` master.
 
@@ -240,5 +240,5 @@ Read-AADIntAccessToken -AccessToken "<jwt>"
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

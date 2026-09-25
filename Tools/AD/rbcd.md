@@ -16,10 +16,10 @@ pip install -r RBCD/requirements.txt
 python3 rbcd.py -f EVIL -t <target_computer> -dc-ip <dc_ip> '<domain>/<user>:<pass>'
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Resource-Based Constrained Delegation section for the full attack chain (create computer account → set RBCD → S4U2Proxy for a service ticket).
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] Resource-Based Constrained Delegation section for the full attack chain (create computer account → set RBCD → S4U2Proxy for a service ticket). Also [[Services/Active Directory/ACL Abuse|ACL Abuse]] — `GenericWrite` on a computer object is what enables the RBCD write in the first place.
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
+*Updated: 2026-09-25*
 *Model: claude-sonnet-5*

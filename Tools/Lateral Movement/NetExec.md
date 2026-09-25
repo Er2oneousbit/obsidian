@@ -267,13 +267,13 @@ netexec smb 192.168.1.0/24 -u Administrator -p Password --log output.txt
 - `spider_plus` module generates many file access events across shares — use targeted share access instead when OPSEC matters
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — GPP/LAPS modules and PTH at scale.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — GPP/LAPS modules and PTH at scale. Services: [[Services/Active Directory/ACL Abuse|ACL Abuse]] (`--laps`/`--gmsa` reads, BloodHound collection), [[Services/Active Directory/Domain Trusts|Domain Trusts]] (`-M enum_trusts`), [[Services/Active Directory/GPO Abuse|GPO Abuse]] (enumerate/validate + execute the SYSTEM foothold).
 > Also [[Services/Local System Management/RPC|RPC]] (--rid-brute, -M coerce_plus), [[Services/Local System Management/WMI|WMI]] (--exec-method wmiexec), [[Services/Local System Management/WinRM|WinRM]] (nxc winrm).
 > Also [[Services/File Xfer/SMB|SMB]] — the primary 445 service: share/user/pol enum, spray, PtH, RID-brute, relay-list.
-> Also [[Services/Network management/LDAP|LDAP]] — `nxc ldap`: users/groups, roasting, delegation, gMSA/LAPS, `-M ldap-checker`, BloodHound collection; [[Services/Network management/NetBIOS|NetBIOS]] — `nxc smb --rid-brute` user enumeration; [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — internal SMB sweep/spray/relay-list once on the VPN tunnel.
+> Also [[Services/Network management/LDAP|LDAP]] — `nxc ldap`: users/groups, roasting, delegation, gMSA/LAPS, `-M ldap-checker`, BloodHound collection; [[Services/Network management/NetBIOS|NetBIOS]] — `nxc smb --rid-brute` user enumeration; [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — internal SMB sweep/spray/relay-list once on the VPN tunnel; [[Services/Remote Access/RDP|RDP]] — `nxc rdp` spray/PtH + `--nla-screenshot`; [[Services/Remote Access/SSH|SSH]] — `nxc ssh` spray + `--key-file`/`--sudo-check`.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

@@ -122,10 +122,10 @@ feroxbuster -u http://10.129.14.128 -w wordlist.txt -o results.txt
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2). Services: [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — recursive content discovery.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

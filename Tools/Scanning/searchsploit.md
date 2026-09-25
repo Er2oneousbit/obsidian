@@ -129,10 +129,10 @@ Database location: `/usr/share/exploitdb/`
 | `-u` | Update database |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2). Services: [[Services/Web Services/WordPress|WordPress]] — offline exploit lookup by plugin/theme name+version.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

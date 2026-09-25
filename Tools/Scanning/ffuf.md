@@ -202,10 +202,10 @@ done
 | `-p <delay>` | Delay between requests |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — user/password/reset-token/OTP fuzzing — and [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — parameter/ID/endpoint brute force.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Command Injection|Command Injection]], [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/File Upload Attacks|File Upload Attacks]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]], [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Web Attacks|Web Attacks]] (CPTS v2). Also [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — user/password/reset-token/OTP fuzzing — and [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] (CWES) — parameter/ID/endpoint brute force. Also [[Services/Web Services/Apache|Apache]] — `Apache.fuzz.txt` content discovery and PHP-extension bypass fuzzing. Also [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — directory, vhost, and parameter fuzzing. Also [[Services/Web Services/Flask|Flask]] — fuzz routes/params (no forced route naming). Also [[Services/Web Services/phpMyAdmin|phpMyAdmin]] — path discovery / login fuzzing.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-09-01*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

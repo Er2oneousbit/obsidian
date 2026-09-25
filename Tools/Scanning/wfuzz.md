@@ -119,10 +119,10 @@ wfuzz -c -w wordlist.txt --sc 200 \
 | `--proxy` | HTTP proxy |
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2). Services: [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — vhost and parameter fuzzing.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-24*
 *Model: claude-opus-5*

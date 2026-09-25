@@ -39,10 +39,10 @@ python3 Pcredz -d /path/to/pcaps/
 
 > [!warning] Passive capture is quiet, but the MITM/poisoning you use to *get* the traffic (Responder, ARP spoof) is noisy and disruptive on a production LAN — scope the poisoning, not just the sniffing.
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] — extracting credentials from network captures. Sibling tool focused on **Net-NTLMv2 from raw pcap/`.etl`**: [[Tools/Network/NTLMRawUnHide|NTLMRawUnHide]] (Python + PowerShell-7 fork).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] — extracting credentials from network captures. Sibling tool focused on **Net-NTLMv2 from raw pcap/`.etl`**: [[Tools/Network/NTLMRawUnHide|NTLMRawUnHide]] (Python + PowerShell-7 fork). Also [[Services/Remote Access/Telnet|Telnet]] — auto-extracts cleartext telnet credentials from a capture.
 
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

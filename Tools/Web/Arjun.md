@@ -119,10 +119,10 @@ done
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]] (CPTS v2). Services: [[Services/Web Services/Flask|Flask]] — discover hidden JSON/body params on blueprint endpoints.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

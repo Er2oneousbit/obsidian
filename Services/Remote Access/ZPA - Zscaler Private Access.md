@@ -1,23 +1,41 @@
 # ZPA — Zscaler Private Access
 
-## What is it?
+#ZPA #Zscaler #ZTNA #ZeroTrust #cloud #remoteaccess
+
+## What is ZPA?
 Zscaler Private Access (ZPA) is a cloud-native Zero Trust Network Access (ZTNA) solution. It brokers access to internal applications via App Connectors (lightweight VMs deployed on-prem or in cloud) and the Zscaler cloud. No inbound firewall ports — connectors initiate outbound TLS to Zscaler. Attack surface includes: tenant misconfiguration, App Connector compromise, SAML/IdP integration abuse, API abuse, and client-side attacks.
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/File Transfer/cURL\|cURL]] | The entire ZPA REST API attack surface (signin, enum, config) |
+| [[Tools/Scanning/NMAP\|NMAP]] | Pivot sweep of internal subnets from a compromised App Connector |
+| [[Tools/Auth/mimikatz\|mimikatz]] | DPAPI decrypt of the ZPA client's cached session tokens (endpoint) |
+
+Also used inline: `jq` (parse the JSON API responses), and the Zscaler Admin Portal / IdP web UIs.
 
 ---
 
 ## Architecture
 
+```mermaid
+flowchart LR
+  U["User device<br/>+ ZPA client<br/>(Z-Tunnel 2.0)"] -->|"outbound TLS 443"| Z["Zscaler cloud<br/>(ZIA / ZPA broker)"]
+  C["App Connector<br/>(on-prem / cloud VM)"] -->|"outbound TLS 443 / 9480"| Z
+  Z -.->|"brokered session"| C
+  C --> A["Internal app"]
 ```
-[User Device + ZPA Client] → [Zscaler Cloud (ZIA/ZPA)] → [App Connector] → [Internal App]
 
 Key components:
-- ZPA Client (Z-Tunnel 2.0 on endpoints)
-- App Connector (deployed in private network — connects out to Zscaler)
-- ZPA Admin Portal (admin.private.zscaler.com)
-- ZPA API (config.private.zscaler.com/api/v1/)
-- Browser Access (clientless — browser-based proxy)
-- Privileged Remote Access (SSH/RDP via browser)
-```
+- **ZPA Client** — Z-Tunnel 2.0 on endpoints
+- **App Connector** — deployed in the private network, connects *out* to Zscaler (no inbound ports)
+- **ZPA Admin Portal** — `admin.private.zscaler.com`
+- **ZPA API** — `config.private.zscaler.com` (see the API-path caveat below)
+- **Browser Access** — clientless browser-based proxy
+- **Privileged Remote Access (PRA)** — SSH/RDP via browser
 
 ---
 
@@ -53,6 +71,8 @@ curl -sk https://<target-app>/ -v 2>&1 | grep -i zscaler
 ---
 
 ## API Authentication
+
+> [!warning] **Verify the API base path against current Zscaler docs.** The `.../api/v1/<resource>` paths used throughout this note are **illustrative shorthand**. The real ZPA config API is versioned and customer-scoped — historically `https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/{customerId}/<resource>` — and Zscaler moves endpoints between versions. Pull your `{customerId}` and the exact paths from the admin portal / the current API reference before relying on any URL here; treat the `$BASE` value below as a placeholder.
 
 ```bash
 # ZPA uses OAuth2 client credentials
@@ -288,7 +308,7 @@ curl -sk "http://pac.zscaler.com/<tenant-name>/cgi-bin/proxy.pac"
 
 ---
 
-## Dangerous Configurations
+## Dangerous Settings
 
 | Config | Risk |
 |--------|------|
@@ -303,26 +323,36 @@ curl -sk "http://pac.zscaler.com/<tenant-name>/cgi-bin/proxy.pac"
 
 ---
 
+## Detection & Artefacts
+
+- **The attacker rarely touches the network path** — ZPA enumeration is API calls to `config.private.zscaler.com` and admin-portal activity, all logged **cloud-side** (ZPA Admin > Administration > audit logs; API-key usage per client_id). Anomalous `client_credentials` sign-ins and bulk `application`/`connector` GETs from a new IP are the tell.
+- **Leaked API secret is the crown jewel** — a `client_secret` in source/CI/config grants full tenant read (and often write); rotate on exposure and scope API roles. Hunt for `client_secret`/`config.private.zscaler.com` in repos and connector configs.
+- **App Connector compromise** shows as unexpected processes/scans from the connector host; the connector's own logs (`/opt/zscaler/var/log/`) and cloud-side connector health/telemetry flag a connector reaching apps it normally doesn't.
+- **PRA credential pulls** (privileged SSH keys/passwords via API) should appear in ZPA's privileged-approval/audit trail — a download outside a change window is an IOC.
+- **Endpoint:** stopping `ZPAService` or reading `%LOCALAPPDATA%\Zscaler\` DPAPI blobs is local-admin activity; EDR sees the service stop and the DPAPI access.
+
+---
+
 ## Quick Reference
 
-```bash
-# Get API token
-curl -s -X POST "https://config.private.zscaler.com/signin" \
-  -d "client_id=<id>&client_secret=<secret>&grant_type=client_credentials" | jq -r '.access_token'
+| Goal | Command |
+|---|---|
+| Get API token | `curl -s -X POST https://config.private.zscaler.com/signin -d "client_id=<id>&client_secret=<secret>&grant_type=client_credentials" \| jq -r .access_token` |
+| Enumerate apps | `curl -s -H "Authorization: Bearer $TOKEN" "$BASE/application?pagesize=500" \| jq '.list[]'` |
+| Enumerate connectors (internal IPs) | `curl -s -H "Authorization: Bearer $TOKEN" "$BASE/connector?pagesize=500" \| jq '.list[].privateIp'` |
+| Find wildcard app segments | `... "$BASE/application?pagesize=500" \| jq '.list[] \| select(.domainNames[] \| contains("*"))'` |
+| Pull PRA privileged creds | `curl -s -H "Authorization: Bearer $TOKEN" "$BASE/privilegedCredentials"` |
+| PAC bypass domains (ZIA) | `curl -sk http://pac.zscaler.com/<tenant>/cgi-bin/proxy.pac` |
+| Pivot from connector host | `nmap -sn <connector-subnet>/24` |
 
-# Enumerate all apps
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://config.private.zscaler.com/api/v1/application?pagesize=500" | \
-  jq '.list[] | {name:.name, domains:.domainNames, ports:.tcpPortRanges}'
+*(`$BASE` = the customer-scoped API base — see the API-path caveat above, not a literal `/api/v1`.)*
 
-# Enumerate App Connectors (internal IPs)
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://config.private.zscaler.com/api/v1/connector?pagesize=500" | \
-  jq '.list[] | {name:.name, privateIp:.privateIp}'
+---
 
-# Check PAC file for bypass domains
-curl -sk "http://pac.zscaler.com/<tenant>/cgi-bin/proxy.pac"
+> [!note] **See also** — the whole surface is driven through [[Tools/File Transfer/cURL|cURL]]; a compromised App Connector is a pivot like any VPN foothold — sweep with [[Tools/Scanning/NMAP|NMAP]] and move as in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] post-connect. SAML/IdP abuse (Golden SAML) ties to [[Standards & Protocols/SAML|SAML]] and AD FS; endpoint token theft uses [[Tools/Auth/mimikatz|mimikatz]] DPAPI.
 
-# Connector host — pivot to internal apps directly
-nmap -sn <connector-subnet>/24
-```
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

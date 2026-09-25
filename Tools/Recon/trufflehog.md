@@ -14,11 +14,11 @@ kubectl get configmap -A -o json | trufflehog filesystem /dev/stdin   # scan k8s
 ```
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Cloud & Data/Kubernetes|Kubernetes]] — scanning ConfigMaps/Secrets for embedded credentials.
+> Services this tool is used against in this vault: [[Services/Cloud & Data/Kubernetes|Kubernetes]] — scanning ConfigMaps/Secrets for embedded credentials. [[Services/Web Services/Azure DevOps|Azure DevOps]] — verified-secret scanning across cloned ADO repos and git history.
 > Related tooling: [[Tools/Recon/gitleaks|gitleaks]] (git-focused alternative), [[Tools/Scanning/trivy|trivy]] (image/IaC secrets).
 
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-22*
+*Updated: 2026-09-24*
 *Model: claude-opus-4-8*

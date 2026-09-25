@@ -104,11 +104,11 @@ tcpdump -nn -r capture.pcap 'port 445'
 ---
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Remote Access/R-Services|R-Services]] (cleartext credential capture on 512–514).
+> Services this tool is used against in this vault: [[Services/Remote Access/R-Services|R-Services]] (cleartext credential capture on 512–514); [[Services/Remote Access/Telnet|Telnet]] (plaintext creds on 23).
 > Related tooling: [[Tools/Network/wireshark|Wireshark / tshark]] for GUI analysis of the resulting `.pcap`.
 
 ---
 
 *Created: 2026-08-13*
-*Updated: 2026-08-13*
+*Updated: 2026-09-23*
 *Model: claude-opus-5*

@@ -248,6 +248,16 @@ sudo tcpdump -i eth0 -nn port 512 or port 513 or port 514 -A
 
 ---
 
+## Detection & Artefacts
+
+- **Nothing on the wire is encrypted** — rlogin/rsh/rexec creds and session data are plaintext on 512–514, so a single `tcpdump`/PCredz capture on-path yields credentials; this is also the strongest detection signal (any 512–514 traffic at all is an IOC on a modern network).
+- **Trust-based auth leaves no password event** — a `.rhosts`/`hosts.equiv` match logs a *successful* rlogin/rsh with **no failed-auth trail**, so brute-force-style detections miss it entirely. Hunt the trust files themselves: `find / -name .rhosts 2>/dev/null` and any `+` entry.
+- **The privileged-source-port tell** — legitimate rsh/rlogin clients bind a source port in 512–1023; a connection to 514 from a *high* source port is a hand-rolled/scripted client (e.g. the `nc`/`printf` rexec one-liner) and abnormal.
+- **`rshd`/`rlogind`/`rexecd` running at all** is the finding (CVE-1999-0651/0618) — flag the inetd/xinetd entry (`/etc/inetd.conf`, `/etc/xinetd.d/`) and recommend migration to SSH.
+- Host-side: `rsh <target> <cmd>` executes with no interactive login, so it can slip past controls that only watch `/bin/login`; watch for `rshd` spawning shells/commands.
+
+---
+
 ## Dangerous Settings
 
 | Setting | Risk |
@@ -280,5 +290,5 @@ sudo tcpdump -i eth0 -nn port 512 or port 513 or port 514 -A
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-13*
-*Model: claude-opus-5*
+*Updated: 2026-09-23*
+*Model: claude-opus-4-8*

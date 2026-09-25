@@ -193,10 +193,10 @@ curl http://target.com/wp-config.php~
 ```
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2).
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Applications|Attacking Common Applications]] (CPTS v2). Services: [[Services/Web Services/WordPress|WordPress]] — the core enumeration/brute tool (users, plugins/themes+versions, vuln matching, login/xmlrpc brute).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-07-31*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

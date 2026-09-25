@@ -321,10 +321,10 @@ Get-DomainGroup -Properties * | Export-Csv groups.csv -NoTypeInformation
 
 ---
 
-> [!note] **See also** — the automated/visual counterpart is [[Tools/AD/BloodHound|BloodHound]] (use PowerView to *verify* and *weaponise* the edges it draws). Share-pillaging is faster with [[Tools/AD/Snaffler|Snaffler]] than `Find-InterestingDomainShareFile`. The ACL-abuse primitives here feed [[Services/Active Directory/ACL Abuse|ACL Abuse]] and the Kerberoast/AS-REP prep feeds [[Services/Active Directory/Kerberos|Kerberos]]; used throughout [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]]. The `Set-DomainObject` write primitive is the Windows-side way to plant a weak `altSecurityIdentities` value or swap a UPN for [[Services/Active Directory/ADCS|ADCS]] ESC10/ESC14.
+> [!note] **See also** — the automated/visual counterpart is [[Tools/AD/BloodHound|BloodHound]] (use PowerView to *verify* and *weaponise* the edges it draws). Share-pillaging is faster with [[Tools/AD/Snaffler|Snaffler]] than `Find-InterestingDomainShareFile`. The ACL-abuse primitives here feed [[Services/Active Directory/ACL Abuse|ACL Abuse]] and the Kerberoast/AS-REP prep feeds [[Services/Active Directory/Kerberos|Kerberos]]; used throughout [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]]. The `Set-DomainObject` write primitive is the Windows-side way to plant a weak `altSecurityIdentities` value or swap a UPN for [[Services/Active Directory/ADCS|ADCS]] ESC10/ESC14. Also feeds [[Services/Active Directory/GPO Abuse|GPO Abuse]] (`New-GPOImmediateTask`, GPO/OU ACL enum) and [[Services/Active Directory/Domain Trusts|Domain Trusts]] (`Get-DomainTrustMapping`, `Get-DomainForeignGroupMember`).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-25*
 *Model: claude-opus-4-8*

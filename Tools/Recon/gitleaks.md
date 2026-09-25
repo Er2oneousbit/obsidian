@@ -14,11 +14,11 @@ gitleaks dir /path                        # scan a directory (non-git)
 ```
 
 > [!note] **See also**
-> Services this tool is used against in this vault: [[Services/Cloud & Data/Kubernetes|Kubernetes]] — scanning configs/manifests pulled from a cluster for secrets.
+> Services this tool is used against in this vault: [[Services/Cloud & Data/Kubernetes|Kubernetes]] — scanning configs/manifests pulled from a cluster for secrets. [[Services/Web Services/Azure DevOps|Azure DevOps]] — secret scanning of ADO repos including full git history.
 > Related tooling: [[Tools/Recon/trufflehog|TruffleHog]] (adds live verification), [[Tools/Scanning/trivy|trivy]].
 
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-22*
+*Updated: 2026-09-24*
 *Model: claude-opus-4-8*

