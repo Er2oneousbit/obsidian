@@ -11,6 +11,8 @@ Simple Mail Transfer Protocol — used to send email between mail servers and fr
 - MUAs (mail clients) use 587; MTAs relay on 25
 - Can be used for user enumeration and phishing/relay abuse
 
+> [!note] Protocol reference — *why* spoofing works and what "no SPF/DKIM/DMARC" actually means (the standards, alignment, and `p=none` gap): [[Standards & Protocols/SPF-DKIM-DMARC|SPF / DKIM / DMARC]]. Channel encryption (STARTTLS/SMTPS) is the orthogonal [[Standards & Protocols/TLS|TLS]] layer.
+
 ---
 
 ## Tools
@@ -358,5 +360,5 @@ Always read the banner (`nc -nv <target> 25`). If it says **`ESMTP Haraka <versi
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-22*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

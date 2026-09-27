@@ -6,6 +6,8 @@
 
 Insecure deserialization enables object injection, property manipulation, or RCE via gadget chains when untrusted data is deserialized without validation. Covers Java, PHP, Python, Ruby, and .NET. Pairs with [[Web Attacks]], [[Server-Side Attacks]], [[Non-PHP Web App Attacks]].
 
+> [!note] **Format reference** — where the wire format is JSON, the danger is a **type-binding** deserializer (Jackson polymorphic typing, `@type`/`$type` hints) that lets the document name the *class* to instantiate — schemaless text choosing code. See [[Standards & Protocols/JSON|JSON]] → Trust model (deserialization) for *why*.
+
 ---
 
 ## Tools
@@ -737,5 +739,5 @@ curl -s -X POST "http://<target>/api" --data-binary @ping.ser
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-08-18*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

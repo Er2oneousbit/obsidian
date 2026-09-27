@@ -80,7 +80,7 @@ braa public@10.129.14.128:.1.3.6.*
 ```
 
 
-> [!note] **See also** — [[Services/Network management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> [!note] **See also** — [[Services/Network Management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 
 ---
 

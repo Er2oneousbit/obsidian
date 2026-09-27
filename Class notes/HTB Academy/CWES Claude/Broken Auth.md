@@ -6,6 +6,8 @@
 
 Broken authentication is any flaw in how a web app verifies identity — letting an attacker enumerate valid users, guess or brute-force credentials, hijack the password-reset flow, defeat MFA, or steal/fixate a session. It's OWASP's perennial top-tier risk (**A07:2021 — Identification and Authentication Failures**) and the first line of defense on almost every target, so login / registration / password-reset / 2FA endpoints are always worth a hard look. This note is the login-form-and-session view; reach for the deeper tool/technique notes for the parts that have grown into their own topics. Pairs with [[Login Brute Forcing]], [[Password Attacks]], [[JWT Attacks]], [[OAuth-OIDC-SAML]].
 
+> [!note] **Protocol reference** — for *why* the token/SSO mechanisms behind these session bugs are attackable (the concept side): [[Standards & Protocols/JWT|JWT]] (stateless session tokens — `alg:none`, weak secret, key confusion) and [[Standards & Protocols/OAuth-OIDC|OAuth 2.0 & OIDC]] (the SSO / account-linking flows — `redirect_uri`, `state`, `id_token` validation).
+
 ---
 
 ## Tools
@@ -542,5 +544,5 @@ echo 'YWRtaW46MjFiNzJjMGI3YWRjNTBjZmQ0N2E=' | base64 -d
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-09-22*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

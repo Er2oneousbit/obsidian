@@ -177,7 +177,7 @@ ipmitool -I lanplus -H <target> -U <user> -P <pass> sol activate
 
 ---
 
-> [!note] **See also** — RAKP hashes crack with [[Tools/Auth/hashcat|hashcat]] (`-m 7300`); a compromised BMC is a host-independent foothold that pivots to OS root. Network-infra siblings under [[Services/Network management/SNMP|SNMP]] (other lights-out/management surfaces).
+> [!note] **See also** — RAKP hashes crack with [[Tools/Auth/hashcat|hashcat]] (`-m 7300`); a compromised BMC is a host-independent foothold that pivots to OS root. Network-infra siblings under [[Services/Network Management/SNMP|SNMP]] (other lights-out/management surfaces).
 
 ---
 

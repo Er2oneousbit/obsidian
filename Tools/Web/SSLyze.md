@@ -161,7 +161,7 @@ Certificate issues:
 
 ---
 
-> [!note] **See also** — [[Services/Network management/TLS|TLS]] (the service note: protocol/cipher/vuln matrix, cert checks, Dangerous Settings); sibling scanner [[Tools/Web/TestSSL|testssl.sh]].
+> [!note] **See also** — [[Services/Network Management/TLS|TLS]] (the service note: protocol/cipher/vuln matrix, cert checks, Dangerous Settings); sibling scanner [[Tools/Web/TestSSL|testssl.sh]].
 
 ---
 

@@ -131,7 +131,7 @@ Not present on **PegaCloud** (JMX not exposed by design). Fix = filter unused po
 ### Other CVEs worth version-checking
 
 | CVE | Class | Note |
-|---|---|---|
+|---|---|---|4
 | CVE-2021-27651 | Auth bypass → RCE | Password-reset bypass, 8.2.1–8.5.2 — the way in for Vector 1 |
 | CVE-2022-24082 | Deserialization RCE | Exposed JMX, on-prem ≥ 8.1.0; CVSS 9.8; MOGWAI toolkit |
 | CVE-2023-26465 | Stored XSS | Markdown/@-mention bypass of the XSS filter |

@@ -83,7 +83,7 @@ snmpwalk -v2c -c public 10.129.14.128 .1.3.6.1.2.1.25.4.2.1.2 | awk -F'"' '{prin
 ```
 
 
-> [!note] **See also** — [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (ASA SNMP enum + `snmpset` config-copy to TFTP); [[Services/Network management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> [!note] **See also** — [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (ASA SNMP enum + `snmpset` config-copy to TFTP); [[Services/Network Management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---

@@ -55,6 +55,9 @@ SPNEGO negotiates a *preference in the clear* before the security context exists
 | The `Negotiate` blob is **opaque and safe** | It wraps an NTLMSSP Type 3 or a Kerberos AP-REQ | **Capture Net-NTLMv2** from `Authorization: Negotiate` (crack/relay); AP-REQ capture |
 | Auth is **bound to the intended service** | Negotiate relayed to another service | **Relay** the wrapped NTLM (`ntlmrelayx` speaks Negotiate); emerging **Kerberos relay** (Project Zero 2021 → decoder.cloud 2025; **CVE-2025-33073** SMB reflection) |
 
+> [!note]
+> **A captured Kerberos AP-REQ is not the same prize as a Net-NTLMv2.** The AP-REQ has no password-derived verifier to attack offline — its only offensive use is **relay / reflection** (the newer Kerberos-relay research). Net-NTLMv2, by contrast, is *both* crackable (`hashcat -m 5600`) and relayable. That asymmetry is the whole point of forcing the **downgrade**: knocking Kerberos out doesn't just enable relay, it converts an otherwise un-crackable capture into an offline password crack. No payloads here — mechanics in [[NTLM]] / [[Services/Active Directory/Kerberos|Kerberos]].
+
 ---
 
 ## Attacked by
@@ -72,5 +75,5 @@ SPNEGO negotiates a *preference in the clear* before the security context exists
 [[NTLM]] and [[Services/Active Directory/Kerberos|Kerberos]] (the two mechanisms it negotiates between)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

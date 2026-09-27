@@ -45,11 +45,15 @@ The format assumes the *application* validates shape, types, and which fields ar
 | Keys are **plain data** | JS merge/`JSON.parse`+assign trusts keys | **Prototype pollution** via `__proto__`/`constructor` → [[Techniques/Non-PHP Web App Attacks]] |
 | Two services **parse identically** | Duplicate/oddly-encoded keys | **JSON interoperability / smuggling** — auth service sees one value, backend another |
 | Values are **well-typed** | `"1"` vs `1`, arrays where scalars expected | **Type juggling** → NoSQL/auth bypass → [[Techniques/NoSQL Injection]] |
-| Responses are **not script** | JSON returned via `<script>`/**JSONP** callback | Cross-site data theft; callback-name XSS → [[Techniques/CORS Misconfiguration]] |
+| Responses are **not script** | JSON read cross-origin via `<script>` — **JSONP** callback *or* **XSSI** (a top-level array/object included as a script, no callback needed) | Cross-site data theft; callback-name XSS → [[Techniques/CORS Misconfiguration]] |
 | Input is **bounded** | Deeply nested / huge arrays | Parser **DoS** (stack blow-up, memory) → [[Sr Tester Role/Topics/API Unrestricted Resource Consumption]] |
 | Deserialization is **inert** | Type-binding deserializers (Jackson/`pickle` bridges) | **Deserialization RCE** → [[Techniques/Deserialization]] |
 
 > [!note] No payloads here — this is the "why." JSON's danger isn't a parser bug so much as **misplaced trust in schemaless text**: the same object that carries `{"user":"me"}` can carry `{"user":"me","role":"admin","__proto__":{...}}`, and only application-side validation stops it. Contrast [[XML]], whose danger is the parser reaching *outside* the document (XXE); JSON's danger is the object *inside* it not being what the app assumed.
+>
+> Two precisions worth keeping straight:
+> - **Prototype pollution's sink is a later deep-*merge*, not `JSON.parse`.** Parsing `{"__proto__":{…}}` only creates an *own* property named `__proto__`; it's a subsequent recursive merge / `Object.assign`-style copy (lodash `merge`, config loaders, query-param mergers) that walks that key onto `Object.prototype`. The format *enables* it; the vulnerable code is the merge.
+> - **XSSI is why sensitive JSON isn't a bare top-level array.** A `[…]` or `{…}` served as `application/json` can still be pulled cross-origin through `<script>` (JSONP, or legacy array/accessor tricks). The defenses are format-level: an un-executable prefix (`)]}',\n`), never a top-level array, and `Content-Type: application/json` **+** `X-Content-Type-Options: nosniff` — the same sniffing assumption that lets a JSON body render as HTML (see [[HTML]] → content-sniffing).
 
 ---
 
@@ -70,5 +74,5 @@ The format assumes the *application* validates shape, types, and which fields ar
 [[REST]] (JSON is its default wire format), [[JWT]] (a signed JSON payload), [[SCIM]] (a JSON provisioning API), [[XML]] (the older data-format sibling — XXE vs mass-assignment), [[HTML]] (the browser markup substrate)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

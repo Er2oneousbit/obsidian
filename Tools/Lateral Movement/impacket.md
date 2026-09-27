@@ -17,7 +17,7 @@ Impacket's remote execution tools — run commands on Windows targets from Kali 
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]], for general post-cert tooling; [[Services/Active Directory/Kerberos|Kerberos]], for using a stolen/forged ticket to get a shell.
 > Also [[Services/Local System Management/RPC|RPC]] (rpcdump/lookupsid/samrdump + coercion PoCs) and [[Services/Local System Management/WMI|WMI]] (wmiexec/dcomexec).
-> Also [[Services/File Xfer/SMB|SMB]] — psexec/smbexec/wmiexec/atexec exec and PtH over 445; [[Services/Network management/NetBIOS|NetBIOS]] — `lookupsid.py` RID cycling over null/authenticated sessions.
+> Also [[Services/File Xfer/SMB|SMB]] — psexec/smbexec/wmiexec/atexec exec and PtH over 445; [[Services/Network Management/NetBIOS|NetBIOS]] — `lookupsid.py` RID cycling over null/authenticated sessions.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 

@@ -6,6 +6,8 @@
 
 Cross-Origin Resource Sharing misconfiguration allowing attacker-controlled origins to read authenticated responses via a victim's browser. CORS is browser-enforced only — curl/Burp ignore it. Pairs with [[Web Attacks]], [[Cross-Site Scripting (XSS)]], [[CSRF Attacks]].
 
+> [!note] **Format reference** — the data being stolen is almost always JSON, and the pre-CORS way to read it cross-origin was **JSONP / XSSI** (`<script>`-including a JSON response). See [[Standards & Protocols/JSON|JSON]] → Trust model for those format-level reads and their defenses (`)]}'` prefix, no top-level arrays).
+
 ---
 
 ## Tools
@@ -298,5 +300,5 @@ curl -si "https://<target>/api/profile" -H "Origin: https://evil.com" -b "sessio
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-08-23*
+*Updated: 2026-09-25*
 *Model: claude-opus-5*

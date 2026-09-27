@@ -17,7 +17,7 @@
 
 ---
 
-> [!note] **See also** — used against [[Services/File Xfer/SMB|SMB]] and [[Services/Network management/NetBIOS|NetBIOS]] (null-session enum over 139: `enumdomusers`, `queryuser`, RID cycling), plus [[Services/Local System Management/RPC|RPC]].
+> [!note] **See also** — used against [[Services/File Xfer/SMB|SMB]] and [[Services/Network Management/NetBIOS|NetBIOS]] (null-session enum over 139: `enumdomusers`, `queryuser`, RID cycling), plus [[Services/Local System Management/RPC|RPC]].
 
 ---
 

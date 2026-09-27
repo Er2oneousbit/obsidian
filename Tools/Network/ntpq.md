@@ -14,7 +14,7 @@ ntpq -c sysinfo <target>    # system info summary
 ntpdc -c monlist <target>   # last-seen clients (amplification / recon); mode 7, often disabled
 ```
 
-> [!note] **See also** — [[Services/Network management/NTP|NTP]] (the service note: enumeration, monlist amplification, Kerberos clock-skew, NTP-MITM time-shifting).
+> [!note] **See also** — [[Services/Network Management/NTP|NTP]] (the service note: enumeration, monlist amplification, Kerberos clock-skew, NTP-MITM time-shifting).
 
 ---
 

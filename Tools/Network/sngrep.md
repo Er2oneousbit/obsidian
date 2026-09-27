@@ -14,7 +14,7 @@ sngrep -I voip_capture.pcap       # replay a saved pcap
 # In the TUI: select a call → Enter for the flow ladder; F2/save to export the dialog + RTP
 ```
 
-> [!note] **See also** — [[Services/Network management/SIP-VoIP|SIP-VoIP]] (eavesdropping / RTP capture, SIP registration hijacking, DTMF extraction).
+> [!note] **See also** — [[Services/Network Management/SIP-VoIP|SIP-VoIP]] (eavesdropping / RTP capture, SIP registration hijacking, DTMF extraction).
 
 ---
 

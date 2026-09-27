@@ -51,6 +51,7 @@ The design deliberately lets a document *direct* the parser — declare entities
 |---|---|---|
 | Parser **won't resolve external entities** | External entities enabled (legacy defaults) | **XXE** — local file read, SSRF, port scan |
 | No entity **can reach out** for blind cases | Parameter entities + external DTD allowed | **Blind / OOB XXE** — exfiltrate over DNS/HTTP via a hosted DTD |
+| Disabling **entity expansion** is enough | The parser still *fetches* an external DTD/schema — a `DOCTYPE … SYSTEM` URL or `xsi:schemaLocation` triggers a request | **SSRF / blind-XXE trigger even with entity resolution off** (the fix most teams think is complete) |
 | Entity expansion is **bounded** | Unbounded nesting allowed | **Billion Laughs / quadratic blowup** DoS |
 | No **remote includes** | `XInclude` / XSLT `document()` enabled | XInclude file/SSRF, **XSLT** transform abuse |
 | A signature covers **what's read** (signed XML) | Namespace / `Id` confusion | **XML Signature Wrapping (XSW)** → [[SAML]] |
@@ -76,5 +77,5 @@ The design deliberately lets a document *direct* the parser — declare entities
 [[SOAP]] (XML envelopes on the wire — every SOAP body is XML, so XXE applies directly), [[SAML]] (the signed-XML standard built directly on this), [[JSON]] / [[OAuth-OIDC]] / [[JWT]] (the JSON-era format & auth standards that largely displaced XML/SOAP)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

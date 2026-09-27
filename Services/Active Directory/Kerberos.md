@@ -424,10 +424,10 @@ Kerberos was long thought un-relayable; **KrbRelay**/**KrbRelayUp** disproved it
 
 ---
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] — the Kerberos/AD module suite (forge_ticket golden/silver/diamond/sapphire, pass-the-ticket → DCSync) that mirrors these techniques from inside the framework. AD-integrated [[Services/Network management/DNS|DNS]] (ADIDNS) is the AD name-resolution/enumeration surface alongside this.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Metasploit|Metasploit]] — the Kerberos/AD module suite (forge_ticket golden/silver/diamond/sapphire, pass-the-ticket → DCSync) that mirrors these techniques from inside the framework. AD-integrated [[Services/Network Management/DNS|DNS]] (ADIDNS) is the AD name-resolution/enumeration surface alongside this.
 > Service target: [[Services/Database Services/MSSQL|MSSQL]] — the `MSSQLSvc` SPN is a prime Kerberoasting target.
-> Enumeration source: [[Services/Network management/LDAP|LDAP]] — where SPN/`DONT_REQ_PREAUTH` accounts are discovered (and `nxc ldap --kerberoasting`/`--asreproast` pull the tickets).
-> Prerequisite: [[Services/Network management/NTP|NTP]] — sync your clock to the DC first or every request fails with `KRB_AP_ERR_SKEW` (> 5 min).
+> Enumeration source: [[Services/Network Management/LDAP|LDAP]] — where SPN/`DONT_REQ_PREAUTH` accounts are discovered (and `nxc ldap --kerberoasting`/`--asreproast` pull the tickets).
+> Prerequisite: [[Services/Network Management/NTP|NTP]] — sync your clock to the DC first or every request fails with `KRB_AP_ERR_SKEW` (> 5 min).
 
 ---
 

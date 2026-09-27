@@ -172,7 +172,7 @@ nxc ldap <DC> -u <user> -p <pass> --gmsa                        # dumps the NT h
 
 ---
 
-> [!note] **See also** — over-permissive ACEs are discovered via [[Services/Network management/LDAP|LDAP]] enumeration (`bloodyAD get writable`, BloodHound collection) and worked with [[Tools/AD/bloodyAD|bloodyAD]]/[[Tools/AD/PowerView|PowerView]]. Shadow-credential and RBCD chains overlap with [[Services/Active Directory/Kerberos|Kerberos]] (S4U, PKINIT); WriteDacl→DCSync feeds [[Services/Active Directory/ADCS|ADCS]]/credential-dumping. GPO object ACLs are their own note: [[Services/Active Directory/GPO Abuse|GPO Abuse]].
+> [!note] **See also** — over-permissive ACEs are discovered via [[Services/Network Management/LDAP|LDAP]] enumeration (`bloodyAD get writable`, BloodHound collection) and worked with [[Tools/AD/bloodyAD|bloodyAD]]/[[Tools/AD/PowerView|PowerView]]. Shadow-credential and RBCD chains overlap with [[Services/Active Directory/Kerberos|Kerberos]] (S4U, PKINIT); WriteDacl→DCSync feeds [[Services/Active Directory/ADCS|ADCS]]/credential-dumping. GPO object ACLs are their own note: [[Services/Active Directory/GPO Abuse|GPO Abuse]].
 
 ---
 

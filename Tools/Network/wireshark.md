@@ -127,7 +127,7 @@ sudo tshark -i eth0 -f "net 10.129.14.0/24"
 
 ---
 
-> [!note] **See also** — [[Tools/Network/tcpdump|tcpdump]] for lightweight headless capture (grab the pcap on a pivot, analyze in Wireshark later). Automated credential extraction from the wire: [[Tools/Network/PCredz|PCredz]] (NTLMv1/2, Kerberos, cleartext). Validate captures from [[Tools/Lateral Movement/responder|Responder]] / [[Tools/Lateral Movement/mitm6|mitm6]] with the `ntlmssp` / `dhcpv6` filters. Also [[Services/Network management/SIP-VoIP|SIP-VoIP]] — Telephony → VoIP Calls for RTP audio reconstruction and RFC 2833 DTMF extraction.
+> [!note] **See also** — [[Tools/Network/tcpdump|tcpdump]] for lightweight headless capture (grab the pcap on a pivot, analyze in Wireshark later). Automated credential extraction from the wire: [[Tools/Network/PCredz|PCredz]] (NTLMv1/2, Kerberos, cleartext). Validate captures from [[Tools/Lateral Movement/responder|Responder]] / [[Tools/Lateral Movement/mitm6|mitm6]] with the `ntlmssp` / `dhcpv6` filters. Also [[Services/Network Management/SIP-VoIP|SIP-VoIP]] — Telephony → VoIP Calls for RTP audio reconstruction and RFC 2833 DTMF extraction.
 
 ---
 

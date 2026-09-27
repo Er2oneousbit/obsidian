@@ -101,6 +101,8 @@ The model: *the AS issues a token after the user consents, and every party downs
 | Access token isn't exposed | Implicit flow / token in URL fragment / `Referer` / logs | **Token leakage** |
 | Scope is fixed at grant | AS honors a scope change on **refresh** or token-exchange | **Scope creep / escalation** |
 | `id_token` fully validated (sig/`iss`/`aud`/`nonce`) | A check is skipped | **ID-token forgery** — `alg:none`, key confusion → [[JWT]] |
+| The asserted **identity** (`email`/`sub`) is genuine & verified | Client links/logs in on `email` while ignoring `email_verified:false` (or trusts a mutable `email` over the stable `sub`) | **OIDC account-takeover / pre-account-takeover** — sign in via an IdP asserting the victim's address and get merged into their local account |
+| Metadata URLs the AS fetches are **safe to request** | AS fetches an attacker-supplied `request_uri`, or a dynamic-registration `jwks_uri`/`logo_uri` | **SSRF via the AS** — reach internal services / cloud metadata through the authorization server |
 | Client secret stays confidential | Leaked in JS, mobile binary, public client | **Client impersonation** |
 | Device-code grant approved only by the real device | User phished into approving the *attacker's* device request | **Device-code phishing** — survives MFA, yields real tokens |
 | Bearer = possession is enough | Token stolen and replayed elsewhere | No proof-of-possession → mitigated by **DPoP** / mTLS-bound tokens |
@@ -124,8 +126,8 @@ The model: *the AS issues a token after the user consents, and every party downs
 
 ## See also
 
-[[SAML]] (the XML-assertion federation cousin — same job, different wire format), [[JWT]] (the token format OIDC carries)  ·  Index: [[_Standards & Protocols]]
+[[SAML]] (the XML-assertion federation cousin — same job, different wire format), [[JWT]] (the token format OIDC carries), [[SCIM]] (the *lifecycle* half — its bearer token is usually an OAuth token; login vs. account-existence)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

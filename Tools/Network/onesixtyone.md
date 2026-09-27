@@ -78,7 +78,7 @@ snmp-check 10.129.14.128 -c public
 ```
 
 
-> [!note] **See also** — [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (ASA SNMP community brute); [[Services/Network management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
+> [!note] **See also** — [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (ASA SNMP community brute); [[Services/Network Management/SNMP|SNMP]] (the service note: enumeration, RW-community RCE/config exfil); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---

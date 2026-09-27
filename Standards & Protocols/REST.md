@@ -59,7 +59,8 @@ REST pushes **contract, authorization, and message security entirely onto the im
 | Server checks **object ownership** per request | ID trusted because it was returned once | **BOLA / IDOR** — `/users/123` → `/users/124` |
 | Server checks the **action/function**, not just login | Endpoint-level authz missing | **BFLA** — call admin-only operations |
 | Only intended **fields** are writable | Request body bound straight to the model | **Mass assignment / over-posting** (`"role":"admin"`) |
-| **Every** endpoint is authenticated | New/undocumented route ships without a guard | Unauth data access → surface found by fuzzing/Swagger |
+| Only intended **fields** are returned | API serializes the whole object and trusts the client to hide the rest | **Excessive data exposure / BOPLA** — read the extra fields (password hash, other users' data) straight off the wire |
+| **Every** endpoint — *and every version* — is authenticated | A new/undocumented route, or a deprecated `/v1/` left running without the guard added to `/v2/`, ships unprotected | Unauth access via **shadow / zombie APIs** — surface found by fuzzing, JS bundles, or a leaked Swagger doc |
 | A **token** = the right user, now | No expiry/revocation/binding | **Token replay / theft**; no server-side logout |
 | Auth is enforced on **all verbs** | Filter covers `GET` but not `PUT`/`DELETE` | **Verb tampering** / method-override bypass |
 | The browser enforces **same-origin** | Over-permissive `Access-Control-Allow-Origin` | **CORS** cross-origin theft → [[Techniques/CORS Misconfiguration]] |
@@ -86,5 +87,5 @@ REST pushes **contract, authorization, and message security entirely onto the im
 [[SOAP]] (the rigid XML+WSDL API style REST displaced), [[JSON]] (REST's default wire format), [[JWT]] (the stateless bearer token REST APIs carry), [[SCIM]] (a REST/JSON provisioning API)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

@@ -293,7 +293,7 @@ Username: admin)(|(password=b*
 
 ---
 
-> [!note] **See also** — network-infra name-resolution sibling [[Services/Network management/DNS|DNS]] (AD-integrated DNS enum/spoofing pairs with LDAP directory enumeration). Roasting/delegation output feeds [[Services/Active Directory/Kerberos|Kerberos]]; relay + coercion overlaps [[Services/File Xfer/SMB|SMB]] and [[Services/Network management/NetBIOS|NetBIOS]] (NBNS/LLMNR/mitm6 capture the auth that relays here); ACL/DACL abuse discovered here is worked in [[Services/Active Directory/ACL Abuse|ACL Abuse]]. LDAPS (636) TLS posture — channel binding, cipher/cert issues — is assessed via [[Services/Network management/TLS|TLS]].
+> [!note] **See also** — network-infra name-resolution sibling [[Services/Network Management/DNS|DNS]] (AD-integrated DNS enum/spoofing pairs with LDAP directory enumeration). Roasting/delegation output feeds [[Services/Active Directory/Kerberos|Kerberos]]; relay + coercion overlaps [[Services/File Xfer/SMB|SMB]] and [[Services/Network Management/NetBIOS|NetBIOS]] (NBNS/LLMNR/mitm6 capture the auth that relays here); ACL/DACL abuse discovered here is worked in [[Services/Active Directory/ACL Abuse|ACL Abuse]]. LDAPS (636) TLS posture — channel binding, cipher/cert issues — is assessed via [[Services/Network Management/TLS|TLS]].
 
 ---
 

@@ -74,7 +74,7 @@ nslookup -query=SRV _kerberos._tcp.dc._msdcs.inlanefreight.local 172.16.5.5
 
 ---
 
-> [!note] **See also** — [[Tools/Network/dig|dig]] is the preferred Linux DNS tool (zone transfers, scriptable `+short` output). Bulk subdomain/zone enumeration: [[Tools/Network/dnsenum|dnsenum]], [[Tools/Network/dnsrecon|dnsrecon]]. Registration data: [[Tools/Network/WHOIS|WHOIS]]. Service context: [[Services/Network management/DNS|DNS]].
+> [!note] **See also** — [[Tools/Network/dig|dig]] is the preferred Linux DNS tool (zone transfers, scriptable `+short` output). Bulk subdomain/zone enumeration: [[Tools/Network/dnsenum|dnsenum]], [[Tools/Network/dnsrecon|dnsrecon]]. Registration data: [[Tools/Network/WHOIS|WHOIS]]. Service context: [[Services/Network Management/DNS|DNS]].
 
 ---
 

@@ -6,6 +6,7 @@
 Transport Layer Security — cryptographic protocol providing confidentiality, integrity, and authentication over TCP. Successor to SSL (deprecated). Relevant to almost every service: HTTPS, SMTPS, LDAPS, IMAPS, MSSQL, MySQL, RDP, etc.
 
 > [!note] Protocol reference — the X.509 certificates TLS presents, and how the chain is validated (or bypassed): [[Standards & Protocols/X509-PKI|X.509 / PKI]].
+> [!note] Protocol reference — the TLS protocol itself (handshake, versions, cipher-suite negotiation) and *why* downgrade / forward-secrecy / renegotiation / STARTTLS-stripping are attackable: [[Standards & Protocols/TLS|TLS — the protocol]].
 
 - **TLS 1.3** — current standard (2018), forward secrecy mandatory
 - **TLS 1.2** — widely deployed, acceptable with strong ciphers
@@ -630,10 +631,10 @@ foreach ($entry in $targets) {
 
 ---
 
-> [!note] **See also** — the certificate side of TLS is [[Standards & Protocols/X509-PKI|X.509 / PKI]] (chain validation and how it's bypassed). TLS wraps almost every service here: [[Services/Network management/LDAP|LDAPS]] (relay/channel-binding), and the STARTTLS-strip variants in the email service notes (SMTP/IMAP/POP3) and web services on 443. The ASA SSL VPN portal in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] is assessed the same way (cipher/protocol/cert posture on 443).
+> [!note] **See also** — the certificate side of TLS is [[Standards & Protocols/X509-PKI|X.509 / PKI]] (chain validation and how it's bypassed). TLS wraps almost every service here: [[Services/Network Management/LDAP|LDAPS]] (relay/channel-binding), and the STARTTLS-strip variants in the email service notes (SMTP/IMAP/POP3) and web services on 443. The ASA SSL VPN portal in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] is assessed the same way (cipher/protocol/cert posture on 443).
 
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-23*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

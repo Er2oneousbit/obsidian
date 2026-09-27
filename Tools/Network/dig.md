@@ -91,7 +91,7 @@ Use `dnsenum` or `dnsrecon` for automated brute force.
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
-> Also [[Services/Network management/DNS|DNS]] — the primary query/AXFR tool for the service.
+> Also [[Services/Network Management/DNS|DNS]] — the primary query/AXFR tool for the service.
 
 ---
 

@@ -15,7 +15,7 @@ voiphopper -i eth0 -c 1 -E 'SEP001122334455'  # CDP spoof mode (impersonate a ph
 sudo tcpdump -i eth0.200 -w calls.pcap udp portrange 10000-20000
 ```
 
-> [!note] **See also** — [[Services/Network management/SIP-VoIP|SIP-VoIP]] (VoIP VLAN hopping → RTP eavesdropping); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CDP/LLDP and switch-layer attacks).
+> [!note] **See also** — [[Services/Network Management/SIP-VoIP|SIP-VoIP]] (VoIP VLAN hopping → RTP eavesdropping); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CDP/LLDP and switch-layer attacks).
 
 ---
 

@@ -570,6 +570,29 @@ python3 jwt_tool.py <token> -I -pc exp -pv 9999999999 -S hs256 -p "<secret>"
 
 ---
 
+## Cross-Service / Audience Token Reuse (no forgery)
+
+Not every JWT attack needs a forged signature. If the signature verifies but the server skips **`aud`** (audience), **`iss`** (issuer), or **token-type** checks, a *legitimately-signed* token can be replayed where it shouldn't work — no key material, no crypto trick. Always try this **before** the forgery attacks; it's zero-effort and common.
+
+```bash
+# 1. aud not validated → cross-service reuse
+#    A token minted for service-A (aud:"api-a") replayed against service-B that
+#    trusts the same issuer/key but never checks aud → accepted unmodified.
+
+# 2. iss not validated → any token that verifies against a key the app knows is
+#    accepted, so a token from a sibling tenant/app on shared infra works.
+
+# 3. Token-type confusion → feed an OIDC id_token where an access_token is expected
+#    (same issuer + key, different purpose). RFC 9068 `typ:at+jwt` exists to stop this.
+
+# Test: decode, note aud / iss / typ, then replay the SAME token unmodified against
+# other endpoints / services / tenants. Acceptance = a missing validation check.
+```
+
+> [!tip] This is the mirror image of the forgery sections above: there you defeat the *signature*; here you exploit the server not checking *what the (valid) signature is for*. Concept + the wrong-audience / cross-type rows: [[Standards & Protocols/JWT|JWT]].
+
+---
+
 ## Where to Find JWTs
 
 ```bash
@@ -627,5 +650,5 @@ python3 -c "import base64;print(base64.urlsafe_b64encode(b'\x00'*64).rstrip(b'='
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-30*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

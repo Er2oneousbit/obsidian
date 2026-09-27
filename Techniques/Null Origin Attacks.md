@@ -306,6 +306,7 @@ if ($http_origin ~* "(target\.com|null)") { add_header Access-Control-Allow-Orig
 | **Never pair `allow-scripts` with `allow-same-origin`** | The framed page can strip its own sandbox. If content needs both, it doesn't need a sandbox — it needs a separate origin. |
 | **Validate `event.origin` literally** | Compare to one expected origin string; never include `"null"`; never rely on `'*'` as `targetOrigin` when sending sensitive data. |
 | **Set `Vary: Origin`** | Stops a cached `ACAO: null` response being served to everyone — see [[CORS Misconfiguration]]. |
+| **Prefer Fetch Metadata over `Origin` allowlists** | A sandboxed/opaque frame still sends browser-set `Sec-Fetch-Site: cross-site` (and `Sec-Fetch-Mode`) that the page **cannot forge** — gating state-changing requests on `Sec-Fetch-Site` in `{same-origin, same-site}` closes the null-origin bypass at its root. This is also the tell that a target is *not* vulnerable: if it enforces Fetch Metadata, the null-origin trick is dead. |
 
 ---
 
@@ -347,5 +348,5 @@ if ($http_origin ~* "(target\.com|null)") { add_header Access-Control-Allow-Orig
 ---
 
 *Created: 2026-08-23*
-*Updated: 2026-08-23*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

@@ -240,6 +240,17 @@ chmod 700 /home/bob/.ssh && chmod 600 /home/bob/.ssh/authorized_keys   # sshd St
 
 ---
 
+## Runtime-level escapes (CVEs, not misconfig)
+
+The routes above abuse what the container was *handed*. A separate class abuses a bug in the **runtime itself** (runc/BuildKit) — worth checking when the container looks hardened but the host is unpatched. Fingerprint the runtime version (`runc --version` if reachable, or the host's package versions post-escape) and match a public PoC.
+
+- **Leaky Vessels — CVE-2024-21626** (runc ≤ 1.1.11, Jan 2024): a `WORKDIR` (or `docker exec --cwd`) pointing at `/proc/self/fd/<n>` leaves the process's working directory on the **host** filesystem, so the container starts with a foothold outside its rootfs → read/write host files → escape. Also travels with the BuildKit CVEs (2024-23651/23652/23653) at image-build time.
+- **runc `/proc/self/exe` overwrite — CVE-2019-5736**: when the attacker can get a `docker exec`/`attach` into a container they control, they overwrite the host's `runc` binary (via `/proc/self/exe`) → the next container start runs their code **as root on the host**. Dead on patched runtimes but survives on pinned/appliance builds.
+
+> [!note] These need the *runtime* to be vulnerable, not just a loose config — so they're the fallback when [enumeration](#enumerate-the-escape-surface) turns up a hardened container (cgroups ro, no socket, caps dropped). Confirm the runc version before spending time here.
+
+---
+
 ## Kubernetes pod → node
 
 If you landed in a **pod**, the escape surface is different (service-account token, kubelet, hostPath volumes). Triage: read the SA token, check your RBAC, look for a way to schedule a privileged pod on the node.
@@ -291,5 +302,5 @@ Rare in practice and thin compared to Linux. Windows Server (process-isolated) c
 ---
 
 *Created: 2026-08-28*
-*Updated: 2026-08-28*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

@@ -139,8 +139,8 @@ ldapsearch -x -H ldap://<dc-ip> \
 
 ---
 
-> [!note] **See also** — verify/enumerate the underlying LDAP objects with [[Tools/AD/ldapsearch|ldapsearch]] ([[Services/Network management/LDAP|LDAP]] service). The **write** side of ADIDNS — *creating* a record any authenticated user can add (WPAD/spoofing) — is `dnstool.py` from the krbrelayx toolkit, not this tool. Feed recovered A-record IPs straight into a [[Tools/AD/BloodHound|BloodHound]] collection or an nmap sweep.
-> Also [[Services/Network management/DNS|DNS]] — dumping AD-integrated DNS (hidden records).
+> [!note] **See also** — verify/enumerate the underlying LDAP objects with [[Tools/AD/ldapsearch|ldapsearch]] ([[Services/Network Management/LDAP|LDAP]] service). The **write** side of ADIDNS — *creating* a record any authenticated user can add (WPAD/spoofing) — is `dnstool.py` from the krbrelayx toolkit, not this tool. Feed recovered A-record IPs straight into a [[Tools/AD/BloodHound|BloodHound]] collection or an nmap sweep.
+> Also [[Services/Network Management/DNS|DNS]] — dumping AD-integrated DNS (hidden records).
 
 ---
 

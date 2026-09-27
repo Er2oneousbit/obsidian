@@ -390,6 +390,7 @@ dig example.com MX
 # e.g. "include:amazonses.com include:sendgrid.net ip4:10.0.0.0/8" leaks internal ranges + vendors
 dig example.com TXT
 dig _dmarc.example.com TXT
+# What these records mean + whether the domain is spoofable → [[Standards & Protocols/SPF-DKIM-DMARC|SPF / DKIM / DMARC]]
 
 # Reverse lookup
 dig -x 10.10.10.10
@@ -813,5 +814,5 @@ Active
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-09-01*
+*Updated: 2026-09-26*
 *Model: claude-opus-5*

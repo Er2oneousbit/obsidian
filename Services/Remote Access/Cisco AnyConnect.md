@@ -933,10 +933,10 @@ Get-ChildItem "C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\NVM\
 
 ---
 
-> [!note] **See also** — IPsec/IKE enum uses [[Tools/Network/ike-scan|ike-scan]]; connect the tunnel with [[Tools/Network/openconnect|openconnect]]; loot Cisco config passwords via [[Tools/Network/ciscot7|ciscot7]] + [[Tools/Auth/hashcat|hashcat]]. ASA config exfil overlaps [[Services/Network management/SNMP|SNMP]] (RW community → TFTP config-copy), [[Services/File Xfer/TFTP|TFTP]] and [[Techniques/Network Device Pentesting|Network Device Pentesting]]. TLS posture of the portal: [[Services/Network management/TLS|TLS]]. Saved-credential extraction feeds [[Tools/Auth/mimikatz|mimikatz]]/[[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (DPAPI). Remote-access siblings: [[Services/Remote Access/SSH|SSH]] and the ZTNA successor [[Services/Remote Access/ZPA - Zscaler Private Access|ZPA]] (App Connector compromise is the modern equivalent of the VPN foothold).
+> [!note] **See also** — IPsec/IKE enum uses [[Tools/Network/ike-scan|ike-scan]]; connect the tunnel with [[Tools/Network/openconnect|openconnect]]; loot Cisco config passwords via [[Tools/Network/ciscot7|ciscot7]] + [[Tools/Auth/hashcat|hashcat]]. ASA config exfil overlaps [[Services/Network Management/SNMP|SNMP]] (RW community → TFTP config-copy), [[Services/File Xfer/TFTP|TFTP]] and [[Techniques/Network Device Pentesting|Network Device Pentesting]]. TLS posture of the portal: [[Services/Network Management/TLS|TLS]]. Saved-credential extraction feeds [[Tools/Auth/mimikatz|mimikatz]]/[[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (DPAPI). Remote-access siblings: [[Services/Remote Access/SSH|SSH]] and the ZTNA successor [[Services/Remote Access/ZPA - Zscaler Private Access|ZPA]] (App Connector compromise is the modern equivalent of the VPN foothold). When the portal is fronted by **SAML SSO**, forged assertions (Golden/Silver SAML) grant VPN access without credentials — protocol/trust model in [[Standards & Protocols/SAML|SAML]].
 
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-23*
+*Updated: 2026-09-25*
 *Model: claude-opus-4-8*

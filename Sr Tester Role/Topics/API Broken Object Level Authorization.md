@@ -44,3 +44,5 @@
 - ✅ Include BOLA in automated tests and code reviews for APIs.  
 
 ---
+
+> 📚 **Protocol reference** — *why* BOLA is endemic: [[Standards & Protocols/REST|REST]] provides no built-in authorization and object IDs are client-supplied, so every endpoint must re-check ownership. Same absence in [[Standards & Protocols/SOAP|SOAP]].

@@ -17,8 +17,8 @@ sudo responder -I tun0
 > [!note] **Responder + ntlmrelayx** — When SMB signing is disabled, don't just capture hashes — relay them for instant code execution. Run Responder with `-w -d` alongside ntlmrelayx. Set SMB and HTTP to Off in Responder.conf to avoid competing with the relay tool.
 
 > [!note] **See also** — Windows-foothold counterpart (same poisoning attack, runs on a Windows host): [[Tools/Lateral Movement/inveigh|Inveigh]]. Relay instead of crack with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]]; force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]; passively sniff creds off the wire (no poisoning) with [[Tools/Network/PCredz|PCredz]]. Also [[Services/Active Directory/Entra ID|Entra ID]] Seamless SSO section (NTLM hash from the `autologon` endpoint). Protocol background: [[Standards & Protocols/NTLM|NTLM]].
-> Also [[Services/Network management/DNS|DNS]] — ADIDNS WPAD/wildcard injection funnels name resolution to Responder.
-> Also [[Services/File Xfer/SMB|SMB]] — capturing/poisoning NetNTLM for SMB relay or cracking; [[Services/Network management/NetBIOS|NetBIOS]] — the LLMNR/NBNS/mDNS broadcast surface this poisons.
+> Also [[Services/Network Management/DNS|DNS]] — ADIDNS WPAD/wildcard injection funnels name resolution to Responder.
+> Also [[Services/File Xfer/SMB|SMB]] — capturing/poisoning NetNTLM for SMB relay or cracking; [[Services/Network Management/NetBIOS|NetBIOS]] — the LLMNR/NBNS/mDNS broadcast surface this poisons.
 
 ---
 

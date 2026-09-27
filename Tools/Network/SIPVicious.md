@@ -14,7 +14,7 @@ svwar -e100-999 -m OPTIONS <target> # enumerate extensions 100-999 (OPTIONS = st
 svcrack -u 200 -d rockyou.txt <target>   # brute-force ext 200's SIP password
 ```
 
-> [!note] **See also** — [[Services/Network management/SIP-VoIP|SIP-VoIP]] (the service note: enumeration, credential brute force, eavesdropping, toll fraud).
+> [!note] **See also** — [[Services/Network Management/SIP-VoIP|SIP-VoIP]] (the service note: enumeration, credential brute force, eavesdropping, toll fraud).
 
 ---
 

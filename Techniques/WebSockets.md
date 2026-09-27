@@ -49,7 +49,7 @@ After the `101 Switching Protocols` response, the connection is a WebSocket — 
 
 | Tool | Purpose |
 |---|---|
-| `Burp Suite` | WS history, Repeater, Intruder — intercept + fuzz + CSWSH testing |
+| [[Tools/Web/Burpsuite\|Burp Suite]] | WS history, Repeater, Intruder — intercept + fuzz + CSWSH testing |
 | [`wscat`](https://github.com/websockets/wscat) | CLI WebSocket client — connect, send, receive |
 | [`websocat`](https://github.com/vi/websocat) | Versatile WS client — scripting + fuzzing, pipe-friendly |
 | [`WSSiP`](https://github.com/nccgroup/wssip) | WS proxy for intercept/modify |
@@ -122,6 +122,8 @@ Cookie: session=victim_cookie
 ```
 
 If the server accepts connections from arbitrary origins → vulnerable.
+
+> [!warning] **SameSite cookies blunt CSWSH — check before assuming it works.** CSWSH depends on the browser attaching the victim's session cookie to the *cross-site* handshake. Since Chrome 80 (2020) cookies default to **`SameSite=Lax`**, so a cross-site `new WebSocket()` **won't carry the cookie** unless it's explicitly `SameSite=None; Secure` (common for third-party/SSO widgets) — or the attacker page is **same-site** (e.g. a subdomain XSS). Inspect the session cookie's `SameSite` attribute first. Token-in-URL or `Sec-WebSocket-Protocol` auth isn't cookie-based, so it sidesteps SameSite entirely (see §3).
 
 **PoC page hosted on attacker server:**
 
@@ -214,6 +216,8 @@ WebSocket messages are just data — the server processes them the same as form 
 ### 3. Authentication & Authorization Flaws
 
 WebSocket connections inherit the session from the HTTP handshake — but the server must still enforce authorization per message.
+
+> [!note] **The browser `WebSocket()` API can't set request headers** — there's no way to add `Authorization` (only the CLI clients above can). So browser apps carry auth one of three ways, each with a catch: the **session cookie** (→ CSWSH if `Origin` is unchecked, but subject to SameSite), a **token in the URL** `wss://host/ws?token=…` (leaks into proxy/server logs, browser history, and `Referer`), or a token smuggled in the **`Sec-WebSocket-Protocol`** header. Always hunt for the token-in-URL pattern — it's the classic WebSocket auth leak.
 
 **Common issues:**
 
@@ -335,9 +339,12 @@ while true; do echo '{"msg":"x"}' | websocat ws://target.com/chat; done
 
 Some reverse proxies (nginx, HAProxy) can be tricked into upgrading a non-WebSocket request, allowing smuggling of HTTP requests through the WS tunnel to bypass access controls.
 
+**The mechanism:** the front-end proxy sees a valid-looking `Upgrade: websocket` handshake and starts blindly tunnelling raw bytes to the back-end — but the back-end either rejects the upgrade (while the proxy keeps the tunnel open) or frames differently. You then pipe raw HTTP requests to **internal-only paths** through the "WebSocket" channel, past the proxy's path allow-list / auth.
+
 ```bash
-# If a /ws path is whitelisted through a proxy, try HTTP request tunneling
-# Tool: ws-smuggler / custom HTTP-over-WS payloads
+# If a /ws path is whitelisted through a proxy, try tunnelling HTTP to a blocked path
+# No single standard tool — craft the upgrade + smuggled request by hand in Burp,
+# or script it over a raw socket (send the Upgrade, then raw HTTP to /admin over the tunnel)
 ```
 
 ---
@@ -427,5 +434,5 @@ window.WebSocket = function(url, ...a){ console.log('[WS]', url); return new _WS
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-08-23*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

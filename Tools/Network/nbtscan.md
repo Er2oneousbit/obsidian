@@ -13,7 +13,7 @@ nbtscan <subnet>/24       # sweep a range
 nbtscan -r <subnet>/24    # source from UDP/137 (root) — bypasses some filters
 ```
 
-> [!note] **See also** — [[Services/Network management/NetBIOS|NetBIOS]] (the service note: name types, LLMNR/NBNS poisoning, null-session enum, RID cycling).
+> [!note] **See also** — [[Services/Network Management/NetBIOS|NetBIOS]] (the service note: name types, LLMNR/NBNS poisoning, null-session enum, RID cycling).
 
 ---
 

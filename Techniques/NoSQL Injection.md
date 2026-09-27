@@ -10,6 +10,8 @@ NoSQL databases (MongoDB, Redis, CouchDB, Cassandra) don't use SQL — they use 
 
 **Key difference from SQLi:** Instead of breaking out of string quotes, you inject JSON operators like `$ne`, `$gt`, `$regex` to change query logic. Pairs with [[SQL Injection]], [[GraphQL Attacks|GraphQL]], [[Server-Side Attacks]].
 
+> [!note] **Format reference** — the vehicle is JSON's silent type coercion: a value the app expects to be a string (`"user"`) arriving as an object (`{"$ne":null}`) is what turns data into an operator. See [[Standards & Protocols/JSON|JSON]] → Trust model (type juggling) for *why* the format allows it.
+
 ---
 
 ## Tools
@@ -418,5 +420,5 @@ $gt → %24gt
 ---
 
 *Created: 2026-02-27*
-*Updated: 2026-09-22*
+*Updated: 2026-09-25*
 *Model: claude-opus-4-8*

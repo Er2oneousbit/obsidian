@@ -76,6 +76,7 @@ The model: *the server trusts the claims in a token whose signature verifies aga
 | The **HMAC secret** is strong | Weak/guessable shared secret | **Secret cracking** (`hashcat -m 16500`, wordlist) → sign arbitrary tokens |
 | Key-selection headers aren't attacker-controlled | Server uses `kid`/`jku`/`jwk`/`x5u`/`x5c` from the token | **`kid` injection** (path traversal / SQLi), **`jku`/`jwk`/`x5c`** pointing at an attacker key |
 | Claims are **validated** (`exp`/`nbf`/`aud`/`iss`) | A check is skipped | Expired-token replay, cross-service / wrong-audience reuse |
+| The token's **type** is checked, not just its signature | Server accepts any validly-signed JWT regardless of `typ` | **Cross-type confusion** — feed an `id_token` where an `access_token` is expected (same issuer & key, different purpose); RFC 9068's `typ: at+jwt` exists precisely to force this check |
 | Payload is **not** treated as secret | Devs stash secrets in claims | Info disclosure — the payload is public base64 |
 | A token can be **revoked** | Stateless, no server-side revocation | Stolen token stays valid until `exp` — logout doesn't kill it |
 | The crypto library is sound | ECDSA verify accepts `r=s=0` | **Psychic Signatures (CVE-2022-21449)** — any `ES*` token forges on OpenJDK 15–18 |
@@ -98,8 +99,8 @@ The model: *the server trusts the claims in a token whose signature verifies aga
 
 ## See also
 
-[[OAuth-OIDC]] (the framework that carries JWTs as ID/access tokens), [[SAML]] (the XML-assertion alternative — same job, signed XML instead of a signed token), [[JSON]] (a JWT is just base64url-encoded JSON — the header & claims are a JSON object)  ·  Index: [[_Standards & Protocols]]
+[[OAuth-OIDC]] (the framework that carries JWTs as ID/access tokens), [[SAML]] (the XML-assertion alternative — same job, signed XML instead of a signed token), [[JSON]] (a JWT is just base64url-encoded JSON — the header & claims are a JSON object), [[X509-PKI|X.509 / PKI]] (the cert format behind `x5c`/`x5u` and RS256 verification)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

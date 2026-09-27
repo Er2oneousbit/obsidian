@@ -86,7 +86,7 @@ dnsrecon -d inlanefreight.htb -n 10.129.14.128 -t std --db results.db
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
-> Also [[Services/Network management/DNS|DNS]] — std/axfr/brute enumeration of the service.
+> Also [[Services/Network Management/DNS|DNS]] — std/axfr/brute enumeration of the service.
 
 ---
 

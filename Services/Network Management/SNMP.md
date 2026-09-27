@@ -268,7 +268,7 @@ use auxiliary/scanner/snmp/snmp_login
 
 ---
 
-> [!note] **See also** — lights-out/management sibling [[Services/Network management/IPMI|IPMI]] (BMC out-of-band management is the other UDP management surface with weak default auth). A RW community on network gear feeds [[Techniques/Network Device Pentesting|Network Device Pentesting]] — running-config exfil lands via [[Services/File Xfer/TFTP|TFTP]] (Cisco Type-7/Type-5 credential looting). The same `snmpset` config-copy is used against ASA appliances in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
+> [!note] **See also** — lights-out/management sibling [[Services/Network Management/IPMI|IPMI]] (BMC out-of-band management is the other UDP management surface with weak default auth). A RW community on network gear feeds [[Techniques/Network Device Pentesting|Network Device Pentesting]] — running-config exfil lands via [[Services/File Xfer/TFTP|TFTP]] (Cisco Type-7/Type-5 credential looting). The same `snmpset` config-copy is used against ASA appliances in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
 
 ---
 

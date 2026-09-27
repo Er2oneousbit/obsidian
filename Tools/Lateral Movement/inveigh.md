@@ -133,7 +133,7 @@ Invoke-Inveigh -LLMNR Y -NBNS Y -ConsoleOutput Y -FileOutput Y
 
 ---
 
-> [!note] **See also** — [[Tools/Lateral Movement/responder|Responder]] is the Linux/Kali counterpart (same LLMNR/NBT-NS/mDNS poisoning attack) — reach for Inveigh when you have a Windows foothold but can't route Kali onto the target segment. Relay the captured auth with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (SMB signing off) instead of cracking. Protocol background: [[Standards & Protocols/NTLM|NTLM]]. Crack NTLMv2 with hashcat `-m 5600`. Service context: [[Services/Network management/NetBIOS|NetBIOS]] (the LLMNR/NBNS poisoning surface).
+> [!note] **See also** — [[Tools/Lateral Movement/responder|Responder]] is the Linux/Kali counterpart (same LLMNR/NBT-NS/mDNS poisoning attack) — reach for Inveigh when you have a Windows foothold but can't route Kali onto the target segment. Relay the captured auth with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]] (SMB signing off) instead of cracking. Protocol background: [[Standards & Protocols/NTLM|NTLM]]. Crack NTLMv2 with hashcat `-m 5600`. Service context: [[Services/Network Management/NetBIOS|NetBIOS]] (the LLMNR/NBNS poisoning surface).
 
 ---
 

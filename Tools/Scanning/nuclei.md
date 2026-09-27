@@ -141,7 +141,7 @@ nuclei -u http://10.129.14.128 -stats
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2). Services: [[Services/Cloud & Data/Salesforce|Salesforce]] — org/community fingerprinting; [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — templated CVE/exposure/panel scanning as the web-recon vuln pass; [[Services/Web Services/MCP - Model Context Protocol|MCP]] — templated detection of exposed MCP/SSE endpoints across a range.
-> Also [[Services/Network management/DNS|DNS]] — subdomain-takeover templates.
+> Also [[Services/Network Management/DNS|DNS]] — subdomain-takeover templates.
 
 ---
 

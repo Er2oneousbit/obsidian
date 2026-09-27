@@ -289,7 +289,7 @@ run
 
 ---
 
-> [!note] **See also** — Unix file-share siblings [[Services/File Xfer/NFS|NFS]] (the Linux equivalent; `no_root_squash`/UID-spoof privesc) and [[Services/File Xfer/Rsync|Rsync]] (daemon module read/write). Windows remote-exec/management siblings that share the RPC/DCOM transport: [[Services/Local System Management/RPC|RPC]], [[Services/Local System Management/WMI|WMI]], [[Services/Local System Management/WinRM|WinRM]]. Coerced/poisoned name resolution feeding relay comes from [[Services/Network management/DNS|DNS]] (ADIDNS WPAD/wildcard) + [[Tools/Lateral Movement/responder|responder]]; the same coerced auth relays to [[Services/Network management/LDAP|LDAP]] (RBCD/shadow creds) when SMB signing blocks the 445 target. Broadcast name-poisoning that captures the auth in the first place is [[Services/Network management/NetBIOS|NetBIOS]] (NBNS/LLMNR → responder).
+> [!note] **See also** — Unix file-share siblings [[Services/File Xfer/NFS|NFS]] (the Linux equivalent; `no_root_squash`/UID-spoof privesc) and [[Services/File Xfer/Rsync|Rsync]] (daemon module read/write). Windows remote-exec/management siblings that share the RPC/DCOM transport: [[Services/Local System Management/RPC|RPC]], [[Services/Local System Management/WMI|WMI]], [[Services/Local System Management/WinRM|WinRM]]. Coerced/poisoned name resolution feeding relay comes from [[Services/Network Management/DNS|DNS]] (ADIDNS WPAD/wildcard) + [[Tools/Lateral Movement/responder|responder]]; the same coerced auth relays to [[Services/Network Management/LDAP|LDAP]] (RBCD/shadow creds) when SMB signing blocks the 445 target. Broadcast name-poisoning that captures the auth in the first place is [[Services/Network Management/NetBIOS|NetBIOS]] (NBNS/LLMNR → responder).
 
 ---
 

@@ -41,3 +41,5 @@
 - ✅ Monitor logs for suspicious access attempts to privileged endpoints.  
 
 ---
+
+> 📚 **Protocol reference** — *why* BFLA is endemic: [[Standards & Protocols/REST|REST]] enforces no function-level authorization — an endpoint is reachable unless the developer guards it, so admin actions leak to normal users. Same absence in [[Standards & Protocols/SOAP|SOAP]].

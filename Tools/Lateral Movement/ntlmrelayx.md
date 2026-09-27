@@ -18,7 +18,7 @@ netexec smb 192.168.1.0/24 --gen-relay-list no_signing.txt
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] ESC8/ESC11, for relaying coerced auth to the CA Web Enrollment/RPC endpoint.
 > Also [[Services/File Xfer/SMB|SMB]] — relaying captured NetNTLM to SMB (signing-off targets).
-> Also [[Services/Network management/LDAP|LDAP]] — relay to `ldap://` (`--delegate-access` RBCD) or `ldaps://` (`--shadow-credentials`) when signing/channel-binding isn't enforced.
+> Also [[Services/Network Management/LDAP|LDAP]] — relay to `ldap://` (`--delegate-access` RBCD) or `ldaps://` (`--shadow-credentials`) when signing/channel-binding isn't enforced.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---

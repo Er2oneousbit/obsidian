@@ -120,7 +120,7 @@ python3 delorean.py -i <interface>
 
 ---
 
-> [!note] **See also** — the clock-skew fix here unblocks [[Services/Active Directory/Kerberos|Kerberos]] attacks; time-shift MITM overlaps the rogue-name-resolution surface of [[Services/Network management/NetBIOS|NetBIOS]]/[[Services/Network management/DNS|DNS]] (both need an on-path/spoofing position).
+> [!note] **See also** — the clock-skew fix here unblocks [[Services/Active Directory/Kerberos|Kerberos]] attacks; time-shift MITM overlaps the rogue-name-resolution surface of [[Services/Network Management/NetBIOS|NetBIOS]]/[[Services/Network Management/DNS|DNS]] (both need an on-path/spoofing position).
 
 ---
 

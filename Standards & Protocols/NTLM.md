@@ -61,6 +61,7 @@ The design rests on two load-bearing assumptions: *knowing the hash is proof of 
 | You need the **plaintext** to authenticate | Only the NT hash is needed | **Pass-the-Hash (PtH)** — authenticate with the dumped hash directly |
 | Auth is **bound to the intended server** | No SMB signing / LDAP channel binding / EPA | **NTLM relay** — forward the victim's AUTHENTICATE to a *different* service (SMB→LDAP, →AD CS **ESC8**, →SMB) |
 | Clients authenticate **only when they choose**, to legit servers | A coercion primitive forces it | **Coercion** — PetitPotam (MS-EFSRPC), PrinterBug (MS-RPRN), DFSCoerce, ShadowCoerce → forced auth to the attacker |
+| Clients reach the **real** server (trusted name resolution) | A failed DNS lookup falls back to LLMNR / NBT-NS / mDNS broadcast — or IPv6 is unconfigured so DHCPv6/DNS is up for grabs | **Name-resolution poisoning** — Responder / Inveigh answer the broadcast, **mitm6** becomes the rogue IPv6 DNS/WPAD; the client then authenticates *to the attacker* and its Net-NTLMv2 is harvested (the everyday capture path, no coercion needed) |
 | The challenge-response **resists offline attack** | Handshake captured | **Net-NTLMv2 cracking** (`hashcat -m 5600`); **NTLMv1 downgrade** → crack.sh → NT hash |
 | **NTLMv1 is disabled** | Legacy still allowed | Downgrade to NTLMv1 and reverse to the NT hash |
 | The NT hash **isn't** a Kerberos key | NT hash **is** the RC4 Kerberos key | **Overpass-the-Hash** — turn a stolen hash into a Kerberos TGT → [[Services/Active Directory/Kerberos|Kerberos]] |
@@ -76,7 +77,7 @@ flowchart LR
 ```
 
 > [!warning]
-> Coercion + relay chains "I can reach the network" straight to Domain Admin in minutes, and new coercion primitives keep surfacing from unexpected surfaces (file pickers, screenshot tools — e.g. the 2026 Snipping Tool hash-leak CVE). Defenses are **SMB signing**, **LDAP signing + channel binding**, **EPA**, and disabling NTLM — confirm which are missing rather than blindly firing coercion on a production DC.
+> Coercion + relay chains "I can reach the network" straight to Domain Admin in minutes, and new forced-auth primitives keep surfacing from unexpected UI surfaces (file pickers, preview/thumbnail handlers, and other client features that trigger an outbound UNC/HTTP fetch). Defenses are **SMB signing**, **LDAP signing + channel binding**, **EPA**, and disabling NTLM — confirm which are missing rather than blindly firing coercion on a production DC.
 
 ---
 
@@ -95,5 +96,5 @@ flowchart LR
 [[Services/Active Directory/Kerberos|Kerberos]] (the successor — ticket-based, what NTLM falls back *from*), [[SPNEGO-GSS|SPNEGO / GSS-API]] (the Negotiate layer that picks Kerberos vs NTLM — and downgrades to it), [[SAML]] / [[OAuth-OIDC]] / [[JWT]] (the web-era auth standards)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

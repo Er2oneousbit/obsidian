@@ -157,7 +157,7 @@ smbclient //192.168.1.10/share -u user -p Password \
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
-> Also [[Services/File Xfer/SMB|SMB]] — interactive share access, null-session listing, file up/download; [[Services/Network management/NetBIOS|NetBIOS]] — share access over the legacy 139 session service.
+> Also [[Services/File Xfer/SMB|SMB]] — interactive share access, null-session listing, file up/download; [[Services/Network Management/NetBIOS|NetBIOS]] — share access over the legacy 139 session service.
 
 ---
 

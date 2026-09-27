@@ -96,7 +96,7 @@ Download: https://learn.microsoft.com/en-us/sysinternals/downloads/whois
 
 ---
 
-> [!note] **See also** — DNS-recon counterparts once you have the domain/nameservers: [[Tools/Network/nslookup|nslookup]] / [[Tools/Network/dig|dig]] (records, AXFR), [[Tools/Network/dnsenum|dnsenum]] / [[Tools/Network/dnsrecon|dnsrecon]] (subdomain + zone enum). Service context: [[Services/Network management/DNS|DNS]].
+> [!note] **See also** — DNS-recon counterparts once you have the domain/nameservers: [[Tools/Network/nslookup|nslookup]] / [[Tools/Network/dig|dig]] (records, AXFR), [[Tools/Network/dnsenum|dnsenum]] / [[Tools/Network/dnsrecon|dnsrecon]] (subdomain + zone enum). Service context: [[Services/Network Management/DNS|DNS]].
 
 ---
 

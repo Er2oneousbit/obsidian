@@ -10,6 +10,8 @@ CSRF is **write-only by default**. Same-origin policy stops the attacker's page 
 
 Pairs with [[Cross-Site Scripting (XSS)]], [[CORS Misconfiguration]], [[WebSockets]], [[OAuth-OIDC-SAML]], [[GraphQL Attacks|GraphQL]].
 
+> [!note] Protocol reference — the delivery vehicle is HTML-native: an auto-submitting `<form>` (or a `<img>`/`<iframe src>` for GETs) is what fires the cross-site request. For how the browser parses that markup and why it runs: [[Standards & Protocols/HTML|HTML]].
+
 ---
 
 ## Tools
@@ -610,5 +612,5 @@ An open redirect on the target turns a cross-site request into a same-site one, 
 ---
 
 *Created: 2026-07-29*
-*Updated: 2026-08-23*
+*Updated: 2026-09-25*
 *Model: claude-opus-4-8*

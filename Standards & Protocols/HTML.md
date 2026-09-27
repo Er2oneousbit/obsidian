@@ -33,9 +33,13 @@ flowchart LR
 | URL | `<a href="X">` | `javascript:` |
 | CSS | `<style>X</style>` | `}` , `url()` |
 
+### Character references — why encoding is context-specific
+
+A character can be written three ways: **named** (`&lt;`), **decimal** (`&#60;`), or **hex** (`&#x3c;`) — all decode to `<`. But the tokenizer only *resolves* references in **HTML-body text and (some) attribute values** — **never** inside rawtext elements (`<script>`, `<style>`) or comments. That asymmetry is why a single "HTML-encode the output" rule is wrong: `&lt;` neutralises a body-context payload but is inert inside `<script>`, where the break-out is a JS-string quote, not `<`. Encoding has to match the *sink's* context — which is the whole point of the table above.
+
 ### Why sanitizing is hard — mutation XSS (mXSS)
 
-The **sanitizer and the browser parse the same bytes differently** — foreign-content namespace confusion, rawtext breakouts, entity and `<template>` quirks, DOM clobbering — so a string that looks clean *mutates* into script when the browser re-parses it. This defeats naive blocklists, has broken high-profile apps (Google Search) and repeatedly bypassed even DOMPurify. (The HTML spec was amended in **May 2025** to escape `<`/`>` in attributes specifically to close an mXSS class.)
+The **sanitizer and the browser parse the same bytes differently** — foreign-content namespace confusion, rawtext breakouts, and entity/`<template>` quirks — so a string that looks clean *mutates* into script when the browser re-parses it. This defeats naive blocklists, has broken high-profile apps (Google Search) and repeatedly bypassed even DOMPurify. (The HTML spec was amended in **May 2025** to escape `<`/`>` in attributes specifically to close an mXSS class.)
 
 ---
 
@@ -49,6 +53,8 @@ The browser treats the page's bytes as authoritative: it parses *anything* into 
 | Only **intended** markup renders | Benign-looking attacker markup injected | **HTML injection** — phishing forms, defacement, CSS/token exfil |
 | Sanitizer and browser **agree** on the parse | They diverge | **mXSS / sanitizer bypass** |
 | DOM sinks get **safe** data | `innerHTML` / `document.write` / `srcdoc` / `eval` on input | **DOM XSS** |
+| Script reads its **own** globals / DOM lookups | Attacker markup's `id`/`name` shadows them via HTML *named access* (`window.x`, `document.forms`) | **DOM clobbering** — script-less HTML that survives a sanitizer redirects a variable/function a defence relies on |
+| The response is parsed as HTML only when **labelled** `text/html` | Missing `X-Content-Type-Options: nosniff` — browser sniffs bytes and renders a non-HTML response as a document | **Content-sniffing XSS** — an uploaded "text"/image file or a reflected JSON/error body executes as markup |
 | The page can't be **framed** | No `frame-ancestors` / `X-Frame-Options` | **Clickjacking** |
 | Unterminated markup is **contained** | A dangling `<img src='` swallows following bytes | **Dangling-markup** exfil (no JS needed) |
 | Active content is **opt-in** | `javascript:` / `data:` / `<svg onload>` allowed | Script-execution vectors |
@@ -75,5 +81,5 @@ The browser treats the page's bytes as authoritative: it parses *anything* into 
 [[XML]] (the sibling markup — same "parser is too trusting" problem, different attack), [[JSON]] (the sibling *data* format — schemaless text → live object, the third of the browser's core formats), [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]]  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-25*
+*Model: claude-opus-4-8*

@@ -143,7 +143,7 @@ tftp -g -r pxelinux.cfg/default <target>
 
 ---
 
-> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (Cisco config looting, Type-7/5 cracking); [[Services/Network management/SNMP|SNMP]] — a RW community pushes a device's running-config to your TFTP server (Cisco config-copy); file-transfer siblings [[Services/File Xfer/FTP|FTP]] and [[Services/File Xfer/SFTP|SFTP]]. Cisco ASA running-config exfil via SNMP config-copy lands here too — see [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
+> [!note] **See also** — [[Techniques/Network Device Pentesting|Network Device Pentesting]] (Cisco config looting, Type-7/5 cracking); [[Services/Network Management/SNMP|SNMP]] — a RW community pushes a device's running-config to your TFTP server (Cisco config-copy); file-transfer siblings [[Services/File Xfer/FTP|FTP]] and [[Services/File Xfer/SFTP|SFTP]]. Cisco ASA running-config exfil via SNMP config-copy lands here too — see [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
 
 ---
 

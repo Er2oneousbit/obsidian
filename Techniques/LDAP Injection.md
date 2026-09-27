@@ -234,7 +234,7 @@ for i in $(seq 1 10); do
 done | sort -n | awk '{a[NR]=$1} END{print "median:", a[int(NR/2)+1]}'
 ```
 
-> [!warning] Forcing full-directory scans in a loop is effectively load-testing the DC — CVE-2025-12764 (pgAdmin) was exactly this pattern weaponized into DoS with cascading auth failures. Rate-limit it, keep the sample count low, and don't run it against a production directory without clearing it first.
+> [!warning] Forcing full-directory scans in a loop is effectively load-testing the DC — unindexed substring filters (leading-wildcard over a large directory) can cascade into auth failures / DoS. Rate-limit it, keep the sample count low, and don't run it against a production directory without clearing it first.
 
 ---
 
@@ -284,6 +284,15 @@ curl -s --data-urlencode "search=)(|(uid=*" "http://<target>/search"
 # LDAP injection to access admin records
 curl -s --data-urlencode "search=*)(|(memberOf=CN=Admins,DC=corp,DC=local" "http://<target>/search"
 ```
+
+---
+
+## DN Injection & Second-Order LDAPi
+
+Two injection points beyond the search filter:
+
+- **DN injection** — input concatenated into a **Distinguished Name** (a `bind` DN, a base DN, an `add`/`modify` target) rather than a *filter*. Filter metacharacters (`()*|&`) aren't special in a DN, but DN special chars are: `,` `+` `=` `<` `>` `#` `;` `\` and leading/trailing spaces. Injecting a `,` can graft extra RDN components or relocate the entry — e.g. turning `cn=<input>` into `cn=user,ou=admins,...`. The fix is **RFC 4514** DN escaping (`\,` `\+` `\=` …), which is *different* from the RFC 4515 filter escaping above — an app that escapes one often forgets the other.
+- **Second-order LDAPi** — input stored benignly (a profile field, an imported record) that a *different* feature later drops into a filter/DN (a sync job, an admin search, a report). The tell: your `)(` payload does nothing at the injection point but errors or mass-matches when an admin later views the directory. Store the payload, then trigger the second feature.
 
 ---
 
@@ -392,5 +401,5 @@ admin)(mail=a*      # does admin's mail start with 'a'?
 ---
 
 *Created: 2026-03-04*
-*Updated: 2026-07-30*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

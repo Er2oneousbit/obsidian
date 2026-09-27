@@ -230,6 +230,8 @@ The high-severity variant: the *application* evaluates the formula, so there is 
 
 > [!note] IMDSv2 needs a `PUT` with a token header, so a plain `WEBSERVICE` GET only reaches **IMDSv1**. A no-response there is not proof the host is safe.
 
+> [!tip] **Sibling formats dodge CSV-specific filters.** When an upload/convert sink accepts spreadsheets, a CSV-only defence often misses **SYLK (`.slk`)** and **Web Query (`.iqy`)** files — both carry formulas/remote-fetch and Excel historically opened them *outside* Protected View. A `.slk` beginning `ID;P` with an `;E`-prefixed formula cell, or a two-line `.iqy` pointing at your URL, is worth trying where `=`-stripping is applied only to `.csv`.
+
 ---
 
 ## Data Exfiltration
@@ -311,7 +313,7 @@ Load it into **Burp Intruder** (sniper) against every stored field that reaches 
 | Prefix the cell with `'` | Common advice, **not sufficient alone** — Excel may strip it on save→reopen (test it) |
 | Wrap in double quotes and escape internal quotes | Helps, same save/reopen caveat |
 | Export **XLSX with explicit string cell types** instead of raw CSV | Best fix — the cell is typed as text, no parse-time formula decision |
-| Library flags (e.g. json-2-csv `preventCsvInjection`) | Only as good as the version — **CVE-2026-9673** (CVSS 6.8) bypassed exactly that flag in json-2-csv `>=3.15.0 <5.5.11` |
+| Library flags (e.g. json-2-csv `preventCsvInjection`) | Only as good as the version — such flags have been **bypassed by CVEs**, so pin and track the library (don't treat the flag as a permanent fix) |
 | Client hardening — Trust Center: DDE off, external content off, Protected View on | Defence in depth, not a substitute for output encoding |
 
 ### Making the finding stick
@@ -348,5 +350,5 @@ Load it into **Burp Intruder** (sniper) against every stored field that reaches 
 ---
 
 *Created: 2026-09-17*
-*Updated: 2026-09-17*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

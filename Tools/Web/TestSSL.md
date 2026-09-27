@@ -158,7 +158,7 @@ Key sections:
 
 ---
 
-> [!note] **See also** — [[Services/Network management/TLS|TLS]] (the service note: protocols/ciphers/vulns matrix, Heartbleed exploitation, Dangerous Settings); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
+> [!note] **See also** — [[Services/Network Management/TLS|TLS]] (the service note: protocols/ciphers/vulns matrix, Heartbleed exploitation, Dangerous Settings); [[Techniques/Network Device Pentesting|Network Device Pentesting]] (CPTS v2) — TLS/SSL assessment on HTTPS management interfaces.
 
 ---
 

@@ -65,7 +65,7 @@ dnsenum --dnsserver 10.129.14.128 -r 10.129.14.0/24 inlanefreight.htb
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2).
-> Also [[Services/Network management/DNS|DNS]] — combined records/AXFR/subdomain enumeration.
+> Also [[Services/Network Management/DNS|DNS]] — combined records/AXFR/subdomain enumeration.
 
 ---
 

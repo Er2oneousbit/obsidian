@@ -59,6 +59,7 @@ The design reduces to one sentence: *the SP grants a session to whoever presents
 |---|---|---|
 | The SP actually **validates** the signature | Unsigned or modified assertions accepted | Signature stripping / no-verify |
 | The signature covers the element the SP **reads** | SP verifies one node, consumes another | **XML Signature Wrapping (XSW)** — 8 known variants |
+| The SP verifies against the **pinned** IdP cert (from metadata) | SP trusts a cert embedded in the Response's own `<ds:KeyInfo>` / `<X509Certificate>` | **Certificate injection / key confusion** — sign the forged assertion with an attacker key and ship the matching cert inline (the SAML analog of JWT `jwk`/`x5c` injection) |
 | The XML parser reads the **whole** text node | Parser stops at an inline comment | **Comment injection** (CVE-2017-11427 family): `admin<!---->@evil.com` → SP reads `admin` |
 | The parser won't resolve **external entities** | DTD entities resolve | **XXE via SAMLResponse** → file read / SSRF |
 | The IdP signing key stays **secret** | Key stolen or forged | **Golden SAML** (on-prem ADFS cert+DKM) / **Silver SAML** (imported Entra cert) |
@@ -66,7 +67,7 @@ The design reduces to one sentence: *the SP grants a session to whoever presents
 | `Destination` / `Recipient` is **enforced** | Not checked | Assertion redirected to an attacker-controlled SP |
 
 > [!note]
-> This is the "why," not the "how" — deliberately no payloads here. The point of this note is that once you see the trust model, each attack in the notes below is obvious: it's just *which* of these seven assumptions the target skipped.
+> This is the "why," not the "how" — deliberately no payloads here. The point of this note is that once you see the trust model, each attack in the notes below is obvious: it's just *which* of these assumptions the target skipped.
 
 ---
 
@@ -84,8 +85,8 @@ The design reduces to one sentence: *the SP grants a session to whoever presents
 
 ## See also
 
-[[OAuth-OIDC]] (companion federation standards — the token-based cousin), [[JWT]] (the token format OIDC carries)  ·  Index: [[_Standards & Protocols]]
+[[XML]] (the format every assertion is built on — XXE and XSW both live here), [[X509-PKI|X.509 / PKI]] (the signing-cert trust model behind XML-DSig and Golden/Silver SAML), [[OAuth-OIDC]] (companion federation standards — the token-based cousin), [[JWT]] (the token format OIDC carries), [[SOAP]] (WS-Trust / WS-Federation carry SAML assertions inside SOAP envelopes — XSW territory)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

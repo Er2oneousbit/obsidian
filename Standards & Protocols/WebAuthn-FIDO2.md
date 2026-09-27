@@ -19,7 +19,7 @@ Two ceremonies, both public-key challenge/response.
 | Step | What happens |
 |---|---|
 | 1 | RP sends a challenge + user/RP info (`navigator.credentials.create()`) |
-| 2 | User verifies (biometric/PIN); the authenticator generates a **keypair scoped to the RP's origin** |
+| 2 | User verifies (biometric/PIN); the authenticator generates a **keypair scoped to the RP's `rpId`** (a registrable-domain suffix of the origin, e.g. `example.com`) |
 | 3 | Authenticator returns the **public key** + optional **attestation** (proof of authenticator model) |
 | 4 | RP stores the public key + credential ID against the account |
 
@@ -49,6 +49,7 @@ The crypto is sound: the private key stays on the authenticator and every assert
 | The property that makes it strong | How a deployment weakens it | Result |
 |---|---|---|
 | **Origin / rpId binding** (anti-phishing) | RP doesn't validate `origin` / `rpIdHash` in the assertion | Phishing resistance lost |
+| **rpId** is scoped as narrowly as the RP needs | rpId set to a broad registrable parent (`example.com` for an app on one subdomain) | A rogue or compromised **sibling subdomain** can use the credential — the origin guarantee widened past intent (and *related-origin requests* loosen it further if the allowlist is lax) |
 | **Fresh challenge** (anti-replay) | RP reuses or doesn't verify the challenge | Assertion replay |
 | **WebAuthn is the *only* path** | Offered *alongside* password / OTP / SMS | **Downgrade / fallback** — the #1 real bypass (see below) |
 | Only the real user can **enroll** | Attacker registers *their* authenticator via a hijacked session or a lured "add a passkey" flow (malicious extension) | **Malicious passkey registration** → persistent ATO |
@@ -76,5 +77,5 @@ The crypto is sound: the private key stays on the authenticator and every assert
 [[OAuth-OIDC]] / [[JWT]] (what the RP hands you *after* a successful passkey login), [[SAML]] (the older federation standard passkeys often front)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

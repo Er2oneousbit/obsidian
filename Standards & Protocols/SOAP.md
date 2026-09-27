@@ -54,6 +54,7 @@ SOAP's design assumes the WSDL is a *convenience* and that WS-Security, *if conf
 | WS-Security **is enforced** | Signature/encryption optional or unchecked | Message tampering; **UsernameToken** creds in cleartext |
 | A signature covers **what's processed** | Namespace / `Id` confusion in signed XML | **XML Signature Wrapping (XSW)** → [[SAML]] |
 | Messages **can't be replayed** | Missing/!checked timestamp + nonce | **Replay** of a captured signed request |
+| Response/callback addresses are **fixed server-side** | `<wsa:ReplyTo>` / `<wsa:FaultTo>` (WS-Addressing) taken from the message | **SSRF** — the service delivers the response/callback to an attacker-chosen URL |
 | Object IDs in the body are **authorized** | No per-operation object-level authz | **BOLA/IDOR** — change `<UserID>123</UserID>` to another's |
 | Faults are **generic** | Verbose fault handling | Stack traces / internal paths / logic disclosure |
 
@@ -77,5 +78,5 @@ SOAP's design assumes the WSDL is a *convenience* and that WS-Security, *if conf
 [[REST]] (the lightweight API style SOAP is usually contrasted with), [[XML]] (the format under every envelope), [[JSON]] (REST's wire format), [[SAML]] (signed XML carried over SOAP in WS-*)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

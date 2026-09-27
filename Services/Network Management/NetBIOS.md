@@ -182,7 +182,7 @@ nxc smb <target> -u '' -p '' --rid-brute
 
 ---
 
-> [!note] **See also** — name-resolution/poisoning sibling [[Services/Network management/DNS|DNS]] (WPAD/wildcard and NBNS/LLMNR are the same responder-fed capture surface); captured/relayed auth lands on [[Services/File Xfer/SMB|SMB]] and [[Services/Network management/LDAP|LDAP]] (RBCD via relay); a rogue [[Services/Network management/NTP|NTP]] source needs the same on-path position as mitm6.
+> [!note] **See also** — name-resolution/poisoning sibling [[Services/Network Management/DNS|DNS]] (WPAD/wildcard and NBNS/LLMNR are the same responder-fed capture surface); captured/relayed auth lands on [[Services/File Xfer/SMB|SMB]] and [[Services/Network Management/LDAP|LDAP]] (RBCD via relay); a rogue [[Services/Network Management/NTP|NTP]] source needs the same on-path position as mitm6.
 
 ---
 

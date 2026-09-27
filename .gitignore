@@ -1,6 +1,8 @@
 # --- Claude Code / internal working files (not part of the published vault) ---
 CLAUDE.md
 TODO.md
+TODO-archive.md
+DECISIONS.md
 .claude/
 .obsidian/
 

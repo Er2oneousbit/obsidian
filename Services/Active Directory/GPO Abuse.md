@@ -112,7 +112,7 @@ The GPO's files live in `\\<domain>\SYSVOL\<domain>\Policies\{GUID}\`. Add a `Ma
 
 ---
 
-> [!note] **See also** — GPO edit rights are just an ACL edge on a GPO object — enumerate them alongside [[Services/Active Directory/ACL Abuse|ACL Abuse]] (BloodHound `GenericWrite`→GPO); a DC-linked GPO yields the same endgame as [[Services/Active Directory/Kerberos|Kerberos]] golden-ticket/DCSync. Rides [[Services/Network management/LDAP|LDAP]] for enumeration and SYSVOL (SMB) for the write. Tools: [[Tools/AD/SharpGPOAbuse|SharpGPOAbuse]], [[Tools/AD/pyGPOAbuse|pyGPOAbuse]], [[Tools/AD/PowerView|PowerView]].
+> [!note] **See also** — GPO edit rights are just an ACL edge on a GPO object — enumerate them alongside [[Services/Active Directory/ACL Abuse|ACL Abuse]] (BloodHound `GenericWrite`→GPO); a DC-linked GPO yields the same endgame as [[Services/Active Directory/Kerberos|Kerberos]] golden-ticket/DCSync. Rides [[Services/Network Management/LDAP|LDAP]] for enumeration and SYSVOL (SMB) for the write. Tools: [[Tools/AD/SharpGPOAbuse|SharpGPOAbuse]], [[Tools/AD/pyGPOAbuse|pyGPOAbuse]], [[Tools/AD/PowerView|PowerView]].
 
 ---
 

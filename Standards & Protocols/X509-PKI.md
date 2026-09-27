@@ -47,12 +47,13 @@ Everything rests on *the validator enforcing the chain* and *the CA issuing only
 
 | Assumption the design rests on | When it fails… | Attack (payloads in the linked note) |
 |---|---|---|
-| Validator checks the **whole chain** + signatures | Skipped, accepts self-signed, or a **non-CA cert is trusted as a CA** | MITM / impersonation (e.g. Vault CVE-2025-6037) |
+| Validator checks the **whole chain** + signatures | Skipped, accepts self-signed, or a **non-CA cert is trusted as a CA** (Basic Constraints not enforced) | MITM / impersonation |
 | Name **matches SAN** | Loose/absent name check, CN fallback | Wrong-host cert accepted → **TLS MITM** |
 | Only a **trusted CA** can issue | Rogue/compromised CA, or attacker installs a root | Forge **any** identity — trust-store poisoning |
+| An intermediate issues **only within its NameConstraints** | Extension absent, or validator doesn't enforce it | A delegated / compromised **sub-CA issues for any domain** it was never meant to cover |
 | **EKU / BasicConstraints** enforced | Not checked | Leaf used as a CA (`CA:TRUE`), or **EKU confusion** (EKUwu) — a cert usable for auth it shouldn't be |
 | AD CS **templates** are least-privilege | Enrollee-Supplies-Subject + Client-Auth EKU + low-priv enrollment | **ESC1** & friends — request a cert *as any user* → **PKINIT/Schannel logon** → DA |
-| Certificate→account **mapping** is strong | Weak/implicit SAN→UPN mapping | **ESC15 / certificate-mapping** abuse |
+| Certificate→account **mapping** is strong | Weak/implicit SAN→UPN mapping, or a weak explicit `altSecurityIdentities` | **Certificate-mapping abuse — ESC9 / ESC10 / ESC14** |
 | Revocation is **checked** | CRL/OCSP soft-fail or ignored | Revoked/stolen cert still accepted |
 | The signing **private key** stays secret | Key theft | Forge signatures — **Golden/Silver SAML** token-signing certs, code-signing cert theft |
 | Path-length / hash strength enforced | Bypassable constraint; MD5/SHA-1 | Over-depth issuance (2025 research); collision-forged cert (historic Flame) |
@@ -62,7 +63,7 @@ Everything rests on *the validator enforcing the chain* and *the CA issuing only
 ## Attacked by
 
 - [[Services/Active Directory/ADCS|ADCS]] — the marquee target: certificate-template/CA misconfig (**ESC1–16**, EKUwu, ESC15 mapping), NTLM relay to web enrollment (**ESC8**), certificate-based Domain Admin. The X.509 mental model (EKU / SAN / PKINIT) is the prerequisite for all of it.
-- [[Services/Network management/TLS|TLS]] — server/client-cert validation, chain and hostname-vs-SAN bypass, MITM with a forged or mistrusted cert.
+- [[Services/Network Management/TLS|TLS]] — server/client-cert validation, chain and hostname-vs-SAN bypass, MITM with a forged or mistrusted cert.
 - [[SAML]] — XML-DSig signs assertions with an X.509 token-signing cert; **Golden/Silver SAML** forge with the stolen signing key.
 - [[JWT]] — `x5c` / `x5u` header-cert injection and RS256 verification against an attacker-supplied cert.
 
@@ -72,8 +73,8 @@ Everything rests on *the validator enforcing the chain* and *the CA issuing only
 
 ## See also
 
-[[Services/Network management/TLS|TLS]] (carries server/client certs), [[Services/Active Directory/ADCS|ADCS]] (the AD CS deployment that issues them), [[SAML]] / [[JWT]] (signed *with* X.509)  ·  Index: [[_Standards & Protocols]]
+[[Services/Network Management/TLS|TLS]] (carries server/client certs), [[Services/Active Directory/ADCS|ADCS]] (the AD CS deployment that issues them), [[SAML]] / [[JWT]] (signed *with* X.509)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*

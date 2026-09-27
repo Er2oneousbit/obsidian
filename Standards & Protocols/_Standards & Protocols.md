@@ -51,6 +51,16 @@ New here? Read [[template]] for the note format and the bar for what earns a not
 
 ---
 
+## Transport, Network & Email
+
+| Note | What it covers | Status |
+|---|---|---|
+| [[Standards & Protocols/TLS\|TLS]] | The handshake / cipher-negotiation / forward-secrecy protocol X.509 certs authenticate — downgrade & STARTTLS-stripping surface (concept note; hands-on testing lives in `Services/`) | ✅ |
+| [[SPF-DKIM-DMARC\|SPF / DKIM / DMARC]] | The DNS-published email-authentication trio — envelope (SPF) + signature (DKIM) + `From:`-alignment & policy (DMARC); the anti-spoofing / phishing-resistance layer | ✅ |
+| [[RADIUS]] | The AAA protocol behind 802.1X / Wi-Fi-Enterprise / VPN / device-admin — one shared secret + MD5; secret cracking, Blast-RADIUS, evil-twin MSCHAPv2 | ✅ |
+
+---
+
 ## Roadmap (candidates)
 
 Scoped per the [[template]] bar (protocol/format/standard · design-must-be-understood-to-attack · cross-cutting). Built strongest-first.
@@ -59,7 +69,7 @@ Scoped per the [[template]] bar (protocol/format/standard · design-must-be-unde
 |---|---|---|
 | **Strong** — ✅ done | [[SAML]], [[OAuth-OIDC]], [[JWT]], [[NTLM]] | Cross-cut Web + Cloud + AD; design-critical |
 | **Second** — ✅ done | XML, WebAuthn/FIDO2, SPNEGO/GSS, SCIM | Real but narrower reach |
-| **Extended** — started | **X.509/PKI ✅ · HTML ✅ · JSON ✅ · REST ✅ · SOAP ✅**; next: TLS · SPF/DKIM/DMARC · RADIUS | Net-new beyond the original plan — narrower but real |
+| **Extended** — ✅ done | **X.509/PKI · HTML · JSON · REST · SOAP · TLS · SPF/DKIM/DMARC · RADIUS** — all ✅ | Net-new beyond the original plan — narrower but real |
 | **Leave in `Services/`** | Kerberos, LDAP | Already have substantial Service notes — cross-link, don't duplicate |
 | **Not built (fail the bar)** | CRUD, AJAX, API | Pattern acronym / dated technique / umbrella category — defined *inline* in [[REST]]/[[SOAP]], not standalone notes |
 
@@ -75,7 +85,7 @@ Scoped per the [[template]] bar (protocol/format/standard · design-must-be-unde
 - **Passwordless**: [[WebAuthn-FIDO2|WebAuthn / FIDO2]] is the phishing-resistant answer to the credential theft the others suffer — so it's attacked by *downgrade* to a weaker factor, not head-on.
 - **Negotiate layer**: [[SPNEGO-GSS|SPNEGO / GSS-API]] chooses [[NTLM]] vs [[Services/Active Directory/Kerberos|Kerberos]] on the wire (`Authorization: Negotiate`) — and is where a client gets *downgraded* from Kerberos to relayable NTLM.
 - **Login vs lifecycle**: [[OAuth-OIDC]]/[[SAML]] log a user *in*; [[SCIM]] governs whether the account *exists* (provisioning / deprovisioning) — the other half of enterprise identity, best attacked via [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]].
-- **Certificate substrate**: [[X509-PKI|X.509 / PKI]] is the trust format under [[Services/Network management/TLS|TLS]], [[Services/Active Directory/ADCS|ADCS]] (ESC), and the signing certs in [[SAML]]/[[JWT]] — one trust-chain model, many attack surfaces.
+- **Certificate substrate**: [[X509-PKI|X.509 / PKI]] is the trust format under [[Services/Network Management/TLS|TLS]], [[Services/Active Directory/ADCS|ADCS]] (ESC), and the signing certs in [[SAML]]/[[JWT]] — one trust-chain model, many attack surfaces.
 - **The two API styles**: [[REST]] (HTTP verbs + [[JSON]], no built-in authz → BOLA/mass-assignment) vs [[SOAP]] (XML envelopes + WSDL contract + WS-Security → XXE/WSDL-enum/signature-wrapping); GraphQL is the third (one endpoint + typed schema, in [[Class notes/HTB Academy/CWES Claude/Intro to GraphQL|Intro to GraphQL]]).
 - **Data-format trio**: [[JSON]] is the modern wire format (carried by [[REST]]/[[JWT]]/[[SCIM]]) — the schemaless-object twin of [[XML]] (which SOAP/SAML ride) and the sibling of [[HTML]]; each is "untrusted text → live structure," differing only in *which* trust the parser misplaces.
 

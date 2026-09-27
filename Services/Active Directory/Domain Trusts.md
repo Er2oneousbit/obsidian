@@ -124,7 +124,7 @@ Get-DomainComputer -Unconstrained -Domain <other.domain>
 
 ---
 
-> [!note] **See also** — trust abuse is Kerberos ticket forgery at forest scale — the ExtraSids/golden-ticket mechanics live in [[Services/Active Directory/Kerberos|Kerberos]]; enumeration rides [[Services/Network management/LDAP|LDAP]]; unconstrained-delegation coercion overlaps [[Techniques/Network Device Pentesting|coercion]] (PetitPotam/printerbug). Tools: [[Tools/AD/PowerView|PowerView]], [[Tools/AD/impacket-kerberos-scripts|impacket Kerberos scripts]], [[Tools/Auth/mimikatz|mimikatz]].
+> [!note] **See also** — trust abuse is Kerberos ticket forgery at forest scale — the ExtraSids/golden-ticket mechanics live in [[Services/Active Directory/Kerberos|Kerberos]]; enumeration rides [[Services/Network Management/LDAP|LDAP]]; unconstrained-delegation coercion overlaps [[Techniques/Network Device Pentesting|coercion]] (PetitPotam/printerbug). Tools: [[Tools/AD/PowerView|PowerView]], [[Tools/AD/impacket-kerberos-scripts|impacket Kerberos scripts]], [[Tools/Auth/mimikatz|mimikatz]].
 
 ---
 

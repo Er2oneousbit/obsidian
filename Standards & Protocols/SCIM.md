@@ -47,6 +47,7 @@ The SP grants a bearer token the power to *be the source of truth for who exists
 | Deprovisioning is **honored and timely** | SP ignores or delays deactivation | **Persistence** — a deactivated (or attacker) account keeps SaaS access |
 | Filtering doesn't **overexpose** | `?filter` returns all users + PII | Enumeration / excessive data exposure |
 | Input is validated | **SCIM filter injection**, mass-assignment of `active`/roles | Logic bypass |
+| `/Bulk` honors the **same per-item authz + size limits** as single ops | Bulk path skips checks applied to individual requests, or has no cap | **Authz bypass + amplification** — smuggle privileged changes past per-request guards, or mass-create/deactivate (DoS) in one call |
 
 > [!warning]
 > The single highest-impact SCIM bug is the **`userName`/email PATCH → ATO**: because the SP trusts the provisioning channel, a SCIM email change often skips the verification a normal profile edit would trigger. If you hold (or can reach) a SCIM token, test that first.
@@ -58,7 +59,7 @@ The SP grants a bearer token the power to *be the source of truth for who exists
 - [[Class notes/HTB Academy/CWES Claude/API Attacks|API Attacks]] — SCIM *is* a REST API, so the whole toolkit applies directly: **BOLA** on `/Users/ID`, **mass assignment** (`active`, `groups`, custom attributes), **excessive data exposure** via `?filter`, and **broken auth** on the bearer token. This is the primary lens.
 - [[OAuth-OIDC]] — the SCIM bearer token is typically an OAuth token; stealing it grants full provisioning power, and SSO (OIDC login) + SCIM (lifecycle) are the two halves of every enterprise identity integration.
 
-**Recon/testing:** enumerate `/ServiceProviderConfig` and `/Schemas` (often unauthenticated) to map capabilities; test the token's blast radius with a benign `GET /Users?count=1` before anything destructive. Doyensec's "SCIM Hunting" (2025) is the current pentest reference.
+**Recon/testing:** enumerate `/ServiceProviderConfig` and `/Schemas` (often unauthenticated) to map capabilities; test the token's blast radius with a benign `GET /Users?count=1` before anything destructive. Doyensec has published SCIM-focused security research worth reviewing before an engagement.
 
 ---
 
@@ -67,5 +68,5 @@ The SP grants a bearer token the power to *be the source of truth for who exists
 [[OAuth-OIDC]] / [[SAML]] (the *login* half — SCIM is the *lifecycle* half), [[JWT]] (what the bearer token often is), [[REST]] / [[JSON]] (SCIM *is* a REST+JSON API — its bugs are ordinary API bugs)  ·  Index: [[_Standards & Protocols]]
 
 *Created: 2026-07-31*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-26*
+*Model: claude-opus-4-8*

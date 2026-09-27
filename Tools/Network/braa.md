@@ -71,7 +71,7 @@ braa public@10.129.14.1-10.129.14.254:.1.3.6.1.2.1.1.5.0
 
 ---
 
-> [!note] **See also** — Find community strings first with [[Tools/Network/onesixtyone|onesixtyone]]; [[Tools/Network/snmpwalk|snmpwalk]] gives cleaner parsed output for a single host once braa flags a live one. Service-level context and the attack surface: [[Services/Network management/SNMP|SNMP]].
+> [!note] **See also** — Find community strings first with [[Tools/Network/onesixtyone|onesixtyone]]; [[Tools/Network/snmpwalk|snmpwalk]] gives cleaner parsed output for a single host once braa flags a live one. Service-level context and the attack surface: [[Services/Network Management/SNMP|SNMP]].
 
 ---
 

@@ -108,7 +108,7 @@ done
 ```
 
 
-> [!note] **See also** — [[Services/Network management/LDAP|LDAP]] service note (the AD LDAP enumeration surface this wraps); [[Techniques/LDAP Injection|LDAP Injection]] (CPTS v2).
+> [!note] **See also** — [[Services/Network Management/LDAP|LDAP]] service note (the AD LDAP enumeration surface this wraps); [[Techniques/LDAP Injection|LDAP Injection]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 
 ---

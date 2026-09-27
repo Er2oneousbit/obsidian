@@ -54,7 +54,7 @@ Also used inline: `ldns-walk` (NSEC zone walking), `iodine` (DNS tunnelling), `d
 | `MX` | Mail exchange server for the domain (with priority) |
 | `NS` | Authoritative nameservers for a domain |
 | `PTR` | Reverse lookup: IP → hostname |
-| `TXT` | Arbitrary text; used for SPF, DKIM, DMARC, domain verification |
+| `TXT` | Arbitrary text; used for SPF, DKIM, DMARC ([[Standards & Protocols/SPF-DKIM-DMARC\|email auth]]), domain verification |
 | `SOA` | Start of Authority: primary NS, admin email, serial, refresh, retry, expire, minimum TTL |
 | `SRV` | Service location records (host, port, priority, weight) |
 | `CAA` | Certificate Authority Authorization — who can issue SSL certs |
@@ -274,10 +274,10 @@ python3 dnstool.py -u '<domain>\<user>' -p <pass> -a add -r <name> -d <attacker_
 
 ---
 
-> [!note] **See also** — AD-integrated DNS ties into [[Services/Active Directory/Kerberos|Active Directory]] enumeration and [[Services/File Xfer/SMB|SMB]] relay (WPAD/wildcard → [[Tools/Lateral Movement/responder|responder]]); dumped via [[Tools/AD/adidnsdump|adidnsdump]]. Network-infra siblings [[Services/Network management/LDAP|LDAP]] and [[Services/Network management/NetBIOS|NetBIOS]] (the other name-resolution/poisoning surfaces), and [[Services/Network management/NTP|NTP]] (clock-skew fix for Kerberos + time-shift MITM).
+> [!note] **See also** — AD-integrated DNS ties into [[Services/Active Directory/Kerberos|Active Directory]] enumeration and [[Services/File Xfer/SMB|SMB]] relay (WPAD/wildcard → [[Tools/Lateral Movement/responder|responder]]); dumped via [[Tools/AD/adidnsdump|adidnsdump]]. Network-infra siblings [[Services/Network Management/LDAP|LDAP]] and [[Services/Network Management/NetBIOS|NetBIOS]] (the other name-resolution/poisoning surfaces), and [[Services/Network Management/NTP|NTP]] (clock-skew fix for Kerberos + time-shift MITM).
 
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-23*
+*Updated: 2026-09-26*
 *Model: claude-opus-4-8*
