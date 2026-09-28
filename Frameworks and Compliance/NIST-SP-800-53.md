@@ -153,7 +153,7 @@ Most federal systems target **Moderate** baseline.
 **Key Controls:**
 - **IA-2 Authentication**: Require authentication for all users; use strong methods (passwords + MFA).
 - **IA-4 Identifier Management**: Unique identifiers for users; inactive accounts disabled.
-- **IA-5 Authentication Mechanisms**: Password policy (12+ chars, complexity, rotation every 60–90 days); support MFA (TOTP, hardware tokens).
+- **IA-5 Authenticator Management**: Password policy (length-first, e.g. 12+ chars); support MFA (TOTP, hardware tokens). **Note:** IA-5 defers password specifics to SP 800-63B, which now *discourages* forced periodic rotation and mandatory composition/complexity rules — rotate only on evidence of compromise. Treat "expire every 60–90 days" as a legacy org policy, not current NIST guidance.
 
 **Implementation**: LDAP/AD for centralized identity; enforce MFA (Duo, Okta); password manager; disable accounts after 60 days inactivity.
 
@@ -233,7 +233,7 @@ Most federal systems target **Moderate** baseline.
 **Goal**: Protect data in transit; segment network; encrypt sensitive data.
 
 **Key Controls:**
-- **SC-4 Information Confidentiality & Integrity**: Encryption for data at rest (AES-256) and in transit (TLS 1.2+).
+- **SC-28 Protection of Information at Rest**: Encrypt data at rest (AES-256). *(Not SC-4 — SC-4 is "Information in Shared System Resources," i.e. preventing residual-data/object-reuse leakage between processes.)*
 - **SC-7 Boundary Protection**: Network boundary enforcement (firewall); DMZ for public systems; internal network protected.
 - **SC-8 Transmission Confidentiality & Integrity**: Encrypt data in transit (TLS); protect against MITM attacks.
 - **SC-12 Cryptographic Key Establishment & Management**: Key generation, rotation, storage in HSM; key escrow procedures.
@@ -248,7 +248,7 @@ Most federal systems target **Moderate** baseline.
 **Goal**: Detect/prevent malware; monitor system health; keep systems updated.
 
 **Key Controls:**
-- **SI-2 Flaw Remediation**: Patch management; critical patches within 15 days, non-critical within 30 days.
+- **SI-2 Flaw Remediation**: Patch management within an **organization-defined time period** — 800-53 sets no fixed number itself. The common FedRAMP overlay is High 30 days / Moderate 90 / Low 180 (see [[FedRAMP]]).
 - **SI-3 Malware Protection**: Antivirus on all endpoints; real-time scanning; signature updates automatic.
 - **SI-4 Information System Monitoring**: Continuous monitoring for intrusions, anomalies; alerting.
 - **SI-7 Software, Firmware & Information Integrity**: File integrity monitoring (Tripwire, ossec); detect unauthorized changes.
@@ -286,7 +286,19 @@ A **subset of 800-53** protecting Controlled Unclassified Information (CUI) on n
 
 ## FISMA Authorization Process (ATO)
 
-Organizations using 800-53 typically follow the FISMA (Federal Information Security Management Act) authorization process:
+The ad-hoc steps below are one telling of the **NIST Risk Management Framework (RMF, SP 800-37 Rev 2)** — the canonical 7-step cycle that governs how 800-53 controls get selected, implemented, and authorized. Know the RMF names; auditors use them:
+
+| RMF Step | What happens | Maps to below |
+|---|---|---|
+| **1. Prepare** | Org- and system-level readiness: roles, risk tolerance, common controls | (pre-work) |
+| **2. Categorize** | FIPS 199 impact level (Low/Mod/High) | Step 1 |
+| **3. Select** | Pick the 800-53 baseline + tailor (800-53B) | Step 2 |
+| **4. Implement** | Deploy controls; document in the SSP | Step 2 |
+| **5. Assess** | 3PAO/assessor tests controls → SAR (per 800-53A) | Step 3 |
+| **6. Authorize** | Authorizing Official accepts residual risk → ATO | Step 4 |
+| **7. Monitor** | ConMon; ongoing assessment; re-authorize | Step 5 |
+
+Organizations using 800-53 follow this under FISMA (Federal Information Security Modernization Act):
 
 ### Step 1: System Categorization (FIPS 199)
 - Determine impact level: Low, Moderate, or High.
@@ -343,7 +355,7 @@ Organizations using 800-53 typically follow the FISMA (Federal Information Secur
 
 **Focus**: Maximum security; redundancy, continuous monitoring, advanced threat detection.
 
-**Sample controls**: All controls from Moderate, plus enhanced versions (e.g., AC-3 (9) Controlled Release, SC-8 (2) Transmission w/ Cryptographic Mechanisms).
+**Sample controls**: All controls from Moderate, plus enhanced versions (e.g., AC-3(9) Controlled Release, SC-8(1) Cryptographic Protection of transmitted data).
 
 ---
 
@@ -385,8 +397,8 @@ Organizations using 800-53 typically follow the FISMA (Federal Information Secur
 |---|---|
 | **System Admin** | CM-2/3 (baselines, change control), SC-7 (boundary protection), SI-2/3 (patching, malware), AU-12 (logging) |
 | **Network Admin** | SC-7 (boundary protection), SC-12 (cryptographic keys), SC-13 (cryptography), SI-4 (monitoring) |
-| **Developer** | SA-3/11 (secure SDLC), SI-7 (code integrity), SC-4 (encryption), AC-3 (access enforcement in code) |
-| **Database Admin** | AC-3/5 (access control, separation of duties), AU-6 (audit review), SI-2/3 (patching, malware), SC-4 (encryption at rest) |
+| **Developer** | SA-3/11 (secure SDLC), SI-7 (code integrity), SC-28 (encryption at rest), AC-3 (access enforcement in code) |
+| **Database Admin** | AC-3/5 (access control, separation of duties), AU-6 (audit review), SI-2/3 (patching, malware), SC-28 (encryption at rest) |
 | **Security Officer** | PL-2 (SSP), CA-2 (assessments), IR-1/4 (incident response), RA-3 (risk assessment) |
 
 ---
@@ -404,8 +416,8 @@ Organizations using 800-53 typically follow the FISMA (Federal Information Secur
 
 ## See also
 
-[[NIST-CSF]], [[FedRAMP]], [[ISO-27001-27002]], [[CIS-Controls]]  ·  Index: [[_Frameworks and Compliance]]
+[[NIST-CSF]], [[FedRAMP]], [[ISO-27001-27002]], [[CIS-Controls]], [[PCI-DSS-v4]], [[Critical-Infrastructure-ICS-Security]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

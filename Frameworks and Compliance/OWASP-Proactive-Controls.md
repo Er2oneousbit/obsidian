@@ -170,7 +170,9 @@ Addresses A09 Security Logging and Alerting Failures.
 
 ### C10 — Stop Server Side Request Forgery
 
-New in v4. When the server fetches a user-supplied URL, allowlist destinations, block internal/link-local ranges (169.254.0.0/16, 127.0.0.0/8, RFC 1918), disable unused schemes (`file://`, `gopher://`), and enforce cloud metadata protections (IMDSv2).
+New in v4. When the server fetches a user-supplied URL, allowlist destinations, block internal/link-local ranges, disable unused schemes (`file://`, `gopher://`), and enforce cloud metadata protections (IMDSv2).
+
+Block **both address families** — IPv6 bypasses are the common miss: IPv4 `127.0.0.0/8`, `169.254.0.0/16` (incl. `169.254.169.254` metadata), RFC 1918 (`10/8`, `172.16/12`, `192.168/16`); IPv6 `::1` (loopback), `fe80::/10` (link-local, incl. the IPv6 metadata endpoint `fd00:ec2::254` on AWS), `fc00::/7` (unique-local), and IPv4-mapped forms like `::ffff:169.254.169.254`. **Resolve the hostname and re-check the *resolved* IP** (defeats DNS-rebinding and decimal/octal/`0x` encodings of the address).
 
 In the 2025 Top 10, SSRF is folded into A01 Broken Access Control.
 
@@ -195,5 +197,5 @@ In the 2025 Top 10, SSRF is folded into A01 Broken Access Control.
 [[OWASP-Top-10]], [[OWASP-ASVS]], [[OWASP-Secure-Coding-Practices]], [[Secure-SDLC]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

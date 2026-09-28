@@ -237,6 +237,15 @@ npm update
 }
 ```
 
+### Dependency Confusion & Typosquatting
+
+Two namespace attacks that dependency *scanning* won't catch — they exploit **how the package name resolves**, not a known CVE:
+
+- **Dependency confusion** (Alex Birsan, 2021): if a build pulls from both a public registry and a private one, an attacker publishes a package with your **internal package's name** and a **higher version** to the *public* registry. The resolver picks the higher version → attacker code runs in your build. **Defense:** scope/namespace internal packages (npm scopes, private-registry-first resolution), reserve your internal names publicly, and pin sources explicitly.
+- **Typosquatting**: attacker publishes `reqeusts`, `python-sqlite`, `electorn` etc. — a fat-finger away from a popular package. **Defense:** verify package names, use allow-listed internal mirrors, and lockfile-pin with integrity hashes.
+
+Both defeat "scan for known-vulnerable versions" because the malicious package is *new*, not a flagged CVE — so they belong in build-time policy, not just SCA.
+
 ### Lock Files
 
 **Purpose**: Guarantee reproducible builds; same dependencies every time.
@@ -282,15 +291,16 @@ npm ci  # "clean install" (uses lockfile; never updates)
 
 **Definition**: Vendor uses other vendors (subprocessors) for code.
 
-**Example**:
-```
-Your app
-  └─ uses Flask (Python web framework)
-      └─ uses Werkzeug (request handling)
-          └─ uses MarkupSafe (template safety)
+**Example** (transitive dependency chain):
+
+```mermaid
+flowchart TD
+    A["Your app"] --> B["Flask (web framework)"]
+    B --> C["Werkzeug (request handling)"]
+    C --> D["MarkupSafe (template escaping)"]
 ```
 
-**Risk**: If MarkupSafe has vulnerability, your app affected.
+**Risk**: If MarkupSafe (a *transitive* dep you never chose directly) has a vulnerability, your app is affected — and it won't appear in your direct-dependency list. This is why SBOMs and scanners must resolve the **full transitive tree**, not just top-level `requirements.txt` entries.
 
 **Mitigation**:
 - SBOM includes transitive dependencies (all levels).
@@ -411,8 +421,8 @@ Mismatch? → Tampered with; reject
 
 ## See also
 
-[[Secure-SDLC]], [[Container-Security]], [[Cloud-Security]], [[OWASP-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
+[[Secure-SDLC]], [[Container-Security]], [[Cloud-Security]], [[OWASP-Top-10]], [[OWASP-Proactive-Controls]], [[OWASP-Mobile-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

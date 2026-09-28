@@ -93,6 +93,30 @@ SOC 2 audits against **one or more of these 5 criteria**; most common is **CC (C
 
 ---
 
+## SOC 1 vs. SOC 2 vs. SOC 3
+
+Don't conflate the three AICPA SOC reports:
+
+| Report | Assesses | Audience | Distribution |
+|---|---|---|---|
+| **SOC 1** | Controls over **financial reporting** (ICFR) — for services that affect a customer's financials (e.g., payroll, billing) | Customer's auditors | Restricted |
+| **SOC 2** | The 5 **Trust Services Criteria** (security etc.) | Customers, their security/risk teams | Restricted (NDA) |
+| **SOC 3** | Same TSC as SOC 2, but a **short public summary** with no detailed test results | Anyone — marketing/public seal | Public |
+
+SOC 2 and SOC 3 test the same controls; SOC 3 just omits the confidential detail so it can be posted publicly.
+
+---
+
+## Reading a SOC 2 Report as a Customer (CUECs)
+
+When *you* assess a vendor's SOC 2 (e.g., during third-party risk review or a pentest scoping call), two sections matter most beyond the opinion:
+
+- **Complementary User Entity Controls (CUECs)** — controls *you* (the customer) must operate for the vendor's controls to actually work (e.g., "user entity is responsible for promptly removing terminated users from the app"). A clean vendor report does **not** cover your side of these; unimplemented CUECs are a common real-world gap.
+- **Subservice organizations & the carve-out vs. inclusive method** — if the vendor relies on a sub-processor (e.g., AWS), the report either *carves out* that sub's controls (you must review the sub's own SOC 2 separately) or *includes* them. Know which, or you have a blind spot.
+- **Exceptions/deviations** — even an *unqualified* report can list tested exceptions; read them, don't just check the opinion.
+
+---
+
 ## SOC 2 Audit Process
 
 ### Pre-Audit (Month 0)
@@ -155,8 +179,8 @@ Auditor describes each control, how it operates, and test results:
 ### Access Controls
 
 - Unique user IDs (no shared accounts).
-- MFA for sensitive access (admin, database, ePHI if applicable).
-- Password policy: 12+ characters, complexity, 90-day rotation.
+- MFA for sensitive access (admin, database, production).
+- Password policy: SOC 2 is **not prescriptive** — the auditor tests *your documented* policy for effective operation, not a fixed length/rotation number. Set a reasonable, modern policy (length-first; NIST 800-63B discourages forced periodic rotation) and prove it's enforced.
 - Access reviews: quarterly or annually; managers confirm access is still needed.
 - Offboarding: access revoked within 1 hour of termination.
 - Segregation of duties: developer ≠ approval ≠ deployment.
@@ -274,8 +298,8 @@ SOC 2 reports expire after 1 year. Plan for:
 
 ## See also
 
-[[ISO-27001-27002]], [[NIST-CSF]], [[HITRUST]], [[PCI-DSS-v4]]  ·  Index: [[_Frameworks and Compliance]]
+[[ISO-27001-27002]], [[NIST-CSF]], [[HITRUST]], [[PCI-DSS-v4]], [[FedRAMP]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

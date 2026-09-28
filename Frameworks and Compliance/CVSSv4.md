@@ -26,11 +26,11 @@ Describes how the vulnerability is exploited:
 ### Attack Complexity (AC)
 Describes conditions beyond the attacker's control that must exist for exploitation:
 
-- **Low (L)**: No special conditions required; the attacker can exploit the vulnerability at will.
-- **High (H)**: Requires specific conditions or configurations that are not always present.
+- **Low (L)**: The attacker needn't defeat any security-hardening measure; the exploit works as-is.
+- **High (H)**: Success depends on evading/defeating a built-in security mechanism (see the note below).
 
 > [!note]
-> AC does not account for the skill level of the attacker—only the presence of conditions outside their control (e.g., timing windows, race conditions, or specific system states).
+> **v4.0 redefined AC.** It no longer covers timing/race/system-state (those moved to **AT**). AC:H now means the attack depends on the attacker **evading or defeating a built-in security mechanism** — e.g., defeating ASLR, winning a cryptographic collision, or exfiltrating a target-specific secret/key. If the obstacle is a *deployment condition* (a race window, a MITM position), that's AT:P, not AC:H.
 
 ---
 
@@ -86,16 +86,15 @@ Impact on **other** systems beyond the vulnerable component — the replacement 
 Threat metrics in v4.0 reflect the current state of threats and attack patterns, replacing temporal metrics from v3.
 
 ### Exploit Maturity (E)
-Reflects the current availability and reliability of exploit code or active exploitation:
+Reflects the current availability and reliability of exploit code or active exploitation. **v4.0 collapsed v3.1's four levels into three** — don't carry v3.1 values (Unproven/Functional/High) into a v4.0 vector:
 
-- **Not Defined (X)**: No value assigned (default, lowest impact on score).
-- **Unproven (U)**: No known exploit code or active exploitation.
-- **Proof-of-Concept (P)**: Demonstration code exists but may not be reliable or widely available.
-- **Functional (F)**: Exploit code exists and works in most situations; active exploitation is limited.
-- **High (H)**: Exploit code is widely available, reliable, and actively exploited.
+- **Not Defined (X)**: No value assigned (default; treated as the highest, **Attacked**, for scoring — so leaving E unset does *not* lower the score).
+- **Attacked (A)**: Attacks have been observed in the wild, **or** a functional/reliable exploit or an automation solution is readily available (absorbs v3.1's Functional + High).
+- **Proof-of-Concept (P)**: PoC/demonstration code exists but is not known to be weaponized or reliable.
+- **Unreported (U)**: No known PoC and no reported attacks (absorbs v3.1's Unproven).
 
 > [!note]
-> This reflects the current state of the threat landscape, not the theoretical exploitability.
+> This reflects the current state of the threat landscape, not theoretical exploitability. Because **X defaults to Attacked**, Exploit Maturity can only ever *lower* a score from the base — set it to `P` or `U` when you have evidence the threat is less mature.
 
 ---
 
@@ -107,11 +106,14 @@ Environmental metrics allow customization of the base score to reflect your orga
 Override the base metrics if your environment differs from the default assumptions:
 
 - **Modified Attack Vector (MAV)**: Customize AV if your environment has network segmentation or other controls.
-- **Modified Attack Complexity (MAC)**: Adjust if special conditions are always/never present in your environment.
+- **Modified Attack Complexity (MAC)**: Adjust if built-in security mechanisms make evasion harder/easier than the base assumed.
+- **Modified Attack Requirements (MAT)**: Adjust the AT prerequisite if your deployment always/never presents it.
 - **Modified Privileges Required (MPR)**: Override if privilege levels differ (e.g., service accounts have higher privileges).
 - **Modified User Interaction (MUI)**: Customize if users in your environment are more/less likely to interact.
-- **Modified Scope (MS)**: Adjust if component isolation is stronger/weaker.
-- **Modified Confidentiality/Integrity/Availability (MC/MI/MA)**: Override if impacts differ from base assumptions.
+- **Modified Vulnerable-System impact (MVC/MVI/MVA)** and **Modified Subsequent-System impact (MSC/MSI/MSA)**: Override if impacts differ from base assumptions.
+
+> [!warning]
+> There is **no Modified Scope (MS)** in v4.0 — Scope was removed entirely (see above). Likewise the impact overrides are the two v4.0 sets (`MVC/MVI/MVA` + `MSC/MSI/MSA`), **not** v3.1's single `MC/MI/MA`. A v4.0 vector string carrying `MS:` or `MC:` is malformed.
 
 > [!tip]
 > A vulnerability is remotely exploitable (AV:N) in general, but in your environment it is only exploitable locally due to network segmentation. Set MAV:L to reflect your actual exposure.
@@ -127,6 +129,21 @@ Reflects the importance of each security objective in the operational environmen
 
 > [!note]
 > These values should reflect the actual importance of each security objective (C/I/A) in your specific operational context. Increasing a requirement multiplier increases the final score, reflecting higher organizational risk if that objective is compromised.
+
+---
+
+## Supplemental Metrics — NEW in v4.0
+
+A dedicated group that conveys extra context but has **zero effect on the numeric score** — consumers apply their own weighting. All default to Not Defined (X). Useful in a report to justify prioritization the base score alone can't express (e.g., a low-score bug on a safety-critical system).
+
+| Metric | Values | What it tells the consumer |
+|---|---|---|
+| **Safety (S)** | Negligible, Present | Whether exploitation can cause physical harm to people (IEC 61508 tie-in) — key for OT/ICS and medical. |
+| **Automatable (AU)** | No, Yes | Can steps 1–4 of the kill chain (recon→exploit) be automated/wormed across many targets? |
+| **Recovery (R)** | Automatic, User, Irrecoverable | How the system recovers after exploitation. |
+| **Value Density (V)** | Diffuse, Concentrated | Does compromising one target yield resources from few (diffuse) or many/central (concentrated) parties? |
+| **Vulnerability Response Effort (RE)** | Low, Moderate, High | How hard remediation/response is for the defender. |
+| **Provider Urgency (U)** | Red, Amber, Green, Clear | The supplier's own urgency rating (a standardized channel for vendor advisories). |
 
 ---
 
@@ -186,5 +203,5 @@ Reflects the importance of each security objective in the operational environmen
 [[CVSSv3]], [[CWE-Top-25]], [[SANS-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

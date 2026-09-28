@@ -116,6 +116,26 @@ Reflects the current availability and reliability of exploit code:
 > [!note]
 > This reflects the current availability and reliability of exploit code, not the theoretical exploitability.
 
+### Remediation Level (RL)
+How mature/available a fix is — a well-patched bug scores lower:
+
+- **Not Defined (X)**: No value assigned.
+- **Unavailable (U)**: No fix exists, or one can't be applied.
+- **Workaround (W)**: An unofficial, non-vendor mitigation exists.
+- **Temporary Fix (T)**: An official but temporary fix exists (e.g., a vendor hotfix/advisory).
+- **Official Fix (O)**: A complete vendor-provided patch is available.
+
+### Report Confidence (RC)
+Confidence in the vulnerability's existence and technical details:
+
+- **Not Defined (X)**: No value assigned.
+- **Unknown (U)**: Reports exist but root cause is unconfirmed.
+- **Reasonable (R)**: Significant detail published, but not full confirmation of root cause.
+- **Confirmed (C)**: Confirmed by the vendor or reproduced independently.
+
+> [!note]
+> All three Temporal metrics **only lower or hold** the base score (their default `X` = highest severity). v4.0 dropped RL and RC, keeping only Exploit Maturity — see [[CVSSv4]].
+
 ---
 
 ## Environmental Metrics
@@ -136,10 +156,24 @@ Reflects the importance of each security objective in the operational environmen
 
 ---
 
+## Scoring & Severity Ratings
+
+| Base Score | Severity |
+|---|---|
+| 0.0 | None |
+| 0.1–3.9 | Low |
+| 4.0–6.9 | Medium |
+| 7.0–8.9 | High |
+| 9.0–10.0 | Critical |
+
+**Example vector — unauthenticated RCE, scope changed:** `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H` → Base **10.0 (Critical)**. Note that `S:C` (scope changed) is what pushes this to 10.0; the same metrics with `S:U` score 9.8.
+
+---
+
 ## See also
 
 [[CVSSv4]], [[CWE-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

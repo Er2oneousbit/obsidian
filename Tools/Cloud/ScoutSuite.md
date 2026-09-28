@@ -57,8 +57,9 @@ scout azure --service-principal \
   --client-secret <secret> \
   --tenant <tenant-id>
 
-# Specific subscription
-scout azure --cli --subscription-id <sub-id>
+# Specific subscription(s) — flag is --subscriptions (plural, space-separated), not --subscription-id
+scout azure --cli --subscriptions <sub-id-1> <sub-id-2>
+scout azure --cli --all-subscriptions        # every subscription the creds can reach
 
 # Specific services
 scout azure --cli --services storageaccounts,keyvaults,virtualmachines,sqldatabases
@@ -157,5 +158,5 @@ EOF
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

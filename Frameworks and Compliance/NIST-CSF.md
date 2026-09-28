@@ -125,21 +125,20 @@ Implement procedures and capabilities to restore systems and processes.
 
 ---
 
-## The 22 Categories
+## The 22 Categories (CSF 2.0)
 
-Under the 6 functions, CSF 2.0 organizes into **22 categories** (groups of related activities) and 106 subcategories. Each category is a specific outcome you need to achieve.
+Under the 6 functions, CSF 2.0 organizes into **22 categories** and **106 subcategories**. Each category is a specific outcome. **Note the 2.0 renaming** — the old 1.1 codes (`PR.AC`, `PR.IP`, `ID.RM`, `ID.GV`) are gone; access control is now `PR.AA` and risk-management strategy/governance moved into the new `GV` function:
 
-**Examples (ID category):**
-- **ID.AM-1**: Inventoried physical devices and software assets.
-- **ID.RA-1**: Asset vulnerabilities are identified and recorded.
-- **ID.RM-1**: Risk management processes and procedures.
+| Function | Categories (2.0) |
+|---|---|
+| **GOVERN (GV)** | GV.OC Organizational Context · GV.RM Risk Management Strategy · GV.RR Roles, Responsibilities & Authorities · GV.PO Policy · GV.OV Oversight · GV.SC Cybersecurity Supply Chain Risk Management |
+| **IDENTIFY (ID)** | ID.AM Asset Management · ID.RA Risk Assessment · ID.IM Improvement |
+| **PROTECT (PR)** | PR.AA Identity Management, Authentication & Access Control · PR.AT Awareness & Training · PR.DS Data Security · PR.PS Platform Security · PR.IR Technology Infrastructure Resilience |
+| **DETECT (DE)** | DE.CM Continuous Monitoring · DE.AE Adverse Event Analysis |
+| **RESPOND (RS)** | RS.MA Incident Management · RS.AN Analysis · RS.CO Incident Reporting & Communication · RS.MI Mitigation |
+| **RECOVER (RC)** | RC.RP Incident Recovery Plan Execution · RC.CO Recovery Communication |
 
-**Examples (PR category):**
-- **PR.AC-1**: Identities and access management systems are managed.
-- **PR.DS-1**: Data security policies and procedures.
-- **PR.IP-1**: Security policies and procedures are managed.
-
-**Structure:** Each category has a description, outcomes, and reference implementations (mapped to other standards like NIST 800-53, CIS Controls, ISO 27001).
+Subcategories use the `FN.CAT-##` form (e.g. **PR.AA-01**). Each maps to reference implementations in other standards (NIST 800-53, CIS Controls, ISO 27002).
 
 ---
 
@@ -265,10 +264,10 @@ CSF 2.0 introduces:
 
 CSF is intentionally flexible; the detailed controls are in other frameworks:
 
-**CSF Category PR.AC-1 (Access Control)** maps to:
-- **ISO 27001**: A.4.1, A.5.2, A.6.1.
-- **NIST 800-53**: AC-2, AC-3, AC-4 (dozens of access control controls).
-- **CIS Controls**: Control 5 (Account Management).
+**CSF 2.0 Category PR.AA (Identity Management, Authentication & Access Control)** maps to:
+- **ISO 27002:2022**: A.5.15 Access control, A.5.16 Identity management, A.5.17 Authentication information, A.8.5 Secure authentication.
+- **NIST 800-53**: AC-2, AC-3, IA-2, IA-5 (the access-control and identity/authentication families).
+- **CIS Controls**: Control 5 (Account Management), Control 6 (Access Control Management).
 
 Organizations typically:
 1. Use CSF to structure strategy (what to do).
@@ -320,8 +319,8 @@ CSF is a **living document** — not a checkbox exercise.
 
 ## See also
 
-[[NIST-SP-800-53]], [[ISO-27001-27002]], [[CIS-Controls]], [[Zero-Trust-Architecture]]  ·  Index: [[_Frameworks and Compliance]]
+[[NIST-SP-800-53]], [[ISO-27001-27002]], [[CIS-Controls]], [[Zero-Trust-Architecture]], [[FedRAMP]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-08-17*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

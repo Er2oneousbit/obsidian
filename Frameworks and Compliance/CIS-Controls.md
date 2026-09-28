@@ -452,8 +452,8 @@ Example: Excessive file shares → Control 12 (Network Infrastructure Management
 
 ## See also
 
-[[NIST-CSF]], [[NIST-SP-800-53]], [[ISO-27001-27002]]  ·  Index: [[_Frameworks and Compliance]]
+[[NIST-CSF]], [[NIST-SP-800-53]], [[ISO-27001-27002]], [[PCI-DSS-v4]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-08-17*
+*Updated: 2026-09-27*
 *Model: claude-opus-5*

@@ -174,7 +174,7 @@ spec:
 - Network policies (restrict pod-to-pod communication).
 - RBAC (principle of least privilege).
 - API encryption (TLS, secret encryption at rest).
-- Pod security policies (restrict what containers can do).
+- Pod Security Admission (PSA) enforcing Pod Security Standards (restrict what containers can do — **PodSecurityPolicy was removed in Kubernetes 1.25**; use PSA/PSS or an admission controller like Kyverno/OPA Gatekeeper).
 - Audit logging (log all API calls).
 
 **Example: Network Policy**:
@@ -275,7 +275,7 @@ subjects:
 | **Network Policies** | Restrict container communication | Network policy resources |
 | **RBAC** | Principle of least privilege | Role, RoleBinding resources |
 | **Secret Encryption** | Protect sensitive data at rest | kube-apiserver --encryption-provider-config |
-| **Pod Security Policies** | Restrict pod capabilities | Pod security policy resources |
+| **Pod Security Admission / Standards** | Restrict pod capabilities | PSA labels (privileged/baseline/restricted); Kyverno/OPA Gatekeeper for custom policy — **not** the removed PodSecurityPolicy |
 | **Audit Logging** | Track all API calls | --audit-log-maxage, --audit-log-maxbackup |
 | **API Authentication** | Prevent unauthorized access | Certificates, tokens, authentication plugins |
 
@@ -393,7 +393,7 @@ trivy image --severity CRITICAL gcr.io/myproject/myapp:1.0
 - [ ] Network policies restrict traffic (deny all, allow specific).
 - [ ] RBAC configured (least privilege).
 - [ ] Secrets encrypted at rest.
-- [ ] Pod security policies/standards enforce restrictions.
+- [ ] Pod Security Admission (PSS: baseline/restricted) or Kyverno/OPA Gatekeeper enforce restrictions.
 - [ ] Audit logging enabled.
 - [ ] API authentication/authorization configured.
 
@@ -407,5 +407,5 @@ trivy image --severity CRITICAL gcr.io/myproject/myapp:1.0
 Offensive counterpart: [[Techniques/Container Escape|Container Escape]] (how the misconfigs in the *Container Escape* section above are actually abused).
 
 *Created: 2026-07-17*
-*Updated: 2026-08-28*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

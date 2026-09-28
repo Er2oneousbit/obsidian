@@ -27,7 +27,10 @@
 
 ### 4 Practice Groups
 
-NIST's SSDF defines **4 practice groups**: **PO** (Prepare the Organization), **PS** (Protect the Software — safeguard code from tampering/unauthorized access), **PW** (Produce Well-Secured Software — secure design, code review, testing), and **RV** (Respond to Vulnerabilities). Practices are numbered within each group (e.g. PW.7 = review/analyze human-readable code):
+NIST's SSDF defines **4 practice groups**: **PO** (Prepare the Organization), **PS** (Protect the Software — safeguard code from tampering/unauthorized access), **PW** (Produce Well-Secured Software — secure design, code review, testing), and **RV** (Respond to Vulnerabilities). Practices are numbered within each group (e.g. PW.7 = review/analyze human-readable code).
+
+> [!note]
+> The subsection numbers below (PO.1, PS.1…) group the material by development activity for readability — they are **not** the exact SSDF practice IDs. Note especially that code review, secure coding, and testing are formally **PW** practices in 800-218, even though they're shown here under the build/protect flow. Use NIST SP 800-218 for the authoritative practice-ID list.
 
 #### Group 1: Prepare Organization (PO)
 
@@ -89,23 +92,23 @@ NIST's SSDF defines **4 practice groups**: **PO** (Prepare the Organization), **
 
 ---
 
-#### Group 3: Produce Well-Secured Software (PO)
+#### Group 3: Produce Well-Secured Software (PW)
 
 **Goal**: Verify security before release.
 
-**PO.1 — Security Testing**
+**PW.1 — Security Testing**
 - Test cases for security (injection, auth, access control).
 - Penetration testing (annual).
 - Vulnerability scanning (automated).
 - Test coverage 80%+ of code.
 
-**PO.2 — Hardening**
+**PW.2 — Hardening**
 - Default configurations hardened.
 - Debug features disabled in production.
 - Error messages don't leak info.
 - Security headers configured.
 
-**PO.3 — Release**
+**PW.3 — Release**
 - Release notes include security fixes.
 - Version control clean (no secrets, no debug code).
 - Artifacts verified (signatures, hashes).
@@ -113,23 +116,23 @@ NIST's SSDF defines **4 practice groups**: **PO** (Prepare the Organization), **
 
 ---
 
-#### Group 4: Maintain & Support (MPS)
+#### Group 4: Respond to Vulnerabilities (RV)
 
-**Goal**: Support secure software post-release.
+**Goal**: Identify and remediate vulnerabilities in released software.
 
-**MPS.1 — Incident Response**
+**RV.1 — Incident Response**
 - Security vulnerability reports triaged.
 - Patches developed & tested quickly.
 - Security advisories published.
 - Fixes backported to supported versions.
 
-**MPS.2 — Continuous Monitoring**
+**RV.2 — Continuous Monitoring**
 - Security updates monitored (OS, libraries).
 - Vulnerabilities in production tracked.
 - Customer feedback on security issues.
 - Metrics tracked (time-to-patch, etc.).
 
-**MPS.3 — End-of-Life**
+**RV.3 — End-of-Life**
 - Support timeline communicated (when version stops getting patches).
 - Secure decommissioning of old versions.
 - Archive of historical vulnerabilities.
@@ -455,8 +458,8 @@ Security update process:
 
 ## See also
 
-[[OWASP-SAMM]], [[OWASP-Proactive-Controls]], [[OWASP-Secure-Coding-Practices]], [[Supply-Chain-Security]]  ·  Index: [[_Frameworks and Compliance]]
+[[OWASP-SAMM]], [[OWASP-Proactive-Controls]], [[OWASP-Secure-Coding-Practices]], [[Supply-Chain-Security]], [[Container-Security]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

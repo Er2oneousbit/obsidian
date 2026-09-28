@@ -146,18 +146,22 @@ User login flow:
 **Core Component**: Microsegmentation; treat network as untrusted.
 
 **Traditional**: Firewall at perimeter; internal traffic trusted.
-```
-Internet → Firewall → [Internal Network] (assumed safe)
-                       - All internal traffic allowed
+
+```mermaid
+flowchart LR
+    NET[Internet] --> FW[Perimeter Firewall] --> INT["Internal Network<br/>(assumed safe — all internal traffic allowed)"]
 ```
 
-**Zero Trust**: Every connection verified; segmented networks.
-```
-Internet → Firewall → [Segment 1] (database)
-                      [Segment 2] (web)
-                      [Segment 3] (users)
-                      
-Between segments: explicit firewall rules; no implicit trust
+**Zero Trust**: Every connection verified; segmented networks with explicit rules between zones.
+
+```mermaid
+flowchart LR
+    NET[Internet] --> FW[Policy Enforcement]
+    FW --> S1[(Database segment)]
+    FW --> S2[Web segment]
+    FW --> S3[User segment]
+    S3 -.->|explicit rule + re-verify| S2
+    S2 -.->|explicit rule + re-verify| S1
 ```
 
 **Implementation**:
@@ -367,5 +371,5 @@ Official NIST Zero Trust guideline (2020). Its **seven tenets** are (paraphrased
 [[NIST-SP-800-53]], [[NIST-CSF]], [[Cloud-Security]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

@@ -36,347 +36,110 @@ SAMM 2.0 organizes **15 security practices** into **5 business functions**, each
 | **Operations** | Incident Management · Environment Management · Operational Management |
 
 > [!note]
-> The walkthrough below labels practices loosely (e.g. "Design Reviews", "Secure Coding") — use the table above for the **official** SAMM 2.0 names. Also note: **"Deployment" was a SAMM 1.x business function; in 2.0 it was replaced by "Operations"** (secure-deployment/defect items moved under Implementation), so treat the legacy "Business Function 6: Deployment" heading below as pre-2.0.
+> The walkthrough below follows the **official SAMM 2.0** structure — 5 business functions × 3 practices = 15. (SAMM 1.x had a separate "Deployment" function; in 2.0 its activities moved into Implementation → *Secure Deployment* and into *Operations*.) Each SAMM practice also has two *streams* (A/B) and maturity levels 1–3; the compact 1/2/3 lines below summarize the maturity ladder per practice.
 
-### Business Function 1: Governance (GOV)
+### Governance (GOV)
 
-**Goal**: Strategic security management; oversight, compliance, culture.
+*Cross-cutting strategy, oversight, and enablement.*
 
-#### GOV.1 Policies and Compliance
+#### Strategy & Metrics
+- **1** — A security roadmap exists with a basic set of application-risk metrics.
+- **2** — Roadmap aligned to a measured application-risk profile; metrics gathered across the portfolio.
+- **3** — Strategy and budget are driven by metrics and reviewed continuously.
 
-**Maturity 1 (Managed)**:
-- Information security policies documented.
-- Policies communicated to all staff.
-- Policy compliance monitored.
+#### Policy & Compliance
+- **1** — Security/compliance baseline (policies, standards) identified for applications.
+- **2** — Policies mapped to applications; third parties held to the same requirements.
+- **3** — Compliance measured per application and reported; deviations tracked to closure.
 
-**Maturity 2 (Measured)**:
-- Policies cover all security domains (data protection, incident response, etc.).
-- Metrics track compliance (% staff trained, audits passed, etc.).
-
-**Maturity 3 (Optimized)**:
-- Policies evolved based on incident data, threat landscape changes.
-- Continuous improvement; policies updated quarterly.
-
----
-
-#### GOV.2 Risk Management
-
-**Maturity 1 (Managed)**:
-- Risk assessment process defined (identify threats, vulnerabilities, likelihood, impact).
-- Risks documented; remediation plans created.
-
-**Maturity 2 (Measured)**:
-- Risk assessment performed regularly (annually minimum).
-- Risks tracked over time; trends analyzed.
-- Risk appetite defined (org's risk tolerance).
-
-**Maturity 3 (Optimized)**:
-- Risk assessment integrated into all business decisions.
-- Risk response strategies optimized (accept, mitigate, transfer).
-- Continuous monitoring; risks re-assessed quarterly.
+#### Education & Guidance
+- **1** — Ad-hoc security training available to developers.
+- **2** — Role-based training plus a centralized secure-development knowledge base.
+- **3** — Training effectiveness measured; a security-champions program embeds expertise in teams.
 
 ---
 
-#### GOV.3 Strategy and Metrics
+### Design (DES)
 
-**Maturity 1 (Managed)**:
-- Security strategy defined (goals, priorities, timeline).
-- Business-aligned (security supports business objectives).
+*Getting requirements and architecture right before code.*
 
-**Maturity 2 (Measured)**:
-- Metrics track progress (# vulnerabilities, code review %, pen test coverage).
-- Dashboards; stakeholder reporting.
+#### Threat Assessment
+- **1** — Best-effort application risk classification and simple threat modeling.
+- **2** — Standardized threat-modeling methodology (STRIDE/PASTA) applied to high-risk apps.
+- **3** — Threat models are proactive, tool-assisted, and kept current as the design changes.
 
-**Maturity 3 (Optimized)**:
-- Metrics drive decisions (data-driven security investment).
-- Benchmarking (compare against industry peers).
-- Continuous optimization based on metrics.
+#### Security Requirements
+- **1** — Security requirements captured for high-risk features.
+- **2** — Requirements standardized and derived from business/compliance drivers; supplier requirements included.
+- **3** — Requirements are structured, testable, and traced through to verification.
 
----
-
-### Business Function 2: Design (DES)
-
-**Goal**: Secure application architecture; threat modeling, secure design.
-
-#### DES.1 Design Reviews
-
-**Maturity 1**:
-- Security reviews conducted on major applications (not all).
-- Informal; no standard process.
-
-**Maturity 2**:
-- Formal design review process; all apps reviewed.
-- Checklist-based; standard criteria.
-
-**Maturity 3**:
-- Continuous design review (iterative; reviews during development).
-- Metrics-driven (track issues found vs. exploited; validate effectiveness).
+#### Security Architecture
+- **1** — Teams are aware of secure-design principles and reference components.
+- **2** — Shared, vetted security components/patterns promoted for reuse.
+- **3** — Reference architecture and component security managed and measured across the portfolio.
 
 ---
 
-#### DES.2 Threat Modeling
+### Implementation (IMP)
 
-**Maturity 1**:
-- Threat modeling performed on request (not standard).
-- Informal; documented in variable detail.
+*Building and shipping the software securely.*
 
-**Maturity 2**:
-- Threat modeling standard practice (all critical apps).
-- Structured approach (STRIDE, PASTA, or similar).
-- Documented; traces to mitigations.
+#### Secure Build
+- **1** — Repeatable, documented build process.
+- **2** — Build automated with security checks (SAST, dependency/SCA scanning) and an SBOM produced.
+- **3** — Build integrity enforced (signed artifacts, provenance); gates block on findings. See [[Supply-Chain-Security]].
 
-**Maturity 3**:
-- Continuous threat modeling (updated as design changes).
-- Integrated with development workflow.
-- Automated tools assist process.
+#### Secure Deployment
+- **1** — Deployment process is documented and repeatable.
+- **2** — Deployment automated; secrets injected securely (no secrets in code or images).
+- **3** — Deployment integrity verified; configuration and secrets managed and audited continuously.
 
----
-
-#### DES.3 Secure Coding
-
-**Maturity 1**:
-- Secure coding guidelines published.
-- Limited adoption; voluntary.
-
-**Maturity 2**:
-- Secure coding standards enforced (code review checks against standards).
-- Training mandatory for all developers.
-- Compliance metrics tracked.
-
-**Maturity 3**:
-- Secure coding practices integrated into development workflow.
-- Automated enforcement (linters, SAST tools).
-- Continuous improvement based on incident analysis.
+#### Defect Management
+- **1** — Security defects are collected in one place.
+- **2** — Defects tracked with severity/SLA, fed back to teams, and reported as metrics.
+- **3** — Defect metrics drive process improvement; SLAs measured and enforced.
 
 ---
 
-### Business Function 3: Implementation (IMP)
+### Verification (VER)
 
-**Goal**: Secure coding practices; vulnerability prevention during development.
+*Checking that what was built matches the security intent.*
 
-#### IMP.1 Code Review
+#### Architecture Assessment
+- **1** — Security mechanisms reviewed against requirements for high-risk apps.
+- **2** — Architecture reviewed against the threat model; findings tracked.
+- **3** — Reviews are systematic and measured across the portfolio.
 
-**Maturity 1**:
-- Peer review conducted; focuses on functionality.
-- Security is secondary concern.
+#### Requirements-driven Testing
+- **1** — Ad-hoc testing that controls work (positive tests) and that misuse is blocked (negative tests).
+- **2** — Security test cases derived from requirements and run consistently.
+- **3** — Testing automated against requirements and abuse cases; coverage measured.
 
-**Maturity 2**:
-- Security-focused code reviews (formal process).
-- Security checklist used; reviewers trained on common vulns.
-- All code reviewed before merge.
-
-**Maturity 3**:
-- Continuous code review (automated + manual).
-- SAST tools integrated (automated scanning; findings prioritized).
-- Metrics: # issues found, severity, remediation time.
-
----
-
-#### IMP.2 Security Testing
-
-**Maturity 1**:
-- Basic testing (unit tests); security not primary focus.
-- Ad-hoc penetration testing (not scheduled).
-
-**Maturity 2**:
-- Security-focused test cases (test for injection, XSS, CSRF, etc.).
-- Regular pen testing (annual minimum).
-- Test coverage metrics.
-
-**Maturity 3**:
-- Continuous security testing (DAST in CI/CD).
-- Automated security tests (run on every commit).
-- Red team exercises (annual; simulate advanced attacks).
-- Test coverage 80%+ of codebase.
+#### Security Testing
+- **1** — Automated scanning (SAST/DAST) on high-risk apps.
+- **2** — Scanning integrated into the pipeline; manual pen testing on release; findings triaged. See [[PTES]].
+- **3** — Continuous, tuned automated + manual testing; results feed metrics and release gates.
 
 ---
 
-#### IMP.3 Secure Build
+### Operations (OPS)
 
-**Maturity 1**:
-- Build process documented; version control used.
-- No automated security gates.
+*Keeping software secure in production. (This function replaced SAMM 1.x's "Deployment.")*
 
-**Maturity 2**:
-- Security checks in CI/CD (SAST, dependency scanning).
-- Automated tests; security findings block merge.
-- Build artifacts signed; integrity verified.
+#### Incident Management
+- **1** — A basic capability to detect and respond to incidents exists.
+- **2** — Formal IR plan with roles, playbooks, and drills; incidents analyzed for lessons.
+- **3** — Detection/response measured and continuously improved, with partial automation.
 
-**Maturity 3**:
-- Comprehensive security checks in pipeline.
-- Automated scanning, testing, code review gates.
-- Build metrics; failures analyzed; trends tracked.
+#### Environment Management
+- **1** — Patching and hardening of the deployment environment happen best-effort.
+- **2** — Consistent hardening baselines (CIS) and a patch cadence; configuration audited.
+- **3** — Environment managed as code with continuous compliance and drift remediation.
 
----
-
-### Business Function 4: Verification (VER)
-
-**Goal**: Testing, validation of security controls; quality assurance.
-
-#### VER.1 Security Testing
-
-**Maturity 1**:
-- Security testing performed; not integrated into standard QA.
-- Manual testing; variable coverage.
-
-**Maturity 2**:
-- Security testing part of QA process (all releases).
-- Test cases documented; repeatable.
-- Severity levels defined; critical issues block release.
-
-**Maturity 3**:
-- Continuous security testing (automated, part of CI/CD).
-- Metrics: coverage, false positive rate, time-to-remediate.
-
----
-
-#### VER.2 Penetration Testing
-
-**Maturity 1**:
-- Ad-hoc penetration tests (not scheduled).
-- Test scope varies; results not formally documented.
-
-**Maturity 2**:
-- Annual penetration testing (external firm or internal team).
-- Formal scope, rules of engagement, reporting.
-- Remediation tracked; re-test confirms fixes.
-
-**Maturity 3**:
-- Continuous penetration testing (ongoing red team exercises).
-- Metrics: findings, time-to-remediate, trend analysis.
-- Lessons learned applied to defensive controls.
-
----
-
-#### VER.3 Resilience Testing
-
-**Maturity 1**:
-- Disaster recovery testing; limited scope.
-- Not integrated into security program.
-
-**Maturity 2**:
-- Disaster recovery + incident response tested regularly.
-- Formal test plans; documented results.
-- RTO/RPO validated.
-
-**Maturity 3**:
-- Continuous resilience testing (chaos engineering).
-- Metrics: recovery time, data loss, business impact.
-
----
-
-### Business Function 5: Operations (OPS)
-
-**Goal**: Secure operations; incident response, monitoring, patch management.
-
-#### OPS.1 Incident Management
-
-**Maturity 1**:
-- Incident response plan exists; ad-hoc execution.
-- No formal training; inconsistent response.
-
-**Maturity 2**:
-- Formal incident response plan (roles, procedures, escalation).
-- Team trained; annual drills.
-- Incidents documented; trends analyzed.
-
-**Maturity 3**:
-- Continuous incident response improvement.
-- Metrics: detection time, response time, remediation time.
-- Automated response (automated playbooks).
-- Lessons learned integrated into defensive controls.
-
----
-
-#### OPS.2 Environment Management
-
-**Maturity 1**:
-- Systems configured according to baselines; informal.
-- Documentation variable; hard to audit.
-
-**Maturity 2**:
-- Hardening standards documented (CIS Benchmarks).
-- Configuration scanning (automated audits).
-- Remediation tracked; metrics monitored.
-
-**Maturity 3**:
-- Infrastructure as Code (declarative; tracked in version control).
-- Continuous compliance monitoring.
-- Automated remediation (drift corrected automatically).
-
----
-
-#### OPS.3 Operational Enablement
-
-**Maturity 1**:
-- Documentation exists; training ad-hoc.
-- Security guidance scattered; not centralized.
-
-**Maturity 2**:
-- Security runbooks created (step-by-step procedures).
-- Training mandatory; compliance tracked.
-- Documentation centralized; accessible.
-
-**Maturity 3**:
-- Automation reduces manual procedures (ChatOps, automated workflows).
-- Continuous improvement (feedback loops from incidents).
-
----
-
-### Business Function 6: Deployment (DEP)
-
-**Goal**: Secure release management; supply chain security.
-
-#### DEP.1 Release Management
-
-**Maturity 1**:
-- Releases documented; tracking basic.
-- No formal approval process.
-
-**Maturity 2**:
-- Formal release process (approval, testing, sign-off).
-- Release notes include security changes.
-- Rollback procedures documented.
-
-**Maturity 3**:
-- Continuous deployment (automated; frequent small releases).
-- Automated testing gates (security checks before release).
-- Metrics: release frequency, time-to-production, incident rate.
-
----
-
-#### DEP.2 Provisioning
-
-**Maturity 1**:
-- Deployment manual; configuration varies.
-- No version control for infrastructure.
-
-**Maturity 2**:
-- Infrastructure as Code (declarative; tracked in git).
-- Automated provisioning (Terraform, Ansible).
-- Configuration compliance verified.
-
-**Maturity 3**:
-- Continuous provisioning (auto-scaling, self-healing).
-- Infrastructure tested automatically (pre-production).
-- Metrics: provisioning time, configuration drift, security incidents.
-
----
-
-#### DEP.3 Decommissioning
-
-**Maturity 1**:
-- Systems decommissioned on ad-hoc basis.
-- Data disposal inconsistent; sometimes insecure.
-
-**Maturity 2**:
-- Formal decommissioning process (data destruction verification).
-- Disposal procedures documented.
-- Metrics: systems decommissioned, data securely destroyed.
-
-**Maturity 3**:
-- Automated decommissioning (infrastructure cleanup).
-- Data destruction automated and verified (with cryptographic proof).
+#### Operational Management
+- **1** — Basic data-protection and system-decommissioning practices.
+- **2** — Data lifecycle (classification, retention, secure disposal) and legacy/EOL management formalized.
+- **3** — Operational processes measured and continuously improved.
 
 ---
 
@@ -471,5 +234,5 @@ Typical progression for organization (not all functions mature at same rate):
 [[Secure-SDLC]], [[OWASP-Proactive-Controls]], [[OWASP-Secure-Coding-Practices]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

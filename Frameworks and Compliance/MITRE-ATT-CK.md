@@ -149,7 +149,7 @@ Each technique includes:
 - Email gateway: block .exe/.scr attachments; sandbox suspicious files.
 - User training: phishing awareness; don't open unknown attachments.
 - Detection: Email logs show suspicious sender, attachment scanned, user reports phishing.
-- Monitoring**: Monitor for execution of attachment (process creation logging).
+- Monitoring: Monitor for execution of attachment (process creation logging).
 
 ---
 
@@ -163,23 +163,12 @@ Each technique includes:
 
 **Example Attack Chain** (based on real incident):
 
-```
-T1598: Phishing for Information
-  └─ T1598.003: Phishing - Spearphishing Link
-     └─ Attacker sends targeted email with link to fake login page
-     └─ Victim enters credentials; attacker captures them
-
-T1078: Valid Accounts
-  └─ Attacker uses compromised credentials to log into O365
-
-T1566: Phishing
-  └─ Attacker sends phishing from victim's email account to others in org (spearphishing via service)
-
-T1113: Screen Capture
-  └─ Attacker installs hidden screenshot tool via Outlook macro
-
-T1119: Automated Exfiltration
-  └─ Screenshots automatically exfiltrated to attacker C2
+```mermaid
+flowchart TD
+    A["T1598.003 Spearphishing Link<br/>targeted email → fake login page, capture creds"] --> B["T1078 Valid Accounts<br/>log into O365 with captured creds"]
+    B --> C["T1566.003 Spearphishing via Service<br/>phish others in the org from victim's account"]
+    C --> D["T1113 Screen Capture<br/>hidden screenshot tool via Outlook macro"]
+    D --> E["T1119 Automated Exfiltration<br/>screenshots → attacker C2"]
 ```
 
 ---
@@ -213,36 +202,37 @@ T1119: Automated Exfiltration
 
 ### Chain 1: Phishing → Malware → Persistence → C2
 
-```
-T1598: Phishing for Information → capture email addresses
-T1566.001: Phishing - Spearphishing Attachment → send malware
-T1204: User Execution → victim opens attachment
-T1059: Command & Scripting Interpreter → malware runs
-T1547.001: Boot or Logon Autostart Execution → achieve persistence
-T1071.001: Application Layer Protocol → C2 over HTTPS
-T1041: Exfiltration Over C2 Channel → steal data
+```mermaid
+flowchart TD
+    A["T1598 Phishing for Information<br/>harvest email addresses"] --> B["T1566.001 Spearphishing Attachment<br/>send malware"]
+    B --> C["T1204 User Execution<br/>victim opens attachment"]
+    C --> D["T1059 Command & Scripting Interpreter<br/>malware runs"]
+    D --> E["T1547.001 Registry Run Keys / Startup Folder<br/>persistence"]
+    E --> F["T1071.001 Application Layer Protocol<br/>C2 over HTTPS"]
+    F --> G["T1041 Exfiltration Over C2 Channel<br/>steal data"]
 ```
 
 ### Chain 2: Compromised Credentials → Lateral Movement → Data Theft
 
-```
-T1586: Compromise Accounts → phishing/brute force steals credentials
-T1078: Valid Accounts → attacker logs in with stolen creds
-T1087: Account Discovery → enumerate other accounts
-T1021: Remote Services (SSH, RDP) → move to other systems
-T1113: Screen Capture → observe what's on target system
-T1005: Data Staged → copy sensitive files to attacker staging area
-T1048: Exfiltration Over Alternative Protocol → steal via FTP/SCP
+```mermaid
+flowchart TD
+    A["T1566 Phishing / T1110 Brute Force<br/>obtain target credentials"] --> B["T1078 Valid Accounts<br/>log in with stolen creds"]
+    B --> C["T1087 Account Discovery<br/>enumerate other accounts"]
+    C --> D["T1021 Remote Services (SSH/RDP)<br/>move to other systems"]
+    D --> E["T1113 Screen Capture<br/>observe target system"]
+    E --> F["T1074 Data Staged<br/>copy sensitive files to staging area"]
+    F --> G["T1048 Exfiltration Over Alternative Protocol<br/>FTP/SCP"]
 ```
 
 ### Chain 3: Supply Chain Compromise → Persistence → Impact
 
-```
-T1195: Supply Chain Compromise → attacker compromises software vendor
-T1566.002: Phishing - Spearphishing Link → malicious update via vendor
-T1195.002: Supply Chain - Software Supply Chain → vendor app auto-updates with backdoor
-T1547.004: Boot or Logon Autostart Execution - Winlogon Helper DLL → persistence
-T1529: System Shutdown/Reboot → ransomware attack; wipe backups; demand ransom
+```mermaid
+flowchart TD
+    A["T1195.002 Software Supply Chain Compromise<br/>backdoor a vendor's build/update"] --> B["T1195 Supply Chain Compromise<br/>backdoored update auto-installs at target"]
+    B --> C["T1547.004 Winlogon Helper DLL<br/>persistence"]
+    C --> D["T1486 Data Encrypted for Impact<br/>ransomware encryption"]
+    D --> E["T1490 Inhibit System Recovery<br/>delete shadow copies / wipe backups"]
+    E --> F["T1529 System Shutdown/Reboot<br/>force reboot into encrypted state, demand ransom"]
 ```
 
 ---
@@ -318,22 +308,19 @@ Not all tactics are equally represented in real attacks. Based on incident data:
 
 ### Tactic Order (Typical Attack Progression)
 
-```
-Reconnaissance → Resource Development → Initial Access
-    ↓
-Execution → Persistence → Privilege Escalation
-    ↓
-Defense Evasion → Credential Access → Discovery
-    ↓
-Lateral Movement → Collection → Command & Control
-    ↓
-Exfiltration → Impact
+```mermaid
+flowchart TD
+    A[Reconnaissance] --> B[Resource Development] --> C[Initial Access]
+    C --> D[Execution] --> E[Persistence] --> F[Privilege Escalation]
+    F --> G[Defense Evasion] --> H[Credential Access] --> I[Discovery]
+    I --> J[Lateral Movement] --> K[Collection] --> L[Command & Control]
+    L --> M[Exfiltration] --> N[Impact]
 ```
 
 ### Top 10 Most-Exploited Techniques (2023–2024 incident data)
 
 1. **T1566**: Phishing (spearphishing email).
-2. **T1203**: Exploitation of Public-Facing Application (unpatched web app).
+2. **T1190**: Exploit Public-Facing Application (unpatched web app). *(Don't confuse with T1203 Exploitation for Client Execution — that's a malicious doc/browser exploit run on a victim endpoint.)*
 3. **T1110**: Brute Force (password spray, dictionary attack).
 4. **T1098**: Account Manipulation (add backdoor account).
 5. **T1021**: Remote Services (SSH, RDP lateral movement).
@@ -345,12 +332,29 @@ Exfiltration → Impact
 
 ---
 
+## ATT&CK vs. Related Models
+
+Testers get asked to place ATT&CK against neighbouring frameworks — the distinction matters when mapping findings:
+
+| Model | What it is | Relationship to ATT&CK |
+|---|---|---|
+| **Lockheed Martin Cyber Kill Chain** | 7 linear phases (Recon → Weaponization → Delivery → Exploitation → Installation → C2 → Actions on Objectives) | Coarser and strictly linear. ATT&CK's tactics are a finer, non-linear superset — a Kill Chain phase maps to several ATT&CK tactics. Use Kill Chain for exec narrative, ATT&CK for technical mapping. |
+| **MITRE D3FEND** | Knowledge graph of *defensive* countermeasures | The blue-team counterpart; D3FEND techniques are linked back to the ATT&CK techniques they counter. |
+| **MITRE Engage** | Adversary engagement / deception planning | Complements ATT&CK by mapping deception operations to the techniques they disrupt. |
+| **CAPEC** | Attack *patterns* (how a weakness is exploited) | More abstract than ATT&CK techniques; CAPEC ↔ CWE ↔ ATT&CK cross-reference each other. |
+
+> [!tip]
+> ATT&CK describes *observed adversary behaviour*; the Kill Chain describes an *idealized intrusion lifecycle*. If a client asks "which kill-chain stage is this," answer in Kill Chain terms but cite the T-ID for precision.
+
+---
+
 ## Resources
 
 - **attack.mitre.org**: Main site; browse tactics/techniques, navigate by platform.
-- **ATT&CK Navigator**: attack.mitre.org/matrices/enterprise (visualize techniques).
+- **ATT&CK Navigator**: attack.mitre.org/matrices/enterprise (visualize techniques, build coverage heat-maps).
+- **Atomic Red Team** (Red Canary): a per-technique library of small, executable tests mapped to ATT&CK IDs — the standard way to *validate detection* for a specific technique during/after a pentest.
 - **ATT&CK Threat Actor Profiles**: Real-world groups (APT28, Lazarus, etc.) with mapped techniques.
-- **STIX/TAXII**: ATT&CK exported in standard format; integrates with security tools (Splunk, CrowdStrike, Elastic, etc.).
+- **STIX/TAXII**: ATT&CK exported in standard format; integrates with security tools (Splunk, CrowdStrike, Elastic, etc.). See [[Threat-Intelligence-Frameworks]].
 
 ---
 
@@ -360,5 +364,5 @@ Exfiltration → Impact
 [[Threat-Intelligence-Frameworks]], [[PTES]], [[NIST-SP-800-115]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

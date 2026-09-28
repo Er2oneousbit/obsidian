@@ -25,23 +25,39 @@
 
 ## Cloud Shared Responsibility Model
 
+```mermaid
+flowchart TB
+    subgraph P["☁️ Provider secures — 'security OF the cloud'"]
+        P1[Physical data centers]
+        P2[Host OS & hypervisor]
+        P3[Provider network backbone]
+    end
+    subgraph C["🔒 Customer secures — 'security IN the cloud'"]
+        C1[Application & code]
+        C2[IAM: identities, roles, keys]
+        C3[Data classification & encryption]
+        C4[Network config, security groups, firewall]
+        C5[Guest-OS patches on customer-managed instances]
+    end
+    P --> C
 ```
-AWS/Azure/GCP Provider Responsibility:
-├─ Physical infrastructure security
-├─ Network security
-├─ Host operating system security
-└─ Hypervisor security
 
-Customer Responsibility:
-├─ Application security
-├─ Identity and access management (IAM)
-├─ Data classification and encryption
-├─ Network configuration
-├─ Firewall rules
-└─ Operating system patches (on customer-managed instances)
-```
+**Key Point**: The provider secures the infrastructure; the customer secures what they put on it — and **the customer's misconfiguration, not a provider breach, is the cause of nearly every cloud incident.**
 
-**Key Point**: Provider secures infrastructure, but customers must secure applications and data.
+### The boundary shifts by service model
+
+Responsibility isn't fixed — it slides as you move up the stack. Know which model the target uses before scoping:
+
+| Layer | On-Prem | IaaS (EC2) | PaaS (Lambda, App Service) | SaaS (M365) |
+|---|---|---|---|---|
+| Data & access | **You** | **You** | **You** | **You** |
+| Application | You | You | You | Provider |
+| Runtime / middleware | You | You | Provider | Provider |
+| Guest OS & patching | You | **You** | Provider | Provider |
+| Virtualization / host | You | Provider | Provider | Provider |
+| Physical | You | Provider | Provider | Provider |
+
+**Data and identity/access are *always* the customer's** — no service model outsources those. That's why IAM and data exposure dominate cloud findings.
 
 ---
 
@@ -472,5 +488,5 @@ aws cloudtrail create-event-selector --trail-name MyTrail --event-selectors Read
 [[Container-Security]], [[Supply-Chain-Security]], [[FedRAMP]], [[Zero-Trust-Architecture]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

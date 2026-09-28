@@ -132,7 +132,7 @@ API_KEY = "AKIA...HARDCODED"
 # Android SharedPreferences storing plaintext session token
 ```
 
-**Prevention**: Use platform-secure storage (Keychain, Keystore, EncryptedSharedPreferences); encrypt at rest; exclude from backups; don't cache sensitive data.
+**Prevention**: Use platform-secure storage (iOS Keychain, Android Keystore — hardware-backed where available); encrypt at rest. **Explicitly exclude secrets from auto-backup** (`android:allowBackup="false"` or backup-rules XML on Android; exclude from iCloud/iTunes backup on iOS) — otherwise "secure" on-device data leaks via cloud backup. Don't cache sensitive data. *(Note: Android's `EncryptedSharedPreferences` was deprecated by Google in 2025 — prefer Keystore directly; see [[OWASP-MASVS]].)*
 
 ---
 
@@ -173,5 +173,5 @@ API_KEY = "AKIA...HARDCODED"
 [[OWASP-MASVS]], [[OWASP-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

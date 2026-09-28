@@ -76,6 +76,9 @@ Controls how PHI can be used and disclosed.
 
 Technical and administrative safeguards for ePHI.
 
+> [!important] **Required vs. Addressable — the core of the Security Rule**
+> Every implementation specification is flagged **Required** or **Addressable**. "Addressable" does **not** mean optional: the entity must implement it *if reasonable and appropriate*, or document why it isn't and adopt an equivalent alternative. Skipping an addressable spec without that documented risk-based justification is itself a violation. Encryption of ePHI, for example, is *addressable* — but "we chose not to encrypt and here's nothing" fails an audit. This is the distinction OCR probes first, and the **Security Risk Assessment (SRA)** under §164.308(a)(1) — a documented, periodic risk analysis of all ePHI — is the single most-cited gap in OCR enforcement actions.
+
 ### Administrative Safeguards
 
 **Security Management Process:**
@@ -139,10 +142,10 @@ Technical and administrative safeguards for ePHI.
 - Logs reviewed regularly for suspicious activity.
 
 **Access Controls:**
-- Unique user IDs for all ePHI access.
-- Password requirements: minimum 8 characters, change every 90 days.
-- Multi-factor authentication recommended (not required, but best practice).
-- Emergency access procedures documented (break-glass accounts).
+- Unique user IDs for all ePHI access (**required**).
+- Password management is an **addressable** safeguard — HIPAA mandates *no* specific length or rotation interval; the org sets a reasonable policy (and NIST 800-63B now discourages forced periodic rotation). Any "8 chars / 90 days" figure is org policy, not a HIPAA rule.
+- Multi-factor authentication recommended (not explicitly required; strong access controls acceptable).
+- Emergency access procedures documented (break-glass accounts) — **required**.
 
 **Integrity Controls:**
 - Mechanisms to ensure ePHI is not improperly altered or destroyed.
@@ -245,7 +248,7 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 | Criminal violations (knowingly obtaining/disclosing PHI) | Up to $250,000 fine + 10 years imprisonment | Selling patient data, unauthorized access |
 
 > [!note]
-> OCR (Office for Civil Rights) has actively pursued enforcement; average settlement is $1-10M.
+> Enforcement is by **HHS OCR** (Office for Civil Rights). Penalties fall into **four tiers** (Unknowing → Reasonable Cause → Willful Neglect-Corrected → Willful Neglect-Uncorrected); the per-year caps shown are the original HITECH figures and are **inflation-adjusted upward each year** (the top-tier cap now exceeds $2M). Resolution amounts vary enormously — from ~$25K for small providers to the record **$16M Anthem settlement (2018)** — so don't quote an "average."
 
 ---
 
@@ -255,5 +258,5 @@ Required actions if unsecured PHI is lost, stolen, or accessed.
 [[HITRUST]], [[GDPR]], [[GLBA]], [[FERPA]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

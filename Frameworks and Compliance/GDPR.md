@@ -213,7 +213,7 @@ Certain data gets **extra protection** — stricter rules on processing:
 
 ### Supervisory Authorities
 - Each EU country has a data protection authority (DPA).
-- Example: Germany = Bundesdatenschutzamt (BfD).
+- Example: Germany = the federal **BfDI** (plus 16 state-level DPAs); Ireland = the DPC (regulates most Big Tech EU HQs).
 - Users can file complaints with their national DPA.
 - DPA investigates and can issue fines.
 
@@ -225,8 +225,8 @@ Certain data gets **extra protection** — stricter rules on processing:
 | **Upper tier** (Art. 83(5)) | Up to €20M or 4% of global annual turnover | Breaching core principles, legal basis, consent, or data-subject rights |
 
 **Notable fines:**
-- Amazon: €746M (2021, Luxembourg CNPD) — personalized advertising without valid consent; largest GDPR fine to date.
-- Meta (Facebook): €1.2B (2023, Irish DPC) — unlawful EU→US personal-data transfers.
+- Meta (Facebook): €1.2B (2023, Irish DPC) — unlawful EU→US personal-data transfers; **largest GDPR fine to date.**
+- Amazon: €746M (2021, Luxembourg CNPD) — personalized advertising without valid consent.
 - Google: €50M (2019, France's CNIL) — lack of transparency and no valid consent for ad personalization.
 
 ---
@@ -284,6 +284,7 @@ Certain data gets **extra protection** — stricter rules on processing:
 ## GDPR for Penetration Testers
 
 **Security testing & GDPR:**
+- **Article 32 (Security of Processing)** is the hook: it requires "a process for regularly testing, assessing and evaluating the effectiveness" of security measures, and names pseudonymization + encryption. This is what makes a pentest a *compliance* activity, not just good practice — cite Art. 32 when framing findings for an EU client.
 - Penetration testing requires explicit legal authorization (rules don't change for testing).
 - If pentest involves personal data, document the legal basis (e.g., client authorization, contract clause).
 - Use pseudonymized/anonymized data for testing when possible.
@@ -298,5 +299,5 @@ Certain data gets **extra protection** — stricter rules on processing:
 [[HIPAA]], [[GLBA]], [[FERPA]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

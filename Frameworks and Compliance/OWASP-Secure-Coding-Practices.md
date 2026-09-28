@@ -16,14 +16,17 @@
 - **Scope**: Design, development, testing practices; language-agnostic (applies to Java, Python, C, Node.js, etc.).
 
 **Relation to Other Standards**:
-- **OWASP Testing Guide** = testing checklist (find vulns after code is written).
+- **OWASP WSTG** (Web Security Testing Guide) = testing checklist (find vulns after code is written).
 - **OWASP Secure Coding Practices** = prevent vulns before code is written (proactive).
 - **NIST SP 800-218 SSDF** = secure software development framework (similar scope, more prescriptive).
 - **CWE Top 25** = common software weaknesses (preventable with secure coding practices).
 
 ---
 
-## The 12 Secure Coding Practice Areas
+## Key Secure Coding Practice Areas (walkthrough)
+
+> [!note]
+> The official OWASP Quick Reference Guide defines **14** checklist sections (listed in *What is this?* above — note it also includes **Session Management**, **Data Protection**, and **System Configuration** as distinct areas). The walkthrough below details the highest-impact areas with code examples and folds a few together (e.g. session management under Authentication); item 12 "Security Build Process" is added as practical CI/CD guidance, not an official section. Use the 14-item list for completeness.
 
 ### 1. Input Validation
 
@@ -621,5 +624,5 @@ jobs:
 [[OWASP-Proactive-Controls]], [[Secure-SDLC]], [[CWE-Top-25]], [[OWASP-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

@@ -149,7 +149,7 @@ The HITRUST CSF organizes **156 controls** into **14 control categories**, **19 
 - Hardening: remove unnecessary services, secure defaults.
 
 **16 – Threat & Vulnerability Management**
-- Patch management: critical within 15 days, standard within 30 days.
+- Patch management: risk-based remediation timeframes keyed to severity (e.g. critical/high ~30 days, others 60–90) — set per your HITRUST risk factors, not a fixed 15-day rule.
 - Security alerts: process for reviewing/triaging vendor advisories.
 - Malware protection: anti-malware on all systems, real-time scanning.
 
@@ -244,7 +244,7 @@ Results are scored on a maturity model (policy → process → implemented → m
 | Email unencrypted | Critical | Deploy S/MIME or appliance encryption |
 | Logs not centralized | Medium | Deploy SIEM; parse logs daily |
 | Vendors not assessed | High-risk | Audit vendor controls; request attestation |
-| Patch delays | Critical | Automate patching; 15-day SLA |
+| Patch delays | Critical | Automate patching; risk-based SLA (critical/high ~30 days) |
 | No incident response plan | Critical | Write IRP; test quarterly |
 | Contractor access not logged | Medium | Deploy access logging; monthly review |
 | Configuration drift | Medium | Deploy configuration management tool |
@@ -271,5 +271,5 @@ Results are scored on a maturity model (policy → process → implemented → m
 [[HIPAA]], [[ISO-27001-27002]], [[NIST-CSF]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

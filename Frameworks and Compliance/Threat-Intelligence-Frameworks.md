@@ -271,14 +271,15 @@ STIX represents threats as objects:
 **TAXII** is a protocol for sharing STIX objects.
 
 **How it works**:
-```
-Threat Intel Provider (e.g., CISA)
-  ├─ Hosts TAXII Server (receives/serves threat intel)
-  │
-Subscribers (e.g., your SOC)
-  ├─ Subscribe to TAXII feeds (e.g., "Malware hashes")
-  ├─ Receive STIX objects in standardized format
-  ├─ Ingest into SIEM/firewall/tools automatically
+
+```mermaid
+flowchart TD
+    P["Threat Intel Provider<br/>(e.g. CISA)"] --> S["TAXII Server<br/>hosts collections / channels of STIX objects"]
+    S -->|poll / subscribe| SOC["Subscriber (your SOC)"]
+    SOC --> ING["Ingest STIX objects (standardized)"]
+    ING --> FW[Firewall: block C2 IPs]
+    ING --> SIEM[SIEM: alert on hashes]
+    ING --> EDR[Endpoint: quarantine samples]
 ```
 
 ### TAXII Channels
@@ -293,23 +294,10 @@ Subscribers (e.g., your SOC)
 
 ### TAXII Workflow
 
-```
-1. Provider publishes STIX objects to TAXII server
-   - STIX bundle containing malware samples, C2 IPs, etc.
-
-2. Subscriber polls TAXII server (or subscribes)
-   - Receives updates in STIX format
-
-3. Subscriber ingests STIX into tools
-   - Firewall: Block C2 IPs
-   - SIEM: Alert on malware hashes
-   - Endpoint: Quarantine malware files
-   - IDS: Detect based on patterns
-
-4. Automated response
-   - No manual translation needed
-   - Same format everywhere
-```
+1. **Provider publishes** STIX objects to a TAXII server — a STIX bundle of malware samples, C2 IPs, etc.
+2. **Subscriber polls** the TAXII server (or subscribes) and receives updates in STIX format.
+3. **Subscriber ingests** STIX into tools — firewall blocks C2 IPs, SIEM alerts on hashes, endpoint quarantines samples, IDS detects on patterns.
+4. **Automated response** — no manual translation needed; the same format everywhere.
 
 ### Real-World Examples
 
@@ -328,6 +316,33 @@ MITRE publishes ATT&CK framework as STIX
 - Tools can query: "What techniques does Lazarus Group use?"
 - Integrate with SIEM (alert on ATT&CK techniques)
 ```
+
+---
+
+## Three Tiers of Threat Intelligence
+
+Intel is consumed at different altitudes; match the product to the audience:
+
+| Tier | Timeframe | Audience | Example |
+|---|---|---|---|
+| **Strategic** | Long-term | Execs, board | Which threat actors target our sector and why; geopolitical risk |
+| **Operational** | Campaign-level | SOC leads, IR, threat hunters | An active campaign's TTPs and infrastructure; who's likely to hit us next quarter |
+| **Tactical** | Immediate | SOC analysts, tools | IoCs to block right now — hashes, IPs, domains |
+
+## Pyramid of Pain
+
+David Bianco's **Pyramid of Pain** ranks indicator types by *how much it costs the adversary to change them* — which is why detecting on TTPs beats blocking hashes:
+
+```mermaid
+flowchart TD
+    A["TTPs — Tough! (adversary must relearn how they operate)"] --> B["Tools — Challenging"]
+    B --> C["Network/Host Artifacts — Annoying"]
+    C --> D["Domain Names — Simple"]
+    D --> E["IP Addresses — Easy"]
+    E --> F["Hash Values — Trivial (one byte change defeats it)"]
+```
+
+**Takeaway:** blocking a hash inconveniences the attacker for minutes; detection built around their **TTPs** (map to [[MITRE-ATT-CK]]) forces them to change *how they work*. Spend detection effort near the top of the pyramid.
 
 ---
 
@@ -390,14 +405,15 @@ Targets: Financial sector, government, cryptocurrency
 
 TTPs (Techniques & Tactics):
 - Initial access: Spearphishing (T1566), Supply chain compromise (T1195)
-- Execution: PowerShell (T1086), Command line (T1059)
-- Persistence: Scheduled tasks (T1053), Registry (T1547)
-- Lateral movement: Pass-the-hash (T1550), SSH (T1021)
+- Execution: PowerShell (T1059.001), Windows Command Shell (T1059.003)
+- Persistence: Scheduled tasks (T1053), Registry Run keys (T1547.001)
+- Lateral movement: Pass-the-hash (T1550.002), SSH (T1021.004)
 - Exfiltration: Over C2 (T1041)
 
-Malware:
-- Emotet (banking trojan)
-- MATA (remote access trojan)
+Malware (attributed to Lazarus):
+- MATA (cross-platform RAT framework)
+- AppleJeus (crypto-theft)
+- BLINDINGCAN / Manuscrypt (RATs)
 
 Infrastructure:
 - C2 servers: 192.0.2.1, 192.0.2.2, ...
@@ -478,5 +494,5 @@ Infrastructure:
 [[MITRE-ATT-CK]], [[PTES]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

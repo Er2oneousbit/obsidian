@@ -167,7 +167,7 @@ Pacu> run eks__enum
 Pacu> run eks__collect_tokens
 ```
 
-> [!note] **Module names verified against the repo (2026-08).** Older guides use `s3__enum` / `secretsmanager__enum` / `ssm__enum` / `cloudformation__enum` / `ebs__enum_snapshots_unauth` — **none of those exist**. Confirm any module with `Pacu> search <keyword>` before `run`.
+> [!note] **Module names verified against the repo `pacu/modules/` tree (re-checked 2026-09-27).** Older guides invent `s3__enum` / `secretsmanager__enum` / `ssm__enum` / `cloudformation__enum` — **those don't exist** (use `s3__download_bucket` / `secrets__enum` / `systemsmanager__download_parameters` / `cloudformation__download_data`). **Correction:** `ebs__enum_snapshots_unauth` **DOES exist** (an earlier note/memory wrongly listed it as fabricated) — it enumerates snapshots exposed publicly/cross-account. Confirm any module with `Pacu> search <keyword>` before `run`.
 
 ---
 
@@ -242,9 +242,11 @@ Pacu> data Lambda    # check environmentVariables fields
 Pacu> run cloudtrail__download_event_history   # get your own activity logs first
 Pacu> run detection__disruption               # disable GuardDuty, CloudTrail, Config
 
-# EBS snapshots — enumerate, then download/explore for creds (no ebs__enum_snapshots_unauth module)
-Pacu> run ebs__enum_volumes_snapshots
-Pacu> run ebs__explore_snapshots
+# EBS snapshots — enumerate, then download/explore for creds
+Pacu> run ebs__enum_volumes_snapshots           # snapshots on volumes in the account
+Pacu> run ebs__enum_snapshots_unauth            # snapshots shared public / cross-account (real module)
+Pacu> run ebs__explore_snapshots                # mount & search a snapshot for secrets
+Pacu> run ebs__download_snapshots
 ```
 
 ---
@@ -308,5 +310,5 @@ aws sts get-caller-identity
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

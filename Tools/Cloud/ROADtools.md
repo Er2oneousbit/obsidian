@@ -63,7 +63,8 @@ roadrecon gatherall                     # Graph + MS Graph + more, in one pass
 
 ```bash
 # Launch the web UI (browse at http://127.0.0.1:5000) — this is how you view/query data.
-# There is NO `roadrecon dump` subcommand; use the GUI or query roadrecon.db directly.
+# (`roadrecon dump` also works — it's an ALIAS for `gather`, verified in main.py; likewise
+#  azdump=azgather, pimdump=pimgather, dumpall=gatherall. There's no separate export command.)
 roadrecon gui
 roadrecon gui -d /tmp/tenant.db         # specify DB file
 
@@ -228,5 +229,5 @@ roadtx prtauth --prt <prt> --prt-sessionkey <key> \
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

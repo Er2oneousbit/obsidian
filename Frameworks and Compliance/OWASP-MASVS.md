@@ -70,7 +70,7 @@ Verification depth is now chosen via **MAS profiles** rather than per-requiremen
 **Example finding**:
 - **Category**: MASVS-STORAGE (profile MAS-L1).
 - **Issue**: Password stored in cleartext in Android `SharedPreferences`.
-- **Fix**: Use `EncryptedSharedPreferences` / Android Keystore.
+- **Fix**: Store the secret via the **Android Keystore** (hardware-backed where available). Note: `EncryptedSharedPreferences` (androidx.security:security-crypto / Jetpack Security) was **deprecated by Google in 2025** — don't recommend it as the target state; prefer Keystore directly, or Tink for app-layer crypto. Better still, avoid storing the password at all (use a token).
 
 ---
 
@@ -99,5 +99,5 @@ Verification depth is now chosen via **MAS profiles** rather than per-requiremen
 [[OWASP-Mobile-Top-10]], [[OWASP-ASVS]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

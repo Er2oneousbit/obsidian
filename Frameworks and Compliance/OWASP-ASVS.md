@@ -74,6 +74,7 @@ The three levels are **cumulative** — L2 includes all of L1, L3 includes all o
 **During the test**:
 - Test each applicable requirement; record pass/fail with evidence.
 - Rate failures by severity (Critical/High/Medium/Low).
+- **Pair ASVS with the OWASP WSTG** (Web Security Testing Guide): ASVS tells you *what* to verify, the WSTG gives the *procedure* for testing each area (WSTG test IDs like `WSTG-ATHN-*` map onto ASVS authentication requirements). ASVS = requirements, WSTG = methodology.
 
 **Report**:
 - Map each finding to its ASVS chapter/requirement so remediation is precise and re-testable.
@@ -97,5 +98,5 @@ The three levels are **cumulative** — L2 includes all of L1, L3 includes all o
 [[OWASP-Top-10]], [[OWASP-Proactive-Controls]], [[OWASP-MASVS]], [[CWE-Top-25]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

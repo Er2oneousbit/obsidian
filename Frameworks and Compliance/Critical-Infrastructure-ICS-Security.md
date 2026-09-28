@@ -28,29 +28,48 @@
 
 ### Traditional (Air-Gapped)
 
+```mermaid
+flowchart LR
+    IT[Corporate IT Network] -.->|air gap: manual data transfer| OT
+    subgraph OT[OT Network — isolated from internet]
+        S[SCADA master] --- P[PLC / RTU] --- F[Field devices]
+    end
 ```
-[Corporate IT Network] --- [Air Gap] --- [OT Network]
-                                         ├─ SCADA master
-                                         ├─ PLC/RTU
-                                         └─ Field devices
-                                         
-- Operator console at air gap (manual data transfer)
-- OT isolated from internet
-- Risk: Insider threat, USB-based malware
-```
+
+*Risk: insider threat, USB-borne malware (the air gap is bridged by media, not the network).*
 
 ### Modern (IT/OT Converged)
 
+```mermaid
+flowchart LR
+    NET[Internet] --> C[Corporate Network] --> D[Industrial DMZ] --> OT
+    subgraph OT[OT Network]
+        S[SCADA] --- P[PLC] --- F[Field devices]
+    end
 ```
-[Internet] → [Corporate Network] → [DMZ] → [OT Network]
-                                           ├─ SCADA
-                                           ├─ PLC
-                                           └─ Field devices
 
-- Remote monitoring/management (internet-accessible)
-- Real-time data to corporate systems
-- Risk: Internet-connected; vulnerable to remote attacks
+*Remote monitoring and real-time data to corporate systems — but now internet-reachable and exposed to remote attack.*
+
+---
+
+## The Purdue Model (segmentation reference)
+
+The **Purdue Enterprise Reference Architecture** is the canonical way to segment OT — attacks descend level by level, and the **Level 3.5 Industrial DMZ (IDMZ)** is the single most important control boundary (no direct IT↔OT traffic crosses it).
+
+```mermaid
+flowchart TB
+    L5["Level 5 — Enterprise network (email, ERP, internet)"]
+    L4["Level 4 — Site business & logistics (IT)"]
+    IDMZ["Level 3.5 — Industrial DMZ (IDMZ)<br/>the IT↔OT break: brokers, patch/AV proxies, jump hosts"]
+    L3["Level 3 — Site operations (historian, MES, domain services)"]
+    L2["Level 2 — Area supervisory control (HMI, SCADA servers)"]
+    L1["Level 1 — Basic control (PLCs, RTUs, DCS controllers)"]
+    L0["Level 0 — Physical process (sensors, actuators, motors, valves)"]
+    L5 --> L4 --> IDMZ --> L3 --> L2 --> L1 --> L0
 ```
+
+- **Levels 4–5 = IT**, **Levels 0–3 = OT**, **3.5 = the DMZ between them.** An attacker who lands in enterprise IT must traverse the IDMZ to reach control systems — which is exactly what segmentation testing probes.
+- Maps onto **ISA/IEC 62443 zones and conduits**: each level (or group) is a *zone*, and the permitted flows between them are *conduits*.
 
 ---
 
@@ -438,5 +457,5 @@ Physical impact (pump spins wrong speed, valve opens incorrectly)
 [[NIST-CSF]], [[NIST-SP-800-53]], [[Zero-Trust-Architecture]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

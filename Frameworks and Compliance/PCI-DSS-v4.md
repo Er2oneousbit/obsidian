@@ -24,6 +24,11 @@ PCI-DSS keeps its long-standing structure: **12 core requirements** grouped unde
 > [!note]
 > The **cardholder data environment (CDE)** — systems that store/process/transmit account data plus anything connected to them — defines PCI scope. Effective segmentation shrinks the CDE and therefore the assessment scope.
 
+> [!important] **Account Data = CHD + SAD** (the core scoping distinction)
+> - **Cardholder Data (CHD):** PAN (Primary Account Number), cardholder name, expiration date, service code. The **PAN is the defining element** — where PAN is stored/processed/transmitted, PCI scope applies.
+> - **Sensitive Authentication Data (SAD):** full track data, card verification code (CVV/CVC/CID), and PIN/PIN block. **SAD must never be stored after authorization** — not even encrypted (Req 3.3). This is the single hardest line in PCI.
+> - Rendering **PAN unreadable** (truncation, tokenization, strong crypto) is what most "protect stored data" work is about; the other CHD elements have lighter handling rules.
+
 ---
 
 ## Goal 1 — Build and Maintain a Secure Network and Systems
@@ -63,7 +68,7 @@ PCI-DSS keeps its long-standing structure: **12 core requirements** grouped unde
 - Users cannot disable or alter anti-malware without documented, time-bound authorization.
 
 ### Requirement 6: Develop and Maintain Secure Systems and Software
-- Patch management: install security patches within **30 days**; **critical/high** patches within **15 days** (compensating controls + risk analysis if not).
+- Patch management (Req 6.3.3): install **critical/high-security** patches within **one month (30 days)** of release; all other applicable patches within an appropriate time frame (PCI's example: ~3 months).
 - Secure SDLC: developer training, code review, and protection against common attacks (injection, etc.).
 - Public-facing web apps protected by an automated technical solution (WAF) or reviewed regularly.
 
@@ -147,7 +152,7 @@ PCI-DSS keeps its long-standing structure: **12 core requirements** grouped unde
 - Storing SAD (CVV, full track, PIN) after authorization — never permitted.
 - Weak transmission crypto (< TLS 1.2, null ciphers) or unvalidated certificates.
 - Poor segmentation, leaving the entire network in scope as the CDE.
-- Missing the 15-day critical-patch window; relying on compensating controls instead of fixing root cause.
+- Missing the 30-day critical/high patch window (Req 6.3.3); relying on compensating controls instead of fixing root cause.
 - No targeted risk analysis to justify frequency-based controls (a v4.0 requirement).
 
 
@@ -156,5 +161,5 @@ PCI-DSS keeps its long-standing structure: **12 core requirements** grouped unde
 [[ISO-27001-27002]], [[SOC-2-Type-II]], [[CIS-Controls]], [[NIST-SP-800-53]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*

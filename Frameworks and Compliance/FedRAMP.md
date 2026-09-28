@@ -179,11 +179,13 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 - **Breach notification**: FedRAMP PMO and affected agencies within 24 hours (or faster for active attacks).
 - **Incident investigation**: root cause analysis, preventive actions.
 
-### Patch Management
-- **Critical patches**: applied within 15 days.
-- **High-priority patches**: within 30 days.
-- **Patch testing**: validated in staging before production.
-- **Patch tracking**: documented; evidence retained.
+### Patch Management / Vulnerability Remediation
+FedRAMP ConMon (RA-5) remediation SLAs are keyed to scan severity, **not** a separate "critical/15-day" tier:
+- **High findings**: remediate within **30 days**.
+- **Moderate findings**: within **90 days**.
+- **Low findings**: within **180 days**.
+- Known-Exploited-Vulnerability (CISA KEV) items inherit BOD 22-01's tighter deadlines when they apply.
+- **Patch testing**: validated in staging before production; tracking documented and evidence retained in the POA&M.
 
 ### Vulnerability Management
 - **Monthly vulnerability scans** (both cloud provider and independent scanning).
@@ -244,8 +246,8 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 - HHS: ATO per agency.
 - Result: Cloud provider needed separate authorizations for each agency (expensive, slow).
 
-**Post-FedRAMP**: One P-ATO covers all agencies.
-- Agencies recognize FedRAMP P-ATO; issue own ATO based on P-ATO.
+**Post-FedRAMP**: One FedRAMP authorization package is reused across agencies.
+- An agency sponsor grants the ATO; other agencies issue their own ATO by reviewing the same package (the "do once, use many times" model). *(Historically the JAB issued a single P-ATO covering all agencies — that path ended in 2024; see Overview.)*
 - Significant cost savings and time reduction.
 
 **Current Status**: FedRAMP now widely accepted; many agencies require FedRAMP authorization for cloud procurement (especially Moderate/High-impact systems).
@@ -255,7 +257,7 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 ## FedRAMP Marketplace & Authorized Systems
 
 **FedRAMP Marketplace** (fedramp.gov/marketplace) lists all authorized cloud systems:
-- **Authorized** systems (P-ATO issued): AWS, Azure, Google Cloud, ServiceNow, Salesforce, Microsoft 365, etc.
+- **Authorized** systems (ATO issued): AWS, Azure, Google Cloud, ServiceNow, Salesforce, Microsoft 365, etc.
 - **In Process**: systems undergoing assessment.
 - **Withdrawn**: systems that failed or chose not to pursue.
 
@@ -293,11 +295,18 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
    - **No incident response capability** (can't respond to breach in 24 hours).
    - **Unvetted subprocessors** (vendor using unauthorized third party).
 
-3. **Assessment Timing**:
+3. **Mandatory attack vectors** — FedRAMP publishes a *Penetration Test Guidance* that fixes the scope; a 3PAO test must cover, at minimum:
+   - **External → target system** (untrusted internet to the CSP's boundary).
+   - **External → corporate** (the CSP's own corporate network, as a path into the system).
+   - **Tenant → tenant** and **tenant → management plane** — the two isolation tests unique to multi-tenant cloud; proving one customer can't reach another's data or the CSP control plane is the crux of a FedRAMP pentest.
+   - **Mobile application → target system** (only if the offering ships a mobile app).
+   - **Social engineering / spear-phishing** against CSP personnel — **mandatory**, not optional, unlike most commercial scopes.
+
+4. **Assessment Timing**:
    - **Pre-authorization**: Pentest informs SSP/SAR; helps identify gaps before 3PAO assessment.
    - **Continuous monitoring**: Annual pentest as part of ongoing compliance.
 
-4. **Reporting**:
+5. **Reporting**:
    - Use NIST 800-53 control language (FedRAMP stakeholders understand it).
    - Map findings to specific controls (AC-2 Account Management failure, etc.).
    - Frame as compliance risk + security risk.
@@ -320,7 +329,7 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 ### Authorization Phase (Months 9–12)
 - [ ] Submit to FedRAMP PMO.
 - [ ] FedRAMP PMO review.
-- [ ] P-ATO issued.
+- [ ] Agency ATO issued (reusable across agencies).
 
 ### Continuous Monitoring (Years 2–3)
 - [ ] Monthly scans, incident reporting.
@@ -347,5 +356,5 @@ FedRAMP baselines (Low/Moderate/High) directly map to NIST SP 800-53 controls. S
 [[NIST-SP-800-53]], [[NIST-CSF]], [[Cloud-Security]], [[SOC-2-Type-II]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

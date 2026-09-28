@@ -18,7 +18,7 @@
 
 **Relation to Other Standards:**
 - **NIST SP 800-115** = U.S. government technical testing standard (more detailed, very technical).
-- **OWASP Testing Guide** = web application testing checklist.
+- **OWASP WSTG** (Web Security Testing Guide, formerly "OWASP Testing Guide") = web application testing checklist/methodology.
 - **PTES** = overall engagement framework (scope → testing → reporting).
 
 ---
@@ -485,7 +485,7 @@ Only if explicitly authorized and IR testing is goal
 |---|---|---|---|
 | **PTES** | Comprehensive penetration testing methodology | Pentesters, clients | Medium (actionable, not exhaustive) |
 | **NIST SP 800-115** | Technical testing standard (federal systems) | U.S. government contractors | Very detailed (300+ pages) |
-| **OWASP Testing Guide** | Web application testing checklist | Web developers, QA, pentesters | Very detailed (web-specific) |
+| **OWASP WSTG** (Web Security Testing Guide) | Web application testing checklist | Web developers, QA, pentesters | Very detailed (web-specific) |
 | **Mitre ATT&CK** | Adversary tactics/techniques (post-exploitation focus) | Red teamers, defenders | Comprehensive (post-breach framework) |
 
 ---
@@ -543,8 +543,8 @@ Only if explicitly authorized and IR testing is goal
 
 ## See also
 
-[[NIST-SP-800-115]], [[MITRE-ATT-CK]], [[OWASP-Top-10]]  ·  Index: [[_Frameworks and Compliance]]
+[[NIST-SP-800-115]], [[MITRE-ATT-CK]], [[OWASP-Top-10]], [[Threat-Intelligence-Frameworks]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-5*

@@ -270,8 +270,8 @@ Ranks 5, 7, 8, 11, 13, 14, 16 are memory-corruption classes — largely absent i
 
 ## See also
 
-[[SANS-Top-25]], [[OWASP-Top-10]], [[CVSSv4]]  ·  Index: [[_Frameworks and Compliance]]
+[[SANS-Top-25]], [[OWASP-Top-10]], [[CVSSv4]], [[CVSSv3]], [[OWASP-ASVS]]  ·  Index: [[_Frameworks and Compliance]]
 
 *Created: 2026-07-17*
-*Updated: 2026-07-21*
+*Updated: 2026-09-27*
 *Model: claude-opus-4-8*
