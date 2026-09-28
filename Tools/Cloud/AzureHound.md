@@ -4,8 +4,8 @@
 
 Go-based BloodHound data collector for Entra ID and Azure RBAC — the cloud counterpart to on-prem SharpHound. Walks the tenant's users, groups, applications, service principals, devices, directory roles, and Azure resource role assignments, then outputs BloodHound-compatible JSON for attack-path analysis. Pairs with [[Tools/Cloud/BARK|BARK]]: collect the graph with AzureHound, identify a path in BloodHound, execute each hop with the matching BARK primitive.
 
-**Source:** https://github.com/BloodHoundAD/AzureHound
-**Install:** download a prebuilt binary from releases, or `go install github.com/bloodhoundad/azurehound/v2@latest`
+**Source:** https://github.com/SpecterOps/AzureHound (moved from BloodHoundAD; old URL redirects)
+**Install:** download a prebuilt binary from the SpecterOps/AzureHound releases (most reliable), or build from source with `go build`
 
 ```bash
 # Collect everything with credentials
@@ -26,5 +26,5 @@ Go-based BloodHound data collector for Entra ID and Azure RBAC — the cloud cou
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-07-27*
-*Model: claude-sonnet-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*
