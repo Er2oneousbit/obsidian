@@ -46,8 +46,37 @@ mv kerbrute_linux_amd64 /usr/local/bin/kerbrute
 | `-o <file>` | Output results to file |
 | `-t <n>` | Threads (default 10) |
 | `-v` | Verbose — show all attempts including failures |
-| `--safe` | Abort if >10% of accounts return UNKNOWN — indicates lockout risk |
+| `--safe` | Abort **all** threads the instant any account comes back locked-out (stops you locking out the rest) |
 | `--delay <ms>` | Delay between attempts in milliseconds |
+| `--hash-file <file>` | Save any **AS-REP hashes** captured during `userenum` (pre-auth-disabled accounts); otherwise they're just logged |
+
+---
+
+## How It Works & What It Captures
+
+Kerbrute sends a bare **AS-REQ** (no pre-auth data) per username and reads the KDC's error:
+
+| KDC response | Meaning | Kerbrute verdict |
+|---|---|---|
+| `KDC_ERR_C_PRINCIPAL_UNKNOWN` | user doesn't exist | invalid — skipped |
+| `KDC_ERR_PREAUTH_REQUIRED` | user exists, pre-auth on | **VALID USERNAME** |
+| an **AS-REP** (a TGT) comes back | user exists **and pre-auth is OFF** | **VALID + AS-REP hash captured** |
+
+That third case is a free win: `userenum` also **AS-REP roasts** every account with
+"Do not require Kerberos pre-authentication" set — feed those to
+[[Tools/Auth/hashcat\|hashcat]] `-m 18200` / [[Tools/Auth/john the ripper\|john]]
+`--format=krb5asrep`. Save them cleanly with `--hash-file`:
+
+```bash
+kerbrute userenum -d CORP.LOCAL --dc 10.10.10.10 usernames.txt \
+  -o valid_users.txt --hash-file asrep.hashes
+```
+
+> [!note] **Detection footprint** — `userenum` produces AS-REQ traffic (event **4768**) but
+> **no bad-password / 4625 logon failures**, which is why it's stealthier than LDAP or
+> SMB enumeration. `passwordspray`/`bruteuser`, by contrast, generate Kerberos pre-auth
+> **failures (event 4771, code 0x18)** and **increment the lockout counter** — hence `--safe`
+> and `--delay`.
 
 ---
 
@@ -153,5 +182,5 @@ grep "VALID LOGIN" spray_results.txt
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

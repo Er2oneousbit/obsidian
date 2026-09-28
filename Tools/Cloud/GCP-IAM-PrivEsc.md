@@ -234,10 +234,10 @@ curl -H "Metadata-Flavor: Google" \
 
 ---
 
-> [!note] **See also** — GCP misconfiguration auditing (the enumeration counterpart) is [[Tools/Cloud/ScoutSuite|ScoutSuite]]; RhinoSec's AWS framework is [[Tools/Cloud/Pacu|Pacu]] (no GCP equivalent exists, hence the gcloud-first approach here).
+> [!note] **See also** — the CLI tool reference (auth, metadata-token theft, secret/storage looting, startup-script RCE) is [[Tools/Cloud/gcloud-cli|gcloud-cli]]. GCP offensive tooling: [[Tools/Cloud/gcpwn|gcpwn]] (NetSPI framework — its `exploit_*` modules automate the paths below), [[Tools/Cloud/gcp_scanner|gcp_scanner]] (what a set of creds can reach), [[Tools/Cloud/GCPBucketBrute|GCPBucketBrute]] (GCS buckets → `setIamPolicy` privesc), [[Tools/Cloud/PurplePanda|PurplePanda]] (cross-platform attack-path graph). Misconfig auditing: [[Tools/Cloud/ScoutSuite|ScoutSuite]]. AWS framework peer: [[Tools/Cloud/Pacu|Pacu]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

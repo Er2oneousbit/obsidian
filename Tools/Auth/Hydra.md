@@ -10,7 +10,7 @@ Fast, parallelized login brute-forcer supporting 50+ protocols. The standard too
 > [!warning] **Account Lockout** — Always verify lockout policy before attacking. Password spraying (one password, many users) is far safer than per-account brute force on production systems. Use `-t 1` and add delays (`-W`) when stealth matters.
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section, for IMAP/legacy-auth spraying against M365; [[Services/Remote Access/R-Services|R-Services]] — Hydra's `rlogin://`, `rexec://`, and `rsh://` modules are the only practical way to brute-force rsh (Nmap has no `rsh-brute` script); [[Services/Database Services/PostgreSQL|PostgreSQL]] — online guessing against 5432 via `postgres://`; [[Services/Database Services/Redis|Redis]] — online guessing against 6379 via `redis://`; [[Services/Email/IMAP|IMAP]] & [[Services/Email/POP3|POP3]] — mailbox spray via `imap://`/`pop3://` (`-S` for SSL); [[Services/Email/SMTP|SMTP]] — AUTH brute/spray on submission via `smtp://`/`smtps://`; [[Services/File Xfer/FTP|FTP]] — online guessing against 21 via `ftp://`; [[Services/Web Services/Jenkins|Jenkins]] — brute `j_acegi_security_check` login; [[Services/Web Services/Jira|Jira]] — spray `/rest/auth/1/session`; [[Services/Web Services/phpMyAdmin|phpMyAdmin]] — brute the `pma_username`/`pma_password` login; [[Services/Web Services/Tomcat|Tomcat]] — brute Manager HTTP-basic auth; [[Services/Web Services/WebLogic|WebLogic]] — brute `/console/j_security_check`.
-> Also [[Services/File Xfer/SMB|SMB]] — online brute via smb://; [[Services/Local System Management/WinRM|WinRM]] — online brute via winrm://; [[Services/Network Management/SIP-VoIP|SIP-VoIP]] — SIP extension password brute via sip:// (alt to svcrack); [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — ASA SSL VPN portal / ASDM brute (`https-post-form`/`https-get`); [[Services/Remote Access/RDP|RDP]] — online brute via `rdp://` (crowbar handles NLA better); [[Services/Remote Access/SSH|SSH]] — online brute via `ssh://`; [[Services/Remote Access/Telnet|Telnet]] — online brute via `telnet://`; [[Services/Remote Access/VNC|VNC]] — password brute via `vnc://`.
+> Also [[Services/File Xfer/SMB|SMB]] — online brute via smb://; [[Services/Local System Management/WinRM|WinRM]] — **no Hydra module exists**; brute via NetExec `nxc winrm` instead; [[Services/Network Management/SIP-VoIP|SIP-VoIP]] — SIP extension password brute via sip:// (alt to svcrack); [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — ASA SSL VPN portal / ASDM brute (`https-post-form`/`https-get`); [[Services/Remote Access/RDP|RDP]] — online brute via `rdp://` (crowbar handles NLA better); [[Services/Remote Access/SSH|SSH]] — online brute via `ssh://`; [[Services/Remote Access/Telnet|Telnet]] — online brute via `telnet://`; [[Services/Remote Access/VNC|VNC]] — password brute via `vnc://`.
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Login Brute Forcing|Login Brute Forcing]], [[Techniques/Network Device Pentesting|Network Device Pentesting]], [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2).
 > Also used in [[Class notes/HTB Academy/CWES Claude/Broken Auth|Broken Auth]] (CWES) — HTTP login-form brute force / spraying.
@@ -101,8 +101,8 @@ hydra -l administrator -x 6:8:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 
 ```bash
 hydra -l administrator -P passwords.txt smb://10.10.10.10
-hydra -L users.txt -p 'Password123' smb://10.10.10.10 -m SMB2    # SMB2
-hydra -L users.txt -p 'Password123' smb://10.10.10.10 -m SMB3    # SMB3
+# SMB2 is a separate service name (not a -m option); there is no smb3 module
+hydra -L users.txt -p 'Password123' smb2://10.10.10.10
 ```
 
 > [!note] For SMB spraying at scale across a subnet, **CrackMapExec / NetExec** is more reliable and gives richer output.
@@ -124,9 +124,15 @@ hydra -l admin -P passwords.txt 10.10.10.10 http-post-form \
 hydra -l admin -P passwords.txt -s 443 https://10.10.10.10 http-post-form \
   "/login:username=^USER^&password=^PASS^:F=Incorrect"
 
-# POST form with additional headers (e.g. CSRF token — must be static or pre-fetched)
+# Custom HTTP header (H=) — e.g. an XHR/API marker or Content-Type. The header's
+# own colon is escaped as \:  . ^USER^/^PASS^/^RAND_IP^ substitute inside it too.
 hydra -l admin -P passwords.txt 10.10.10.10 http-post-form \
-  "/login:username=^USER^&password=^PASS^&_token=abc123:F=Invalid"
+  "/login:username=^USER^&password=^PASS^:F=Invalid:H=X-Requested-With\: XMLHttpRequest"
+
+# Pre-fetch a session cookie from another page each round (C=). By default the
+# module already re-grabs a cookie from the form URL itself before every attempt.
+hydra -l admin -P passwords.txt 10.10.10.10 http-post-form \
+  "/login:username=^USER^&password=^PASS^:F=Invalid:C=/login"
 
 # HTTP GET form
 hydra -l admin -P passwords.txt 10.10.10.10 http-get-form \
@@ -140,6 +146,8 @@ hydra -l admin -P passwords.txt -s 8080 http-get://10.10.10.10/
 ```
 
 > [!tip] **Finding form parameters** — Intercept the login request in Burp Suite to identify the exact parameter names, the endpoint path, and a reliable failure/success string. The failure string (`F=`) is usually more reliable than a success string.
+
+> [!warning] **CSRF tokens Hydra can't handle** — `C=` grabs *cookies*, but Hydra cannot parse a one-time CSRF **token** out of the response body and echo it back in the next POST. If the form embeds a rotating hidden `_token` / `authenticity_token`, every Hydra attempt fails. Use **ffuf** (grabs a fresh token per request), **Burp Intruder** with a session-handling macro, or a short `requests` script instead.
 
 ### Mail Protocols
 
@@ -183,8 +191,9 @@ hydra -P /usr/share/seclists/Discovery/SNMP/common-snmp-community-strings.txt sn
 # LDAP
 hydra -L users.txt -P passwords.txt ldap3://10.10.10.10
 
-# WinRM
-hydra -L users.txt -P passwords.txt http-get://10.10.10.10:5985/wsman
+# WinRM — Hydra has NO winrm module, and http-get can't satisfy WinRM's
+# Negotiate/NTLM auth. Use NetExec instead:
+#   nxc winrm 10.10.10.10 -u users.txt -p passwords.txt
 ```
 
 ---
@@ -253,9 +262,10 @@ hydra -R
 | Redis | `redis` |
 
 ```bash
-# List all supported modules
-hydra -U <module>     # show module-specific help
-hydra --list-modules  # list all modules (newer versions)
+# List all supported modules — run hydra with no args; the bottom
+# "Supported services:" line enumerates every module
+hydra
+hydra -U <module>     # show module-specific help (e.g. hydra http-post-form -U)
 ```
 
 ---
@@ -274,5 +284,5 @@ hydra --list-modules  # list all modules (newer versions)
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

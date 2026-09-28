@@ -42,6 +42,15 @@ Invoke-AzHybridWorkerExtraction  # creds/certs from an Automation Hybrid Runbook
 Get-AzKeyVaultSecretsREST
 Get-AZStorageKeysREST
 Get-AzAutomationAccountCredsREST
+
+# More verified credential/data grabbers (2026-09-28, confirmed in Az/ and Misc/)
+Get-AzAppConfiguration                    # App Configuration store — connection strings / feature secrets
+Get-AzureVMExtensionSettings              # VM extension config incl. protectedSettings (often creds)
+Get-AzureVMExtensionSettingsWireServer    # same, pulled via the host WireServer agent
+Get-AzAppRegistrationManifest             # app manifests (may reveal secrets/permissions)
+Get-AzAutomationCustomModules             # custom Automation modules (can hide creds/backdoors)
+Get-AzBatchAccountData                    # Batch account data/keys
+Get-AzMachineLearningData                 # AML workspace data
 ```
 
 ---
@@ -114,5 +123,5 @@ Invoke-EnumerateAzureSubDomains -Base <company-name>    # *.blob/file/table/queu
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

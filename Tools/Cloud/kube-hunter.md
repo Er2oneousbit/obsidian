@@ -10,9 +10,13 @@ Aqua Security's Kubernetes vulnerability scanner — probes a cluster from the o
 **Install:** `pip install kube-hunter` or run the container image.
 
 ```bash
-kube-hunter --remote <target>            # external scan
+kube-hunter --remote <target>            # external scan of one host
+kube-hunter --cidr 10.0.0.0/24           # sweep a subnet for cluster components
 kube-hunter --pod                        # from inside a compromised pod
-kube-hunter --remote <target> --active   # active exploitation attempts (intrusive)
+kube-hunter --interface                  # scan all local interfaces (broad, from a pod/node)
+kube-hunter --remote <target> --active   # active exploitation attempts (intrusive!)
+kube-hunter --mapping                    # just map components found, don't run hunters
+kube-hunter --remote <target> --report json --log warning > kh.json   # machine-readable output
 ```
 
 > [!note] **See also**
@@ -22,5 +26,5 @@ kube-hunter --remote <target> --active   # active exploitation attempts (intrusi
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-22*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

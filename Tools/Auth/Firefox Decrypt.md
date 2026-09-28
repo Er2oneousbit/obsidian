@@ -8,8 +8,9 @@ Python tool that extracts saved passwords from Mozilla Firefox, Waterfox, Thunde
 **Install:** `git clone https://github.com/unode/firefox_decrypt` — requires Python 3 and NSS libraries
 
 ```bash
-# NSS library dependency (usually pre-installed on Kali)
-apt install python3-nss    # if missing
+# firefox_decrypt loads the native libnss3 via ctypes — it needs NO Python NSS
+# binding. Install the library itself only if missing (it's usually on Kali):
+apt install libnss3        # Debian/Ubuntu  (Arch/Gentoo: the 'nss' package)
 ```
 
 ---
@@ -90,8 +91,13 @@ python3 firefox_decrypt.py --format pass /path/to/profile/
 # Filter results — grep for specific keywords
 python3 firefox_decrypt.py /path/to/profile/ | grep -C2 -i "vpn\|corp\|domain\|admin"
 
-# Non-interactive — skip profiles with master passwords
-python3 firefox_decrypt.py --no-interactive /path/to/profile/
+# JSON / tabular (TSV) formats also available
+python3 firefox_decrypt.py --format json /path/to/profile/
+
+# Non-interactive (scripting) — no prompts at all. Pick the profile with -c N
+# (1-based); if there's a master password, feed it on stdin.
+python3 firefox_decrypt.py -n -c 1 /path/to/profiles/
+echo 'MasterPass123' | python3 firefox_decrypt.py -n -c 1 /path/to/profiles/
 ```
 
 ---
@@ -127,7 +133,7 @@ python3 firefox_decrypt.py --format csv /path/to/profile/ > ff_creds.csv
 grep -i "vpn\|citrix\|rdweb\|outlook\|admin\|jira\|confluence\|gitlab" ff_creds.csv
 ```
 
-> [!note] **Related tools** — LaZagne (`lazagne.py browsers`) covers Firefox plus Chrome, IE, and other browsers in one run and is often the better choice on Windows targets when you want all browser creds at once.
+> [!note] **Related tools** — [[Tools/Auth/LaZagne|LaZagne]] (`laZagne.exe browsers`) covers Firefox plus Chrome, IE, and other browsers in one run and is often the better choice on Windows targets when you want all browser creds at once.
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
@@ -135,5 +141,5 @@ grep -i "vpn\|citrix\|rdweb\|outlook\|admin\|jira\|confluence\|gitlab" ff_creds.
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

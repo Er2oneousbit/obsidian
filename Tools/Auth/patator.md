@@ -38,7 +38,7 @@ patator <module> <module_options> 0=<wordlist> -x ignore:<filter>
 | `-x ignore:size=1234` | Ignore responses of this byte size |
 | `-x ignore:egrep='(failed\|error\|invalid)'` | Regex match |
 
-> [!tip] **Calibrate before you filter.** Run patator once with **no `-x`** and read the results table — every attempt prints its `code` and `size`. The failures all share one code/size; that's what you feed to `-x ignore:`. The hit is the row that breaks the pattern. Getting the filter right is the whole skill with patator — don't guess it, observe it. Combine conditions within one action with a comma (**both** must match): `-x ignore:code=302,fgrep='Location: /home.html'`; use multiple `-x` for OR: `-x ignore:code=200 -x ignore:fgrep='CSRF'`. To **terminate the whole run** on the first hit use `-x quit:code=302`; `-x free=user:code=302` instead stops testing more passwords **for that one user** (per-value early-exit, like Hydra's `-f`) and moves on. Valid conditions: `code`, `size`, `time`, `mesg`, `fgrep`, `egrep` — **`time`** matches response latency (`time=3-`), the lever for timing-based user enumeration when the body is identical on hit and miss.
+> [!tip] **Calibrate before you filter.** Run patator once with **no `-x`** and read the results table — every attempt prints its `code` and `size`. The failures all share one code/size; that's what you feed to `-x ignore:`. The hit is the row that breaks the pattern. Getting the filter right is the whole skill with patator — don't guess it, observe it. Combine conditions within one action with a comma (**both** must match): `-x ignore:code=302,fgrep='Location: /home.html'`; use multiple `-x` for OR: `-x ignore:code=200 -x ignore:fgrep='CSRF'`. To **terminate the whole run** on the first hit use `-x quit:code=302`; `-x free=user:code=302` instead stops testing more passwords **for that one user** (per-value early-exit, like Hydra's `-f`) and moves on. **Full action set** (verified `patator ssh_login --help`): `ignore` / `retry` (re-try the same candidate — transient 500s or rate-limit blips) / `reset` (drop and reopen the connection before the next attempt — stateful targets or ones that cap connections) / `skip` (advance past the candidate without counting it) / `free` / `quit`. Valid conditions: `code`, `size`, `time`, `mesg`, `fgrep`, `egrep` — **`time`** matches response latency (`time=3-`), the lever for timing-based user enumeration when the body is identical on hit and miss.
 
 ---
 
@@ -262,5 +262,5 @@ patator unzip_pass zipfile=secret.zip password=FILE0 0=rockyou.txt -x ignore:mes
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

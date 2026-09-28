@@ -27,11 +27,18 @@ Invoke-RefreshToMSTeamsToken -Domain <domain> -RefreshToken $response.refresh_to
 ConvertFrom-JWTtoken -Token $response.access_token
 ```
 
+> [!tip] **Why the swap works — FOCI.** The resource-to-resource pivot only works because
+> the built-in Microsoft clients (Az CLI, Teams, Office, etc.) are a **Family of Client IDs**
+> that *share* refresh tokens. A refresh token minted for one FOCI client can be redeemed for
+> an access token scoped to any resource the family covers — so device-code-phish as one app,
+> then `Invoke-RefreshTo…Token` your way into Graph / Outlook / SharePoint / ARM without ever
+> re-prompting the user. Non-FOCI (custom) app tokens won't cross-swap.
+
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Token Theft & Abuse and FOCI Abuse sections — this tool automates the manual `curl` refresh-token exchanges shown there.
 > Also used in [[Techniques/OAuth-OIDC-SAML|OAuth / OIDC / SAML Attacks]] (device code phishing, FOCI pivot, PRT escalation).
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

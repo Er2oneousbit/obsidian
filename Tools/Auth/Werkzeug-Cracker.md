@@ -7,8 +7,8 @@ Wordlist cracker for **Werkzeug password hashes** — the `pbkdf2:sha256:…` (a
 **Source:** https://github.com/AnataarXVI/Werkzeug-Cracker
 **Install:**
 ```bash
-git clone https://github.com/AnataarXVI/Werkzeug_Cracker.git
-cd Werkzeug_Cracker
+git clone https://github.com/AnataarXVI/Werkzeug-Cracker.git
+cd Werkzeug-Cracker
 pip3 install -r requirements.txt      # needs Python 3.10+ and the werkzeug library
 ```
 
@@ -45,6 +45,12 @@ pbkdf2:sha256:600000$YnRgjnim$c9541a8c...        # method:algo:iterations$salt$h
 | Speed | CPU, multithreaded — modest | **GPU — far faster** |
 | Best for | quick job, odd method, no GPU, no conversion hassle | big wordlist + a GPU box |
 
+> [!warning] **Modern Flask often means scrypt, not pbkdf2.** Werkzeug **3.0+ changed the
+> default** hashing method to `scrypt:32768:8:1$…`. hashcat's `-m 10900` is **pbkdf2-only**
+> and won't touch those — this is exactly where Werkzeug-Cracker earns its place, since it
+> calls `check_password_hash()` and cracks whatever method the hash string declares. Check
+> the hash prefix (`pbkdf2:` vs `scrypt:`) before choosing your tool.
+
 > [!tip] **PBKDF2 iterations only parallelise *across* candidates, not within one** (each hash is a serial chain), so even on a GPU the H/s is low (a 600k-iter hash ran ~4.3 kH/s on an RTX 5060 Ti). But **rockyou is frequency-ordered** — a common password lands in the first fraction of a percent regardless of tool. **Run the wordlist before deciding it's infeasible;** the "is this even worth it" analysis often costs more than the crack. (HTB *Instant*: a 600k-iter hash that "looked" like 2.7 days fell in ~1 minute.)
 
 ---
@@ -62,5 +68,5 @@ pbkdf2:sha256:600000$YnRgjnim$c9541a8c...        # method:algo:iterations$salt$h
 ---
 
 *Created: 2026-08-26*
-*Updated: 2026-08-26*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

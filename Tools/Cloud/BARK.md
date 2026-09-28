@@ -205,7 +205,15 @@ Get-EntraTierZeroServicePrincipals -Token $token
 
 ## Azure Resource Manager (ARM) Abuse
 
-BARK also attacks Azure *resources* (needs an ARM-audience token — `Get-AzureRMTokenWith*`). These are the highest-impact primitives: command exec on VMs, secret theft from Key Vaults, Function App keys.
+BARK also attacks Azure *resources* (needs an ARM-audience token — `Get-AzureRMTokenWith*`, **confirmed present**). These are the highest-impact primitives: command exec on VMs, secret theft from Key Vaults, Function App keys.
+
+> [!warning] **Function names in this section not re-confirmed (2026-09-28).** The Entra
+> functions above were verified line-for-line against `BARK.ps1`, but the ARM-attack function
+> names below (`Invoke-AzureRMVMRunCommand`, `Get-AzureRMKeyVaultSecretValue`,
+> `Get-AzureFunctionAppMasterKeys`) and the abuse-test runners / `Get-EntraTierZeroServicePrincipals`
+> could **not** be confirmed against source this pass (the file is too large for a clean fetch,
+> and BARK isn't installed on-box). Treat them as *likely-but-unverified* and confirm before use:
+> `Get-Command -Module BARK -Verb Invoke,Get,Test | Select Name`. Same on-box confirm owed as GraphRunner.
 
 ```powershell
 # Enumerate what you can reach (VM/KeyVault enum take -SubscriptionID from the sub list)
@@ -242,5 +250,5 @@ Invoke-AllAzureMGAbuseTests -Token $token
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

@@ -81,7 +81,7 @@ hashcat --help | grep -i bcrypt
 | `400` | phpBB / WordPress / Joomla MD5 |
 | `10900` | **PBKDF2-HMAC-SHA256** (Werkzeug/Flask, Django `pbkdf2_sha256`) |
 | `3000` | LM hash |
-| `5200` | KeePass |
+| `5200` | Password Safe v3 |
 | `9600` | MS Office 2013 |
 | `13400` | KeePass 1/2 |
 | `16500` | JWT (HS256) |
@@ -266,7 +266,10 @@ hashcat -a 0 -m 16500 jwt.txt /usr/share/wordlists/rockyou.txt
 ### WPA2
 
 ```bash
-hashcat -a 0 -m 22000 handshake.hccapx /usr/share/wordlists/rockyou.txt
+# Mode 22000 eats the .hc22000 format (from hcxpcapngtool), NOT the legacy
+# .hccapx (that was old mode 2500). Convert a capture first:
+#   hcxpcapngtool -o handshake.hc22000 capture.pcapng
+hashcat -a 0 -m 22000 handshake.hc22000 /usr/share/wordlists/rockyou.txt
 ```
 
 ### Web-App Framework Hashes (Werkzeug / Flask, Django)
@@ -286,6 +289,44 @@ hashcat -a 0 -m 10900 werkzeug.hash /usr/share/wordlists/rockyou.txt
 > [!tip] **No conversion, or no GPU?** [[Tools/Auth/Werkzeug-Cracker|Werkzeug-Cracker]] eats the `pbkdf2:sha256:…` string **as-is** (calls `check_password_hash`) and handles scrypt too — CPU-only but zero reformatting. Django's own `pbkdf2_sha256$<iter>$<salt>$<b64>` is the same mode 10900 with its own layout.
 
 > [!warning] **PBKDF2 is GPU-*slow*** — the iteration chain is serial, so only *candidates* parallelise (a 600k-iter hash ≈ 4 kH/s even on a good GPU). Don't let the headline iteration count talk you out of it: rockyou is frequency-ordered, so run it — a common password surfaces in the first minute. See the [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] "run the wordlist before optimising it" note.
+
+---
+
+## Output & Hash-File Handling
+
+Real dumps rarely come as one-bare-hash-per-line. secretsdump / NTDS output is
+`domain\user:rid:lmhash:nthash:::` (7 colon fields) — hashcat can't parse that and
+will bail with *"no hashes loaded"*. Reduce it to `user:hash` and let `--username`
+strip the name back off:
+
+```bash
+# secretsdump NTDS/SAM output -> user:nthash, then crack with --username
+cut -d: -f1,4 secretsdump.out > user_nt.txt
+hashcat -a 0 -m 1000 --username user_nt.txt rockyou.txt -r /usr/share/hashcat/rules/best64.rule
+
+# --username also works directly on any genuine 2-field  user:hash  file
+hashcat -a 0 -m 1000 --username creds.txt rockyou.txt
+```
+
+```bash
+# Map cracked passwords BACK to usernames (needs --username on a user:hash file)
+hashcat -m 1000 --username user_nt.txt --show
+
+# Write only the plaintexts to a file (user:hash:plain by default)
+hashcat -a 0 -m 1000 hashes.txt rockyou.txt -o cracked.txt
+hashcat -a 0 -m 1000 hashes.txt rockyou.txt -o cracked.txt --outfile-format=2   # 2 = plain only
+
+# List the hashes still UNCRACKED (feed straight into the next, harder attack)
+hashcat -m 1000 hashes.txt --left
+
+# Strip cracked hashes out of the working file as they fall (keeps long runs lean)
+hashcat -a 0 -m 1000 hashes.txt rockyou.txt --remove
+```
+
+> [!tip] **Pass-the-Hash short-circuit** — before spending GPU-hours, remember an
+> NT hash is directly usable for [[Tools/Auth/Invoke-TheHash|Invoke-TheHash]] / `impacket`
+> PtH. Crack only when you need the *cleartext* (password reuse, VPN/web logins,
+> proving weak-password findings). Cracked creds come from [[Tools/Credential Dumping/secretsdump|secretsdump]].
 
 ---
 
@@ -345,5 +386,5 @@ hashcat -a 0 -m 1000 hashes.txt rockyou.txt --force
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-25*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

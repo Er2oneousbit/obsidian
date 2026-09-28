@@ -28,8 +28,9 @@ ldapdomaindump -u 'INLANEFREIGHT\htb-student' -p 'Academy_student_AD!' 172.16.5.
 # Specify output directory
 ldapdomaindump -u 'DOMAIN\user' -p 'Password' <dc-ip> -o /tmp/ldd-output/
 
-# Use NTLM hash instead of password (pass-the-hash)
-ldapdomaindump -u 'DOMAIN\user' --hashes :<NT-hash> <dc-ip>
+# Use NTLM hash instead of password (pass-the-hash) — there is NO --hashes flag;
+# the hash goes in -p as LM:NT (blank LM is fine), with the default NTLM authtype
+ldapdomaindump -u 'DOMAIN\user' -p ':<NT-hash>' <dc-ip>
 
 # Anonymous LDAP (if allowed — rare but worth trying)
 ldapdomaindump <dc-ip>
@@ -108,5 +109,5 @@ proxychains ldapdomaindump -u 'DOMAIN\user' -p 'Password' <dc-ip>
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

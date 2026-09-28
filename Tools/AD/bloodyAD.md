@@ -29,6 +29,17 @@ bloodyAD --host <dc_ip> -d <domain> -u <user> -p ':<NTLM_hash>' get children
 bloodyAD --host <dc_ip> -d <domain> -k get children                    # Kerberos, from KRB5CCNAME
 ```
 
+**Command surface (verb → what's worth knowing).** Run as `bloodyAD ... <verb> <function> [args]`:
+
+| Verb | Functions you'll actually use |
+|---|---|
+| `get` | `children`, `object --attr`, `writable` (what *you* can edit — the first thing to run), `dnsDump`, `search`, `membership`, `trusts` |
+| `set` | `object` (arbitrary attribute write — the ESC14 primitive), `password`, `owner` (take ownership), `restore` (un-delete a tombstoned object) |
+| `add` | `shadowCredentials`, `rbcd`, `genericAll`, `groupMember`, `dcsync` (grant yourself replication), `uac` (flip account-control bits, e.g. DONT_REQ_PREAUTH for targeted AS-REP), `computer`, `user`, `dnsRecord`, `gmsaGroup`, `badSuccessor` |
+| `remove` | mirrors `add` — undo each write for cleanup |
+
+> [!tip] **`get writable` is the killer feature** — it enumerates every object your principal can modify and *which* right you hold, so you find the escalation edge without loading BloodHound. Scope it, e.g. `get writable --otype GPO` or `--right WRITE`.
+
 > [!warning] `set object` overwrites the attribute's value. On a multi-valued attribute such as `altSecurityIdentities`, read the existing values first and re-supply them alongside yours, or you will silently break a legitimate certificate mapping that someone depends on.
 
 > [!note] **See also**
@@ -39,5 +50,5 @@ bloodyAD --host <dc_ip> -d <domain> -k get children                    # Kerbero
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

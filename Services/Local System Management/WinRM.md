@@ -17,7 +17,7 @@ Windows Remote Management — Microsoft's WS-Management (WS-Man) implementation 
 |---|---|
 | [[Tools/Lateral Movement/evil-winrm\|evil-winrm]] | The primary WinRM shell — password/PtH/Kerberos, upload/download, AMSI bypass, in-memory exec |
 | [[Tools/Lateral Movement/NetExec\|NetExec]] | `nxc winrm` — validate creds/hash, spray, `-x`/`-X` command exec |
-| [[Tools/Auth/Hydra\|Hydra]] | Online brute (`winrm://`) |
+| [[Tools/Auth/Hydra\|Hydra]] | ⚠ no winrm module — use NetExec for WinRM brute |
 | [[Tools/Scanning/NMAP\|NMAP]] | `http-auth-finder` + version on 5985/5986 |
 | [[Tools/Payloads & Shells/metasploit\|metasploit]] | `scanner/winrm/winrm_auth_methods`, `winrm_login` |
 
@@ -143,7 +143,7 @@ winrs -r:<target> -u:<user> -p:<pass> powershell -c "Get-Process"
 
 ```bash
 nxc winrm <target> -u users.txt -p passwords.txt
-hydra -L users.txt -P passwords.txt winrm://<target>
+# NB: Hydra has NO winrm module — NetExec is the tool for WinRM brute/spray
 ```
 
 ### Pass-the-Hash
@@ -208,5 +208,5 @@ nxc winrm <target> -u <user> -p <pass> -X "Get-LocalUser"  # PowerShell
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-23*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

@@ -112,6 +112,40 @@ Categories from the built-in ruleset:
 runas /netonly /user:DOMAIN\user "Snaffler.exe -s -o snaffler.log"
 ```
 
+### Recon-only and scoping (often the first, quietest run)
+
+```powershell
+# -a : just LIST accessible shares, skip all file enumeration — fast, quiet map of the estate
+.\Snaffler.exe -s -a -o shares.log
+
+# -u : pull account names from AD, pick the interesting-looking ones, and add them as a search rule
+#      (surfaces files/paths named after admins, service accounts, etc.)
+.\Snaffler.exe -s -u -o snaffler.log
+
+# Point at a specific domain / DC instead of auto-detecting (-d domain, -c DC to query)
+.\Snaffler.exe -s -d corp.local -c dc01.corp.local -o snaffler.log
+```
+
+### Tuning the in-file content search
+
+```powershell
+# -r : max bytes to search INSIDE a file for interesting strings (default 500k) — distinct from
+#      -l, which caps which files get looked at by size at all
+.\Snaffler.exe -s -r 1000000 -o snaffler.log
+
+# -j : bytes of context to show either side of a matched string (wider grep window)
+.\Snaffler.exe -s -v Data -j 200 -o snaffler.log
+```
+
+### Config file (`-z`) — reproducible, tunable runs
+
+```powershell
+# Generate a sample .toml you can edit (rules, share/path denylists, thresholds, output)
+.\Snaffler.exe -z generate           # writes .\default.toml
+# Then run everything from that config instead of a long flag string
+.\Snaffler.exe -z .\myrun.toml
+```
+
 ---
 
 ## Running via C2 / Without Dropping to Disk
@@ -158,5 +192,5 @@ grep -c "{Yellow}" snaffler.log
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

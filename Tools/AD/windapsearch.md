@@ -40,8 +40,11 @@ python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -U
 # Privileged users (adminCount=1)
 python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --admin-objects
 
-# Domain Admins members
-python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -G -g "Domain Admins"
+# Domain Admins members — dedicated shortcut
+python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --da
+
+# Members of ANY group (recurses nested groups) — this is the real flag, not -g
+python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -m "Domain Admins"
 
 # All groups
 python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -G
@@ -53,20 +56,25 @@ python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -C
 python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> -C \
   --attrs operatingSystem | grep -i "2008\|2003\|XP\|Windows 7"
 
-# Domain Controllers
-python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --DCs
+# Domain Controllers — no built-in module; filter on the DC trust-account UAC bit (8192)
+python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> \
+  --custom "(userAccountControl:1.2.840.113556.1.4.803:=8192)" --attrs dNSHostName
 ```
+
+> [!warning] **Flag reality check (ropnop/windapsearch, Python).** The enumeration modules are `-U`/`--users`, `-G`/`--groups`, `-C`/`--computers`, `-PU`/`--privileged-users`, `--da` (Domain Admins), `-m "<group>"`/`--members` (any group), `--admin-objects` (adminCount=1), `--user-spns` (Kerberoastable), `--unconstrained-users`, `--unconstrained-computers`, `--gpos`, plus `--custom`/`-s`/`-l`. There is **no** `-g`, `--DCs`, `--kerberoastable`, or `--asreproastable` — use `--da`/`-m`, the UAC filter above, `--user-spns`, and a `--custom` pre-auth filter respectively. The Go rewrite (`windapsearch-linux-amd64`) uses a different `-m <module>` scheme entirely — don't mix the two flag sets.
 
 ---
 
 ## Kerberos Attack Targets
 
 ```bash
-# Kerberoastable users (SPN set on user accounts)
-python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --kerberoastable
+# Kerberoastable users (SPN set on user accounts) — the flag is --user-spns
+python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --user-spns
 
-# ASREPRoastable users (no pre-auth required)
-python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --asreproastable
+# ASREPRoastable users (no pre-auth required) — no built-in module; use --custom + the UAC bit
+python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> \
+  --custom "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))" \
+  --attrs sAMAccountName
 
 # Unconstrained delegation (computers + users)
 python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> --unconstrained-users
@@ -101,7 +109,7 @@ python3 windapsearch.py -d domain.local -u user -p 'Pass' --dc-ip <dc-ip> \
 ```bash
 DC="<dc-ip>"; DOM="domain.local"; U="user"; P="Password"
 
-for module in -U -G -C --admin-objects --kerberoastable --asreproastable --unconstrained-computers --DCs; do
+for module in -U -G -C --admin-objects --user-spns --unconstrained-users --unconstrained-computers --gpos; do
     echo "=== $module ==="
     python3 windapsearch.py -d $DOM -u $U -p "$P" --dc-ip $DC $module 2>/dev/null
 done
@@ -114,5 +122,5 @@ done
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

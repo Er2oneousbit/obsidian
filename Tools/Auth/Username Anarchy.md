@@ -33,9 +33,9 @@ By default Username Anarchy outputs all formats. Restrict to a specific format w
 # Use a specific format only
 ./username-anarchy -f first.last John Smith       # john.smith
 ./username-anarchy -f firstlast John Smith        # johnsmith
-./username-anarchy -f first_last John Smith       # john_last
+./username-anarchy -f firstl John Smith           # johns  (first + last initial)
 ./username-anarchy -f flast John Smith            # jsmith
-./username-anarchy -f fmlast John Smith           # j.smith (middle initial variant)
+./username-anarchy -f fmlast "John B Smith"       # jbsmith (first+middle-initial+last — needs a middle name)
 
 # Multiple formats
 ./username-anarchy -f first.last,flast John Smith
@@ -50,8 +50,9 @@ By default Username Anarchy outputs all formats. Restrict to a specific format w
 | `firstlast` | johnsmith | `-f firstlast` |
 | `first` | john | `-f first` |
 | `last` | smith | `-f last` |
-| `lastfirst` | smithjohn | `-f lastfirst` |
+| `last.first` | smith.john | `-f last.first` |
 | `f.last` | j.smith | `-f f.last` |
+| `firstlast[8]` | johnsmit | `-f 'firstlast[8]'` (truncated — matches AD's legacy 8-char sAMAccountName) |
 
 ---
 
@@ -112,5 +113,5 @@ kerbrute passwordspray valid_users.txt 'Welcome1' --dc 10.10.10.10 -d inlanefrei
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*

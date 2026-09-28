@@ -167,7 +167,21 @@ Pacu> run eks__enum
 Pacu> run eks__collect_tokens
 ```
 
-> [!note] **Module names verified against the repo `pacu/modules/` tree (re-checked 2026-09-27).** Older guides invent `s3__enum` / `secretsmanager__enum` / `ssm__enum` / `cloudformation__enum` — **those don't exist** (use `s3__download_bucket` / `secrets__enum` / `systemsmanager__download_parameters` / `cloudformation__download_data`). **Correction:** `ebs__enum_snapshots_unauth` **DOES exist** (an earlier note/memory wrongly listed it as fabricated) — it enumerates snapshots exposed publicly/cross-account. Confirm any module with `Pacu> search <keyword>` before `run`.
+> [!note] **Module names verified against the repo `pacu/modules/` tree (re-checked 2026-09-28).** Older guides invent `s3__enum` / `secretsmanager__enum` / `ssm__enum` / `cloudformation__enum` — **those don't exist** (use `s3__download_bucket` / `secrets__enum` / `systemsmanager__download_parameters` / `cloudformation__download_data`). **Correction:** `ebs__enum_snapshots_unauth` **DOES exist** (an earlier note/memory wrongly listed it as fabricated) — it enumerates snapshots exposed publicly/cross-account. Confirm any module with `Pacu> search <keyword>` before `run`.
+
+### More high-value modules (verified present 2026-09-28)
+
+```
+Pacu> run systemsmanager__rce_ec2          # RCE on SSM-managed EC2 (Pacu's answer to `aws ssm send-command`)
+Pacu> run ec2__download_userdata           # pull EC2 user-data across instances (bootstrap secrets)
+Pacu> run ec2__startup_shell_script        # persist/exec via instance startup script
+Pacu> run iam__bruteforce_permissions      # discover perms when you can't list your own policy
+Pacu> run iam__backdoor_assume_role        # add your account as trusted principal on a role (persistence)
+Pacu> run rds__enum_snapshots              # + rds__explore_snapshots — RDS snapshot looting (like the ebs__ set)
+Pacu> run cognito__enum                    # + cognito__attack — Cognito user-pool / identity-pool abuse
+Pacu> run organizations__assume_role       # cross-account pivot via AWS Organizations
+Pacu> run vpc__enum_lateral_movement       # map cross-VPC/peering lateral paths
+```
 
 ---
 
@@ -310,5 +324,5 @@ aws sts get-caller-identity
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-27*
+*Updated: 2026-09-28*
 *Model: claude-opus-4-8*

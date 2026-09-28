@@ -22,6 +22,10 @@ You've pulled an encrypted archive off a target and need its password:
 # Find .aes backups (pyAesCrypt's default extension)
 find /var/backup /var/backups /opt /home -name '*.aes' 2>/dev/null
 
+# Confirm a blob really is AES Crypt before brute-forcing (extension may be missing/renamed):
+# AES Crypt v2 files begin with the bytes  41 45 53 02  = ASCII "AES" + version 0x02
+xxd -l 4 suspicious.bin        # -> 4145 5302  means it's an AES Crypt container
+
 # Hint that pyAesCrypt is even in play: it shows up in a Flask/Python app's deps
 curl -s "http://<t>/?file=/app/requirements.txt" | grep -i aescrypt
 ```
@@ -42,5 +46,5 @@ python3 -c "import pyAesCrypt; pyAesCrypt.decryptFile('backup.aes','backup.tar',
 ---
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
-*Model: claude-opus-5*
+*Updated: 2026-09-28*
+*Model: claude-opus-4-8*
