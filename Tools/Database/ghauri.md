@@ -2,9 +2,9 @@
 
 **Tags:** #ghauri #SQLi #SQLInjection #injection #WebAppAttacks #Scanner #Python
 
-`ghauri` is an advanced SQL injection detection and exploitation tool, written as a lighter alternative to [[Tools/Database/SQLMap|SQLMap]]. It targets the same core techniques — boolean-blind, time-blind, error-based, stacked, and UNION — but sends noticeably fewer requests to confirm an injection, which matters when the target is rate-limited, WAF-fronted, or you're trying to stay quiet. Output is terser than SQLMap's and it needs less flag-tuning to get a clean result on straightforward injections.
+`ghauri` is an advanced SQL injection detection and exploitation tool, written as a lighter alternative to [[Tools/Database/SQLMap|SQLMap]]. It targets the same core blind/inference techniques — boolean-blind, time-blind, error-based, and stacked queries — but sends noticeably fewer requests to confirm an injection, which matters when the target is rate-limited, WAF-fronted, or you're trying to stay quiet. Output is terser than SQLMap's and it needs less flag-tuning to get a clean result on straightforward injections.
 
-It is **not** a full replacement: SQLMap has far broader DBMS coverage, the tamper-script ecosystem, `--os-shell`/`--file-write`, and second-order support. Reach for ghauri first on a simple injectable parameter; fall back to SQLMap when you need extraction depth or evasion.
+It is **not** a full replacement: ghauri has **no UNION-based technique** (it's still an open TODO in the repo — its default technique string `BEST` is Boolean/Error/Stacked/Time only), and SQLMap also has far broader DBMS coverage, the tamper-script ecosystem, `--os-shell`/`--file-write`, and second-order support. Reach for ghauri first on a simple injectable parameter; fall back to SQLMap when you need UNION extraction, extraction depth, or evasion. (Ghauri does ship an **experimental `--sql-shell`** for interactive queries once injection is confirmed.)
 
 **Source:** https://github.com/r0oth3x49/ghauri
 **Install:** `pipx install git+https://github.com/r0oth3x49/ghauri.git` (or `pip3 install .` from a clone)
@@ -40,9 +40,9 @@ ghauri -u "http://<TARGET>/page?id=1" --proxy http://127.0.0.1:8080
 | `--data` | POST body |
 | `--cookie` | Session cookie for authenticated testing |
 | `--batch` | Non-interactive; accept defaults |
-| `--technique` | `B`oolean, `E`rror, `U`nion, `S`tacked, `T`ime — restrict to cut noise |
+| `--technique` | `B`oolean, `E`rror, `S`tacked, `T`ime (default `BEST`) — restrict to cut noise. No UNION technique |
 | `--dbms` | Skip fingerprinting when the backend is already known |
-| `--level` | Raise to reach headers/cookies as injection points |
+| `--level` | `1`–`3` (default 1); raise to reach headers/cookies as injection points |
 | `--proxy` | Route through Burp |
 
 > [!tip]
@@ -53,5 +53,5 @@ ghauri -u "http://<TARGET>/page?id=1" --proxy http://127.0.0.1:8080
 ---
 
 *Created: 2026-08-17*
-*Updated: 2026-08-17*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

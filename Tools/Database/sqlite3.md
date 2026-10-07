@@ -93,6 +93,16 @@ C:\Users\<user>\AppData\Local\Google\Chrome\User Data\Default\Cookies
 # Windows Firefox
 C:\Users\<user>\AppData\Roaming\Mozilla\Firefox\Profiles\*.default\key4.db
 
+# macOS Chrome / Chromium (password_value encrypted with a key in the login Keychain — "Chrome Safe Storage")
+~/Library/Application Support/Google/Chrome/Default/Login Data
+~/Library/Application Support/Google/Chrome/Default/Cookies
+# macOS Firefox
+~/Library/Application Support/Firefox/Profiles/*.default*/key4.db
+# macOS Safari — History.db IS SQLite; cookies are binarycookies (NOT SQLite); saved passwords live in the Keychain
+~/Library/Safari/History.db
+~/Library/Cookies/Cookies.binarycookies          # binary format — parse with BinaryCookieReader, not sqlite3
+# Safari/login-Keychain creds → chainbreaker (see Tools/Credential Dumping/chainbreaker)
+
 # KeePass (not SQLite but common find)
 *.kdbx
 
@@ -297,5 +307,5 @@ sqlite3 new_database.db < database_dump.sql
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-25*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

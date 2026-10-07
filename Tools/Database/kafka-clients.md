@@ -19,8 +19,15 @@ kcat -b <target>:9092 -t <topic> -C -o beginning -e
 kafka-topics.sh --bootstrap-server <target>:9092 --list
 kafka-console-consumer.sh --bootstrap-server <target>:9092 --topic <topic> --from-beginning
 
+# Produce a message (also the quick "do I have WRITE access to this topic?" test)
+echo "test" | kcat -b <target>:9092 -t <topic> -P
+echo "test" | kafka-console-producer.sh --bootstrap-server <target>:9092 --topic <topic>
+
 # Authenticated (SASL) — supply a client-config file
 kafka-topics.sh --bootstrap-server <target>:9094 --command-config client.properties --list
+# kcat SASL/PLAIN equivalent (inline props):
+kcat -b <target>:9094 -L -X security.protocol=SASL_PLAINTEXT -X sasl.mechanism=PLAIN \
+  -X sasl.username=<user> -X sasl.password=<pass>
 ```
 
 > [!note] **See also** — [[Services/Cloud & Data/Kafka|Apache Kafka]] for the full attack methodology (topic data harvesting, Connect RCE, ZooKeeper/KRaft control plane, SASL brute force).
@@ -28,5 +35,5 @@ kafka-topics.sh --bootstrap-server <target>:9094 --command-config client.propert
 ---
 
 *Created: 2026-07-29*
-*Updated: 2026-07-29*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

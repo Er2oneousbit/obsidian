@@ -143,6 +143,12 @@ BEGIN
 END;
 /
 
+-- Windows Oracle target — job_action needs the FULL path to cmd.exe, args are /c <cmd>.
+-- The job runs as the OracleJobScheduler / Oracle service account (often SYSTEM-level):
+--   job_action => 'C:\Windows\System32\cmd.exe'
+--   arg 1 => '/c'     arg 2 => 'whoami > C:\Windows\Temp\out.txt'
+-- (UTL_FILE read-back below: CREATE DIRECTORY win_tmp AS 'C:\Windows\Temp'; FOPEN 'out.txt')
+
 -- Read the output file back with UTL_FILE (OPENFILENAME/OPENROWSET are MSSQL, not Oracle).
 -- See the File Read section below — point the directory at /tmp and FOPEN 'out.txt':
 CREATE OR REPLACE DIRECTORY tmp_dir AS '/tmp';
@@ -221,5 +227,5 @@ DESC tablename       # describe table structure
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

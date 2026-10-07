@@ -11,26 +11,30 @@
 # Scan a target URL — auto-detects GET/POST params
 nosqli scan -t "http://<TARGET>/login"
 
-# POST body with explicit request data
-nosqli scan -t "http://<TARGET>/login" -r "username=admin&password=admin"
+# POST with default body data (-d, NOT -r) — data should NOT contain injection strings
+nosqli scan -t "http://<TARGET>/login" -d "username=admin&password=admin"
 
-# JSON body
-nosqli scan -t "http://<TARGET>/api/login" \
-  -r '{"username":"admin","password":"admin"}' \
-  --content-type application/json
+# JSON body / authenticated / custom headers → save the request from Burp/ZAP and load it with -r.
+# -r takes a FILE (a raw HTTP request), which is also how you carry a session cookie or Content-Type:
+nosqli scan -r ./login_request.txt
 
-# Authenticated / with a cookie
-nosqli scan -t "http://<TARGET>/search?q=test" -a "session=<token>"
+# Route through Burp to capture the injectable request it finds
+nosqli scan -t "http://<TARGET>/login" -p http://127.0.0.1:8080
+
+# Custom user agent
+nosqli scan -t "http://<TARGET>/login" -u "Mozilla/5.0 ..."
 ```
 
 | Flag | Description |
 |---|---|
 | `scan` | Run the injection scan |
-| `-t` | Target URL |
-| `-r` | Request body / data |
-| `-a` | Cookie/header for auth |
-| `-p` | Proxy (route through Burp) |
-| `--content-type` | Force the request content type |
+| `-t, --target` | Target URL (e.g. `http://site/page?arg=1`) |
+| `-r, --request` | Load a raw HTTP request from a **file** (Burp/ZAP export) — the way to send JSON, cookies, or custom headers |
+| `-d, --data` | Default POST body data (should NOT include injection strings) |
+| `-p, --proxy` | Proxy requests through this URL (Burp) |
+| `-u, --user-agent` | Set the User-Agent |
+
+> [!warning] There is **no `-a` cookie flag and no `--content-type` flag** — earlier drafts of this note invented both. For authenticated or JSON endpoints, capture the full request in Burp, save it, and pass it with `-r <file>`; the file carries the `Cookie`/`Content-Type` headers.
 
 > [!note] It focuses on **web-layer operator injection** — auth bypass and `$regex` extraction. It does not cover aggregation-pipeline injection (`$lookup`/`$unionWith`), direct-DB attacks, or the CouchDB/Redis/ES surfaces — test those by hand or with [[Tools/Database/NoSQLMap|NoSQLMap]].
 
@@ -41,5 +45,5 @@ nosqli scan -t "http://<TARGET>/search?q=test" -a "session=<token>"
 ---
 
 *Created: 2026-07-31*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

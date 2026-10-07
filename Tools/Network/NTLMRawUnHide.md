@@ -41,7 +41,7 @@ python3 NTLMRawUnhide.py -i capture.pcap -f      # live-follow a growing capture
 hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt
 ```
 
-**Install:** `git clone https://github.com/Er2oneousbit/NTLMRawUnHide-PS7` (fork) · `git clone https://github.com/mlgualtieri/NTLMRawUnHide` (original). A local copy of the original script also lives at `Tools/Database/NTLMRawUnHide.py`.
+**Install:** `git clone https://github.com/Er2oneousbit/NTLMRawUnHide-PS7` (fork) · `git clone https://github.com/mlgualtieri/NTLMRawUnHide` (original). A local copy of the original script sits beside this note at `Tools/Network/NTLMRawUnHide.py`.
 
 ---
 
@@ -70,5 +70,5 @@ netsh trace start capture=yes tracefile=C:\temp\trace.etl
 ---
 
 *Created: 2026-08-14*
-*Updated: 2026-08-14*
+*Updated: 2026-09-29*
 *Model: claude-opus-5*
