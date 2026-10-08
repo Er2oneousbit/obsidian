@@ -16,7 +16,7 @@ a Windows target. The Linux equivalent is [[Tools/AD/impacket-kerberos-scripts|i
 > no elevation (`kerberoast`, `asreproast`, `asktgt`, `tgtdeleg`); `dump`/`monitor`/`triage`
 > across **all** logon sessions and `ptt` into another session need **local admin/SYSTEM**.
 
-> [!note] **See also** — the full methodology behind these commands: [[Services/Active Directory/Kerberos|Kerberos]] (Kerberoast/AS-REP/overpass-the-hash/S4U/ticket forging). Also [[Services/Active Directory/ACL Abuse|ACL Abuse]] — consume a shadow-credential cert with `Rubeus.exe asktgt /certificate:...` and run targeted Kerberoasting after a `GenericWrite` SPN write. Linux counterpart: [[Tools/AD/impacket-kerberos-scripts|impacket Kerberos scripts]].
+> [!note] **See also** — the full methodology behind these commands: [[Services/Active Directory/Kerberos|Kerberos]] (Kerberoast/AS-REP/overpass-the-hash/S4U/ticket forging). Also [[Services/Active Directory/ACL Abuse|ACL Abuse]] — consume a shadow-credential cert with `Rubeus.exe asktgt /certificate:...` and run targeted Kerberoasting after a `GenericWrite` SPN write. Linux counterpart: [[Tools/AD/impacket-kerberos-scripts|impacket Kerberos scripts]]; macOS counterpart: [[Tools/AD/Bifrost|Bifrost]].
 
 ---
 

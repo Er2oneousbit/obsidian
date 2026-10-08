@@ -330,6 +330,10 @@ powershell -nop -W hidden -noni -ep bypass -c "..."
 
 ---
 
+> [!note] **See also** — sibling note, same tool from the **interactive-shell / terminal-toolkit** angle (multi-category placement, per DECISIONS D1): [[Tools/Command Shell/Powershell|Tools/Command Shell/PowerShell]] (invocation flags, WinRM remoting, PSReadLine history loot, Constrained Language Mode, detection footprint).
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
+*Updated: 2026-09-28*
 *Model: claude-sonnet-4-6*

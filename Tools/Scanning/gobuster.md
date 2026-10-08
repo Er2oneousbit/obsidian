@@ -129,9 +129,10 @@ gobuster vhost -u http://10.129.14.128 \
 
 
 > [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Cross-Site Scripting (XSS)|Cross-Site Scripting (XSS)]], [[Class notes/HTB Academy/CPTS v2 (claude)/Fuzzing|Fuzzing]], [[Class notes/HTB Academy/CPTS v2 (claude)/Info Gathering|Info Gathering]] (CPTS v2). Also [[Services/Network Management/DNS|DNS]] — subdomain brute via `gobuster dns`. Also [[Services/Web Services/Apache|Apache]] — CGI, `.htaccess`/`.htpasswd`, and backup-file discovery. Also [[Services/Web Services/Confluence|Confluence]] — endpoint/content discovery. Also [[Services/Web Services/HTTP-HTTPS|HTTP/HTTPS]] — directory/file/vhost/dns brute force. Also [[Services/Web Services/IIS|IIS]] — `.asp`/`.aspx`/`.config` content discovery. Also [[Services/Web Services/Jenkins|Jenkins]] — path discovery (`/script`, `/credentials`, `/api`). Also [[Services/Web Services/phpMyAdmin|phpMyAdmin]] — find the pma path. Also [[Services/Web Services/Tomcat|Tomcat]] — enumerate deployed apps/paths.
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — `gobuster dns --do` subdomain brute (3.8.x flag change).
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-09-25*
+*Updated: 2026-10-08*
 *Model: claude-opus-5*

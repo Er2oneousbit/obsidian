@@ -365,6 +365,10 @@ lsof | grep $(whoami)
 
 ---
 
+> [!note] **See also** — sibling note, same tool from the **interactive-shell / terminal-toolkit** angle (multi-category placement, per DECISIONS D1): [[Tools/Command Shell/Bash|Tools/Command Shell/Bash]] (rbash escape, command-injection obfuscation, history OPSEC, macOS bash-3.2 caveat).
+
+---
+
 *Created: 2026-03-13*
-*Updated: 2026-03-13*
+*Updated: 2026-09-28*
 *Model: claude-sonnet-4-6*

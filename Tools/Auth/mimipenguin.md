@@ -22,7 +22,8 @@ sudo bash mimipenguin.sh         # shell version — fewer deps, but some target
 > misses. It also leans on `gcore` (can hang) and the 32-bit build mishandles 64-bit
 > address spaces. Treat a hit as a bonus, not a guarantee.
 
-> [!note] **See also** — [[Tools/Auth/mimikatz|mimikatz]] (Windows counterpart);
+> [!note] **See also** — [[Tools/Credential Dumping/mimipenguin|mimipenguin (Credential Dumping angle)]] (shadow sibling — same tool, fuller usage/OPSEC walkthrough);
+> [[Tools/Auth/mimikatz|mimikatz]] (Windows counterpart);
 > [[Tools/Auth/LaZagne|LaZagne]] (broader Linux/Windows app-credential harvester);
 > [[Tools/Auth/Firefox Decrypt|Firefox Decrypt]] (browser creds). Fits the local-privesc /
 > looting phase — see [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
@@ -56,5 +57,5 @@ sudo bash mimipenguin.sh         # shell version — fewer deps, but some target
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-28*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

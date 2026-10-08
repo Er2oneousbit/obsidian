@@ -2,7 +2,7 @@
 
 **Tags:** `#mimipenguin` `#credentialdumping` `#linux` `#memory` `#pillaging` `#postexploitation`
 
-Linux equivalent of Mimikatz — dumps plaintext credentials from memory on running Linux systems. Reads process memory from services that cache credentials (GDM, KDE Wallet, SSH agents, web browsers, mail clients). Requires root. Available as both a Python script and a Bash script.
+Linux equivalent of Mimikatz — dumps plaintext credentials from memory on running Linux systems. Walks `/proc/<pid>/mem` of a fixed set of known credential-holding processes (display managers, GNOME Keyring, and a few network services), then **validates each candidate string against the user's `/etc/shadow` hash** so it only prints confirmed passwords. Requires root. Available as both a Python script and a Bash script.
 
 **Source:** https://github.com/huntergregal/mimipenguin
 **Install:** `git clone https://github.com/huntergregal/mimipenguin`
@@ -21,18 +21,16 @@ sudo bash mimipenguin.sh
 
 ## What It Dumps
 
-mimipenguin targets processes that cache credentials in memory:
+mimipenguin only has modules for the processes below — it does **not** target KDE Wallet, `ssh-agent` passphrases, browsers, or mail clients (those are LaZagne / browser-decrypt territory):
 
 | Source | What's Recovered |
 |---|---|
-| GDM (GNOME Display Manager) | Linux desktop login password |
-| KDE Wallet / kwallet | Wallet master password |
-| gnome-keyring | Keyring unlock password |
-| SSH agent (`ssh-agent`) | Cached SSH passphrases |
-| VSFTPd | FTP session credentials |
-| Apache2 (htpasswd) | Basic auth credentials |
-| OpenSSH (sshd) | Authentication credentials |
-| Chromium / Chrome | Saved credentials from memory |
+| GDM (GNOME Display Manager) | Desktop login password (Kali/Debian) |
+| LightDM | Desktop login password (Ubuntu) |
+| GNOME Keyring | Logged-in user's password (`CVE-2018-20781`) |
+| VSFTPd | Password of an **active** FTP connection |
+| Apache2 | Credentials from an active HTTP **Basic-Auth** session |
+| OpenSSH (sshd) | Password of an active SSH session that used `sudo` |
 
 ---
 
@@ -49,10 +47,10 @@ sudo bash mimipenguin.sh
 sudo python3 mimipenguin.py | tee mimipenguin_out.txt
 ```
 
-**Example output:**
+**Example output** (every hit is prefixed `[SYSTEM - <SOURCE>]`, `user:password` confirmed against `/etc/shadow`):
 ```
 [SYSTEM - GNOME]	user:password123
-[SSH]			root:SecurePass!
+[SYSTEM - SSH]		root:SecurePass!
 ```
 
 ---
@@ -117,10 +115,10 @@ sudo cat /proc/$(pgrep sshd)/environ | tr '\0' '\n' | grep -i pass
 - Modern GNOME/KDE no longer cache passwords in recoverable plaintext in many configurations — results vary heavily by distro version
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> [!note] **See also / cross-platform** — [[Tools/Auth/mimipenguin|mimipenguin (Auth angle)]] (shadow sibling — same tool, looting/priv-esc framing); [[Tools/Credential Dumping/mimikatz|mimikatz]] (Windows in-memory equivalent); [[Tools/Credential Dumping/LaZagne|LaZagne]] (stored-credential harvester, Linux + Windows); [[Tools/Credential Dumping/chainbreaker|chainbreaker]] (macOS Keychain equivalent). Fits the local priv-esc / looting phase — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

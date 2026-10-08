@@ -269,9 +269,10 @@ use auxiliary/scanner/snmp/snmp_login
 ---
 
 > [!note] **See also** — lights-out/management sibling [[Services/Network Management/IPMI|IPMI]] (BMC out-of-band management is the other UDP management surface with weak default auth). A RW community on network gear feeds [[Techniques/Network Device Pentesting|Network Device Pentesting]] — running-config exfil lands via [[Services/File Xfer/TFTP|TFTP]] (Cisco Type-7/Type-5 credential looting). The same `snmpset` config-copy is used against ASA appliances in [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]].
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — SNMP quick enum incl. process-args OID and `nsExtendObjects`.
 
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-23*
+*Updated: 2026-10-08*
 *Model: claude-opus-4-8*

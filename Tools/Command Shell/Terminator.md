@@ -131,6 +131,7 @@ CVE landscape: HD Moore's *Terminal Emulator Security Issues* (2003) is the orig
 ---
 
 > [!note] **See also**
+> Cross-OS emulator siblings: [[Tools/Command Shell/Windows Terminal (wt)|Windows Terminal]] (Windows) and [[Tools/Command Shell/iTerm2|iTerm2]] (macOS — has broadcast + `tmux -CC`, and the CVE-2019-9535 escape-injection RCE).
 > Sibling terminal tool with server-side persistence: [[Tools/Command Shell/tmux|tmux]] — run one inside each Terminator pane. The escape-injection risk above applies equally to any emulator, tmux panes included.
 > Where the *other* "Terminator" (Spyboy BYOVD AV/EDR killer) belongs: [[Techniques/AV & EDR Evasion|AV & EDR Evasion]].
 > Weaponizing escape injection via log poisoning: [[Class notes/HTB Academy/CPTS v2 (claude)/File Inclusion|File Inclusion]].
@@ -138,5 +139,5 @@ CVE landscape: HD Moore's *Terminal Emulator Security Issues* (2003) is the orig
 ---
 
 *Created: 2026-08-13*
-*Updated: 2026-08-13*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

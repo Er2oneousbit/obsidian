@@ -63,6 +63,13 @@ Select with `-c/--collectors <name>,<name>` (default `All`). The v2 collector na
 | `MobaXterm` / `MRemoteNG` / `RDCMan` | Saved sessions/passwords from those clients |
 | `SCCM` | SCCM network-access-account / task-sequence creds |
 | `VNC` | Stored VNC passwords |
+| `CloudCredentials` | AWS/Azure/GCP CLI credential files & tokens |
+| `PasswordManagers` | Local password-manager stores/vaults |
+| `SSHSecrets` | Saved SSH keys / known hosts / PuTTY sessions |
+| `PowerShellHistory` | `ConsoleHost_history.txt` (creds typed on the CLI) |
+| `VersionControlSystems` | Git/SVN stored credentials |
+| `IDEProjects` | Secrets/connection strings in IDE project files |
+| `RecycleBin` | Deleted interesting files from the Recycle Bin |
 
 DPAPI master keys are decrypted along the way (via `--fetch-pvk`/`--pvkfile`/`--pwdfile`/`--ntfile`/`--mkfile`). Remote-registry secrets (SAM/LSA/DPAPI-System) come from RemoteOps, on by default — disable with `-nr/--no-remoteops`.
 
@@ -157,10 +164,10 @@ certipy auth -pfx exported_cert.pfx -dc-ip 192.168.1.1
 
 ---
 
-> [!note] **See also** — the on-host Windows counterpart is [[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (same DPAPI loot, but a binary runs on the target). Recovered client-auth certs feed [[Tools/AD/Certipy|Certipy]]; `--laps` pulls from [[Tools/AD/LAPSToolkit|LAPS]]; test looted creds with [[Tools/Lateral Movement/NetExec|NetExec]].
+> [!note] **See also** — the on-host Windows counterpart is [[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]] (same DPAPI loot, but a binary runs on the target). The macOS analog for pillaging the OS credential store is [[Tools/Credential Dumping/chainbreaker|chainbreaker]] (Keychain, not DPAPI). Recovered client-auth certs feed [[Tools/AD/Certipy|Certipy]]; `--laps` pulls from [[Tools/AD/LAPSToolkit|LAPS]]; test looted creds with [[Tools/Lateral Movement/NetExec|NetExec]].
 
 ---
 
 *Created: 2026-03-06*
 *Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Model: claude-opus-4-8*

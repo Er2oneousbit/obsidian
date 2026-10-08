@@ -92,7 +92,7 @@ impacket-findDelegation <domain>/<user>:<pass> -dc-ip <dc_ip>
 impacket-lookupsid <domain>/<user>:<pass>@<dc_ip>
 ```
 
-> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] for the full methodology these scripts implement (AS-REP Roasting, Kerberoasting, Golden/Silver Ticket, delegation abuse). Also [[Services/Active Directory/Domain Trusts|Domain Trusts]] — `raiseChild` (auto child→forest-root), `ticketer -extra-sid` (ExtraSids golden ticket), and `lookupsid` for cross-domain SID enumeration.
+> [!note] **See also** — [[Services/Active Directory/Kerberos|Kerberos]] for the full methodology these scripts implement (AS-REP Roasting, Kerberoasting, Golden/Silver Ticket, delegation abuse). Also [[Services/Active Directory/Domain Trusts|Domain Trusts]] — `raiseChild` (auto child→forest-root), `ticketer -extra-sid` (ExtraSids golden ticket), and `lookupsid` for cross-domain SID enumeration. From a **macOS** foothold, the native-API equivalent is [[Tools/AD/Bifrost|Bifrost]].
 
 ---
 

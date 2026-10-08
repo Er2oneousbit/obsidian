@@ -14,9 +14,10 @@ ssh-audit --level=warn <target>    # only warnings and worse
 ```
 
 > [!note] **See also** — [[Services/Remote Access/SSH|SSH]] (the service note: enumeration, auth methods, key attacks, tunneling). Cross-references the same weak-algorithm findings that [[Tools/Scanning/NMAP|NMAP]]'s `ssh2-enum-algos` surfaces.
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — SSH enumeration step.
 
 ---
 
 *Created: 2026-09-23*
-*Updated: 2026-09-23*
+*Updated: 2026-10-08*
 *Model: claude-opus-4-8*

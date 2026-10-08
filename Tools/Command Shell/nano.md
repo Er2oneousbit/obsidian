@@ -102,12 +102,12 @@ openssl passwd -1 -salt x Password123        # -> $1$x$....
 ---
 
 > [!note] **See also**
-> Sibling editor, same GTFO story (with modal survival tips): [[Tools/Command Shell/Vim|Vim / vi]].
+> Sibling editor, same GTFO story (with modal survival tips): [[Tools/Command Shell/Vim|Vim / vi]]; the pager version (`!sh` from `less`/`man`): [[Tools/Command Shell/Pagers (less-more-man)|Pagers]].
 > Sudo/SUID enumeration + the file-write payloads: [[Class notes/HTB Academy/CPTS v2 (claude)/Linux Priv Esc|Linux Priv Esc]] (Sudo Exploitation / SUID).
 > Full per-context catalog: [GTFOBins — nano](https://gtfobins.github.io/gtfobins/nano/).
 
 ---
 
 *Created: 2026-08-13*
-*Updated: 2026-08-13*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*

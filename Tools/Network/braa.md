@@ -72,9 +72,10 @@ braa public@10.129.14.1-10.129.14.254:.1.3.6.1.2.1.1.5.0
 ---
 
 > [!note] **See also** — Find community strings first with [[Tools/Network/onesixtyone|onesixtyone]]; [[Tools/Network/snmpwalk|snmpwalk]] gives cleaner parsed output for a single host once braa flags a live one. Service-level context and the attack surface: [[Services/Network Management/SNMP|SNMP]].
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — SNMP bulk walk.
 
 ---
 
 *Created: 2026-03-13*
-*Updated: 2026-08-31*
+*Updated: 2026-10-08*
 *Model: claude-opus-5*

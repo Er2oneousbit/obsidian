@@ -194,4 +194,4 @@ Cracking an `.aes` password: [[Tools/Auth/pyAesBrute|pyAesBrute]] (dictionary br
 
 *Created: 2026-08-14*
 *Updated: 2026-09-25*
-*Model: claude-opus-5*
+*Model: claude-opus-4.8*

@@ -20,6 +20,7 @@ admin** (for `SeDebugPrivilege`) or **SYSTEM**.
 > Protection (RunAsPPL) off** and Credential Guard absent, or extra bypass steps.
 
 > [!note] **See also** — [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] (`sekurlsa::dpapi` + `dpapi::cred` to decrypt saved VPN credentials; `crypto::certificates /export` for non-exportable client-auth certs). Also [[Services/Remote Access/ZPA - Zscaler Private Access|ZPA]] — `dpapi::cred` on the ZPA client's cached session-token blobs (`%LOCALAPPDATA%\Zscaler\`). DPAPI counterpart without the binary: [[Tools/Credential Dumping/SharpDPAPI|SharpDPAPI]]. AD attack use: [[Services/Active Directory/Domain Trusts|Domain Trusts]] — `lsadump::trust /patch` to extract trust keys for inter-realm TGT forging; [[Services/Active Directory/ADFS|ADFS]] — exporting the token-signing cert on the ADFS server.
+> **Companion note:** [[Tools/Credential Dumping/mimikatz|mimikatz (full command reference)]] — the exhaustive module-by-module reference (sekurlsa/lsadump/kerberos/dpapi/token, DCSync `/all /csv`, `lsadump::lsa /inject`, Golden/Silver + `/sids` SID-History, PPL bypass). This note is the auth/pillaging-focused cut; go there for the complete syntax.
 
 ---
 
@@ -128,5 +129,5 @@ misc::skeleton                                               # DC skeleton key �
 ---
 
 *Created: 2026-07-13*
-*Updated: 2026-09-28*
+*Updated: 2026-09-29*
 *Model: claude-opus-4-8*

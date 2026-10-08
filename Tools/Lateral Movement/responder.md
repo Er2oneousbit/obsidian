@@ -19,6 +19,7 @@ sudo responder -I tun0
 > [!note] **See also** — Windows-foothold counterpart (same poisoning attack, runs on a Windows host): [[Tools/Lateral Movement/inveigh|Inveigh]]. Relay instead of crack with [[Tools/Lateral Movement/ntlmrelayx|ntlmrelayx]]; force auth on demand with [[Tools/Lateral Movement/Coercer|Coercer]]; passively sniff creds off the wire (no poisoning) with [[Tools/Network/PCredz|PCredz]]. Also [[Services/Active Directory/Entra ID|Entra ID]] Seamless SSO section (NTLM hash from the `autologon` endpoint). Protocol background: [[Standards & Protocols/NTLM|NTLM]].
 > Also [[Services/Network Management/DNS|DNS]] — ADIDNS WPAD/wildcard injection funnels name resolution to Responder.
 > Also [[Services/File Xfer/SMB|SMB]] — capturing/poisoning NetNTLM for SMB relay or cracking; [[Services/Network Management/NetBIOS|NetBIOS]] — the LLMNR/NBNS/mDNS broadcast surface this poisons.
+> Also [[Class notes/HTB Academy/CPTS v2 (claude)/Attacking Common Services|Attacking Common Services]] (CPTS v2) — LLMNR/NBT-NS poisoning feeding the SMB relay workflow.
 
 ---
 
@@ -177,5 +178,5 @@ sudo responder -I tun0 -A
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
+*Updated: 2026-10-08*
 *Model: claude-opus-5*

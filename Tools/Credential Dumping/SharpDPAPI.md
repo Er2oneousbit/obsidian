@@ -283,10 +283,10 @@ SharpDPAPI.exe certificates /pvk:domain.pvk /machine
 - Browser credential decryption reads `Login Data` SQLite file — Chrome may lock it if running; target via VSS or copy when browser is closed
 
 
-> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — DPAPI blob decryption for browser/app creds. The **remote/Linux counterpart** (same loot, no binary on target) is [[Tools/Credential Dumping/DonPAPI|DonPAPI]]; decrypted client-auth certs feed [[Tools/AD/Certipy|Certipy]]. Also [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — decrypting saved VPN credential blobs from a compromised client.
+> [!note] **See also** — [[Class notes/HTB Academy/CPTS v2 (claude)/Windows Priv Esc|Windows Priv Esc]] (CPTS v2) — DPAPI blob decryption for browser/app creds. The **remote/Linux counterpart** (same loot, no binary on target) is [[Tools/Credential Dumping/DonPAPI|DonPAPI]]; decrypted client-auth certs feed [[Tools/AD/Certipy|Certipy]]. Also [[Services/Remote Access/Cisco AnyConnect|Cisco AnyConnect]] — decrypting saved VPN credential blobs from a compromised client. The **macOS** analog (its credential store is the Keychain, not DPAPI) is [[Tools/Credential Dumping/chainbreaker|chainbreaker]].
 
 ---
 
 *Created: 2026-03-06*
-*Updated: 2026-09-23*
+*Updated: 2026-09-28*
 *Model: claude-opus-5*
